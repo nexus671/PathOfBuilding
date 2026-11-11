@@ -81,8 +81,25 @@ describe("Veiled unique affix pools", function()
 		local item = makeUnique("That Which Was Taken")
 		assert.is_not_nil(item)
 		assert.are.equal(1, item.limit)
-		assert.are.equal(48, item.requirements.level)
 		assert.is_nil(item.affixes.AnimalCharmMaximumRage1)
 		assert.is_not_nil(item.affixes.AnimalCharmMaximumRage2)
+	end)
+
+	it("recalculates That Which Was Taken requirements from crafted modifiers", function()
+		local item = makeUnique("That Which Was Taken")
+		assert.is_not_nil(item)
+		-- The empty template has no selected modifiers to derive a level from.
+		item.prefixes[1] = { modId = "AnimalCharmMaximumRage2", range = 1 }
+		item:Craft()
+		assert.are.equal(48, item.requirements.level)
+
+		item.prefixes[2] = { modId = "AnimalCharmAshOnHittingRareUniqueEnemy2", range = 1 }
+		item:Craft()
+		assert.are.equal(57, item.requirements.level)
+		assert.are.equal(57, new("Item"):Item(item.raw, "UNIQUE").requirements.level)
+
+		item.prefixes[2] = { modId = "None" }
+		item:Craft()
+		assert.are.equal(48, item.requirements.level)
 	end)
 end)
