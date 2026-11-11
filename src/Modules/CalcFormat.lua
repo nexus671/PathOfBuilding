@@ -15,16 +15,16 @@ end
 
 function formatCalcStr(str, actor, colData)
 	if not actor then return "" end
-	str = str:gsub("{output:([%a%.:]+)}", function(c)
-		local ns, var = c:match("^(%a+)%.(%a+)$")
+	str = str:gsub("{output:([%w_%.:]+)}", function(c)
+		local ns, var = c:match("^([%w_]+)%.([%w_]+)$")
 		if ns then
 			return actor.output[ns] and actor.output[ns][var] or ""
 		else
 			return actor.output[c] or ""
 		end
 	end)
-	str = str:gsub("{(%d+):output:([%a%.:]+)}", function(p, c)
-		local ns, var = c:match("^(%a+)%.(%a+)$")
+	str = str:gsub("{(%d+):output:([%w_%.:]+)}", function(p, c)
+		local ns, var = c:match("^([%w_]+)%.([%w_]+)$")
 		if ns then
 			return formatCalcVal(actor.output[ns] and actor.output[ns][var] or 0, tonumber(p))
 		else

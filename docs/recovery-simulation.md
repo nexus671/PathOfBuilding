@@ -1,6 +1,11 @@
 # Recovery simulation coverage
 
-Enable **Simulate recovery between hits** in Configuration. Enemy damage,
+Open **Simulation setup** in Calcs, or **Simulation** at the top of Configuration,
+to filter to the **Encounter Simulation** settings. Enable **Simulate recovery
+between hits**, then choose **View results** to jump to **Recovery over Time**.
+Click **Timeline: Inspect trial 1** for the charts and event log. **Close** returns
+to Calcs; **Show samples** adds periodic resource samples to the event log.
+Enemy damage,
 category and attack/cast time define the scenario. Trials start at full configured
 recoverable pools with the configured initial protection and Ghost Shrouds.
 

@@ -37,6 +37,18 @@ function CalcBreakdownClass:CalcBreakdownControl(calcsTab)
 	end
 	self.pinnedColour = { 0.25, 1, 0.25 }
 	self.borderColour = { 0.33, 0.66, 0.33 }
+	self.controls.timelineClose = new("ButtonControl"):ButtonControl({"TOPRIGHT",self,"TOPRIGHT"},{-24,4,62,20},"Close",function()
+		self.calcsTab:ClearDisplayStat()
+		self.shown = false
+	end)
+	self.controls.timelineClose.shown = function() return self.isTimeline end
+	self.controls.timelineSamples = new("CheckBoxControl"):CheckBoxControl({"TOPRIGHT",self,"TOPRIGHT"},{-240,5,18},"Show samples",function(state)
+		self.showTimelineSamples = state
+		local source,pinned,force = self.sourceData,self.pinned,self.forceActor
+		self.sourceData = nil
+		self:SetBreakdownData(source,pinned,force)
+	end)
+	self.controls.timelineSamples.shown = function() return self.isTimeline end
 	return self
 end
 
@@ -92,10 +104,21 @@ function CalcBreakdownClass:SetBreakdownData(displayData, pinned, forceActor)
 	end
 
 	self.shown = true
+	self.isTimeline = false
+	for _,section in ipairs(self.sectionList) do if section.type == "TIMELINE" then self.isTimeline = true end end
+	if self.isTimeline and not self.showTimelineSamples then
+		for _,section in ipairs(self.sectionList) do
+			if section.type == "TABLE" then
+				local events = { }
+				for _,row in ipairs(section.rowList) do if row.event ~= "Sample" then events[#events+1] = row end end
+				section.rowList = events
+			end
+		end
+	end
 
 	-- Determine the size of each section, and the combined content size of the breakdown
 	self.contentWidth = 0
-	local offset = 2
+	local offset = self.isTimeline and 28 or 2
 	for i, section in ipairs(self.sectionList) do
 		if section.type == "TEXT" then
 			section.width = 0
@@ -116,9 +139,9 @@ function CalcBreakdownClass:SetBreakdownData(displayData, pinned, forceActor)
 					if row[col.key] then
 						local _, num = string.gsub(row[col.key], "%d%d%d%d", "") -- count how many commas will be added
 						if main.showThousandsSeparators and num > 0 then
-							col.width = m_max(col.width or 0, DrawStringWidth(16, "VAR", col.label) + 6, DrawStringWidth(12, "VAR", row[col.key]) + 6 + (4 * num))
+							col.width = m_max(col.width or 0, DrawStringWidth(16, "VAR", col.label) + 6, DrawStringWidth(self.isTimeline and 14 or 12, "VAR", row[col.key]) + 6 + (4 * num))
 						else 
-							col.width = m_max(col.width or 0, DrawStringWidth(16, "VAR", col.label) + 6, DrawStringWidth(12, "VAR", row[col.key]) + 6)
+							col.width = m_max(col.width or 0, DrawStringWidth(16, "VAR", col.label) + 6, DrawStringWidth(self.isTimeline and 14 or 12, "VAR", row[col.key]) + 6)
 						end
 					end
 				end
@@ -126,7 +149,7 @@ function CalcBreakdownClass:SetBreakdownData(displayData, pinned, forceActor)
 					section.width = section.width + col.width
 				end
 			end
-			section.height = #section.rowList * 14 + 20
+			section.height = #section.rowList * (self.isTimeline and 18 or 14) + 20
 			if section.label then
 				self.contentWidth = m_max(self.contentWidth, 6 + DrawStringWidth(16, "VAR", section.label..":"))
 				section.height = section.height + 16
@@ -595,6 +618,7 @@ end
 
 function CalcBreakdownClass:DrawBreakdownTable(viewPort, x, y, section)
 	local cursorX, cursorY = GetCursorPos()
+	local rowHeight, textSize = self.isTimeline and 18 or 14, self.isTimeline and 14 or 12
 	if section.label then
 		-- Draw table label if able
 		DrawString(x + 2, y, "LEFT", 16, "VAR", "^7"..section.label..":")
@@ -627,11 +651,11 @@ function CalcBreakdownClass:DrawBreakdownTable(viewPort, x, y, section)
 				local _, notes = string.gsub(row[col.key], " to ", " ") -- counts " to " in the string
 				local _, paren = string.gsub(row[col.key], "%b()", " ") -- counts parenthesis in the string
 				if (alpha == 0 or notes > 0 or paren > 0) and col.right then
-					DrawString(col.x + col.width - 4, rowY + 1, "RIGHT_X", 12, "VAR", "^7"..formatNumSep(tostring(row[col.key])))
+					DrawString(col.x + col.width - 4, rowY + 1, "RIGHT_X", textSize, "VAR", "^7"..formatNumSep(tostring(row[col.key])))
 				elseif (alpha == 0 or notes > 0 or paren > 0) then
-					DrawString(col.x, rowY + 1, "LEFT", 12, "VAR", "^7"..formatNumSep(tostring(row[col.key])))
+					DrawString(col.x, rowY + 1, "LEFT", textSize, "VAR", "^7"..formatNumSep(tostring(row[col.key])))
 				else
-					DrawString(col.x, rowY + 1, "LEFT", 12, "VAR", "^7"..tostring(row[col.key]))
+					DrawString(col.x, rowY + 1, "LEFT", textSize, "VAR", "^7"..tostring(row[col.key]))
 				end
 				local ttFunc = row[col.key.."Tooltip"]
 				local ttNode = row[col.key.."Node"]
@@ -669,7 +693,7 @@ function CalcBreakdownClass:DrawBreakdownTable(viewPort, x, y, section)
 				end
 			end
 		end
-		rowY = rowY + 14
+		rowY = rowY + rowHeight
 	end
 	if section.footer then
 		-- Draw table footer if able
@@ -741,6 +765,7 @@ function CalcBreakdownClass:DrawEncounterTimeline(x,y,section)
 		DrawString(x+2,top,"LEFT",12,"VAR","100%")
 		DrawString(x+20,top+48,"LEFT",12,"VAR","0")
 		SetDrawColor(1,1,1); DrawString(x+4,top-20,"LEFT",14,"VAR",plot.label.." (normalized)")
+		if plot.label == "Poison DPS" and (trace.caps.poison or 0) == 0 then DrawString(x+240,top-20,"LEFT",12,"VAR","No poison applied in this trial") end
 		local legendX=x+240
 		for _,series in ipairs(plot.series) do
 			local key,color=series[1],series[2]
@@ -797,7 +822,7 @@ function CalcBreakdownClass:Draw(viewPort)
 	self.y = y
 	-- Draw background
 	SetDrawLayer(nil, 10)
-	SetDrawColor(0, 0, 0, 0.9)
+	SetDrawColor(0, 0, 0, self.isTimeline and 1 or 0.9)
 	DrawImage(nil, x + borderThickness, y + borderThickness, width - borderThickness * 2, height - borderThickness * 2)
 	-- Draw border (this is put in sub layer 11 so it draws over the contents, in case they don't fit the screen)
 	SetDrawLayer(nil, 11)
@@ -833,6 +858,13 @@ function CalcBreakdownClass:Draw(viewPort)
 		elseif section.type == "TIMELINE" then
 			self:DrawEncounterTimeline(x+2,sectionY,section)
 		end
+	end
+	if self.isTimeline then
+		SetDrawLayer(nil,11)
+		SetDrawColor(0.08,0.08,0.1); DrawImage(nil,self.x+2,self.y+2,width-4,24)
+		SetDrawColor(1,1,1); DrawString(self.x+8,self.y+5,"LEFT",16,"VAR","Encounter timeline")
+		self.controls.timelineClose:Draw(viewPort)
+		self.controls.timelineSamples:Draw(viewPort)
 	end
 	SetDrawLayer(nil, 0)
 end

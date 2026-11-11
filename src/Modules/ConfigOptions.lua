@@ -2360,6 +2360,7 @@ Huge sets the radius to 11.
 		{val="SpellProjectile",label="Projectile Spell"}
 	} },
 	{ var = "enemySpeed", type = "countAllowZero", label = "Enemy attack / cast time in ms:", defaultPlaceholderState = 700 },
+	{ section = "Encounter Simulation", col = 3 },
 	{ var = "simulateRecovery", type = "check", label = "Simulate recovery between hits", tooltip = "Adds finite trials with individual hit outcomes in Calcs. Uses evasion entropy and rolls dodge, block, suppression and avoidance. Survival rate is a sample estimate; surviving the window does not establish infinite survival." },
 	{ var = "recoverySimulationWindow", type = "count", label = "Recovery simulation window (s):", ifOption = "simulateRecovery", defaultPlaceholderState = 60, tooltip = "Simulation duration, capped at 300 seconds." },
 	{ var = "recoverySimulationTrials", type = "count", label = "Recovery simulation trials:", ifOption = "simulateRecovery", defaultPlaceholderState = 32, tooltip = "Number of reproducible trials, from 1 to 128. More trials improve sampling but increase calculation time." },
@@ -2381,6 +2382,7 @@ Huge sets the radius to 11.
 	{ var = "recoverySimulationLightningDot", type = "countAllowZero", label = "Continuous Lightning damage/s:", ifOption = "simulateRecovery" },
 	{ var = "recoverySimulationChaosDot", type = "countAllowZero", label = "Continuous Chaos damage/s:", ifOption = "simulateRecovery" },
 	{ var = "poisonDamageWindow", type = "count", label = "Poison damage window (s):", defaultPlaceholderState = 5, tooltip = "Shows selected-skill poison DPS and damage within this combat window in Calcs. Starts with no poisons and assumes continuous application. Capped at 300 seconds." },
+	{ section = "Enemy Hit Damage", col = 3 },
 	{ var = "enemyMultiplierPvpDamage", type = "count", label = "Custom PvP Damage multiplier percent:", ifFlag = "isPvP", tooltip = "This multiplies the damage of a given skill in pvp, for instance any with damage multiplier specific to pvp (from skill or support or item like sire of shards)", apply = function(val, modList, enemyModList)
 		enemyModList:NewMod("MultiplierPvpDamage", "BASE", val, "Config")
 	end },

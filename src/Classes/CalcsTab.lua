@@ -7,6 +7,7 @@ local pairs = pairs
 local ipairs = ipairs
 local t_insert = table.insert
 local m_max = math.max
+local m_min = math.min
 local m_floor = math.floor
 
 local buffModeDropList = {
@@ -40,6 +41,7 @@ function CalcsTabClass:CalcsTab(build)
 
 	self.controls.search = new("EditControl"):EditControl({"TOPLEFT",self,"TOPLEFT"}, {4, 5, 260, 20}, "", "Search", "%c", 100, nil, nil, nil, true)
 	t_insert(self.controls, self.controls.search)
+	self.controls.simulationSetup = new("ButtonControl"):ButtonControl({"LEFT",self.controls.search,"RIGHT"},{6,0,135,20},"Simulation setup",function() self.build.configTab:ShowEncounterSimulation() end)
 
 	-- Special section for skill/mode selection
 	self:NewSection(3, "SkillSelect", 1, colorCodes.NORMAL, {{ defaultCollapsed = false, label = "View Skill Details", data = {
@@ -308,6 +310,17 @@ function CalcsTabClass:Draw(viewPort, inputEvents)
 	end
 	self.controls.scrollBar.height = viewPort.height
 	self.controls.scrollBar:SetContentDimension(maxY - (baseY - 26), viewPort.height)
+	if self.focusRecoverySimulation then
+		for _,section in ipairs(self.sectionList) do
+			for i,subSection in ipairs(section.subSection) do
+				if subSection.label == "Recovery over Time" then
+					subSection.collapsed = false
+					self.controls.scrollBar.offset = m_min(m_max(0,maxY-viewPort.y-viewPort.height),m_max(0,section.y+section.controls["toggle"..i].y-viewPort.y-40))
+				end
+			end
+		end
+		self.focusRecoverySimulation = false
+	end
 	for _, section in ipairs(self.sectionList) do
 		if not section.isOverlay then
 			-- Give sections their actual Y position and let them update
@@ -435,6 +448,13 @@ end
 function CalcsTabClass:SearchMatch(txt)
 	local searchStr = self.controls.search.buf:lower()
 	return string.len(searchStr) > 0 and txt:lower():find(searchStr)
+end
+
+function CalcsTabClass:ShowRecoverySimulation()
+	self.build.viewMode = "CALCS"
+	self.controls.search:SetText("Recovery over Time")
+	self.focusRecoverySimulation = true
+	self.input.showMinion = false
 end
 
 -- Build the calculation output tables

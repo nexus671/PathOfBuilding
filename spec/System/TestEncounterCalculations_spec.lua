@@ -3,6 +3,11 @@ describe("Encounter reporting and comparisons",function()
 	local time=require("Modules.CalcTime")
 	before_each(function() newBuild() end)
 
+	it("formats digit-bearing poison outputs as values instead of raw placeholders",function()
+		assert.are.equal("123.5",formatCalcStr("{1:output:PoisonDPSAt1}",{output={PoisonDPSAt1=123.456}}))
+		assert.are.equal("7",formatCalcStr("{output:PoisonDPSAt10}",{output={PoisonDPSAt10=7}}))
+	end)
+
 	it("resolves saved avoidance power categories and separates player/minion stats",function()
 		local output={MeleeNotHitChance=51,SpellNotHitChance=12,ProjectileNotHitChance=63,Life=100,
 			TotalPoisonDPS=1000,Minion={Life=999,MeleeNotHitChance=7,TotalPoisonDPS=200}}
@@ -314,7 +319,15 @@ describe("Encounter reporting and comparisons",function()
 		control:SetBreakdownData({{breakdown="RecoverySimulationTimeline"},x=20,y=20,width=120},true)
 		assert.are.equal("TIMELINE",control.sectionList[2].type)
 		assert.are.equal("TABLE",control.sectionList[3].type)
+		for _,row in ipairs(control.sectionList[3].rowList) do assert.are_not.equals("Sample",row.event) end
+		assert.are.equal(true,control.isTimeline)
 		control:Draw({x=0,y=0,width=1920,height=1080})
+		build.configTab:ShowEncounterSimulation()
+		assert.are.equal("Encounter Simulation",build.configTab.controls.search.buf)
+		assert.are.equal(true,build.configTab.varControls.simulateRecovery:IsShown())
+		assert.are.equal(false,build.configTab.varControls.enemyCritChance:IsShown())
+		build.calcsTab:ShowRecoverySimulation()
+		runCallback("OnFrame"); assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
 		for _,view in ipairs({"CONFIG","CALCS"}) do build.viewMode=view; runCallback("OnFrame"); assert(not __mainObject__.promptMsg,__mainObject__.promptMsg) end
 	end)
 

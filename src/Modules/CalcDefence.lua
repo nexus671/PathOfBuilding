@@ -4578,7 +4578,8 @@ function calcs.recoveryOverTime(env, actor)
 		if selectedTrace then
 			local totalCharges=0
 			for _,item in ipairs(flaskList) do totalCharges=totalCharges + item.flaskData.chargesMax end
-			selectedTrace.caps={Life=o.LifeUnreserved,EnergyShield=o.EnergyShield,Mana=o.ManaUnreserved,crab=o.CrabBarriersMax or 0,shrouds=ghostDance and 3 or 0,chargesTotal=totalCharges,poison=o.TotalPoisonDPS or 0}
+			selectedTrace.caps={Life=o.LifeUnreserved,EnergyShield=o.EnergyShield,Mana=o.ManaUnreserved,crab=o.CrabBarriersMax or 0,shrouds=ghostDance and 3 or 0,chargesTotal=totalCharges,poison=0}
+			for _,point in ipairs(selectedTrace.points) do selectedTrace.caps.poison=m_max(selectedTrace.caps.poison,point.poison or 0) end
 			local rows = { }
 			for _,r in ipairs(selectedTrace.rows) do rows[#rows + 1] = { time=s_format("%.3f",r.time),life=s_format("%.0f",r.Life),es=s_format("%.0f",r.EnergyShield),mana=s_format("%.0f",r.Mana),reservation=s_format("%.0f",r.reservation),crab=tostring(r.crab),shrouds=tostring(r.shrouds),charges=r.charges,poison=s_format("%.0f",r.poison),event=r.event } end
 			breakdown.RecoverySimulationTimeline = { s_format("Trial %d of %d, seed %d. This is one individual trial, not an averaged resource trajectory.",traceTrial,trials,env.configInput.recoverySimulationSeed or 104729),selectedTrace.cause and "Death: "..selectedTrace.cause or "Window reached alive.",s_format("%d additional events omitted from the bounded log. Samples and terminal outcome are retained in the graph.",selectedTrace.dropped), timeline=selectedTrace,wrap=720,

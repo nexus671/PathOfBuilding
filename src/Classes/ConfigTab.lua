@@ -195,6 +195,9 @@ function ConfigTabClass:ConfigTab(build)
 	self.controls.search = new("EditControl"):EditControl({ "TOPLEFT", self.controls.sectionAnchor, "TOPLEFT" }, { 8, 15, 360, 20 }, "", "Search", "%c", 100, function()
 		self:UpdateControls()
 	end, nil, nil, true)
+	self.controls.simulationSetup = new("ButtonControl"):ButtonControl({"LEFT",self.controls.encounterPresets,"RIGHT"},{4,0,100,20},"Simulation",function() self:ShowEncounterSimulation() end)
+	self.controls.simulationResults = new("ButtonControl"):ButtonControl({"LEFT",self.controls.simulationSetup,"RIGHT"},{4,0,100,20},"View results",function() self.build.calcsTab:ShowRecoverySimulation() end)
+	self.controls.simulationResults.enabled = function() return self.input.simulateRecovery end
 	self.controls.toggleConfigs = new("ButtonControl"):ButtonControl({ "LEFT", self.controls.search, "RIGHT" }, { 10, 0, 200, 20 }, function()
 		-- dynamic text
 		return self.toggleConfigs and "Hide Ineligible Configurations" or "Show All Configurations"
@@ -209,7 +212,7 @@ function ConfigTabClass:ConfigTab(build)
 	local function searchMatch(varData)
 		local searchStr = self.controls.search.buf:lower():gsub("[%-%.%+%[%]%$%^%%%?%*]", "%%%0")
 		if searchStr and searchStr:match("%S") then
-			local label = StripEscapes(varData.label or ""):lower()
+			local label = StripEscapes((varData.label or "").." "..(varData.sectionName or "")):lower()
 			local err, match = PCall(string.matchOrPattern, label, searchStr)
 			if not err and match then
 				return true
@@ -309,6 +312,7 @@ function ConfigTabClass:ConfigTab(build)
 				self.customSection = lastSection
 			end
 		else
+			varData.sectionName = lastSection.label
 			local control
 			if varData.type == "check" then
 				control = new("CheckBoxControl"):CheckBoxControl({"TOPLEFT",lastSection,"TOPLEFT"}, {234, 0, 18}, varData.label, function(state)
@@ -1036,6 +1040,14 @@ function ConfigTabClass:UpdateControls()
 		end
 	end
 	self:UpdateCustomModsControls()
+end
+
+function ConfigTabClass:ShowEncounterSimulation()
+	self.build.viewMode = "CONFIG"
+	self.controls.search:SetText("Encounter Simulation")
+	self.controls.scrollBar.offset = 0
+	for _,section in ipairs(self.sectionList) do if section.label == "Encounter Simulation" then section.collapsed = false end end
+	self:UpdateControls()
 end
 
 function ConfigTabClass:UpdateEncounterComparisonList()
