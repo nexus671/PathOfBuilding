@@ -788,7 +788,11 @@ function CalcBreakdownClass:DrawEncounterTimeline(x,y,section)
 	end
 	SetDrawColor(1,1,1)
 	DrawString(plotX,y+286,"LEFT",12,"VAR","0s")
-	DrawString(plotX+plotWidth,y+286,"RIGHT",12,"VAR",s_format("%.2fs",stop))
+	for fraction=1,3 do
+		local label=s_format("%.1fs",stop*fraction/4)
+		DrawString(plotX+plotWidth*fraction/4-DrawStringWidth(12,"VAR",label)/2,y+286,"LEFT",12,"VAR",label)
+	end
+	DrawString(plotX+plotWidth,y+286,"RIGHT_X",12,"VAR",s_format("%.2fs",stop))
 	if hovered and nearest then
 		DrawString(x+4,y+304,"LEFT",12,"VAR",s_format("%.3fs: Life %.0f | ES %.0f | Mana %.0f | Crab %d | Shrouds %d",nearest.time,nearest.Life,nearest.EnergyShield,nearest.Mana,nearest.crab,nearest.shrouds))
 		DrawString(x+4,y+320,"LEFT",12,"VAR",s_format("Flask charges: %s | Poison DPS: %.0f",nearest.charges,nearest.poison))
@@ -837,6 +841,9 @@ function CalcBreakdownClass:Draw(viewPort)
 	DrawImage(nil, x + width - borderThickness, y, borderThickness, height)
 	SetDrawLayer(nil, 10)
 	self:DrawControls(viewPort)
+	-- Hovered controls can reset the draw layer while drawing their tooltip.
+	-- Restore it so the opaque panel never covers its own charts and event log.
+	SetDrawLayer(nil,10)
 	-- Draw the sections
 	y = y - scrollBar.offset
 	for i, section in ipairs(self.sectionList) do
@@ -864,6 +871,7 @@ function CalcBreakdownClass:Draw(viewPort)
 		SetDrawColor(0.08,0.08,0.1); DrawImage(nil,self.x+2,self.y+2,width-4,24)
 		SetDrawColor(1,1,1); DrawString(self.x+8,self.y+5,"LEFT",16,"VAR","Encounter timeline")
 		self.controls.timelineClose:Draw(viewPort)
+		SetDrawLayer(nil,11)
 		self.controls.timelineSamples:Draw(viewPort)
 	end
 	SetDrawLayer(nil, 0)
