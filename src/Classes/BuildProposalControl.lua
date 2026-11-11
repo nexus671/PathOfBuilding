@@ -198,6 +198,7 @@ function Panel.Open(build)
 	controls.restore.enabled = function() return bridge.previous ~= nil and bridge.build == main.modes.BUILD end
 	controls.analysis = button(16,184,210,"Checks and death analysis",function() Panel.Analysis(build) end)
 	controls.diagnostics = button(242,184,210,"Connection diagnostics",Panel.Diagnostics)
+	controls.crafting = button(468,184,210,"Crafting projects",function() safely(function() require("Classes.CraftingProjectControl").Open(build) end) end)
 	controls.detail = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,234,0,14},function()
 		local text = bridge.lastError or bridge.status and bridge.status.title or "Enable the bridge, connect your MCP client, then ask it to plan or compare builds."
 		return #text > 100 and text:sub(1,97).."..." or text

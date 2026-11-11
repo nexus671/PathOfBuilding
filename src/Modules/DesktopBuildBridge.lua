@@ -160,6 +160,8 @@ local function applyOperation(build, op)
 		end
 	elseif op.type == "set_notes" then
 		build.notesTab.controls.edit:SetText(text(op.text,64000,"notes"))
+	elseif op.type == "set_crafting_project" then
+		build.savers.CraftingProjects:Upsert(op.project)
 	else error("Unknown operation: "..tostring(op.type)) end
 end
 
@@ -244,7 +246,8 @@ local function path(name) return main.userPath.."AI-build-"..name..".json" end
 function M.capture(build)
 	local context = {revision=M.revision(build),name=build.buildName,level=build.characterLevel,className=build.spec.curClassName,ascendancy=build.spec.curAscendClassName,
 		stats=stats(build),items={},skills={},passives={},masteries=copyTable(build.spec.masterySelections),config=copyTable(build.configTab.input),
-		warnings=copyTable(build.controls.warnings.lines),slots={},plan=M.plan,audit=insights.audit(build),encounter=insights.diagnose(build)}
+		warnings=copyTable(build.controls.warnings.lines),slots={},plan=M.plan,audit=insights.audit(build),encounter=insights.diagnose(build),
+		craftingProjects=copyTable(build.savers.CraftingProjects.projects),craftingWarning=build.savers.CraftingProjects.warning}
 	local catalog = {gems={},passives={},config={},classes={}}
 	for name,slot in pairs(build.itemsTab.slots) do
 		context.slots[#context.slots+1] = name
@@ -336,6 +339,10 @@ end
 
 function M.summary(prepared)
 	local resolved = M.capture(prepared.candidate).context
+	-- Avoid duplicating large opaque simulator exports across every comparison result.
+	resolved.craftingProjectSummaries = { }
+	for _,project in ipairs(resolved.craftingProjects) do resolved.craftingProjectSummaries[#resolved.craftingProjectSummaries+1]={id=project.id,title=project.title,slot=project.slot} end
+	resolved.craftingProjects = nil
 	return {id=prepared.id,title=prepared.title,baseRevision=prepared.baseRevision,before=prepared.before,after=prepared.after,delta=prepared.delta,warnings=prepared.warnings,
 		resolved=resolved,changes=prepared.changes,audit=prepared.audit,evaluation=prepared.evaluation,
 		instructions="Open AI builds in PoB to review. Only a desktop button can apply this proposal."}
@@ -419,6 +426,29 @@ function M.poll(build, force)
 		assert(type(request.id) == "string" and request.id:match("^[%w%-]+$") and #request.id <= 80,"Invalid proposal ID")
 		if M.prepared then return end
 		M.lastRequest,M.lastError = os.time(),nil
+		if request.kind == "craftAction" or request.kind == "craftSimulate" then
+			assert(request.baseRevision == M.revision(build),"Build changed. Refresh crafting context.")
+			local raw=request.itemText
+			if not raw then local slot=assert(build.itemsTab.slots[request.slot],"Unknown item slot"); raw=assert(build.itemsTab.items[slot.selItemId],"Selected slot is empty").raw end
+			local simulator=require("Modules.CraftingSimulator")
+			M.status={id=request.id,status="calculating"}; M.publishState()
+			local result=request.kind == "craftAction" and simulator.perform(raw,request.action,request.seed,request.initialState) or simulator.simulate(raw,request.recipe,request.options)
+			M.status={id=request.id,status="crafted",nativeCrafting=result}; M.publishState()
+			return
+		end
+		if request.kind == "craftInspect" then
+			assert(request.baseRevision == M.revision(build),"Build changed. Refresh crafting context.")
+			local raw = request.itemText
+			if not raw then
+				local slot = assert(build.itemsTab.slots[request.slot],"Unknown item slot")
+				raw = assert(build.itemsTab.items[slot.selItemId],"Selected slot is empty").raw
+			end
+			M.status = {id=request.id,status="inspected",crafting=require("Modules.CraftingProjects").inspect(raw,request.query,request.limit)}
+			local ok,catalog=pcall(require("Modules.CraftingSimulator").catalog,raw,request.query,request.limit)
+			if ok then M.status.crafting.nativeEngine=catalog else M.status.crafting.nativeEngineUnavailable=tostring(catalog):match("^[^\n]+") end
+			M.publishState()
+			return
+		end
 		if request.kind == "plan" then
 			M.configure(request.plan)
 			M.status = {id=request.id,status="configured",title="Build goals updated"}

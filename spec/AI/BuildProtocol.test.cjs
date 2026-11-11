@@ -115,3 +115,53 @@ test('retries a brief incomplete desktop refresh without reporting a disconnecte
   fs.readFileSync=function(file,...args){if (partial && file === path.join(f.dir,'AI-build-state.json')) {partial=false;return '{';}return originalRead.call(this,file,...args);};
   try {assert.equal(f.call('get_build_context',{}).context.name,'Desktop');assert.equal(partial,false);} finally {fs.readFileSync=originalRead;}
 });
+
+
+function craftingProject() {return {id:'life-helmet',title:'Life helmet',slot:'Helmet',startingItem:'Rarity: NORMAL\nIron Hat\nItem Level: 86',targetItem:'Rarity: RARE\nPlanned Hat\nIron Hat\n+100 to maximum Life',goals:['100 Life'],steps:[{action:'Choose a suitable method in Craft of Exile',stopWhen:'Target modifiers present',onFailure:'Stop at the budget limit'}]};}
+
+test('queues crafting inspection with exactly one item source and current revision', t => {
+  const f=fixture(t);
+  assert.throws(()=>f.call('inspect_crafting_item',{baseRevision:f.state.revision}),/exactly one/);
+  assert.throws(()=>f.call('inspect_crafting_item',{baseRevision:f.state.revision,slot:'Helmet',itemText:'other'}),/exactly one/);
+  f.call('inspect_crafting_item',{baseRevision:f.state.revision,slot:'Helmet',query:'life',limit:5});
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(queued.kind,'craftInspect');assert.equal(queued.slot,'Helmet');
+});
+
+test('proposes crafting metadata and optional target gear through desktop review', t => {
+  const f=fixture(t);const project=craftingProject();
+  f.call('propose_crafting_plan',{baseRevision:f.state.revision,project,equipTarget:true});
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.deepEqual(queued.proposal.operations.map(op=>op.type),['set_crafting_project','equip_item']);
+  assert.equal(queued.proposal.operations[1].text,project.targetItem);
+  assert.equal(f.call('get_crafting_projects',{}).projects.length,0);
+});
+
+test('rejects invalid crafting evidence and execution fields', t => {
+  const f=fixture(t);const project=craftingProject();
+  assert.throws(()=>f.call('propose_crafting_plan',{baseRevision:f.state.revision,project:{...project,runCode:'no'}}),/arguments/);
+  assert.throws(()=>f.call('propose_crafting_plan',{baseRevision:f.state.revision,project:{...project,targetItem:''},equipTarget:true}),/target item/);
+  assert.throws(()=>f.call('propose_crafting_plan',{baseRevision:f.state.revision,project:{...project,simulation:{patch:'3.29',observedAt:1,trials:10,successes:11}}}),/exceed trials/);
+});
+
+
+test('queues native currency actions without applying desktop equipment', t => {
+  const f=fixture(t);
+  f.call('apply_crafting_action',{baseRevision:f.state.revision,itemText:craftingProject().startingItem,action:{method:'alchemy'},seed:123});
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(queued.kind,'craftAction'); assert.equal(queued.action.method,'alchemy');
+  assert.equal(queued.proposal,undefined);
+});
+
+test('bounds native recipe work and rejects unsupported methods and invalid routes', t => {
+  const f=fixture(t);
+  const base={baseRevision:f.state.revision,itemText:craftingProject().startingItem,recipe:{steps:[{method:'alchemy'}],targets:[{anyOf:['IncreasedLife1']}]}};
+  assert.throws(()=>f.call('simulate_crafting',{...base,options:{trials:2000,maxActions:2000}}),/20000/);
+  assert.throws(()=>f.call('simulate_crafting',{...base,recipe:{...base.recipe,steps:[{method:'harvest'}]}}),/arguments/);
+  assert.throws(()=>f.call('simulate_crafting',{...base,recipe:{...base.recipe,steps:[{method:'alchemy',onFailure:3}]}}),/route/);
+  assert.throws(()=>f.call('simulate_crafting',{...base,recipe:{...base.recipe,steps:[{method:'alchemy',maxAttempts:20}]}}),/target conditions/);
+  assert.throws(()=>f.call('simulate_crafting',{...base,options:{prices:{alchemy:1}}}),/currency/);
+  f.call('simulate_crafting',{...base,options:{trials:100,maxActions:1,prices:{alchemy:1},currency:'chaos'}});
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(queued.kind,'craftSimulate'); assert.equal(queued.options.trials,100);
+});
