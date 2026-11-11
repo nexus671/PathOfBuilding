@@ -1,65 +1,90 @@
 # Recovery simulation coverage
 
-Enable **Simulate recovery between hits** in Configuration. Enemy hit damage,
+Enable **Simulate recovery between hits** in Configuration. Enemy damage,
 category and attack/cast time define the scenario. Trials start at full configured
 recoverable pools with the configured initial protection and Ghost Shrouds.
 
-Each trial processes individual enemy attempts. Evasion uses a shared entropy
-counter, reset after an attack-free gap. Dodge, block, suppression and damage
-avoidance use a local seeded random generator. Average damage category selects
-each of the four attack/spell categories equally. The EHP unlucky setting is
-excluded; the ordinary configured probabilities apply.
+Evasion uses entropy; dodge, block, suppression and damage avoidance use a local
+seeded random generator. Average selects each attack/spell category equally.
+The EHP unlucky setting is excluded. Default 32 reproducible trials, configurable
+from 1 to 128. Calcs shows survival frequency and capped 10th/50th/90th percentiles
+of time alive. Reaching the window is not proof of infinite survival. Small samples
+are approximate, especially for rare bursts. Detailed trials are omitted from
+item-preview calculations to keep ordinary comparisons fast.
 
-The default is 32 reproducible trials, configurable from 1 to 128. Calcs shows
-the fraction surviving the window and the 10th/50th/90th percentiles of time alive.
-Times are capped at the selected window: reaching it is not proof of infinite
-survival. Small trial counts are approximate samples, especially for rare bursts.
+Enable **Simulate main-skill attacks** to pay native configured costs on outgoing
+attempts. Unaffordable attempts are skipped; Calcs shows their affordable fraction.
+Successful hits apply native average instant leech/gain on hit and create leech
+instances. Each instance expires separately. Combined rates obey native caps;
+ordinary instances clear at full unreserved life/mana/ES unless retention is
+allowed. A Petrified Blood recovery cap below full unreserved life therefore
+allows instances to remain. Eldritch Battery pays mana costs from ES first.
+Configured average hit damage and critical chance remain fixed: these trials do
+not recalculate DPS, conditional damage, Wither or poison stacks from attack uptime.
 
-| Mechanic | Current treatment |
+**Track temporary defense uptime** is on by default. Selected utility and
+enduring recovery flasks start full and reuse at expiry. Only known passive charge
+generation is included; no kill, hit or critical-strike charges are invented.
+Native defenses/recovery are recalculated when the active flask set changes,
+using isolated projection caches without editing the build. Elusive avoidance
+decays from its configured initial effect; Nightblade can reapply it on outgoing
+critical hits after it expires. Other sources of Elusive generation and changes
+to damage/critical modifiers while Elusive are not simulated.
+
+| Mechanic | Treatment |
 | --- | --- |
-| Regeneration and life degen | Native configured rates between events; pool caps apply. |
-| Recoup | Each damaging hit adds a separate cohort with its native duration and recovery modifiers. |
-| Ordinary ES recharge | Starts after the configured delay, can restore partially or fully during real gaps, and is interrupted by damage to ES or the resource ES protects. Costs do not interrupt it. Continuous degen on the protected resource disables recharge. |
-| Eldritch Battery | Native routing; damage to mana/ES interrupts recharge. Damage only to life does not. |
-| Ghost Dance | Up to three charges, one generated every two seconds from the start of the trial. An eligible unblocked hit consumes a charge after damage; recovery is 3% of evasion, capped by ES recovery space. No recovery after a lethal hit. Generation phase before combat is not known. |
-| Divine Shield and physical-prevention regeneration | Per-hit physical damage prevented produces a regeneration cohort for the native recent duration, including prevention from block/suppression. Damage shifted to another type is not physical prevention. Native regeneration/recovery modifiers and recovery caps apply. |
-| Petrified Blood / Progenesis | Native immediate pool reduction plus separate four-second delayed-loss cohorts; death can occur between hits. |
-| Gain on block/suppression | Applies to the actual corresponding outcome after nonlethal damage. |
-| Defiance of Destiny | Missing-life recovery before connected hits. |
-| Emperor's Vigilance | ES bypass changes on the actual blocked hit. |
-| Dissolution of the Flesh | Basic hit-only reservation capacity; clears after two seconds without damage to life. Life healing does not clear reservation. Delayed life loss, degen, life costs and existing life reservations are explicitly unsupported combinations. |
-| Main-skill leech/on-hit and costs | Optional sustained rates. Assumes resource sustainability; leech startup, instance expiry and removal at full are not simulated. |
-| Aegis, guard, allied pools, Vaal Arctic Armour | Configured initial protection; no repeated recast/refill schedule. |
-| Ward, Wicked Ward, recharge applied to life, enemy impales, ES degen routing | Explicitly unsupported. |
+| Regeneration, configured resource loss | Native rates between events with recovery caps. |
+| Recoup | Per-hit cohorts with native duration and modifiers. |
+| ES recharge | Full/partial recovery in real gaps; damage to ES or its protected resource interrupts it. Costs do not interrupt it. |
+| Wicked Ward | Protects recharge for four seconds from its start, not four seconds from every hit. |
+| Eternal Youth | Recharge applies to actual life. It does not clear Dissolution reservation. |
+| Ghost Dance | Three finite charges, two-second generation, eligible unblocked-hit consumption and capped ES recovery after nonlethal damage. |
+| Divine Shield / physical-prevention regeneration | Per-hit cohorts, native modifiers, recovery restrictions and copying such as Pious Path. Shifted damage is not physical prevention. |
+| Petrified Blood / Progenesis | Separate delayed-loss cohorts; death can occur between hits. Non-flask life recovery obeys Petrified Blood's cap. |
+| Dissolution | Separate actual-life and reservation state. Two seconds without damage to life releases reservation; healing only restores actual life. PB/Progenesis delayed loss, recoup, life costs and Eternal Youth operate on actual life. Damage-induced clamping of actual life can interrupt recharge. |
+| Block/suppression gains, Defiance | Apply to actual corresponding outcomes, with no recovery after lethal damage. |
+| Emperor's Vigilance | Routing changes on the actual blocked hit. |
+| Ward | Ordinary timed restoration after a break. Partial chance not to break is explicitly unsupported. |
+| Aegis | Native skill recharge delays, separate pool timers; depleted pools can refill. |
+| Guard | Native duration, early depletion and cooldown. Optional **Recast guard when ready** pays native costs. This is a manual-use policy, not trigger-threshold simulation. Vaal guards are not automatically reused. |
+| Allied protection | Configured initial pools; no resummoning schedule. |
 
-Configured mitigation, critical damage and conditional buffs remain fixed across
-trials. This is not a complete combat engine: no movement, enemy packs, variable
-hit sizes, flask use, kills, temporary-buff expiry or automated skill rotation.
-Existing burst EHP and poison/steady-state DPS calculations are unchanged.
+## Explicit limits
+
+- Dissolution with existing life reservations needs aura-cancellation ordering and
+  buff changes, and is unsupported. Upstream reports [#10193](https://github.com/PathOfBuildingCommunity/PathOfBuilding/issues/10193)
+  and [#10258](https://github.com/PathOfBuildingCommunity/PathOfBuilding/issues/10258)
+  are not claimed fixed.
+- Dynamic damage-over-time routing through ES/Dissolution is unsupported. Known
+  continuous degen on the protected resource disables ordinary recharge.
+- Instant recovery flasks and recovery flasks that end at full need activation,
+  termination and recovery-cap policies and are explicitly unsupported when selected.
+- Immortal Ambition's conditional leech redirection and enemy impale stacks are
+  explicitly unsupported.
+- Other configured conditional buffs remain fixed, including recently-hit effects,
+  full-ES damage bonuses and variable enemy critical damage. No movement, multiple
+  attackers, kills or complete skill rotation is simulated.
+- Elusive generation phase, flask state, leech and skill-cost timing are scenario
+  assumptions; survival frequency is an estimate, not a guarantee or boss rating.
 
 ## Next improvements
 
-1. Track leech instances: creation from outgoing hits, duration, caps, removal at
-   full, leech persisting at full and instant leech. Track actual outgoing gain-on-hit events and
-   stop attacking when resources cannot pay costs.
-2. Extend Dissolution with a separate actual-life pool, delayed life loss and
-   reservation cancellation. Petrified Blood/Eternal Youth interactions must not
-   be approximated as healing reservation.
-3. Add recharge state for Wicked Ward, Eternal Youth and forced recharge starts.
-4. Route continuous damage dynamically as ES/mana empty and refill; include
-   ongoing degeneration in recharge interruption and Dissolution reservation.
-5. Schedule Ward restoration, Aegis refills, guard recasts and temporary buffs.
-6. Model flask duration, charges and activation policy; avoid assuming permanent
-   recovery from a flask that cannot be sustained.
-7. Add multiple attackers, damage/critical distributions and dynamic conditions
-   such as recently hit, full ES, Wind Dancer and changing Elusive effect.
-8. Expose convergence/sample uncertainty before using trial results for automatic
-   item ranking. Retain the fast burst metric for routine comparisons.
+1. Life-aura cancellation and dynamic degen routing for Dissolution.
+2. Instant/ending recovery flasks, charge-on-hit/critical generation and explicit
+   activation policies; special Ward/flask interactions.
+3. Conditional leech transformations and dynamic damage/critical modifiers.
+4. Multiple attackers, variable hit sizes, changing recently-hit/full-ES conditions,
+   and resummoning/recasting other protective skills.
+5. Sampling uncertainty/convergence checks before automatic survival-based ranking.
 
 ## Mechanics references
 
-- [GGG: evasion entropy and independent block/dodge](https://www.pathofexile.com/forum/view-thread/11707/filter-account-type/staff/page/10#p748465)
-- [Ghost Dance game stats](https://poedb.tw/us/Ghost_Dance)
-- [Divine Shield game stats](https://poedb.tw/us/Divine_Shield)
-- [Dissolution game stats](https://poedb.tw/us/Dissolution_of_the_Flesh)
+- [GGG: evasion entropy](https://www.pathofexile.com/forum/view-thread/11707/filter-account-type/staff/page/10#p748465)
+- [Ghost Dance](https://poedb.tw/us/Ghost_Dance)
+- [Divine Shield](https://poedb.tw/us/Divine_Shield)
+- [Dissolution](https://poedb.tw/us/Dissolution_of_the_Flesh)
+- [Eternal Youth](https://poedb.tw/us/Eternal_Youth)
+- [Wicked Ward](https://poedb.tw/us/Wicked_Ward)
+- [Molten Shell](https://poedb.tw/us/Molten_Shell)
+- [Primal Aegis](https://poedb.tw/us/Primal_Aegis)
 - [GGG: prevented physical damage](https://old.reddit.com/r/pathofexile/comments/qd4crg/finally_i_can_now_take_105_of_damage_from_blocked/hhktpsc/)
