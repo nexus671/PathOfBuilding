@@ -69,4 +69,39 @@ describe("EHP recovery and damage avoidance", function()
 		assert.are.equal(47, out.AvoidColdDamageChance)
 		assert.are.near(10, out.ConfiguredNotHitChance, 0.0001)
 	end)
+
+	it("averages attack evasion and spell block jointly (issue 8983)", function()
+		local mods = "+1000 to maximum Life\n75% chance to evade attacks\n75% chance to block spell damage"
+		local average = calculate(mods, 400, "Average").TotalEHP
+		local melee = calculate(mods, 400, "Melee").TotalEHP
+		local spell = calculate(mods, 400, "Spell").TotalEHP
+		assert.are.near(melee, average, 0.01)
+		assert.are.near(spell, average, 0.01)
+	end)
+
+	it("keeps spell block and suppression on the spell share of Average hits", function()
+		for _, suppression in ipairs({ 0, 50, 100 }) do
+			local out = calculate("+1000 to maximum Life\n75% chance to evade attacks\n75% chance to block spell damage\n+"..suppression.."% chance to Suppress Spell Damage", 400, "Average")
+			-- Half the attempts are attacks (25% connect), half are spells
+			-- (25% pass block, then suppression prevents its configured portion).
+			local effect = out.SpellSuppressionEffect / 100
+			local damageFraction = (0.25 + 0.25 * (1 - suppression / 100 * effect)) / 2
+			local embeddedSuppression = suppression == 100 and (1 - effect / 2) or 1
+			assert.are.near(damageFraction, out.ConfiguredDamageChance / 100 * (1 - out.ConfiguredNotHitChance / 100) * embeddedSuppression, 0.000001)
+		end
+	end)
+
+	it("weights unlucky avoidance within each Average hit category", function()
+		build.configTab.input.EHPUnluckyWorstOf = 2
+		local out = calculate("+1000 to maximum Life\n75% chance to evade attacks\n75% chance to block spell damage", 400, "Average")
+		assert.are.near(1 - 0.75 ^ 2, out.ConfiguredDamageChance / 100 * (1 - out.ConfiguredNotHitChance / 100), 0.000001)
+	end)
+
+	it("does not grant spell-block recovery for attack blocks in Average mode", function()
+		local mods = "+1000 to maximum Life\n+1000 to maximum Energy Shield\n75% chance to block attack damage"
+		local without = calculate(mods, 400, "Average").TotalEHP
+		local with = calculate(mods.."\nRecover 1000 Energy Shield when you Block Spell Damage", 400, "Average")
+		assert.are.equal(1000, with.EnergyShieldOnSpellBlock)
+		assert.are.equal(without, with.TotalEHP)
+	end)
 end)

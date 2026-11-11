@@ -1704,6 +1704,12 @@ function calcs.buildDefenceEstimations(env, actor)
 				output.ConfiguredNotHitChance = output.ConfiguredNotHitChance / 100 * output.ConfiguredNotHitChance
 				output.ConfiguredEvadeChance = output.ConfiguredEvadeChance / 100 * output.ConfiguredEvadeChance
 			end
+			if damageCategoryConfig == "Average" then
+				output.ConfiguredNotHitChance = 0
+				for _, category in ipairs({ "Melee", "Projectile", "Spell", "SpellProjectile" }) do
+					output.ConfiguredNotHitChance = output.ConfiguredNotHitChance + (output[category.."NotHitChance"] / 100) ^ worstOf * 25
+				end
+			end
 		end
 	end
 
@@ -2821,11 +2827,40 @@ function calcs.buildDefenceEstimations(env, actor)
 		do
 			local DamageIn = { }
 			local BlockChance = output.EffectiveBlockChance / 100
+			local averageHitWeights
+			local spellHitChance = 1
+			local spellBlockChance = 0
 			if damageCategoryConfig ~= "Melee" and damageCategoryConfig ~= "Untyped" then
 				BlockChance = output["Effective"..damageCategoryConfig.."BlockChance"] / 100
 			end
+			if damageCategoryConfig == "Average" then
+				-- Average the joint events, not their separate marginal chances.
+				-- After evasion/dodge, connected hits need not be 50% attacks/spells.
+				averageHitWeights = { }
+				local totalWeight = 0
+				local worstOf = env.configInput.EHPUnluckyWorstOf or 1
+				for _, category in ipairs({ "Melee", "Projectile", "Spell", "SpellProjectile" }) do
+					local weight = 1 - (output[category.."NotHitChance"] / 100) ^ worstOf
+					averageHitWeights[category] = weight
+					totalWeight = totalWeight + weight
+				end
+				BlockChance, spellHitChance = 0, 0
+				for category, weight in pairs(averageHitWeights) do
+					weight = totalWeight > 0 and weight / totalWeight or 0
+					averageHitWeights[category] = weight
+					local blockChance = output["Effective"..(category == "Melee" and "" or category).."BlockChance"] / 100
+					BlockChance = BlockChance + weight * blockChance
+					if category == "Spell" or category == "SpellProjectile" then
+						spellHitChance = spellHitChance + weight
+						spellBlockChance = spellBlockChance + weight * blockChance
+					end
+				end
+			elseif damageCategoryConfig == "Spell" or damageCategoryConfig == "SpellProjectile" then
+				spellBlockChance = BlockChance
+			end
 			if enemyDB:Flag(nil, "CannotBeBlocked") then
 				BlockChance = 0
+				spellBlockChance = 0
 			end
 			local blockEffect = (1 - BlockChance * output.BlockEffect / 100)
 			local suppressChance = 0
@@ -2835,27 +2870,32 @@ function calcs.buildDefenceEstimations(env, actor)
 				DamageIn.LifeWhenHit = output.LifeOnBlock * BlockChance
 				DamageIn.ManaWhenHit = output.ManaOnBlock * BlockChance
 				DamageIn.EnergyShieldWhenHit = output.EnergyShieldOnBlock * BlockChance
-				if damageCategoryConfig == "Spell" or damageCategoryConfig == "SpellProjectile" then
-					DamageIn.EnergyShieldWhenHit = DamageIn.EnergyShieldWhenHit + output.EnergyShieldOnSpellBlock * BlockChance
-				elseif damageCategoryConfig == "Average" then
-					DamageIn.EnergyShieldWhenHit = DamageIn.EnergyShieldWhenHit + output.EnergyShieldOnSpellBlock / 2 * BlockChance
-				end
+				DamageIn.EnergyShieldWhenHit = DamageIn.EnergyShieldWhenHit + output.EnergyShieldOnSpellBlock * spellBlockChance
 			end
 			-- suppression
 			if damageCategoryConfig == "Spell" or damageCategoryConfig == "SpellProjectile" or damageCategoryConfig == "Average" then
 				suppressChance = output.EffectiveSpellSuppressionChance / 100
 			end
 			-- We include suppression in damage reduction if it is 100% otherwise we handle it here.
+			local suppressRate = suppressChance * (damageCategoryConfig == "Average" and spellHitChance or 1)
 			if suppressChance < 1 then
-				if damageCategoryConfig == "Average" then
-					suppressChance = suppressChance / 2
+				suppressionEffect = 1 - suppressRate * output.SpellSuppressionEffect / 100
+			end
+			DamageIn.EnergyShieldWhenHit = (DamageIn.EnergyShieldWhenHit or 0) + output.EnergyShieldOnSuppress * suppressRate
+			DamageIn.LifeWhenHit = (DamageIn.LifeWhenHit or 0) + output.LifeOnSuppress * suppressRate
+			local blockSuppressionEffect = blockEffect * suppressionEffect
+			if averageHitWeights then
+				blockSuppressionEffect = 0
+				for category, weight in pairs(averageHitWeights) do
+					local blockChance = enemyDB:Flag(nil, "CannotBeBlocked") and 0 or output["Effective"..(category == "Melee" and "" or category).."BlockChance"] / 100
+					local spellMultiplier = (category == "Spell" or category == "SpellProjectile") and (1 - suppressChance * output.SpellSuppressionEffect / 100) or 1
+					blockSuppressionEffect = blockSuppressionEffect + weight * (1 - blockChance * output.BlockEffect / 100) * spellMultiplier
 				end
-				DamageIn.EnergyShieldWhenHit = (DamageIn.EnergyShieldWhenHit or 0) + output.EnergyShieldOnSuppress * suppressChance
-				DamageIn.LifeWhenHit = (DamageIn.LifeWhenHit or 0) + output.LifeOnSuppress * suppressChance
-				suppressionEffect = 1 - suppressChance * output.SpellSuppressionEffect / 100
-			else
-				DamageIn.EnergyShieldWhenHit = (DamageIn.EnergyShieldWhenHit or 0) + output.EnergyShieldOnSuppress * ( damageCategoryConfig == "Average" and 0.5 or 1 )
-				DamageIn.LifeWhenHit = (DamageIn.LifeWhenHit or 0) + output.LifeOnSuppress * ( damageCategoryConfig == "Average" and 0.5 or 1 )
+				-- TakenHit already contains the old 50/50 suppression average when
+				-- suppression is guaranteed; replace that factor rather than repeat it.
+				if suppressChance == 1 then
+					blockSuppressionEffect = blockSuppressionEffect / (1 - output.SpellSuppressionEffect / 200)
+				end
 			end
 			-- gain when hit (currently just gain on block/suppress, and Defiance of Destiny)
 			if not env.configInput.DisableEHPGainOnBlock and (output["NumberOfDamagingHits"] > 1) then
@@ -2887,7 +2927,7 @@ function calcs.buildDefenceEstimations(env, actor)
 					end
 					averageAvoidChance = averageAvoidChance + AvoidChance
 				end
-				DamageIn[damageType] = output[damageType.."TakenHit"] * (blockEffect * suppressionEffect * (1 - AvoidChance / 100))
+				DamageIn[damageType] = output[damageType.."TakenHit"] * (blockSuppressionEffect * (1 - AvoidChance / 100))
 			end
 			-- recoup initialisation
 			if output["anyRecoup"] > 0 then
@@ -2904,16 +2944,22 @@ function calcs.buildDefenceEstimations(env, actor)
 			end
 			DamageIn["LimitEHPSpeedup"] = DamageIn["TrackRecoupable"] or DamageIn["TrackLifeLossOverTime"] or DamageIn.GainWhenHit
 			averageAvoidChance = averageAvoidChance / 5
-			output["ConfiguredDamageChance"] = 100 * (blockEffect * suppressionEffect * (1 - averageAvoidChance / 100))
+			output["ConfiguredDamageChance"] = 100 * (blockSuppressionEffect * (1 - averageAvoidChance / 100))
 			output["NumberOfMitigatedDamagingHits"] = (output["ConfiguredDamageChance"] ~= 100 or DamageIn["TrackRecoupable"] or DamageIn["TrackLifeLossOverTime"] or DamageIn.GainWhenHit) and numberOfHitsToDie(DamageIn) or output["NumberOfDamagingHits"]
 			if breakdown then
 				breakdown["ConfiguredDamageChance"] = {
 					s_format("%.2f ^8(chance for block to fail)", 1 - BlockChance)
 				}	
-				if output.ShowBlockEffect then
+				if averageHitWeights then
+					breakdown["ConfiguredDamageChance"] = { }
+					for _, category in ipairs({ "Melee", "Projectile", "Spell", "SpellProjectile" }) do
+						t_insert(breakdown["ConfiguredDamageChance"], s_format("%.2f%% ^8(%s share of connected hits)", averageHitWeights[category] * 100, category))
+					end
+					t_insert(breakdown["ConfiguredDamageChance"], s_format("%.3f ^8(weighted block and suppression multiplier)", blockSuppressionEffect))
+				elseif output.ShowBlockEffect then
 					t_insert(breakdown["ConfiguredDamageChance"], s_format("x %.2f ^8(block effect)", output.BlockEffect / 100))
 				end
-				if suppressionEffect ~= 1 then
+				if not averageHitWeights and suppressionEffect ~= 1 then
 					t_insert(breakdown["ConfiguredDamageChance"], s_format("x %.3f ^8(suppression effect)", suppressionEffect))
 				end
 				if averageAvoidChance > 0 then
