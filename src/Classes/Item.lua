@@ -2462,7 +2462,9 @@ function ItemClass:BuildModListForSlotNum(baseList, slotNum)
 			flaskData.duration = round(self.base.flask.duration * (1 + durationInc / 100) * (1 + self.quality / 100) * durationMore, 1)
 		end
 		flaskData.chargesMax = self.base.flask.chargesMax + calcLocal(modList, "FlaskCharges", "BASE", 0)
-		flaskData.chargesUsed = m_floor(self.base.flask.chargesUsed * (1 + calcLocal(modList, "FlaskChargesUsed", "INC", 0) / 100))
+		flaskData.chargesUsedInc = calcLocal(modList, "FlaskChargesUsed", "INC", 0)
+		flaskData.chargesUsed = m_floor(self.base.flask.chargesUsed * (1 + flaskData.chargesUsedInc / 100))
+		flaskData.critChance = calcLocal(modList, "FlaskChargeOnCritChance", "BASE", 0)
 		flaskData.gainMod = 1 + calcLocal(modList, "FlaskChargeRecovery", "INC", 0) / 100
 		flaskData.effectInc = calcLocal(modList, "FlaskEffect", "INC", 0) + calcLocal(modList, "LocalEffect", "INC", 0)
 		for _, value in ipairs(modList:List(nil, "FlaskData")) do
