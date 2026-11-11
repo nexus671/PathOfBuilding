@@ -2,13 +2,13 @@
 
 Open **AI builds -> Crafting projects**, or choose **Items -> Crafting plan**. Create a project with a starting item and explicit item level, then choose **Native crafting**.
 
-The pages separate **Emulate item**, **Target conditions**, and **Simulate recipe**. Crafting runs locally. Equipped gear changes only through the desktop preview and review flow.
+The pages separate **Emulate item**, **Target conditions**, **Simulate recipe**, and **Craft settings**. Crafting runs locally. Equipped gear changes only through the desktop preview and review flow.
 
 Plain item copies can be imported when their complete modifier identities and rolls resolve uniquely. Advanced copy text helps preserve identities. Missing item levels, overlapping modifier tiers and values the engine cannot reconstruct require an explicit choice; the importer does not guess. For a structured starting state through MCP, use the corresponding blank base as the starting text.
 
 ## Emulate an item
 
-Choose an action and its options, then **Apply currency**. **Configure fossil combination / donor item** accepts up to four fossils or a second item for Awakener and recombination. A Tangled Fossil requires the effect already revealed by the socketed resonator.
+Select an icon in the currency tray, then click the item card or **Apply to item**. The card shows the base artwork, rarity, sockets, defences and modifiers; applied currency counts appear on the tray. Other methods remain in the dropdown, with their choices below it. **More crafting options** opens recipe controls, donor/fossil configuration and the reproducible random seed. **Configure fossil combination / donor item** accepts up to four fossils or a second item for Awakener and recombination. A Tangled Fossil requires the effect already revealed by the socketed resonator.
 
 **Undo currency** reverses an action; **Reset item** restores the starting state. Veiled Orbs leave an unfinished choice: select **Choose an unveil** and pick an offered modifier before previewing. An imprint belongs to this starting item and can be restored once.
 
@@ -24,7 +24,7 @@ Use a blank base or item text whose modifier IDs PoB resolves. Unresolved explic
 
 **Predictable recombination (observed odds)** needs the game's displayed success percentage for the exact inputs and selected modifiers. Add one exact target for each selected modifier, with at least one from each input, then configure the donor and percentage. MCP accepts explicit `selectedMods.left` and `selectedMods.right` ID lists. The model preserves the chosen base's item level and treats failure as destruction. It fits a shared constant to your observation; its base shares remain estimates. It cannot independently calculate the game's displayed percentage.
 
-**Allflame settings** uses current client data for currency outcomes and Sulphur costs. Choose your unlocked ship upgrades; **Observed override** accepts settings read in game. After applying currency, inspect each ghost before keeping one. Recipes prefer the most matching target groups. Existing imprints are consumed. Kishara offers four retained-modifier choices; Tzamoto attempts to reset Intangibility, with destruction modeled as an assumed 50/50 branch.
+**Allflame settings** uses current client data for currency outcomes and Sulphur costs. Choose your unlocked ship upgrades; **Observed override** accepts settings read in game. After applying currency, select a ghost and inspect its item card before keeping it. Recipes prefer the most matching target groups. Existing imprints are consumed. Kishara offers four retained-modifier choices; Tzamoto attempts to reset Intangibility, with destruction modeled as an assumed 50/50 branch.
 
 **Edit hypothetical item** stages modifier additions, removals, replacements, rolls, fractures and basic properties. Keeping edits sets a new recipe start and clears the recorded currency sequence; Cancel discards them.
 
@@ -76,3 +76,5 @@ Poll `get_proposal_status` for results. Requests allow at most 2,000 trials, 2,0
 ## External cross-check
 
 Craft of Exile remains an optional independent check. Its [documented import links](https://beta.craftofexile.com/developers?game=poe1) accept advanced game-copy text; it provides no public crafting API. Other handoffs are labeled **base-only**. Verify the imported item and patch. External exports remain opaque data; supplied external results stay separately labeled from native calculations.
+
+Base artwork is bundled from the same pinned game-data export as crafting. Missing artwork uses PoB's equipment silhouette. The workbench works offline; `python tools/update_crafting_art.py` refreshes the asset manifest when the crafting data is updated.

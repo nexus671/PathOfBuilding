@@ -1,5 +1,5 @@
 """Render headless draw records with PoB's bundled bitmap fonts (requires Pillow)."""
-# cspell:ignore putalpha getchannel
+# cspell:ignore putalpha getchannel LANCZOS
 import argparse
 import functools
 import json
@@ -63,6 +63,15 @@ def render(frame):
             rect = [command[k] for k in ("x", "y", "width", "height")]
             draw.rectangle((rect[0], rect[1], rect[0] + rect[2] - 1, rect[1] + rect[3] - 1), fill=rgba(command["color"]))
             background.append((rect, clip, command["color"]))
+            if command.get("asset"):
+                asset = (ROOT / "src" / command["asset"]).resolve()
+                if not asset.is_relative_to((ROOT / "src/Assets").resolve()):
+                    raise ValueError("Texture outside bundled assets")
+                texture = Image.open(asset).convert("RGBA")
+                texture = texture.resize((max(1, round(rect[2])), max(1, round(rect[3]))), Image.Resampling.LANCZOS)
+                texture = ImageChops.multiply(texture, Image.new("RGBA", texture.size, rgba(command["color"])))
+                layer = Image.new("RGBA", canvas.size)
+                layer.alpha_composite(texture, (round(rect[0] + (rect[2]-texture.width)/2), round(rect[1] + (rect[3]-texture.height)/2)))
         elif command["kind"] == "polygon":
             points = command["points"]
             draw.polygon(list(zip(points[::2], points[1::2])), fill=rgba(command["color"]))
@@ -118,7 +127,7 @@ def render(frame):
                     ink.putalpha(ImageChops.multiply(glyph.getchannel("A"), ink.getchannel("A")))
                     layer.alpha_composite(ink, (round(x), round(y)))
                 x = math.ceil(x + (width + right) * scale)
-        if command.get("textured"):
+        if command.get("textured") and not command.get("asset"):
             audit["texturedPlaceholders"] += 1
         canvas.alpha_composite(layer.crop(box), box[:2])
     return canvas.convert("RGB"), audit

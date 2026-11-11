@@ -1,0 +1,17 @@
+{
+  "copyright": "Item artwork (c) Grinding Gear Games. Used with the same attribution as the game data.",
+  "sources": {
+    "transmute": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyUpgradeToMagic.png",
+    "alteration": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollMagic.png",
+    "augmentation": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyAddModToMagic.png",
+    "regal": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyUpgradeMagicToRare.png",
+    "alchemy": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyUpgradeToRare.png",
+    "chaos": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png",
+    "exalt": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyAddModToRare.png",
+    "annul": "https://web.poecdn.com/image/Art/2DItems/Currency/AnnullOrb.png",
+    "scour": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyConvertToNormal.png",
+    "divine": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyModValues.png",
+    "vaal": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyVaal.png",
+    "chromatic": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollSocketColours.png"
+  }
+}

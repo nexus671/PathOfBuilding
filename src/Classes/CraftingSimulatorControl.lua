@@ -1,5 +1,6 @@
 -- Native item emulator and bounded recipe trials, isolated from equipped items.
 local simulator=require("Modules.CraftingSimulator")
+local workbench=require("Modules.CraftingWorkbench")
 local Panel={ }
 local function button(controls,key,x,y,w,label,callback)
 	controls[key]=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function()
@@ -45,35 +46,23 @@ function Panel.Open(build,project)
 	local sequence=0
 	local lastSimulation
 	local height=math.max(520,math.min(700,main.screenH-60))
-	label(controls,"intro",16,24,"Native crafting: emulated items stay separate from your build until reviewed.")
-	controls.output=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{448,92,416,height-160},nil,{})
+	label(controls,"intro",16,24,"Select a currency, then click your item to craft.")
+	local refreshItem=workbench.item(controls,"item",448,92,416,height-160,model,function() return state end,function() controls.apply:Click() end)
+	controls.targetSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,244,416,height-312},nil,{})
 	local function refresh(extra)
-		local lines={ }
-		if extra then for _,line in ipairs(extra) do lines[#lines+1]=line end end
-		if state.destroyed then lines[#lines+1]="The hypothetical item was destroyed. Undo or reset to continue.";controls.output.list=rows(lines);return end
-		local item=simulator.toItem(model,state)
-		lines[#lines+1]=""
-		lines[#lines+1]=item.baseName.." | "..state.rarity.." | item level "..item.itemLevel
-		lines[#lines+1]="Memory strands: "..(state.memoryStrands or 0)
-		lines[#lines+1]="Intangibility: "..(state.intangibility or 0).."%"
-		for _,entry in ipairs(state.affixes) do
-			local mod=model.byId[entry.id]
-			local values={ }
-			for _,line in ipairs(mod) do values[#values+1]=itemLib.applyRange(line,entry.range or 0.5) end
-			lines[#lines+1]=mod.type..(entry.fractured and " (fractured)" or entry.crafted and " (crafted)" or "")..": "..table.concat(values," / ")
-		end
-		if state.veil then lines[#lines+1]="Pending unveil: choose Unveil to see the offered choices." end
-		for _,entry in ipairs(state.implicits or {}) do lines[#lines+1]=entry.side.." tier "..entry.tier..": "..table.concat(model.byId[entry.id]," / ") end
-		lines[#lines+1]=""; lines[#lines+1]="Target groups ("..(requiredGroups or "all").." required)"
+		refreshItem()
+		local lines={"Target groups: "..#targets.." ("..(requiredGroups or "all").." required)"}
 		for index,group in ipairs(targets) do
-			local names={ }
-			for _,id in ipairs(group.anyOf) do names[#names+1]=model.byId[id] and table.concat(model.byId[id]," / ") or id end
-			lines[#lines+1]=index..". "..(group.negate and "Exclude " or "Require ")..(group.atLeast or 1).." | "..table.concat(names," OR ")..(group.fractured == true and " | fractured" or group.fractured == false and " | not fractured" or "")..(group.crafted == true and " | crafted" or group.crafted == false and " | not crafted" or "")..(group.minRoll and " | minimum roll "..(group.minRoll*100).."%" or "")
+			local names={}
+			for _,id in ipairs(group.anyOf) do names[#names+1]=model.byId[id] and table.concat(model.byId[id]," / ") or "Unknown modifier" end
+			lines[#lines+1]=index..". "..(group.negate and "Exclude " or "Require ")..(group.atLeast or 1)..": "..table.concat(names," OR ")
+			if group.fractured ~= nil then lines[#lines+1]=group.fractured and "Fractured only" or "Not fractured" end
+			if group.crafted ~= nil then lines[#lines+1]=group.crafted and "Crafted only" or "Not crafted" end
+			if group.minRoll then lines[#lines+1]="Minimum roll: "..(group.minRoll*100).."%" end
 		end
-		for key,value in pairsSortByKey(requirements or {}) do lines[#lines+1]=key..": "..tostring(value) end
-		lines[#lines+1]=""
-		lines[#lines+1]="See Coverage for model assumptions and remaining gaps."
-		controls.output.list=rows(lines)
+		for key,value in pairsSortByKey(requirements or {}) do lines[#lines+1]=key:gsub("(%l)(%u)","%1 %2")..": "..tostring(value) end
+		controls.targetSummary.list=rows(lines)
+		controls.intro.label=extra and extra[1] or "Select a currency, then click your item to craft."
 	end
 	label(controls,"methodLabel",16,64,"Crafting action")
 	local methods={ }
@@ -109,33 +98,15 @@ function Panel.Open(build,project)
 		local function keep(nextState,index)
 			history[#history+1]=copyTable(state);if #history > 40 then table.remove(history,1) end
 			if index then craft.allflame=craft.allflame or copyTable(result.allflame.settings);craft.allflame.choiceIndex=index end
-			state=nextState;actions[#actions+1]=craft;updateOptions();refresh({"Last action seed: "..usedSeed})
+			state=nextState;actions[#actions+1]=craft;updateOptions();refresh({"Applied "..(simulator.labels[craft.method] or "craft")..". Select another currency or undo."})
 		end
 		if result.choices and #result.choices > 1 then
 			local popup={};local choices={}
 			for i=1,#result.choices do choices[i]={label="Ghost outcome "..i,val=i} end
 			popup.choice=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,628,24},choices)
-			popup.preview=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,70,628,300},nil,{})
-			local function showChoice()
-				local choice=result.choices[popup.choice:GetSelValueByKey("val")];local lines={"Intangibility: "..choice.state.intangibility.."%"}
-				local preview=choice.state
-				if preview.destroyed then lines[#lines+1]="Destroyed"
-				else
-					local context=simulator.context(model,preview)
-					lines[#lines+1]=context.item.baseName.." | "..preview.rarity
-					lines[#lines+1]="Quality: "..(preview.quality or 0).."%"
-					for _,entry in ipairs(preview.affixes) do
-						local mod=context.byId[entry.id];local values={}
-						for _,line in ipairs(mod) do values[#values+1]=itemLib.applyRange(line,entry.range or 0.5) end
-						lines[#lines+1]=mod.type..(entry.fractured and " (fractured)" or entry.crafted and " (crafted)" or "")..": "..table.concat(values," / ")
-					end
-					for _,entry in ipairs(preview.corruptedImplicits or preview.implicits or {}) do
-						for _,line in ipairs(context.byId[entry.id]) do lines[#lines+1]="Implicit: "..itemLib.applyRange(line,entry.range or 0.5) end
-					end
-					if preview.veil then lines[#lines+1]="Pending unveil: choose a modifier after keeping this outcome." end
-				end
-				popup.preview.list=rows(lines,604)
-			end
+			local showChoice=workbench.item(popup,"preview",16,70,628,300,model,function()
+				return result.choices[popup.choice:GetSelValueByKey("val")].state
+			end)
 			popup.choice.selFunc=showChoice;showChoice()
 			button(popup,"keep",16,390,200,"Keep ghost outcome",function() local index=popup.choice:GetSelValueByKey("val");keep(result.choices[index].state,index);main:ClosePopup() end)
 			button(popup,"close",528,390,116,"Cancel",function() main:ClosePopup() end)
@@ -366,17 +337,29 @@ function Panel.Open(build,project)
 		main:OpenPopup(860,coverageHeight,"Crafting coverage and assumptions",popup,nil,nil,"close")
 	end)
 	button(controls,"close",748,height-48,116,"Close",function() main:ClosePopup() end)
-	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,52,416,24},{"Emulate item","Target conditions","Simulate recipe"})
+	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,52,416,24},{"Emulate item","Target conditions","Simulate recipe","Craft settings"})
+	button(controls,"settings",16,380,416,"More crafting options",function() controls.page:SelByValue("Craft settings") end)
+	controls.item.enabled=function() return controls.page:GetSelValue() == "Emulate item" and not state.destroyed end
+	controls.apply.x=16;controls.apply.width=200;controls.undo.x=232;controls.undo.width=200
 	local pages={
-		["Emulate item"]={methodLabel=96,method=116,optionLabel=160,option=180,seedLabel=220,seed=240,apply=240,undo=240,configure=282,keepRecipe=330,reset=330,exact=374,allflame=410,manual=448},
-		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetConditions=202},
+		["Craft settings"]={configure=116,keepRecipe=154,reset=154,exact=194,seedLabel=234,seed=254},
+		["Emulate item"]={methodLabel=230,method=248,optionLabel=280,option=298,apply=346,undo=346,settings=380,allflame=414,manual=448},
+		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetConditions=202,targetSummary=244},
 		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354},
 	}
 	for page,layout in pairs(pages) do for key,y in pairs(layout) do
 		local control=controls[key];control.y=y;control.shown=function() return controls.page:GetSelValue() == page end
 	end end
 	controls.distribution.x=16;controls.distribution.width=416
+	workbench.currencies(controls,function(method)
+		controls.method:SelByValue(method,"val");updateOptions();refresh()
+	end,function() return controls.method:GetSelValueByKey("val") end,function() return controls.page:GetSelValue() == "Emulate item" end,function(method)
+		local count=0;for _,entry in ipairs(actions) do if entry.method == method then count=count+1 end end;return count
+	end)
+	controls.methodLabel.label="More currencies and crafting methods"
+	controls.optionLabel.label="Options for selected currency"
+	controls.apply.label="Apply to item"
 	updateOptions(); refresh()
-	main:OpenPopup(880,height,"Native crafting emulator and simulator",controls,nil,nil,"close")
+	main:OpenPopup(880,height,"Crafting workbench",controls,nil,nil,"close")
 end
 return Panel

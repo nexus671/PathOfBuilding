@@ -13,12 +13,23 @@ for _,size in ipairs({{1280,720},{1024,768}}) do
 		ui:frame():write(directory.."/"..size[1].."-"..name..".json");frames=frames+1
 		assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
 	end
-	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",
+	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)
 	require("Classes.CraftingProjectControl").Open(build)
 	frame("projects");ui:click("native")
-	frame("emulator");ui:click("allflame")
+	frame("emulator")
+	ui:click("currency_alchemy");ui:click("item")
+	frame("crafted")
+	assert(#main.popups[1].controls.itemMods.list>=4,"Clicking the item did not apply Alchemy")
+	assert(main.popups[1].controls.intro.label:find("Applied Orb of Alchemy",1,true))
+	ui:click("undo");frame("undone")
+	assert(main.popups[1].controls.itemMods.list[1][1]:find("No explicit modifiers",1,true),"Undo did not restore the item")
+	ui:click("currency_transmute");ui:click("item");frame("magic")
+	assert(main.popups[1].controls.itemMods.list[1][1]:find("No explicit modifiers",1,true)==nil)
+	ui:click("undo");ui:click("currency_chromatic");ui:click("item");frame("sockets")
+	assert(main.popups[1].controls.intro.label:find("Applied Chromatic Orb",1,true))
+	ui:click("undo");ui:click("currency_alchemy");ui:click("allflame")
 	frame("allflame");ui:click("use");ui:click("apply")
 	assert(main.popups[1].title=="Allflame outcomes")
 	assert(#main.popups[1].controls.choice.list==4)
@@ -29,6 +40,7 @@ for _,size in ipairs({{1280,720},{1024,768}}) do
 	ui:click("addTarget");ui:click("targetConditions")
 	frame("targets");ui:choose("fractured","Fractured only");ui:click("keep")
 	ui:choose("page","Simulate recipe")
+	ui:choose("page","Craft settings");frame("settings");ui:choose("page","Simulate recipe")
 	frame("simulation");ui:text("trials","12")
 	assert(main.popups[1].controls.trials.buf=="12","Native character events did not reach the edit control")
 	ui:click("close");main.popups={}

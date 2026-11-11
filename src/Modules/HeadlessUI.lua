@@ -15,6 +15,7 @@ function M.install(options)
 	options = options or { }
 	local ui = {width=options.width or 1280,height=options.height or 752,commands={},keys={},cursorX=-100,cursorY=-100,clock=0}
 	local originals, fonts = { }, { }
+	local images = setmetatable({},{__mode="k"})
 	local previousWidth, previousHeight, previousViewport = main.screenW, main.screenH, main.viewPort
 	local function replace(name, value) originals[name]=_G[name];_G[name]=value end
 	local function font(height, name)
@@ -56,6 +57,12 @@ function M.install(options)
 		command.color=copyTable(color);command.clip=copyTable(viewport);command.layer=layer;command.sublayer=sublayer
 		command.order=#ui.commands+1;ui.commands[#ui.commands+1]=command
 	end
+	local nativeImage=NewImageHandle
+	replace("NewImageHandle",function()
+		local handle=nativeImage();local load=handle.Load
+		function handle:Load(path,...) images[self]=path;return load(self,path,...) end
+		return handle
+	end)
 	replace("GetScreenSize",function() return ui.width,ui.height end)
 	replace("GetVirtualScreenSize",function() return ui.width,ui.height end)
 	replace("GetCursorPos",function() return ui.cursorX,ui.cursorY end)
@@ -75,7 +82,7 @@ function M.install(options)
 	replace("SetDrawLayer",function(value,sub) layer=value or layer;sublayer=sub or 0 end)
 	replace("GetDrawLayer",function() return layer end)
 	replace("DrawImage",function(handle,x,y,w,h)
-		record({kind="rect",x=x+viewport[1],y=y+viewport[2],width=w,height=h,textured=handle~=nil})
+		record({kind="rect",x=x+viewport[1],y=y+viewport[2],width=w,height=h,textured=handle~=nil,asset=images[handle]})
 	end)
 	replace("DrawImageQuad",function(handle,...)
 		local points={...};for i=1,8,2 do points[i]=points[i]+viewport[1];points[i+1]=points[i+1]+viewport[2] end
@@ -145,7 +152,7 @@ function M.install(options)
 	end
 	function ui:write(path)
 		local file=assert(io.open(path,"w"));file:write(require("dkjson").encode({schemaVersion=1,width=self.width,height=self.height,
-			commands=self.commands,controls=self.controls,regions=self.regions,limitations={"Text uses bundled bitmap-font metrics and atlases. Textured draws and non-ASCII glyphs are placeholders; this is not a GPU screenshot."}}));file:close()
+			commands=self.commands,controls=self.controls,regions=self.regions,limitations={"Text uses bundled bitmap-font metrics and atlases. Untracked textures and non-ASCII glyphs are placeholders; this is not a GPU screenshot."}}));file:close()
 	end
 	function ui:restore()
 		for name,value in pairs(originals) do _G[name]=value end
