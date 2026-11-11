@@ -1,6 +1,11 @@
 VERSION[ai][2026/11/11]
 
 --- AI Edition ---
+* Fetch a fresh manifest when checking for updates, preventing cached manifests from queuing a rollback.
+
+VERSION[ai][2026/11/11]
+
+--- AI Edition ---
 * Bring encounter setup, results and charts into one workspace.
 * Show resource pools before and after lethal hits.
 * Add AI briefs and a local read-only MCP report connection.
