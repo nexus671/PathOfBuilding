@@ -347,6 +347,7 @@ end
 ---@param actor Actor
 ---@param activeSkill ActiveSkill
 function calcs.offence(env, actor, activeSkill)
+	activeSkill.recoveryPoisonProfiles = nil
 	---@type ModDB
 	local modDB = actor.modDB
 	---@type ModDB
@@ -4932,7 +4933,8 @@ function calcs.offence(env, actor, activeSkill)
 					output.TotalPoisonDPS = PoisonDPSCapped
 					local weight = skillFlags.bothWeaponAttack and not skillData.doubleHitsWhenDualWielding and 0.5 or 1
 					if not skillModList:Flag(nil, "Condition:NonPoisonedOnly") then
-						t_insert(poisonTimeProfiles, { slope = singlePoisonDPSCapped * poisonApplicationsPerSecond * weight, ceiling = PoisonDPSUncapped * weight })
+						t_insert(poisonTimeProfiles, { slope = singlePoisonDPSCapped * poisonApplicationsPerSecond * weight, ceiling = PoisonDPSUncapped * weight,
+							duration=globalOutput.PoisonDuration, limit=poisonStackLimit and singlePoisonDPSCapped * m_ceil(poisonStackLimit / additionalPoisonStacks) * additionalPoisonStacks * weight or math.huge })
 					end
 				end
 				if breakdown then
@@ -6305,9 +6307,11 @@ function calcs.offence(env, actor, activeSkill)
 			for _, profile in ipairs(poisonTimeProfiles) do
 				profile.slope = profile.slope * quantityMultiplier
 				profile.ceiling = profile.ceiling * quantityMultiplier
+				profile.limit = profile.limit * quantityMultiplier
 			end
 		end
 		local window = m_min(m_max(env.configInput.poisonDamageWindow or 5, 0.01), 300)
+		activeSkill.recoveryPoisonProfiles = poisonTimeProfiles
 		local cap = m_min(data.misc.DotDpsCap, output.TotalPoisonDPS)
 		local result = timeCalcs.poisonWindow(poisonTimeProfiles, window, cap)
 		output.PoisonDamageWindow = window

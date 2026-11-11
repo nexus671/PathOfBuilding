@@ -4838,7 +4838,7 @@ function ItemsTabClass:AddItemStatDifferences(tooltip, item, base, slot)
 		end
 		local usedInc = modDB:Sum("INC", nil, "FlaskChargesUsed")
 		if usedInc ~= 0 then
-			local used = m_floor(flaskData.chargesUsed * (1 + usedInc / 100))
+			local used = require("Modules.CalcEncounter").chargesUsed(item.base.flask.chargesUsed, flaskData.chargesUsedInc or 0, usedInc)
 			t_insert(stats, s_format("^8Charges used: ^7%d ^8of ^7%d ^8(^7%d ^8uses)", used, flaskData.chargesMax, m_floor(flaskData.chargesMax / used)))
 		end
 		local gainMod = flaskData.gainMod * (1 + modDB:Sum("INC", nil, "FlaskChargesGained") / 100)
@@ -4900,7 +4900,7 @@ function ItemsTabClass:AddItemStatDifferences(tooltip, item, base, slot)
 		end
 
 		if hasUptime then
-			local flaskChargesUsed = flaskData.chargesUsed * (1 + usedInc / 100)
+			local flaskChargesUsed = require("Modules.CalcEncounter").chargesUsed(item.base.flask.chargesUsed, flaskData.chargesUsedInc or 0, usedInc)
 			if flaskChargesUsed > 0 and flaskDuration > 0 then
 				local per3Duration = flaskDuration - (flaskDuration % 3)
 				local per5Duration = flaskDuration - (flaskDuration % 5)

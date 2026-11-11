@@ -1,6 +1,7 @@
 -- Calculations over a finite combat window.
 -- These do not replace burst EHP or the existing steady-state DPS outputs.
 local M = { }
+local encounter = require("Modules.CalcEncounter")
 local min, max = math.min, math.max
 
 -- Local RNG: reproducible trials without changing Lua's global random state.
@@ -76,13 +77,22 @@ end
 -- Reactive recovery flasks use finite charges and a delayed threshold policy.
 -- Each resource ends independently at full unless the flask is enduring.
 function M.recoveryFlask(config)
-	local charges, last, pending, expires, uses = config.charges, 0, math.huge, -math.huge, 0
+	local bank = config.bank or encounter.charges(config, config.random)
+	local pending, expires = math.huge, -math.huge
 	local effects = { }
 	return function(t, pools, full, trigger, profile)
-		charges = min(config.charges, charges + (t - last) * (config.generation or 0)); last = t
+		bank:advance(t)
 		local active = false
+		local function sourceFull()
+			for resource in pairs(config.resources) do if pools[resource] < full[resource] - 1e-8 then return false end end
+			return true
+		end
+		local missingLife = max(0,(full.Life or 0) - (pools.Life or 0))
 		for resource, effect in pairs(effects) do
-			if t >= (effect.expires or expires) - 1e-9 or not effect.enduring and pools[resource] >= full[resource] - 1e-8 then effects[resource] = nil
+			if t >= (effect.expires or expires) - 1e-9 then
+				if effect.finishLife then pools[resource] = min(full[resource],pools[resource] + missingLife) end
+				effects[resource] = nil
+			elseif not effect.enduring and sourceFull() then effects[resource] = nil
 			else active = true end
 		end
 		local wanted = config.auto or false
@@ -90,17 +100,21 @@ function M.recoveryFlask(config)
 			if pools[resource] < trigger[resource] * config.threshold - 1e-8 then wanted = true end
 		end
 		if not wanted then pending = math.huge end
-		if not active and wanted and charges >= config.used and config.used > 0 then
+		if not active and wanted and bank:ready(t) then
 			if pending == math.huge then pending = t + config.reaction end
 			if t >= pending - 1e-9 then
-				charges, pending, uses = charges - config.used, math.huge, uses + 1
+				assert(bank:use(t))
+				pending = math.huge
 				local duration
 				effects, duration = profile(pools)
 				expires = t + duration
 				for resource, effect in pairs(effects) do
 					effect.expires = t + (effect.duration or duration)
 					pools[resource] = min(full[resource], pools[resource] + (effect.instant or 0))
-					if (effect.rate or 0) <= 0 or not effect.enduring and pools[resource] >= full[resource] - 1e-8 then effects[resource] = nil end
+				end
+				local fullNow=sourceFull()
+				for resource,effect in pairs(effects) do
+					if not effect.gradual and (effect.rate or 0) <= 0 and not effect.enduring or not effect.enduring and fullNow then effects[resource]=nil end
 				end
 			end
 		end
@@ -108,7 +122,7 @@ function M.recoveryFlask(config)
 		active = false
 		local event = pending
 		for resource, effect in pairs(effects) do recovery[resource] = effect.rate; active = true; event = min(event, effect.expires) end
-		return active, recovery, event, uses
+		return active, recovery, min(event,bank:next(t)), bank.uses, bank.charges
 	end
 end
 
@@ -170,17 +184,16 @@ end
 -- Charge-limited use policy: use at expiry, starting with a full flask.
 -- No kill charges are invented. Callers supply known passive generation only.
 function M.flask(config)
-	local charges, last, activeUntil = config.charges, 0, -math.huge
-	local uses = 0
+	local bank = config.bank or encounter.charges(config, config.random)
+	local activeUntil = -math.huge
 	return function(t, wanted)
-		charges = min(config.charges, charges + (t - last) * (config.generation or 0))
-		last = t
+		bank:advance(t)
 		local used = false
-		if wanted and t >= activeUntil - 1e-9 and charges >= config.used and config.used > 0 then
-			charges, activeUntil, uses, used = charges - config.used, t + config.duration, uses + 1, true
+		if wanted and t >= activeUntil - 1e-9 and bank:use(t) then
+			activeUntil, used = t + config.duration, true
 		end
-		local nextEvent = t < activeUntil and activeUntil or config.generation and config.generation > 0 and t + max(0, config.used - charges) / config.generation or math.huge
-		return t < activeUntil, used, nextEvent, uses
+		local nextEvent = t < activeUntil and activeUntil or bank:next(t)
+		return t < activeUntil, used, nextEvent, bank.uses, bank.charges
 	end
 end
 
@@ -245,18 +258,29 @@ function M.survival(config)
 	local interval = config.interval
 	assert(interval and interval >= 0.02, "hit interval must be at least 20ms")
 	local t, nextHit, hits, lastRechargeDamage = 0, 0, 0, 0
+	local sampleInterval, nextSample = max(0.25,window / 240), 0
 	local nextAttack, attempts, attacks = config.attack and 0 or math.huge, 0, 0
 	local rechargeActive, rechargeBegan = false, -math.huge
+	local continuousInterruption = false
 	local reservationRelease = math.huge
 	local cohorts = { }
 	local resources = { "Life", "Mana", "EnergyShield" }
+	local function interruptsRecharge(damage)
+		local protected = config.protectedResource or "Life"
+		local damaged = damage[protected] > 0
+		if config.actualDissolution and protected == "Life" then damaged = damaged and config.reservationMax - (pools.LifeReservation or 0) <= pools.Life + 1e-8 end
+		return damage.EnergyShield > 0 or damaged
+	end
 	local function result(survived, at)
+		if config.observe then config.observe(at,pools,survived and "Window reached" or "Death") end
 		return { time = at, hits = hits, survived = survived, pools = pools, attacks = attacks, attempts = attempts }
 	end
+	if config.observe then config.observe(0,pools,"Start") end
 	while t <= window do
 		if t >= reservationRelease - 1e-9 then
 			if config.actualDissolution then pools.LifeReservation = 0
 			else pools.Life = config.caps.Life end
+			if config.observe then config.observe(t,pools,"Dissolution reservation released") end
 			reservationRelease = math.huge
 		end
 		local external = config.before and config.before(pools, t) or math.huge
@@ -271,6 +295,7 @@ function M.survival(config)
 			if interrupted or pools.EnergyShield < oldES then
 				if not (config.wickedWard and rechargeActive and t - rechargeBegan < 4 - 1e-9) then
 					lastRechargeDamage, rechargeActive = t, false
+					if config.observe then config.observe(t,pools,"Recharge interrupted by hit") end
 				end
 			end
 			if config.dissolution and (config.actualDissolution and (pools.LifeDamageReserved or 0) > 0 or not config.actualDissolution and pools.Life < oldLife) then reservationRelease = t + 2 end
@@ -288,15 +313,22 @@ function M.survival(config)
 			nextAttack = t + max(0.005, attackInterval)
 		end
 		if occurred and config.before then external = min(external, config.before(pools, t)) end
+		if t >= nextSample - 1e-9 then
+			if config.observe then config.observe(t,pools,"Sample") end
+			nextSample = t + sampleInterval
+		end
 		if t >= window then break end
 		local dt = min(config.step or 0.02, window - t, nextHit - t, nextAttack - t, reservationRelease - t, external - t)
+		dt = min(dt,nextSample - t)
 		local rates = { }
+		local delayedLifeLoss, dotLifeDamage = 0, 0
 		local baseRates = type(config.rates) == "function" and config.rates(pools, t) or config.rates or { }
 		for _, resource in ipairs(resources) do rates[resource] = baseRates[resource] or 0 end
 		for i = #cohorts, 1, -1 do
 			local cohort = cohorts[i]
 			if cohort.expires <= t + 1e-9 then table.remove(cohorts, i)
 			else
+				delayedLifeLoss = delayedLifeLoss + max(0,-(cohort.Life or 0))
 				dt = min(dt, cohort.expires - t)
 				for _, resource in ipairs(resources) do rates[resource] = rates[resource] + (cohort[resource] or 0) end
 			end
@@ -308,7 +340,11 @@ function M.survival(config)
 		end
 		local delay = type(config.rechargeDelay) == "function" and config.rechargeDelay(pools, t) or config.rechargeDelay or math.huge
 		local rechargeStart = lastRechargeDamage + delay
-		if not rechargeActive and t >= rechargeStart - 1e-9 then rechargeActive, rechargeBegan = true, t end
+		if continuousInterruption and config.dot and interruptsRecharge(config.dot(pools,rates,t)) then rechargeStart = math.huge end
+		if not rechargeActive and t >= rechargeStart - 1e-9 then
+			rechargeActive, rechargeBegan = true, t
+			if config.observe then config.observe(t,pools,"Recharge started") end
+		end
 		local rechargeAdded = 0
 		if rechargeActive then
 			local resource = config.rechargeResource or "EnergyShield"
@@ -326,10 +362,7 @@ function M.survival(config)
 		local reservationRate, dotInterrupted = 0, false
 		if config.dot then
 			local damage = config.dot(pools, rates, t)
-			local protected = config.protectedResource or "Life"
-			local protectedDamaged = damage[protected] > 0
-			if config.actualDissolution and protected == "Life" then protectedDamaged = protectedDamaged and config.reservationMax - (pools.LifeReservation or 0) <= pools.Life + 1e-8 end
-			if damage.EnergyShield > 0 or protectedDamaged then
+			if interruptsRecharge(damage) then
 				if not (config.wickedWard and rechargeActive and t - rechargeBegan < 4 - 1e-9) then
 					if rechargeActive then
 						local resource = config.rechargeResource or "EnergyShield"
@@ -343,6 +376,7 @@ function M.survival(config)
 				if resource == "Life" and config.actualDissolution then reservationRate = damage.Life
 				else rates[resource] = rates[resource] - damage[resource] end
 			end
+			dotLifeDamage = damage.Life
 			if reservationRate > 0 then
 				dt = min(dt, max(0, config.reservationMax - (pools.LifeReservation or 0)) / reservationRate)
 				local gap = config.reservationMax - (pools.LifeReservation or 0) - pools.Life
@@ -358,12 +392,8 @@ function M.survival(config)
 			if rates[resource] < 0 and pools[resource] > 1e-8 then dt = min(dt, -pools[resource] / rates[resource]) end
 			if (flaskRates[resource] or 0) > 0 and rates[resource] > 0 and pools[resource] < flaskCaps[resource] - 1e-8 then dt = min(dt, (flaskCaps[resource] - pools[resource]) / rates[resource]) end
 		end
-		if rates.Life < 0 and pools.Life + rates.Life * dt <= 0 then
-			local death = t - pools.Life / rates.Life
-			pools.Life = 0
-			return result(false, death)
-		end
 		if dotInterrupted then lastRechargeDamage = t + dt end
+		continuousInterruption = dotInterrupted
 		if reservationRate > 0 then
 			pools.LifeReservation = (pools.LifeReservation or 0) + reservationRate * dt
 			reservationRelease = t + dt + 2
@@ -374,7 +404,15 @@ function M.survival(config)
 			local value = max(0, pools[resource] + rates[resource] * dt)
 			pools[resource] = config.actualDissolution and resource == "Life" and min(cap, value) or min(max(cap, pools[resource]), value)
 		end
-		if pools.Life <= 1e-8 then pools.Life = 0; return result(false, t + dt) end
+		if pools.Life <= 1e-8 then
+			pools.Life = 0
+			local causes = { }
+			if reservationRate > 0 then causes[#causes + 1] = "Dissolution reservation filled" elseif dotLifeDamage > 0 then causes[#causes + 1] = "Continuous damage" end
+			if delayedLifeLoss > 0 then causes[#causes + 1] = "Delayed Life loss" end
+			if (baseRates.Life or 0) < 0 then causes[#causes + 1] = "Configured net Life loss" end
+			if config.lossCause then config.lossCause(#causes > 0 and table.concat(causes," + ") or "Life capacity depleted") end
+			return result(false, t + dt)
+		end
 		if dt <= 0 then error("Recovery timeline failed to advance") end
 		t = min(window, t + dt)
 	end

@@ -4,6 +4,7 @@
 -- Calculation breakdown control used in the Calcs tab
 --
 local t_insert = table.insert
+local s_format = string.format
 local m_max = math.max
 local m_min = math.min
 local m_ceil = math.ceil
@@ -174,6 +175,9 @@ function CalcBreakdownClass:AddBreakdownSection(sectionData)
 			width = 8 + 1920/4,
 			height = 4 + 1080/4,
 		})
+	end
+	if breakdown.timeline then
+		t_insert(self.sectionList,{type="TIMELINE",timeline=breakdown.timeline,width=730,height=340})
 	end
 
 	if breakdown.rowList and #breakdown.rowList > 0 then
@@ -695,6 +699,64 @@ function CalcBreakdownClass:DrawRadiusVisual(x, y, width, height, radius)
 	DrawImage(self.uiOverlay, x, y, width, height)
 end
 
+function CalcBreakdownClass:DrawEncounterTimeline(x,y,section)
+	local trace=section.timeline
+	local width,plotX,plotWidth=section.width,x+48,section.width-65
+	local stop=m_max(0.001,trace.time or trace.window)
+	local function line(x1,y1,x2,y2)
+		local dx,dy=x2-x1,y2-y1
+		local length=math.sqrt(dx*dx+dy*dy)
+		if length < 1e-8 then return end
+		local ox,oy=-dy/length*0.75,dx/length*0.75
+		DrawImageQuad(nil,x1+ox,y1+oy,x2+ox,y2+oy,x2-ox,y2-oy,x1-ox,y1-oy)
+	end
+	local plots={
+		{label="Resources",series={{"Life",{0.3,1,0.4}},{"EnergyShield",{0.3,0.9,1}},{"Mana",{0.5,0.6,1}}}},
+		{label="Defenses",series={{"crab",{1,0.75,0.25}},{"shrouds",{0.8,0.5,1}},{"chargesTotal",{0.9,0.9,0.9}}}},
+		{label="Poison DPS",series={{"poison",{1,0.4,0.6}}}},
+	}
+	local labels={Life="Life",EnergyShield="ES",Mana="Mana",crab="Crab",shrouds="Shrouds",chargesTotal="Charges",poison="Poison DPS"}
+	local cursorX,cursorY=GetCursorPos()
+	local hovered=cursorX >= plotX and cursorX <= plotX+plotWidth and cursorY >= y and cursorY <= y+300
+	local hoverTime=(cursorX-plotX)/plotWidth*stop
+	local nearest
+	for _,point in ipairs(trace.points) do if not nearest or math.abs(point.time-hoverTime) < math.abs(nearest.time-hoverTime) then nearest=point end end
+	for index,plot in ipairs(plots) do
+		local top=y+(index-1)*100+22
+		SetDrawColor(0.12,0.12,0.15); DrawImage(nil,plotX,top,plotWidth,62)
+		SetDrawColor(0.45,0.45,0.5); line(plotX,top+62,plotX+plotWidth,top+62)
+		DrawString(x+2,top,"LEFT",12,"VAR","100%")
+		DrawString(x+20,top+48,"LEFT",12,"VAR","0")
+		SetDrawColor(1,1,1); DrawString(x+4,top-20,"LEFT",14,"VAR",plot.label.." (normalized)")
+		local legendX=x+240
+		for _,series in ipairs(plot.series) do
+			local key,color=series[1],series[2]
+			local cap=trace.caps[key] or 0
+			for _,p in ipairs(trace.points) do cap=m_max(cap,p[key] or 0) end
+			if cap > 0 then
+				SetDrawColor(unpack(color))
+				local text=labels[key]..": "..s_format("%.0f",cap)
+				DrawString(legendX,top-20,"LEFT",12,"VAR",text)
+				legendX=legendX+DrawStringWidth(12,"VAR",text)+14
+				local previous
+				for _,p in ipairs(trace.points) do
+					local px,py=plotX+p.time/stop*plotWidth,top+62-m_min(1,m_max(0,(p[key] or 0)/cap))*62
+					if previous then line(previous[1],previous[2],px,py) end
+					previous={px,py}
+				end
+			end
+		end
+		if hovered and nearest then SetDrawColor(0.7,0.7,0.7); local px=plotX+nearest.time/stop*plotWidth; line(px,top,px,top+62) end
+	end
+	SetDrawColor(1,1,1)
+	DrawString(plotX,y+286,"LEFT",12,"VAR","0s")
+	DrawString(plotX+plotWidth,y+286,"RIGHT",12,"VAR",s_format("%.2fs",stop))
+	if hovered and nearest then
+		DrawString(x+4,y+304,"LEFT",12,"VAR",s_format("%.3fs: Life %.0f | ES %.0f | Mana %.0f | Crab %d | Shrouds %d",nearest.time,nearest.Life,nearest.EnergyShield,nearest.Mana,nearest.crab,nearest.shrouds))
+		DrawString(x+4,y+320,"LEFT",12,"VAR",s_format("Flask charges: %s | Poison DPS: %.0f",nearest.charges,nearest.poison))
+	else DrawString(x+4,y+308,"LEFT",12,"VAR","Hover to inspect samples. Legend values are each series' reference maximum; exact events follow below.") end
+end
+
 function CalcBreakdownClass:Draw(viewPort)
 	local sourceData = self.sourceData
 	local scrollBar = self.controls.scrollBar
@@ -755,6 +817,8 @@ function CalcBreakdownClass:Draw(viewPort)
 			SetDrawColor(1, 1, 1)
 			DrawImage(nil, x + 2, sectionY, section.width - 4, section.height)
 			self:DrawRadiusVisual(x + 4, sectionY + 2, section.width - 8, section.height - 4, section.radius)
+		elseif section.type == "TIMELINE" then
+			self:DrawEncounterTimeline(x+2,sectionY,section)
 		end
 	end
 	SetDrawLayer(nil, 0)
