@@ -4,7 +4,7 @@ local M = { }
 M.methods = {"transmute","alteration","augmentation","regal","alchemy","chaos","exalt","annul","scour","divine","bench","remove_crafted","essence"}
 M.labels = {transmute="Orb of Transmutation",alteration="Orb of Alteration",augmentation="Orb of Augmentation",regal="Regal Orb",alchemy="Orb of Alchemy",chaos="Chaos Orb",exalt="Exalted Orb",annul="Orb of Annulment",scour="Orb of Scouring",divine="Divine Orb",bench="Crafting bench",remove_crafted="Remove crafted modifiers",essence="Essence"}
 M.limits = {"Experimental PoE 1 model, not a complete game crafting implementation.",
-	"Supported: ordinary equipment, known modifier IDs, fractured modifiers, basic currencies, bench modifiers and essences. Metamods protect/remap only the supported actions.",
+	"Supported: ordinary equipment, known modifier IDs, fractured modifiers, basic currencies, bench modifiers and essences. Meta modifiers protect/remap only the supported actions.",
 	"Unsupported actions fail explicitly: fossils, Harvest, recombination, influence orbs, corruption, sockets/links, veiled crafts and special league mechanics.",
 	"Rerolls model 4/5/6 rare modifiers with weights 8/3/1, and 1/2 magic modifiers equally. These distribution assumptions and PoB data coverage affect estimates.",
 	"Integer roll ranges use inclusive integer draws. Fractional display ranges use illustrative normalized rolls because the underlying stat precision is not present in this data export.",
@@ -36,7 +36,7 @@ local function flags(model,state)
 			if line == "Suffixes Cannot Be Changed" then result.suffixes=true end
 			if line == "Cannot roll Attack Modifiers" then result.attack=true end
 			if line == "Cannot roll Caster Modifiers" then result.caster=true end
-			if line == "Can have up to 3 Crafted Modifiers" then result.multicraft=true end
+			if line == "Can have up to 3 Crafted Modifiers" then result.multipleCrafts=true end
 		end
 	end
 	return result
@@ -217,7 +217,7 @@ function M.action(model,input,action,random)
 	elseif method == "bench" then
 		local mod=assert(model.byId[action.modId],"Unknown bench modifier")
 		assert(action.modId:match("^bench:"),"Select a bench modifier")
-		assert(c.crafted < (f.multicraft and 3 or 1),"Crafted modifier limit reached")
+		assert(c.crafted < (f.multipleCrafts and 3 or 1),"Crafted modifier limit reached")
 		assert(not c.groups[mod.group],"A modifier from this group is already present")
 		assert(c[mod.type] < (state.rarity == "RARE" and 3 or 1),"No open affix for this bench craft")
 		if state.rarity == "NORMAL" then state.rarity="MAGIC" end

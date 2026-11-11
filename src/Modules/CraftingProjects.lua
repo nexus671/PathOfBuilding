@@ -1,3 +1,4 @@
+-- cspell:ignore eimport
 -- Build-owned crafting plans. External simulator exports are data, never code.
 local json = require("dkjson")
 local M = { }

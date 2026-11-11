@@ -110,7 +110,7 @@ describe("Native crafting simulator", function()
 		assert.is_true(scoured.affixes[1].fractured)
 	end)
 
-	it("honors prefix locks and attack blocking while consuming rerolled metamods", function()
+	it("honors prefix locks and attack blocking while consuming rerolled meta modifiers", function()
 		local model=simulator.model(raw)
 		local id=lifeTargets(model)[1].anyOf[1]
 		local prefixLock,noAttack
