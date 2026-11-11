@@ -1271,13 +1271,23 @@ function buildMode:OnFrame(inputEvents)
 		self.outputRevision = self.outputRevision + 1
 		self.buildFlag = false
 		self.skillsTab:UpdateSocketGroups()
-		self.calcsTab:BuildOutput()
+		self.calcsTab:BuildOutput(not launch.headless)
 		if self.controls.breakdown.pinned and self.breakdownInputs then
 			self.controls.breakdown:SetBreakdownData()
 			self.controls.breakdown:SetBreakdownData(unpack(self.breakdownInputs))
 		end
 		self:RefreshStatList()
 		self.configTab.calcFunc, self.configTab.calcBase = self.calcsTab:GetMiscCalculator()
+	end
+	if require("Modules.RecoveryTasks").tick(self.calcsTab) then
+		self.outputRevision = self.outputRevision + 1
+		self:RefreshStatList()
+		if self.controls.breakdown.pinned and self.breakdownInputs then
+			self.controls.breakdown:SetBreakdownData()
+			self.controls.breakdown:SetBreakdownData(unpack(self.breakdownInputs))
+		end
+		local bridge = require("Modules.DesktopBuildBridge")
+		if bridge.enabled and bridge.build == self then bridge.contextRevision = nil end
 	end
 	if main.showThousandsSeparators ~= self.lastShowThousandsSeparators then
 		self:RefreshStatList()

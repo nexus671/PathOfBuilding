@@ -3999,10 +3999,12 @@ function calcs.recoveryOverTime(env, actor)
 	local o, mods, breakdown = actor.output, actor.modDB, actor.breakdown
 	actor.mainSkill.skillFlags.recoverySimulation = env.configInput.simulateRecovery and true or false
 	if not env.configInput.simulateRecovery then return end
+	if env.recoveryDeferred then o.RecoverySimulationPending = true; return end
+	local build = env.recoveryBuild or env.build
 	local uncheckedRecovery = false
 	for i=1,5 do
-		local slot=env.build.itemsTab.slots["Flask "..i]
-		local item=slot and env.build.itemsTab.items[slot.selItemId]
+		local slot=build.itemsTab.slots["Flask "..i]
+		local item=slot and build.itemsTab.items[slot.selItemId]
 		if item and item.flaskData and (item.base.flask.life or item.base.flask.mana) and not env.flasks[item] then uncheckedRecovery=true end
 	end
 	local checks,warningCount=encounter.audit(env.configInput,{ tincture=next(env.tinctures),uncheckedRecovery=uncheckedRecovery,poisonUnsupported=o.PoisonWindowUnsupported })
@@ -4039,11 +4041,14 @@ function calcs.recoveryOverTime(env, actor)
 	local categoryConfig = env.configInput.enemyDamageType or "Average"
 	local caps = { Life = o.LifeRecoverable, Mana = o.ManaUnreserved or 0, EnergyShield = o.EnergyShieldRecoveryCap }
 	if mods.conditions.AffectedByPetrifiedBlood then caps.Life = m_min(caps.Life, o.Life * (o.LowLifePercentage or data.misc.LowPoolThreshold) / 100) end
+	local permissionCache = { }
 	local function recoveryPermissions(currentMods)
+		if permissionCache[currentMods] then return permissionCache[currentMods] end
 		local allowed = { }
 		for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
 			allowed[resource] = not currentMods:Flag(nil, "CannotGain"..resource) and not (resource == "Life" and currentMods:Flag(nil, "CannotRecoverLifeOutsideLeech"))
 		end
+		permissionCache[currentMods] = allowed
 		return allowed
 	end
 	local rates = { Life = o.LifeRegenRecovery or 0, Mana = o.ManaRegenRecovery or 0, EnergyShield = o.EnergyShieldRegenRecovery or 0 }
@@ -4075,12 +4080,12 @@ function calcs.recoveryOverTime(env, actor)
 	local flaskList, flaskAvailable, flaskSlot, profileCache = { }, { }, { }, { }
 	local emptyFlasks = 0
 	for i = 1, 5 do
-		local slot = env.build.itemsTab.slots["Flask "..i]
+		local slot = build.itemsTab.slots["Flask "..i]
 		if not slot or not slot.selItemId or slot.selItemId == 0 then emptyFlasks = emptyFlasks + 1 end
 	end
 	for i = 1, 5 do
-		local slot = env.build.itemsTab.slots["Flask "..i]
-		local item = slot and env.build.itemsTab.items[slot.selItemId]
+		local slot = build.itemsTab.slots["Flask "..i]
+		local item = slot and build.itemsTab.items[slot.selItemId]
 		if item and item.flaskData then
 			flaskList[#flaskList + 1], flaskSlot[item] = item, i
 			flaskAvailable[item] = env.flasks[item] or env.configInput.recoverySimulationEquippedFlasks and (item.base.flask.life or item.base.flask.mana)
@@ -4109,7 +4114,7 @@ function calcs.recoveryOverTime(env, actor)
 				local previousCache = GlobalCache.cachedData.CALCULATOR
 				GlobalCache.cachedData.CALCULATOR = { }
 				local ok, projected = xpcall(function()
-					local projection = calcs.initEnv(env.build, env.mode == "CALCS" and "CALCS" or "CALCULATOR", env.override)
+					local projection = calcs.initEnv(build, env.mode == "CALCS" and "CALCS" or "CALCULATOR", env.override, { noBreakdown = true })
 					projection.recoveryProjection = true
 					projection.recoveryGuardSuppressed = not guardActive
 					projection.recoveryManualFlasks = true
@@ -4143,7 +4148,7 @@ function calcs.recoveryOverTime(env, actor)
 			local saved = GlobalCache.cachedData.CALCULATOR
 			GlobalCache.cachedData.CALCULATOR = { }
 			local ok, costs = xpcall(function()
-				local projection = calcs.initEnv(env.build, "CALCULATOR")
+				local projection = calcs.initEnv(build, "CALCULATOR")
 				projection.recoveryProjection = true
 				for _,candidate in ipairs(projection.player.activeSkillList) do if candidate.activeEffect.grantedEffect.name == name then projection.player.mainSkill = candidate; break end end
 				calcs.perform(projection)
@@ -4162,10 +4167,12 @@ function calcs.recoveryOverTime(env, actor)
 			end
 		end
 	end
+	local chargeRateCache, dotCache = { }, { }
 	local results, totalShrouds, totalShroudRecovery, totalFlaskUses, totalCrabLost = { }, 0, 0, 0, 0
 	local deathCauses, selectedTrace = { }, nil
 	local traceTrial = m_floor(m_min(trials,m_max(1,env.configInput.recoverySimulationTraceTrial or 1)))
 	for trial = 1, trials do
+		if env.recoveryCheckpoint then env.recoveryCheckpoint() end
 		local o, mods, actor = o, mods, actor
 		local recoveryAllowed = recoveryPermissions(mods)
 		local caps = copyTable(caps)
@@ -4216,13 +4223,17 @@ function calcs.recoveryOverTime(env, actor)
 		end
 		local crabLost = 0
 		local function chargeRates(item)
+			local cached = chargeRateCache[mods]
+			if not cached then cached = { }; chargeRateCache[mods] = cached end
+			if cached[item] then return cached[item][1], cached[item][2] end
 			local generation = mods:Sum("BASE", nil, "FlaskChargesGenerated")
 			if item.base.flask.life then generation = generation + mods:Sum("BASE", nil, "LifeFlaskChargesGenerated") end
 			if item.base.flask.mana then generation = generation + mods:Sum("BASE", nil, "ManaFlaskChargesGenerated") end
 			if not item.base.flask.life and not item.base.flask.mana then generation = generation + mods:Sum("BASE", nil, "UtilityFlaskChargesGenerated") end
 			generation = generation + emptyFlasks * mods:Sum("BASE", nil, "FlaskChargesGeneratedPerEmptyFlask")
 			local gain = (item.flaskData.gainMod or 1) * (1 + mods:Sum("INC", nil, "FlaskChargesGained") / 100)
-			return generation * gain, gain
+			cached[item] = { generation * gain, gain }
+			return cached[item][1], cached[item][2]
 		end
 		for i,item in ipairs(flaskList) do
 			local d = item.flaskData
@@ -4306,7 +4317,7 @@ function calcs.recoveryOverTime(env, actor)
 			end
 			return effects, duration
 		end
-		local result = timeCalcs.survival({ pools = pools, caps = caps, rates = function() return rates end, window = window,
+		local result = timeCalcs.survival({ checkpoint = env.recoveryCheckpoint, pools = pools, caps = caps, rates = function() return rates end, window = window,
 			resourceFloor = function(resource) return tincture and tincture.active and weeping and resource == "Life" and 1 or 0 end,
 			interval = (dotOnly or env.configInput.recoverySimulationSingleHit) and math.huge or o.enemySkillTime, step = timedEffects and manualFlasks and 0.05 or math.huge, dissolution = dissolution, actualDissolution = dissolution, reservationMax = o.LifeUnreserved,
 			observe = trace and record or nil,
@@ -4316,17 +4327,20 @@ function calcs.recoveryOverTime(env, actor)
 				return flaskRates, { Life=m_max(0, o.LifeUnreserved - (state.LifeReservation or 0)), Mana=o.ManaUnreserved, EnergyShield=o.EnergyShieldRecoveryCap }
 			end,
 			dot = function(state, currentRates)
-				local damage, bypass, mom = { }, { }, { }
-				for _,kind in ipairs(dmgTypeList) do
-					damage[kind] = (o[kind.."BuildDegen"] or 0) + (dotOnly and (o[kind.."EnemyDegen"] or 0) or 0)
-					bypass[kind] = o[kind.."EnergyShieldBypass"] or 0
-					mom[kind] = (o[kind.."MindOverMatter"] or 0) + (o.sharedMindOverMatter or 0)
+				if not dotCache[o] then
+					local damage, bypass, mom = { }, { }, { }
+					for _,kind in ipairs(dmgTypeList) do
+						damage[kind] = (o[kind.."BuildDegen"] or 0) + (dotOnly and (o[kind.."EnemyDegen"] or 0) or 0)
+						bypass[kind] = o[kind.."EnergyShieldBypass"] or 0
+						mom[kind] = (o[kind.."MindOverMatter"] or 0) + (o.sharedMindOverMatter or 0)
+					end
+					for _,kind in ipairs(dmgTypeList) do
+						local raw = m_max(0, env.configInput["recoverySimulation"..kind.."Dot"] or 0)
+						for target,shift in pairs(actor.damageOverTimeShiftTable[kind]) do damage[target] = damage[target] + raw * shift / 100 * o[target.."TakenDotMult"] end
+					end
+					dotCache[o] = timeCalcs.prepareDot(damage, { bypass=bypass, mom=mom, battery=mods:Flag(nil, "EnergyShieldProtectsMana") })
 				end
-				for _,kind in ipairs(dmgTypeList) do
-					local raw = m_max(0, env.configInput["recoverySimulation"..kind.."Dot"] or 0)
-					for target,shift in pairs(actor.damageOverTimeShiftTable[kind]) do damage[target] = damage[target] + raw * shift / 100 * o[target.."TakenDotMult"] end
-				end
-				return timeCalcs.dotRates(state, currentRates, damage, { bypass=bypass, mom=mom, battery=mods:Flag(nil, "EnergyShieldProtectsMana") })
+				return dotCache[o](state, currentRates)
 			end,
 			leech = attacking and leech or nil,
 			attackInterval = attacking and function() return 1 / m_max(o.RecoveryAttackRate, 0.005) end or nil,
@@ -4683,7 +4697,8 @@ end
 function calcs.recoveryCompare(env, actor)
 	local id = env.configInput.recoverySimulationCompareSet
 	if not id or id == 0 then return end
-	local configTab = env.build.configTab
+	local source = env.recoveryBuild or env.build
+	local configTab = source.configTab
 	local target = configTab.configSets[id]
 	local o, breakdown = actor.output,actor.breakdown
 	local function unsupported(reason)
@@ -4694,7 +4709,7 @@ function calcs.recoveryCompare(env, actor)
 	local saved = GlobalCache.cachedData.CALCULATOR
 	GlobalCache.cachedData.CALCULATOR={ }
 	local ok, projected=xpcall(function()
-		local build=setmetatable({ },{__index=env.build})
+		local build=setmetatable({ },{__index=source})
 		local config=copyTable(target)
 		config.input.simulateRecovery=true
 		config.input.recoverySimulationCompareSet=0
@@ -4703,10 +4718,11 @@ function calcs.recoveryCompare(env, actor)
 		config.input.recoverySimulationSeed=env.configInput.recoverySimulationSeed or 104729
 		local proxy=setmetatable({ build=build,input=config.input,placeholder=config.placeholder,configSets={[id]=config},activeConfigSetId=id },{__index=configTab})
 		build.configTab=proxy
-		build.calcsTab=setmetatable({input=copyTable(env.build.calcsTab.input)},{__index=env.build.calcsTab})
+		build.calcsTab=setmetatable({input=copyTable(source.calcsTab.input)},{__index=source.calcsTab})
 		proxy:BuildModList()
 		local projection=calcs.initEnv(build,"CALCULATOR")
 		projection.recoveryComparison=true
+		projection.recoveryCheckpoint=env.recoveryCheckpoint
 		calcs.perform(projection)
 		return projection.player
 	end,debug.traceback)

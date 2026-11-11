@@ -400,9 +400,10 @@ function calcs.buildActiveSkill(env, mode, skill, targetUUID, limitedProcessingF
 end
 
 -- Build output for display in the side bar or calcs tab
-function calcs.buildOutput(build, mode)
+function calcs.buildOutput(build, mode, deferRecovery)
 	-- Build output for selected main skill
 	local env, cachedPlayerDB, cachedEnemyDB, cachedMinionDB = calcs.initEnv(build, mode)
+	env.recoveryDeferred = deferRecovery
 	calcs.perform(env)
 
 	local output = env.player.output

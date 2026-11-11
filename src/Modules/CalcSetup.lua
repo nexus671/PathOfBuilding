@@ -509,7 +509,7 @@ function calcs.initEnv(build, mode, override, specEnv)
 		env.configPlaceholder = build.configTab.placeholder
 		env.calcsInput = build.calcsTab.input
 		env.mode = mode
-		env.buildBreakdown = mode == "MAIN" or mode == "CALCS"
+		env.buildBreakdown = (mode == "MAIN" or mode == "CALCS") and not (specEnv and specEnv.noBreakdown)
 		env.spec = override.spec or build.spec
 		env.override = override
 		env.classId = env.spec.curClassId

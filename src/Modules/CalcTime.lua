@@ -94,8 +94,8 @@ end
 
 -- Simultaneous continuous damage. Empty pools can intercept damage with their
 -- current recovery; allocate that supply proportionally across damage types.
-function M.dotRates(pools, rates, damage, config)
-	local esDemand, manaDemand, life, flows = 0, 0, 0, { }
+function M.prepareDot(damage, config)
+	local esDemand, flows = 0, { }
 	for kind, amount in pairs(damage) do
 		local bypass = min(1, max(0, (config.bypass[kind] or 0) / 100))
 		local mom = min(1, max(0, (config.mom[kind] or 0) / 100))
@@ -103,15 +103,22 @@ function M.dotRates(pools, rates, damage, config)
 		flows[#flows + 1] = { amount = amount, es = es, mom = mom }
 		esDemand = esDemand + es
 	end
-	local esTaken = pools.EnergyShield > 1e-8 and esDemand or min(esDemand, max(0, rates.EnergyShield or 0))
-	for _, flow in ipairs(flows) do
-		local es = esDemand > 0 and flow.es * esTaken / esDemand or 0
-		local mana = config.battery and flow.amount * flow.mom - es or (flow.amount - es) * flow.mom
-		manaDemand, life = manaDemand + mana, life + flow.amount - es - mana
+	return function(pools, rates)
+		local manaDemand, life = 0, 0
+		local esTaken = pools.EnergyShield > 1e-8 and esDemand or min(esDemand, max(0, rates.EnergyShield or 0))
+		for _, flow in ipairs(flows) do
+			local es = esDemand > 0 and flow.es * esTaken / esDemand or 0
+			local mana = config.battery and flow.amount * flow.mom - es or (flow.amount - es) * flow.mom
+			manaDemand, life = manaDemand + mana, life + flow.amount - es - mana
+		end
+		local manaTaken = pools.Mana > 1e-8 and manaDemand or min(manaDemand, max(0, rates.Mana or 0))
+		life = life + manaDemand - manaTaken
+		return { Life = life, Mana = manaTaken, EnergyShield = esTaken }
 	end
-	local manaTaken = pools.Mana > 1e-8 and manaDemand or min(manaDemand, max(0, rates.Mana or 0))
-	life = life + manaDemand - manaTaken
-	return { Life = life, Mana = manaTaken, EnergyShield = esTaken }
+end
+
+function M.dotRates(pools, rates, damage, config)
+	return M.prepareDot(damage, config)(pools, rates)
 end
 
 -- Reactive recovery flasks use finite charges and a delayed threshold policy.
@@ -332,7 +339,10 @@ function M.survival(config)
 		return { time = at, hits = hits, survived = survived, pools = pools, attacks = attacks, attempts = attempts }
 	end
 	if config.observe then config.observe(0,pools,"Start") end
+	local checkpointSteps = 0
 	while t <= window do
+		checkpointSteps = checkpointSteps + 1
+		if config.checkpoint and checkpointSteps % 32 == 1 then config.checkpoint() end
 		-- End ordinary leech at the full-pool boundary before simultaneous costs
 		-- or incoming hits can make the resource appear non-full again.
 		if config.leech then config.leech:rates(t, pools) end

@@ -33,6 +33,7 @@ end
 
 
 dofile("Launch.lua")
+launch.headless = true
 
 -- Prevents loading of ModCache
 -- Allows running mod parsing related tests without pushing ModCache

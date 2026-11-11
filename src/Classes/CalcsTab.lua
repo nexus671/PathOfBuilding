@@ -462,14 +462,15 @@ function CalcsTabClass:ShowRecoverySimulation()
 end
 
 -- Build the calculation output tables
-function CalcsTabClass:BuildOutput()
+function CalcsTabClass:BuildOutput(deferRecovery)
+	self.recoveryJob = nil
 	self.powerBuildFlag = true
 
 	--[[
 	local start = GetTime()
 	SetProfiling(true)
 	for i = 1, 1000  do
-		self.calcs.buildOutput(self.build, "MAIN")
+		self.calcs.buildOutput(self.build, "MAIN", deferRecovery)
 	end
 	SetProfiling(false)
 	ConPrintf("Calc time: %d ms", GetTime() - start)
@@ -480,10 +481,14 @@ function CalcsTabClass:BuildOutput()
 		node.finalModList = node.modList
 	end
 
-	self.mainEnv = self.calcs.buildOutput(self.build, "MAIN")
+	self.mainEnv = self.calcs.buildOutput(self.build, "MAIN", deferRecovery)
 	self.mainOutput = self.mainEnv.player.output
-	self.calcsEnv = self.calcs.buildOutput(self.build, "CALCS")
+	self.calcsEnv = self.calcs.buildOutput(self.build, "CALCS", deferRecovery)
 	self.calcsOutput = self.calcsEnv.player.output
+
+	if deferRecovery and self.build.configTab.input.simulateRecovery then
+		require("Modules.RecoveryTasks").start(self, { self.mainEnv, self.calcsEnv })
+	end
 
 	if self.displayData then
 		self.controls.breakdown:SetBreakdownData()
@@ -678,7 +683,7 @@ function CalcsTabClass:PowerBuilder()
 				end
 			end
 			nodeIndex = nodeIndex + 1
-			if coroutine.running() and GetTime() - start > 100 then
+			if coroutine.running() and GetTime() - start > 8 then
 				if self.build.powerBuilderProgressCallback then
 					self.build.powerBuilderProgressCallback(m_floor(nodeIndex/total*100))
 				end
@@ -724,7 +729,7 @@ function CalcsTabClass:PowerBuilder()
 						end
 					end
 					nodeIndex = nodeIndex + 1
-					if coroutine.running() and GetTime() - start > 100 then
+					if coroutine.running() and GetTime() - start > 8 then
 						if self.build.powerBuilderProgressCallback then
 							self.build.powerBuilderProgressCallback(m_floor(nodeIndex/total*100))
 						end
@@ -753,7 +758,7 @@ function CalcsTabClass:PowerBuilder()
 				node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
 			end
 			nodeIndex = nodeIndex + 1
-			if coroutine.running() and GetTime() - start > 100 then
+			if coroutine.running() and GetTime() - start > 8 then
 				if self.build.powerBuilderProgressCallback then
 					self.build.powerBuilderProgressCallback(m_floor(nodeIndex/total*100))
 				end

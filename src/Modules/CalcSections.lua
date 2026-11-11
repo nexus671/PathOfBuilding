@@ -2353,6 +2353,7 @@ return {
 	},}
 }, }, { defaultCollapsed = false, label = "Recovery over Time", data = {
 	flag = "recoverySimulation",
+	{ label = "Calculation", haveOutput = "RecoverySimulationPending", { format = "Updating..." } },
 	{ label = "Scenario", haveOutput = "RecoverySimulationUnsupported", { format = "Unsupported", { breakdown = "RecoverySimulationUnsupported" } } },
 	{ label = "Window", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationWindow}s", { breakdown = "RecoverySimulationWindow" } } },
 	{ label = "Trials", haveOutput = "RecoverySimulationWindow", { format = "{0:output:RecoverySimulationTrials}", { breakdown = "RecoverySimulationTrials" } } },

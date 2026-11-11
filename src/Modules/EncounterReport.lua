@@ -28,7 +28,7 @@ function M.capture(build)
 	local config = build.configTab.configSets[build.configTab.activeConfigSetId]
 	local incoming = { interval=output.enemySkillTime, rawHitDamage=output.totalEnemyDamageIn, afterEnemyModifiers={ } }
 	for _,kind in ipairs({ "Physical", "Lightning", "Cold", "Fire", "Chaos" }) do incoming.afterEnemyModifiers[kind] = output[kind.."EnemyDamage"] end
-	return clean({ schemaVersion=1, capturedAt=os.date("!%Y-%m-%dT%H:%M:%SZ"), source="desktop-explicit-snapshot", calculationPending=build.buildFlag or false,
+	return clean({ schemaVersion=1, capturedAt=os.date("!%Y-%m-%dT%H:%M:%SZ"), source="desktop-explicit-snapshot", calculationPending=build.buildFlag or build.calcsTab.recoveryJob ~= nil,
 		build={ name=build.buildName, configuration=config and config.title, skill=actor.mainSkill and actor.mainSkill.activeEffect and actor.mainSkill.activeEffect.grantedEffect.name },
 		settings=settings, summary=summary, comparison=comparison, trace=actor.recoverySimulationTrace,
 		incoming=incoming,
