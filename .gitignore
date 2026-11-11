@@ -12,6 +12,7 @@ inspect.lua
 Builds/
 *.cfg
 Settings.xml
+AI-encounter.json
 
 # Testing
 luajit/

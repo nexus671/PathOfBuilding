@@ -6,6 +6,12 @@ on:
     branches: [ dev ]
   workflow_dispatch:
 jobs:
+  test_ai_bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test desktop MCP bridge
+        run: node --test spec/AI/McpServer.test.cjs
   run_tests:
     runs-on: ubuntu-latest
     container: ghcr.io/pathofbuildingcommunity/pathofbuilding-tests:latest

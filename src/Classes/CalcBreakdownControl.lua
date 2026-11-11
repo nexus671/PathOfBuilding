@@ -817,8 +817,8 @@ function CalcBreakdownClass:Draw(viewPort)
 	self.width = width
 	self.height = height
 	-- Calculate position based on the source cell
-	local x = sourceData.x + sourceData.width + 5
-	local y = m_min(sourceData.y, viewPort.y + viewPort.height - height)
+	local x = m_max(viewPort.x, sourceData.x + sourceData.width + 5)
+	local y = m_max(viewPort.y, m_min(sourceData.y, viewPort.y + viewPort.height - height))
 	if x + width > viewPort.x + viewPort.width then
 		x = m_max(viewPort.x, sourceData.x - 5 - width)
 	end

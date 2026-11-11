@@ -13,6 +13,7 @@ A Path of Exile build planner with encounter timelines and improved survival cal
 - Compare damage, defenses, and item upgrades.
 - Explore recovery, flasks, and tinctures over time.
 - Inspect encounter timelines and compare scenarios.
+- Explain encounter results with AI briefs and a local MCP connection.
 
 The encounter tools are experimental. See the [guide](docs/recovery-simulation.md) to get started.
 

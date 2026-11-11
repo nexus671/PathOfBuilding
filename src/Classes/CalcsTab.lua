@@ -41,7 +41,7 @@ function CalcsTabClass:CalcsTab(build)
 
 	self.controls.search = new("EditControl"):EditControl({"TOPLEFT",self,"TOPLEFT"}, {4, 5, 260, 20}, "", "Search", "%c", 100, nil, nil, nil, true)
 	t_insert(self.controls, self.controls.search)
-	self.controls.simulationSetup = new("ButtonControl"):ButtonControl({"LEFT",self.controls.search,"RIGHT"},{6,0,135,20},"Simulation setup",function() self.build.configTab:ShowEncounterSimulation() end)
+	self.controls.simulationSetup = new("ButtonControl"):ButtonControl({"LEFT",self.controls.search,"RIGHT"},{6,0,135,20},"Simulation",function() self:OpenEncounterWorkspace() end)
 
 	-- Special section for skill/mode selection
 	self:NewSection(3, "SkillSelect", 1, colorCodes.NORMAL, {{ defaultCollapsed = false, label = "View Skill Details", data = {
@@ -448,6 +448,10 @@ end
 function CalcsTabClass:SearchMatch(txt)
 	local searchStr = self.controls.search.buf:lower()
 	return string.len(searchStr) > 0 and txt:lower():find(searchStr)
+end
+
+function CalcsTabClass:OpenEncounterWorkspace()
+	require("Classes.EncounterWorkspaceControl").Open(self)
 end
 
 function CalcsTabClass:ShowRecoverySimulation()
