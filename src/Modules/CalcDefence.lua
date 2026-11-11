@@ -4048,6 +4048,15 @@ function calcs.recoveryOverTime(env, actor)
 	-- These represent available unreserved capacity, not actual Life, for Dissolution.
 	if dissolution then caps.Life = m_min(caps.Life, o.LifeUnreserved, env.configInput.conditionLowLife and o.Life * (o.LowLifePercentage or data.misc.LowPoolThreshold) / 100 or o.Life) end
 	local timedEffects = env.configInput.recoverySimulationTimedEffects ~= false
+	local tinctureItem, tinctureCount = nil, 0
+	for item in pairs(env.tinctures) do tinctureItem, tinctureCount = item, tinctureCount + 1 end
+	local dynamicTincture = timedEffects and env.configInput.recoverySimulationTinctures ~= false and tinctureItem
+	if dynamicTincture and tinctureCount > 1 then
+		o.RecoverySimulationUnsupported = true
+		if breakdown then breakdown.RecoverySimulationUnsupported = { "Timed tincture cycles currently require a single selected tincture." } end
+		return
+	end
+	local weeping = mods:Flag(nil, "Condition:WeepingWoundsInsteadOfManaBurn")
 	local flaskList, flaskAvailable, flaskSlot, profileCache = { }, { }, { }, { }
 	local emptyFlasks = 0
 	for i = 1, 5 do
@@ -4072,23 +4081,29 @@ function calcs.recoveryOverTime(env, actor)
 		end
 	end
 	local initialCrab = o.CrabBarriers or 0
-	local function profileFor(active, guardActive, crabCount)
+	local function profileFor(active, guardActive, crabCount, tincture)
 		local key = ""
 		for i = 1, #flaskList do key = key..(active[i] and "1" or "0") end
 		local allActive = not key:find("0", 1, true)
 		key = key..(guardActive and "G" or "g")..tostring(crabCount)
+		if tincture then key = key.."T"..(tincture.active and "1" or tincture.effect and "L" or "0")..":"..tincture.stacks end
 		if not profileCache[key] then
-			if allActive and guardActive and not manualFlasks and crabCount == initialCrab then profileCache[key] = { actor=actor, output=o, mods=mods }
+			if not tincture and allActive and guardActive and not manualFlasks and crabCount == initialCrab then profileCache[key] = { actor=actor, output=o, mods=mods }
 			else
 				-- Isolate calculator caches used by the projections from item previews.
 				local previousCache = GlobalCache.cachedData.CALCULATOR
 				GlobalCache.cachedData.CALCULATOR = { }
 				local ok, projected = xpcall(function()
-					local projection = calcs.initEnv(env.build, "CALCULATOR")
+					local projection = calcs.initEnv(env.build, "CALCULATOR", env.override)
 					projection.recoveryProjection = true
 					projection.recoveryGuardSuppressed = not guardActive
 					projection.recoveryManualFlasks = true
 					projection.recoveryCrabBarriers = crabCount
+					if tincture then
+						projection.recoveryManaBurnStacks = tincture.stacks
+						projection.tinctures = tincture.effect and { [tinctureItem] = true } or { }
+						projection.recoveryTinctureLingering = tincture.effect and not tincture.active
+					end
 					projection.flasks = { }
 					for i,item in ipairs(flaskList) do if active[i] then projection.flasks[item] = true end end
 					calcs.perform(projection)
@@ -4155,7 +4170,22 @@ function calcs.recoveryOverTime(env, actor)
 			pools.Guard[damageType] = o[damageType.."GuardAbsorb"] or 0
 		end
 		local flaskSchedules, recoverySchedules, flaskRates, flaskUses, flaskBanks = { }, { }, { }, { }, { }
+		local currentActive = { }
 		local poison = encounter.poison(data.misc.DotDpsCap)
+		local tincture
+		if dynamicTincture then
+			local d = tinctureItem.tinctureData
+			local maximum = mods:Sum("BASE", nil, "MaxManaBurnStacks")
+			tincture = timeCalcs.tincture({
+				interval = d.manaBurn / calcLib.mod(mods, { actor="player" }, "TinctureManaBurnRate"),
+				cooldown = tinctureItem.base.tincture.cooldown / (1 + (d.cooldownInc + mods:Sum("INC", { actor="player" }, "TinctureCooldownRecovery")) / 100),
+				maximum = maximum > 0 and maximum or nil,
+				lingerPerStack = mods:Sum("BASE", nil, "TinctureLingerPerBurn"), lingerMax = mods:Sum("BASE", nil, "TinctureLingerMax"),
+				onHit = tinctureItem.title == "The Battle Within",
+				skipChance = mods:Sum("BASE", nil, "TincturesNotInflictManaBurn"),
+				floor = weeping and 1 or 0, reuse = env.configInput.recoverySimulationReuseTincture,
+			}, timeCalcs.random(encounter.seed(seed,0,5)))
+		end
 		local trace = trial == traceTrial and not env.recoveryComparison and encounter.trace(window) or nil
 		local deathCause, enemyAttempt = "Unspecified resource loss", 0
 		local function record(t,state,event)
@@ -4246,6 +4276,7 @@ function calcs.recoveryOverTime(env, actor)
 			return effects, duration
 		end
 		local result = timeCalcs.survival({ pools = pools, caps = caps, rates = function() return rates end, window = window,
+			resourceFloor = function(resource) return tincture and tincture.active and weeping and resource == "Life" and 1 or 0 end,
 			interval = (dotOnly or env.configInput.recoverySimulationSingleHit) and math.huge or o.enemySkillTime, step = timedEffects and manualFlasks and 0.05 or math.huge, dissolution = dissolution, actualDissolution = dissolution, reservationMax = o.LifeUnreserved,
 			observe = trace and record or nil,
 			lossCause = function(cause) deathCause = cause end,
@@ -4278,7 +4309,14 @@ function calcs.recoveryOverTime(env, actor)
 					record(t,state,"Attack skipped: insufficient Life, Mana or ES")
 					return state, false
 				end
+				if tincture and tincture.active and state[weeping and "Life" or "Mana"] <= (weeping and 1 or 0) + 1e-8 then
+					local _,message = tincture:update(t,state[weeping and "Life" or "Mana"])
+					if message then record(t,state,message) end
+					local projection = profileFor(currentActive,guardActive,crab(t,false),tincture)
+					o,mods,actor = projection.output,projection.mods,projection.actor
+				end
 				if roll(o.HitChance) then
+					if tincture and actor.mainSkill.skillFlags.melee then tincture:hit(t) end
 					local critical = roll(o.CritChance)
 					if critical then criticalCharges(t) end
 					if timedEffects and currentElusive(t) == 0 and actor.mainSkill.skillModList:Flag(actor.mainSkill.skillCfg, "SupportedByNightblade") and critical then elusiveEffect, elusiveApplied, elusiveFresh = elusiveBase, t, true end
@@ -4295,6 +4333,11 @@ function calcs.recoveryOverTime(env, actor)
 			end or nil,
 			before = function(state, t)
 				local nextEvent, active = math.huge, { }
+				if tincture then
+					local event, message = tincture:update(t, state[weeping and "Life" or "Mana"])
+					if event > t + 1e-9 then nextEvent = m_min(nextEvent, event) end
+					if message then record(t,state,message) end
+				end
 				if timedEffects and guardActive and t >= guardExpires - 1e-9 then
 					guardActive, guardReady, guardExpires = false, t + guardCooldown, math.huge
 					for key in pairs(state.Guard) do state.Guard[key] = 0 end
@@ -4328,7 +4371,8 @@ function calcs.recoveryOverTime(env, actor)
 					end
 					local count, tick = crab(t, false)
 					if (o.CrabBarriersMax or 0) > 0 then nextEvent = m_min(nextEvent, tick) end
-					local projection = profileFor(active, guardActive, count)
+					currentActive = active
+					local projection = profileFor(active, guardActive, count, tincture)
 					o, mods, actor = projection.output, projection.mods, projection.actor
 					caps.Life, caps.Mana, caps.EnergyShield = o.LifeRecoverable, o.ManaUnreserved, o.EnergyShieldRecoveryCap
 					state.Life = m_min(state.Life, m_max(0, o.LifeUnreserved - (state.LifeReservation or 0)))
@@ -4554,7 +4598,7 @@ function calcs.recoveryOverTime(env, actor)
 			timedEffects and "Crab Barriers regenerate every 0.5s, lose stacks on physical damage from hits, and respect Craiceann loss/protection/gain modifiers. Native mitigation and block bonuses are recalculated. Elusive decays; Nightblade can reapply it on outgoing critical hits." or "Temporary defense tracking is disabled.",
 			"Configured continuous damage uses current ES/bypass, EB and MoM routing, interrupts unprotected recharge, and accumulates Dissolution reservation. Damage-only inputs do not trigger hit recovery or Crab losses. Hit-derived enemy ailments are not inferred as permanent DoTs.",
 			"Ordinary Ward restoration, native Aegis refill delays and recharge protection are timed. Guard recasting, if enabled, is a paid manual-use policy; trigger thresholds are not simulated.",
-			(env.configInput.multiplierManaBurnStacks or 0) > 0 and not next(env.tinctures) and "Configured Mana Burn is still applied even though no tincture is selected. Review that input when assessing attack affordability." or "Resource loss includes the configured Mana Burn stacks.",
+			dynamicTincture and "Selected tincture starts at zero burn; stacks build until resource exhaustion or the mastery cutoff, then clear and start cooldown. Reuse follows the selected manual policy." or (env.configInput.multiplierManaBurnStacks or 0) > 0 and not next(env.tinctures) and "Configured Mana Burn is still applied even though no tincture is selected. Review that input when assessing attack affordability." or "Resource loss includes the configured Mana Burn stacks.",
 		}
 		lines.wrap=720
 		for _, stat in ipairs({ "RecoverySimulationAttackUptime", "RecoverySimulationTime", "RecoverySimulationTimeLow", "RecoverySimulationTimeHigh", "RecoverySimulationWindow", "RecoverySimulationTrials", "RecoverySimulationSurvived", "RecoverySimulationDied", "RecoverySimulationSurvivalChance", "RecoverySimulationIncomingDamage", "RecoverySimulationShroudsUsed", "RecoverySimulationShroudRecovery", "RecoverySimulationFlaskUses", "RecoverySimulationCrabLost" }) do breakdown[stat] = lines end

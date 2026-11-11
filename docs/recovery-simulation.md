@@ -130,9 +130,20 @@ Intrinsic resource loss such as Mana Burn remains resource loss, not damage.
 | Guard | Native duration, early depletion and cooldown. Optional **Recast guard when ready** pays native costs. This is a manual-use policy, not trigger-threshold simulation. Vaal guards are not automatically reused. |
 | Crab Barriers | Start at the configured count, gain one every 0.5s with a fixed phase from combat start, lose stacks on physical hit damage. Craiceann's Tracks/Chitin/Pincers loss limits, four-second protection and gain-to-maximum chance are parsed and simulated. Native reduction and threshold block bonuses are recalculated for each state. |
 | Recovery flasks | Finite charges, activation/reaction policy, dynamic low-life instant recovery, gradual/end recovery, source/full-pool termination, enduring recovery and PB's flask exception. Mean total flask uses and Crab Barriers lost are shown in Calcs. |
+| Tincture cycles | One selected tincture starts at zero burn. Native burn interval, local/global cooldown recovery, chance not to inflict burn, first-six-stacks exemption and stack-limit mastery apply. Zero mana (1 Life for Weeping Wounds) deactivates it, clears burn and starts cooldown. Native damage/defenses change with its state. **Reuse tincture when ready** models manual reactivation after cooldown and resource recovery; off means one activation. Enduring Suffusion's effects linger separately from burn and active-tincture conditions. The Battle Within gains burn on outgoing melee hits instead of periodically. |
 | Allied protection | Configured initial pools; no resummoning schedule. |
 
 ## Explicit limits
+
+- Timed tincture cycles currently require one selected tincture; multiple selected
+  tinctures are explicitly unsupported. With no selected tincture, manually
+  configured Mana Burn stays fixed and is flagged for review. Turning off
+  temporary-effect tracking or tincture cycles keeps the configured snapshot.
+- Newly imported game/API tinctures retain `Tincture Values: Final` provenance,
+  avoiding a second application of quality/local effect to displayed modifiers.
+  PoB-created and older items retain the existing base-value interpretation;
+  their provenance cannot be inferred reliably. A confirmed game-value item can
+  use that raw-item header. Rounded original rolls cannot be reconstructed.
 
 - Dissolution with existing life reservations needs aura-cancellation ordering and
   buff changes, and is unsupported. Upstream reports [#10193](https://github.com/PathOfBuildingCommunity/PathOfBuilding/issues/10193)

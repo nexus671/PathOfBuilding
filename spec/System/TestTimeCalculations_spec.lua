@@ -1,6 +1,47 @@
 describe("Finite combat windows", function()
 	local time = require("Modules.CalcTime")
 	before_each(function() newBuild() end)
+	it("clears tincture burn at zero mana and waits through cooldown after recovery", function()
+		local t = time.tincture({ interval=0.7, cooldown=8, reuse=true }, function() return 0.5 end)
+		t:update(0,20); t:update(0.7,10)
+		assert.are.equal(1,t.stacks)
+		t:update(1,0)
+		assert.are.equal(false,t.active); assert.are.equal(0,t.stacks); assert.are.equal(9,t.ready)
+		t:update(8.999,20); assert.are.equal(false,t.active)
+		t:update(9,20); assert.are.equal(true,t.active); assert.are.equal(2,t.uses); assert.are.equal(0,t.stacks)
+	end)
+
+	it("keeps tinctures off after one activation unless reuse is selected", function()
+		local t = time.tincture({ interval=1, cooldown=6 }, function() return 0.5 end)
+		t:update(0,20); t:update(1,0); t:update(100,20)
+		assert.are.equal(false,t.active); assert.are.equal(1,t.uses)
+	end)
+
+	it("separates lingering tincture effects from burn and cooldown", function()
+		local t = time.tincture({ interval=1, cooldown=8, maximum=2, lingerPerStack=0.5, lingerMax=6 }, function() return 0.5 end)
+		t:update(0,20); t:update(1,20); t:update(2,20)
+		assert.are.equal(false,t.active); assert.are.equal(0,t.stacks); assert.are.equal(true,t.effect)
+		assert.are.equal(10,t.ready); t:update(3,20); assert.are.equal(false,t.effect)
+	end)
+
+	it("does not gain skipped Mana Burn and supports hit-driven tinctures", function()
+		local skipped=time.tincture({ interval=1, cooldown=8, skipChance=100 }, function() return 0.5 end)
+		skipped:update(0,20); skipped:update(1,20); assert.are.equal(0,skipped.stacks)
+		local hit=time.tincture({ interval=1, cooldown=8, onHit=true }, function() return 0.5 end)
+		hit:update(0,20); hit:update(20,20); assert.are.equal(0,hit.stacks)
+		hit:hit(20); assert.are.equal(1,hit.stacks)
+	end)
+
+	it("splits Weeping Wounds at one Life and removes its loss before death", function()
+		local tincture=time.tincture({ interval=1, cooldown=8, floor=1 }, function() return 0.5 end)
+		local p={ Life=11, Mana=0, EnergyShield=0 }
+		local result=time.survival({pools=p,caps={Life=11,Mana=0,EnergyShield=0},window=3,interval=100,step=math.huge,
+			before=function(p,t) local event=tincture:update(t,p.Life); return event end,
+			resourceFloor=function(resource) return tincture.active and resource=="Life" and 1 or 0 end,
+			rates=function() return {Life=tincture.active and -10 or 0} end,
+			hit=function(p) return p end})
+		assert.are.equal(true,result.survived); assert.are.near(1,p.Life,1e-8); assert.are.equal(false,tincture.active)
+	end)
 
 	it("integrates poison before and after its duration limit", function()
 		local early = time.poisonWindow({{ slope = 100, ceiling = 400 }}, 2)
