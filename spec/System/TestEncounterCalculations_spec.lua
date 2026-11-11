@@ -230,6 +230,10 @@ describe("Encounter reporting and comparisons",function()
 		assert.is_true(#actor.breakdown.RecoverySimulationTimeline.rowList > 1)
 		local control=build.calcsTab.controls.breakdown
 		control:DrawEncounterTimeline(0,0,{width=730,timeline=actor.recoverySimulationTrace})
+		control:SetBreakdownData({{breakdown="RecoverySimulationTimeline"},x=20,y=20,width=120},true)
+		assert.are.equal("TIMELINE",control.sectionList[2].type)
+		assert.are.equal("TABLE",control.sectionList[3].type)
+		control:Draw({x=0,y=0,width=1920,height=1080})
 		for _,view in ipairs({"CONFIG","CALCS"}) do build.viewMode=view; runCallback("OnFrame"); assert(not __mainObject__.promptMsg,__mainObject__.promptMsg) end
 	end)
 

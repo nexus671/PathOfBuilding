@@ -3996,7 +3996,7 @@ function calcs.recoveryOverTime(env, actor)
 	end
 	local checks,warningCount=encounter.audit(env.configInput,{ tincture=next(env.tinctures),uncheckedRecovery=uncheckedRecovery,poisonUnsupported=o.PoisonWindowUnsupported })
 	o.RecoverySimulationWarnings=warningCount
-	if breakdown then breakdown.RecoverySimulationWarnings={ "Review assumptions without changing saved configuration automatically.",rowList=checks,colList={{label="Status",key="level"},{label="Configuration / coverage",key="text"}} } end
+	if breakdown then breakdown.RecoverySimulationWarnings={ "Review assumptions without changing saved configuration automatically.",wrap=720,rowList=checks,colList={{label="Status",key="level"},{label="Configuration / coverage",key="text"}} } end
 	local function hasKeystone(name)
 		local node = env.spec.tree.keystoneMap[name]
 		return env.keystonesAdded and env.keystonesAdded[name] or node and env.spec.allocNodes[node.id]
@@ -4524,6 +4524,7 @@ function calcs.recoveryOverTime(env, actor)
 		breakdown.RecoverySimulationConfidenceLow = { "95% Wilson interval for survival in this scenario. This measures trial sampling uncertainty, not uncertainty in game mechanics or configured assumptions.",s_format("%.2f%% to %.2f%% (%d trials)",o.RecoverySimulationConfidenceLow,o.RecoverySimulationConfidenceHigh,trials),"Zero observed deaths does not establish zero death risk. Trials from a single seed family are not proof of convergence." }
 		breakdown.RecoverySimulationConfidenceHigh = breakdown.RecoverySimulationConfidenceLow
 		local damageLines = { "Selected main skill: direct hit damage plus expected poison damage from landed, paid attacks. Each poison keeps its application-time damage and expires separately.","Skipped uses apply no hit damage or poison. Configured native damage is recalculated as flask/guard/Crab profiles change. Other conditional damage, Wither, charges and skill rotations stay configured.","Damage is averaged over the full scenario window, including poison remaining after the player's death until expiry or window end. Other ailments, impales, secondary skills and minions are excluded.", attacking and "Poison chance and additional poisons use native average amounts per landed hit; individual poison rolls are not simulated." or "Main-skill attacks are disabled: simulated outgoing damage is zero." }
+		damageLines.wrap=720
 		for _,key in ipairs({ "RecoverySimulationDamageDPS","RecoverySimulationPoisonDPS","RecoverySimulationDamage" }) do breakdown[key] = damageLines end
 		local causeRows = { }
 		for cause,entry in pairs(deathCauses) do causeRows[#causeRows + 1] = { cause=cause,count=tostring(entry.count),trial=tostring(entry.first) } end
@@ -4536,7 +4537,7 @@ function calcs.recoveryOverTime(env, actor)
 			selectedTrace.caps={Life=o.LifeUnreserved,EnergyShield=o.EnergyShield,Mana=o.ManaUnreserved,crab=o.CrabBarriersMax or 0,shrouds=ghostDance and 3 or 0,chargesTotal=totalCharges,poison=o.TotalPoisonDPS or 0}
 			local rows = { }
 			for _,r in ipairs(selectedTrace.rows) do rows[#rows + 1] = { time=s_format("%.3f",r.time),life=s_format("%.0f",r.Life),es=s_format("%.0f",r.EnergyShield),mana=s_format("%.0f",r.Mana),reservation=s_format("%.0f",r.reservation),crab=tostring(r.crab),shrouds=tostring(r.shrouds),charges=r.charges,poison=s_format("%.0f",r.poison),event=r.event } end
-			breakdown.RecoverySimulationTimeline = { s_format("Trial %d of %d, seed %d. This is one individual trial, not an averaged resource trajectory.",traceTrial,trials,env.configInput.recoverySimulationSeed or 104729),selectedTrace.cause and "Death: "..selectedTrace.cause or "Window reached alive.",s_format("%d additional events omitted from the bounded log. Samples and terminal outcome are retained in the graph.",selectedTrace.dropped), timeline=selectedTrace,
+			breakdown.RecoverySimulationTimeline = { s_format("Trial %d of %d, seed %d. This is one individual trial, not an averaged resource trajectory.",traceTrial,trials,env.configInput.recoverySimulationSeed or 104729),selectedTrace.cause and "Death: "..selectedTrace.cause or "Window reached alive.",s_format("%d additional events omitted from the bounded log. Samples and terminal outcome are retained in the graph.",selectedTrace.dropped), timeline=selectedTrace,wrap=720,
 				rowList=rows,colList={{label="Time (s)",key="time"},{label="Life",key="life"},{label="ES",key="es"},{label="Mana",key="mana"},{label="Reserved",key="reservation"},{label="Crab",key="crab"},{label="Shrouds",key="shrouds"},{label="Charges by slot",key="charges"},{label="Poison DPS",key="poison"},{label="Event",key="event"}} }
 		end
 	end
@@ -4555,6 +4556,7 @@ function calcs.recoveryOverTime(env, actor)
 			"Ordinary Ward restoration, native Aegis refill delays and recharge protection are timed. Guard recasting, if enabled, is a paid manual-use policy; trigger thresholds are not simulated.",
 			(env.configInput.multiplierManaBurnStacks or 0) > 0 and not next(env.tinctures) and "Configured Mana Burn is still applied even though no tincture is selected. Review that input when assessing attack affordability." or "Resource loss includes the configured Mana Burn stacks.",
 		}
+		lines.wrap=720
 		for _, stat in ipairs({ "RecoverySimulationAttackUptime", "RecoverySimulationTime", "RecoverySimulationTimeLow", "RecoverySimulationTimeHigh", "RecoverySimulationWindow", "RecoverySimulationTrials", "RecoverySimulationSurvived", "RecoverySimulationDied", "RecoverySimulationSurvivalChance", "RecoverySimulationIncomingDamage", "RecoverySimulationShroudsUsed", "RecoverySimulationShroudRecovery", "RecoverySimulationFlaskUses", "RecoverySimulationCrabLost" }) do breakdown[stat] = lines end
 	end
 	if not env.recoveryComparison then calcs.recoveryCompare(env,actor) end
@@ -4613,7 +4615,7 @@ function calcs.recoveryCompare(env, actor)
 			s_format("Survival 95%% Wilson intervals: A %.2f%% to %.2f%%; B %.2f%% to %.2f%%.",o.RecoverySimulationConfidenceLow,o.RecoverySimulationConfidenceHigh,projected.output.RecoverySimulationConfidenceLow,projected.output.RecoverySimulationConfidenceHigh),
 			s_format("B minus A, %d paired trials; identical window and seed family. Enemy rolls are indexed by attempt and outcome, independent of outgoing action/flask rolls.",#a),
 			"Approximate 95% paired mean intervals use variance of within-pair differences. Small samples and rare events can make these intervals unreliable; inspect each scenario's Wilson survival interval and repeat with other seeds. No automatic upgrade ranking is performed.",
-			"Same gear/tree/skills; B uses its saved configuration. Positive time/survival/damage deltas favor B. Trial identity is preserved, including deaths and poison expiry after death.",rowList=rows,colList={{label="Metric",key="metric"},{label="Mean delta",key="delta"},{label="95% low (approx.)",key="low"},{label="95% high (approx.)",key="high"}} }
+			"Same gear/tree/skills; B uses its saved configuration. Positive time/survival/damage deltas favor B. Trial identity is preserved, including deaths and poison expiry after death.",wrap=720,rowList=rows,colList={{label="Metric",key="metric"},{label="Mean delta",key="delta"},{label="95% low (approx.)",key="low"},{label="95% high (approx.)",key="high"}} }
 		for _,metric in ipairs(values) do breakdown[metric[2]]=report end
 	end
 end

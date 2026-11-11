@@ -160,9 +160,22 @@ function CalcBreakdownClass:AddBreakdownSection(sectionData)
 
 	if #breakdown > 0 then
 		-- Text lines
+		local lines = breakdown
+		if breakdown.wrap then
+			lines = { }
+			for _,text in ipairs(breakdown) do
+				local line = ""
+				for word in text:gmatch("%S+") do
+					local candidate = line == "" and word or line.." "..word
+					if line ~= "" and DrawStringWidth(16,"VAR",candidate) > breakdown.wrap then lines[#lines + 1] = line; line = word
+					else line = candidate end
+				end
+				lines[#lines + 1] = line
+			end
+		end
 		t_insert(self.sectionList, {
 			type = "TEXT",
-			lines = breakdown,
+			lines = lines,
 			textSize = 16
 		})
 	end
