@@ -254,4 +254,16 @@ describe("Desktop build proposals", function()
 		assert.is_true(#diagnosis.tests > 0)
 		assert.is_truthy(table.concat(diagnosis.limitations," "):find("do not establish",1,true))
 	end)
+
+	it("captures allocated unnamed passive nodes in imported builds", function()
+		local node
+		for _,entry in pairs(build.spec.nodes) do if entry.alloc then node=entry; break end end
+		assert.is_truthy(node)
+		local originalName=node.name
+		node.name=nil
+		local ok,snapshot=pcall(require("Modules.BuildInsights").snapshot,build)
+		node.name=originalName
+		assert.is_true(ok)
+		assert.is_truthy(snapshot.passives[node.id])
+	end)
 end)

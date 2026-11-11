@@ -18,7 +18,7 @@ function M.snapshot(build)
 	end
 	for name,slot in pairs(build.itemsTab.slots) do
 		local item = build.itemsTab.items[slot.selItemId]
-		if item then result.items[name] = {name=item.name,text=item.raw,active=slot.active,requirements=copyTable(item.requirements)} end
+		if item then result.items[name] = {name=item.name or item.baseName or "Item",text=item.raw,active=slot.active,requirements=copyTable(item.requirements)} end
 	end
 	for _,group in ipairs(build.skillsTab.socketGroupList) do
 		local names = { }
@@ -26,7 +26,7 @@ function M.snapshot(build)
 		result.skills[#result.skills+1] = (group.label or "").." ["..(group.slot or "unassigned").."] "..table.concat(names," + ")..(group.enabled == false and " (disabled)" or "")..(group.includeInFullDPS and " [Full DPS]" or "").." main="..tostring(group.mainActiveSkill or 1)
 	end
 	result.mainGroup = build.mainSocketGroup
-	for _,node in pairs(build.spec.nodes) do if node.alloc then result.passives[node.id] = node.name..(build.spec.masterySelections[node.id] and " (mastery "..build.spec.masterySelections[node.id]..")" or "") end end
+	for _,node in pairs(build.spec.nodes) do if node.alloc then result.passives[node.id] = (node.name or node.dn or node.type or "Passive")..(build.spec.masterySelections[node.id] and " (mastery "..build.spec.masterySelections[node.id]..")" or "") end end
 	return result
 end
 
