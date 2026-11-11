@@ -3,7 +3,89 @@ describe("Advanced native crafting", function()
 	local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86"
 	local random=function() return 0.42 end
 	local function rare() return sim.perform(raw,{method="alchemy"},12).state end
-	local function tag(model,id,wanted) for _,value in ipairs(model.byId[id].modTags or {}) do if value == wanted then return true end end end
+	local function tag(model,id,wanted) for _,value in ipairs(model.byId[id].modTags or {}) do if value == wanted then return true end end;return nil end
+	it("offers independent Allflame outcomes and charges currency and Sulphur once", function()
+		local state=copyTable(sim.model(raw).initial);state.rarity="RARE";state.affixes={{id="IncreasedLife1",range=0.5}}
+		local craft={method="exalt",allflame={outcomes=4,gainMin=5,gainMax=5,sulphur=100}}
+		local result=sim.perform(raw,craft,88,state)
+		assert.are.equal(4,#result.choices)
+		for _,choice in ipairs(result.choices) do
+			assert.are.equal(2,#choice.state.affixes)
+			assert.are.equal(5,choice.state.intangibility)
+			assert.are.equal("IncreasedLife1",choice.state.affixes[1].id)
+			assert.is_truthy(choice.itemText)
+		end
+		craft.allflame.choiceIndex=4
+		local selected=sim.perform(raw,craft,88,state)
+		assert.are.equal(result.choices[4].itemText,selected.itemText)
+		assert.are.equal(0,state.intangibility)
+		local recipe={steps={craft},targets={},requirements={minAffixes=2}}
+		local trials=sim.simulate(raw,recipe,{initialState=state,trials=10,maxActions=1,prices={exalt=2,dead_mans_sulphur=0.01},currency="chaos"})
+		assert.are.equal(10,trials.successes)
+		assert.are.equal(3,trials.meanCost)
+		assert.are.equal(10,trials.currencySpent.exalt)
+		assert.are.equal(1000,trials.currencySpent.dead_mans_sulphur)
+		assert.are.equal(false,pcall(sim.calculate,raw,craft,{{anyOf={"FireResist1"}}},state))
+		local free=copyTable(craft);free.allflame.sulphur=0
+		local noSulphur=sim.simulate(raw,{steps={free},targets={},requirements={minAffixes=2}},{initialState=state,trials=1,maxActions=1,prices={exalt=2},currency="chaos"})
+		assert.are.equal(2,noSulphur.meanCost)
+		assert.is_nil(noSulphur.currencySpent.dead_mans_sulphur)
+	end)
+	it("collapses Allflame at full Intangibility without increasing it or blocking ordinary crafting", function()
+		local model=sim.model(raw.."\nIntangibility: 100%")
+		assert.are.equal(100,model.initial.intangibility)
+		local craft={method="alchemy",allflame={outcomes=4,gainMin=5,gainMax=10,sulphur=30,choiceIndex=4}}
+		local result=sim.perform(raw.."\nIntangibility: 100%",craft,12)
+		assert.are.equal(1,#result.choices)
+		assert.is_true(result.allflame.collapsed)
+		assert.are.equal(100,result.state.intangibility)
+		local ordinary=sim.perform(raw.."\nIntangibility: 100%",{method="alchemy"},12)
+		assert.are.equal(100,ordinary.state.intangibility)
+		assert.is_nil(ordinary.choices)
+		assert.are.equal(false,pcall(sim.perform,raw,{method="bench",modId="bench:1",allflame=craft.allflame},12))
+	end)
+	it("adds a weighted Rotmother modifier and preserves it through native item import", function()
+		local belt="Rarity: NORMAL\nLeather Belt\nItem Level: 86"
+		local model=sim.model(belt);local state=copyTable(model.initial);state.rarity="RARE"
+		local result=sim.perform(belt,{method="ducat_rotmother"},12,state)
+		assert.are.equal(1,#result.state.affixes)
+		assert.is_truthy(data.itemMods.Ducat[result.state.affixes[1].id])
+		assert.are.equal(result.state.affixes[1].id,sim.model(result.itemText).initial.affixes[1].id)
+		assert.are.equal(false,pcall(sim.perform,belt,{method="ducat_rotmother"},12,result.state))
+		assert.are.equal(false,pcall(sim.perform,raw,{method="ducat_rotmother"},12,rare()))
+		local natural=sim.pool(model,model.initial)
+		for _,entry in ipairs(natural) do assert.is_nil(data.itemMods.Ducat[entry.id]) end
+	end)
+	it("calibrates predictable recombination to observed odds and retains the chosen host level", function()
+		local model=sim.model(raw);local donorModel=sim.model("Rarity: NORMAL\nCone Helmet\nItem Level: 70")
+		local input=copyTable(model.initial);input.rarity="MAGIC";input.affixes={{id="IncreasedLife1",range=0.75}}
+		local donor=copyTable(donorModel.initial);donor.rarity="MAGIC";donor.affixes={{id="FireResist1",range=0.25}}
+		local craft={method="recombine_predictable",donorItem=sim.toItem(donorModel,donor).raw,selectedMods={left={"IncreasedLife1"},right={"FireResist1"}},reportedSuccessChance=40}
+		local targets={{anyOf={"IncreasedLife1"}},{anyOf={"FireResist1"}}}
+		local odds=sim.calculate(raw,craft,targets,input)
+		assert.are.near(40,odds.successChance,1e-8)
+		assert.are.near(60,odds.destructionChance,1e-8)
+		assert.are.near(40,odds.outcomes[1].chance+odds.outcomes[2].chance,1e-8)
+		local rightPick=(odds.outcomes[1].chance+odds.outcomes[2].chance/2)/100
+		local result=sim.action(model,input,craft,function() return rightPick end)
+		assert.are.equal("Cone Helmet",sim.toItem(model,result).baseName)
+		assert.are.equal(70,sim.toItem(model,result).itemLevel)
+		assert.are.equal("RARE",result.rarity)
+		assert.are.equal(2,#result.affixes)
+		sim.validateState(model,result)
+		local added=sim.perform(raw,{method="exalt"},44,result)
+		assert.are.equal(3,#added.state.affixes)
+		assert.are.equal("Cone Helmet",new("Item"):Item(added.itemText).baseName)
+		local failed=sim.action(model,input,craft,function() return 0.99 end)
+		assert.is_true(failed.destroyed)
+		local trial=sim.simulate(raw,{steps={craft},targets=targets},{initialState=input,trials=40,maxActions=1,seed=11})
+		assert.are.equal(40,trial.successes+trial.destroyedTrials)
+		assert.are.equal(false,pcall(sim.action,model,input,{method=craft.method,donorItem=craft.donorItem,selectedMods=craft.selectedMods},random))
+		local duplicate=copyTable(craft);duplicate.selectedMods.left={"IncreasedLife1","IncreasedLife1"}
+		assert.are.equal(false,pcall(sim.action,model,input,duplicate,random))
+		local invalid=copyTable(craft);invalid.reportedSuccessChance=101
+		assert.are.equal(false,pcall(sim.action,model,input,invalid,random))
+	end)
 	it("stops inside a repeated step as soon as a partial final goal is achieved", function()
 		local model=sim.model(raw);local first=sim.perform(raw,{method="alchemy"},777).state.affixes[1].id
 		local alternative

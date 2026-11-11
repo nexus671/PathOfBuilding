@@ -210,7 +210,12 @@ function main:Init()
 					-- the trade hash field is split by stat descriptor, which
 					-- means we shouldn't have problems with long stats being
 					-- split
-					for _, line in pairs(mod.tradeHashes) do
+					local descriptorLines = mod.tradeHashes
+					if not descriptorLines or not next(descriptorLines) then
+						descriptorLines = { }
+						for _, line in ipairs(mod) do descriptorLines[#descriptorLines + 1] = { line } end
+					end
+					for _, line in pairs(descriptorLines) do
 						local rangedLine = itemLib.applyRange(table.concat(line, " "), 0.5)
 						modLib.parseMod(rangedLine)
 					end

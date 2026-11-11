@@ -224,3 +224,23 @@ test('queues crafting cancellation with an explicit request identifier', t => {
   assert.equal(queued.kind,'craftCancel');assert.equal(queued.requestId,'active-craft');
   assert.equal(queued.proposal,undefined);
 });
+
+test('queues observed predictable selections with bounded typed odds', t => {
+  const f=fixture(t);
+  const args={baseRevision:f.state.revision,itemText:craftingProject().startingItem,action:{method:'recombine_predictable',donorItem:'donor',selectedMods:{left:['IncreasedLife1'],right:['FireResist1']},reportedSuccessChance:40}};
+  f.call('apply_crafting_action',args);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json'))).action,args.action);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  assert.throws(()=>f.call('apply_crafting_action',{...args,action:{...args.action,reportedSuccessChance:101}}),/arguments/);
+  assert.throws(()=>f.call('apply_crafting_action',{...args,action:{...args.action,selectedMods:{left:[],right:['FireResist1']}}}),/arguments/);
+});
+
+test('queues observed Allflame profiles without allowing unbounded ghost work', t => {
+  const f=fixture(t);
+  const args={baseRevision:f.state.revision,itemText:craftingProject().startingItem,action:{method:'exalt',allflame:{outcomes:4,gainMin:8,gainMax:12,sulphur:100,preferredTargets:[{anyOf:['FireResist1']}]}},initialState:{rarity:'RARE',affixes:[],intangibility:30}};
+  f.call('apply_crafting_action',args);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json'))).action,args.action);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  assert.throws(()=>f.call('apply_crafting_action',{...args,action:{...args.action,allflame:{...args.action.allflame,outcomes:1000}}}),/arguments/);
+  assert.throws(()=>f.call('apply_crafting_action',{...args,initialState:{...args.initialState,intangibility:101}}),/arguments/);
+});

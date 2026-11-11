@@ -17,6 +17,7 @@ local methods={
 	bench_reroll="Bench: reroll 1 or 3 modifiers",eldritch_implicit="Eldritch Ember / Ichor",eldritch_exalt="Eldritch Exalted Orb",eldritch_annul="Eldritch Orb of Annulment",
 	eldritch_chaos="Eldritch Chaos Orb",blessed="Blessed Orb",sacred="Sacred Orb",socket_bench="Bench: socket count / links",binding="Orb of Binding",
 	ducat_cyaxan="Cyaxan's Ducat",ducat_brinehook="Brinehook's Ducat",ducat_genteel="The Genteel's Ducat",ducat_merrick="Merrick's Ducat",
+	ducat_rotmother="Rotmother's Ducat",
 	beast_meta="Bestiary: add a crafted meta modifier",beast_influence="Bestiary: add a modifier to an influenced item",
 }
 A.methods=methods
@@ -126,6 +127,7 @@ function A.extend(M,api)
 		table.sort(model.veiled,function(a,b) return a.id < b.id end)
 		for id,mod in pairs(data.beastCraft) do if mod.type == "Suffix" then model.special[id]=true end end
 		for id,mod in pairs(data.itemMods.Mercenary) do if mod.level <= model.item.itemLevel and model.item:GetModSpawnWeight(mod) > 0 then model.special[id]=true end end
+		if model.item.type == "Belt" then for id,mod in pairs(data.itemMods.Ducat) do if mod.level <= model.item.itemLevel then model.special[id]=true end end end
 		for id,mod in pairs(data.itemMods.Eldritch) do if model.item:GetModSpawnWeight(mod) > 0 then model.special[id]=true end end
 		for id,fossil in pairs(A.data().fossils) do if fossil.name ~= "" then model.fossils[#model.fossils+1]={id=id,name=fossil.name} end end
 		table.sort(model.fossils,function(a,b) return a.name < b.name end)
@@ -282,6 +284,15 @@ function A.extend(M,api)
 		elseif method == "beast_influence" then
 			assert(state.rarity == "RARE" and contains(state.influences,action.influence),"Choose an influence already present on this rare item")
 			append(model,state,random)
+		elseif method == "ducat_rotmother" then
+			assert(model.item.type == "Belt" and state.rarity == "RARE","Rotmother requires a rare belt")
+			assert(not (f.prefixes or f.suffixes or f.attack or f.caster),"Remove meta modifiers before using Rotmother in this model")
+			local source={}
+			for id,mod in pairs(data.itemMods.Ducat) do if mod.level <= model.item.itemLevel then
+				local weight=0;for i,key in ipairs(mod.weightKey) do if key == "deepwater_hazard_belt" then weight=mod.weightVal[i] end end
+				if weight > 0 then source[#source+1]={id=id,mod=mod,weight=weight} end
+			end end
+			table.sort(source,function(a,b) return a.id < b.id end);append(model,state,random,{source=source,fixedWeights=true})
 		elseif method == "ducat_cyaxan" then
 			assert(state.rarity == "RARE" and not (f.prefixes or f.suffixes or f.attack or f.caster),"Cyaxan requires a rare item without meta modifiers in this model")
 			api.clear(model,state,true);local source={}
@@ -664,7 +675,7 @@ function A.extend(M,api)
 	end
 	M.limits={"Independent PoE 1 crafting model pinned to extracted 3.29.3.6 data; this is not complete Craft of Exile parity.",
 		"Current coverage includes core currencies, ordinary jewels/flasks/tinctures, bench crafts, essences, weighted fossils, Harvest tag crafts, influence slams, Awakener, fractures, veiled choices, Bestiary, Eldritch crafts, base implicit/defence rerolls and deterministic socket/link bench crafts.",
-		"Tangled Fossils require a revealed resonator outcome. Predictable recombination, unique generation, Allflame outcome selection and unreleased 3.30 rules are not implemented.",
+		"Tangled Fossils require a revealed resonator outcome. Automatic predictable recombination odds, unique generation, automatic Allflame settings and unreleased 3.30 rules are not implemented.",
 		"Rare modifier counts and Eldritch Chaos counts are model assumptions. Numeric display rolls and sampling intervals do not establish exact in-game odds.",
 		"Every result is a separate hypothetical item. Costs use supplied prices; no game currency is spent."}
 	require("Modules.CraftingProperties").extend(M,A,api)
@@ -672,5 +683,7 @@ function A.extend(M,api)
 	require("Modules.CraftingSockets").extend(M,A,api)
 	require("Modules.CraftingMemory").extend(M,A,api)
 	require("Modules.CraftingRecombination").extend(M,A,api)
+	require("Modules.CraftingPredictable").extend(M,A,api)
+	require("Modules.CraftingAllflame").extend(M,A,api)
 end
 return A

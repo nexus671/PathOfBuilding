@@ -20,6 +20,12 @@ Use a blank base or item text whose modifier IDs PoB resolves. Unresolved explic
 
 **Locus of Corruption** can destroy the hypothetical item. Destruction stops that trial, retains its currency spending and prevents previewing a nonexistent item. **Undo currency** still restores the prior emulated state.
 
+**Predictable recombination (observed odds)** needs the game's displayed success percentage for the exact inputs and selected modifiers. Add one exact target for each selected modifier, with at least one from each input, then configure the donor and percentage. MCP accepts explicit `selectedMods.left` and `selectedMods.right` ID lists. The model preserves the chosen base's item level and treats failure as destruction. It fits a shared constant to your observation; its base shares remain estimates. It cannot independently calculate the game's displayed percentage.
+
+**Allflame: enter observed Vesper settings** enables ghost outcomes for the selected currency. Enter its maximum outcome count, Intangibility gain range and Dead Man's Sulphur cost. Apply the currency, inspect each ghost and keep one. Cancel keeps the emulated input. Intangibility can reduce the entire craft to one outcome; ordinary crafting still works. Import this property with `Intangibility: 30%`, or continue the returned structured state.
+
+For recipes, Allflame prefers the outcome matching the most captured target groups, with ties keeping the first. A manually selected ghost is recorded as a fixed choice index; after collapse it keeps the only outcome. Costs include one currency use and one Sulphur charge, rather than charging for every ghost. These are conditional models using your settings, not an automatic Vesper data table. MCP supplies the same values in `action.allflame` and receives bounded `choices` with each emulated result.
+
 ## Set targets
 
 Add a modifier on **Target conditions**. Separate groups require all groups by default; **Add alternative** makes an OR choice within the last group. **Target counts, rolls and item properties** edits the last group and final conditions:

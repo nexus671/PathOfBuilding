@@ -48,6 +48,7 @@ function Panel.Open(build,project)
 		lines[#lines+1]=""
 		lines[#lines+1]=item.baseName.." | "..state.rarity.." | item level "..item.itemLevel
 		lines[#lines+1]="Memory strands: "..(state.memoryStrands or 0)
+		lines[#lines+1]="Intangibility: "..(state.intangibility or 0).."%"
 		for _,entry in ipairs(state.affixes) do
 			local mod=model.byId[entry.id]
 			local values={ }
@@ -90,13 +91,49 @@ function Panel.Open(build,project)
 
 	button(controls,"apply",162,204,130,"Apply currency",function()
 		sequence=sequence+1
-		local result=simulator.perform(draft.startingItem,action(),assert(tonumber(controls.seed.buf),"Invalid seed")+sequence-1,state)
-		history[#history+1]=copyTable(state)
-		if #history > 40 then table.remove(history,1) end
-		state=result.state; actions[#actions+1]=action(); updateOptions()
-		refresh({"Last action seed: "..(tonumber(controls.seed.buf)+sequence-1)})
+		local craft=action();local usedSeed=assert(tonumber(controls.seed.buf),"Invalid seed")+sequence-1
+		local result=simulator.perform(draft.startingItem,craft,usedSeed,state)
+		local function keep(nextState,index)
+			history[#history+1]=copyTable(state);if #history > 40 then table.remove(history,1) end
+			if index then craft.allflame.choiceIndex=index end
+			state=nextState;actions[#actions+1]=craft;updateOptions();refresh({"Last action seed: "..usedSeed})
+		end
+		if result.choices and #result.choices > 1 then
+			local popup={};local choices={}
+			for i=1,#result.choices do choices[i]={label="Ghost outcome "..i,val=i} end
+			popup.choice=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,628,24},choices)
+			popup.preview=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,70,628,300},nil,{})
+			local function showChoice()
+				local choice=result.choices[popup.choice:GetSelValueByKey("val")];local lines={"Intangibility: "..choice.state.intangibility.."%"}
+				for line in (choice.itemText or (choice.state.veil and "Pending unveil" or "Destroyed")):gmatch("[^\r\n]+") do lines[#lines+1]=line end
+				popup.preview.list=rows(lines)
+			end
+			popup.choice.selFunc=showChoice;showChoice()
+			button(popup,"keep",16,390,200,"Keep ghost outcome",function() local index=popup.choice:GetSelValueByKey("val");keep(result.choices[index].state,index);main:ClosePopup() end)
+			button(popup,"close",528,390,116,"Cancel",function() main:ClosePopup() end)
+			main:OpenPopup(660,440,"Allflame outcomes",popup,nil,nil,"close")
+		else keep(result.state) end
 	end)
 	button(controls,"undo",308,204,124,"Undo currency",function() assert(#history > 0,"No currency action to undo"); state=table.remove(history); table.remove(actions); updateOptions(); refresh() end)
+	button(controls,"allflame",16,410,416,"Allflame: enter observed Vesper settings",function()
+		local craft=action();local profile=craft.allflame or {};local popup={}
+		label(popup,"hint",16,28,"Use the maximum outcomes, gain range and cost shown for this craft.")
+		edit(popup,"outcomes",16,60,140,24,tostring(profile.outcomes or ""),"Max outcomes 1-4",12)
+		edit(popup,"gainMin",172,60,140,24,tostring(profile.gainMin or ""),"Min gain %",12)
+		edit(popup,"gainMax",328,60,140,24,tostring(profile.gainMax or ""),"Max gain %",12)
+		edit(popup,"sulphur",16,100,296,24,tostring(profile.sulphur or ""),"Dead Man's Sulphur cost",12)
+		label(popup,"policy",16,144,"Recipes prefer the most matching current target groups; ties keep the first.")
+		button(popup,"use",16,186,200,"Use Allflame settings",function()
+			local values={};for _,key in ipairs({"outcomes","gainMin","gainMax","sulphur"}) do values[key]=assert(tonumber(popup[key].buf),"Enter all four observed settings") end
+			assert(values.outcomes == math.floor(values.outcomes) and values.outcomes >= 1 and values.outcomes <= 4,"Choose one to four outcomes")
+			assert(values.gainMin >= 0 and values.gainMax >= values.gainMin and values.gainMax <= 100,"Invalid Intangibility gain range")
+			if #targets > 0 then values.preferredTargets=copyTable(targets) end
+			craft.allflame=values;configured[craft.method]=craft;main:ClosePopup();refresh({"Allflame settings enabled for "..simulator.labels[craft.method]})
+		end)
+		button(popup,"disable",232,186,200,"Use ordinary currency",function() craft.allflame=nil;configured[craft.method]=craft;main:ClosePopup() end)
+		button(popup,"close",448,186,116,"Cancel",function() main:ClosePopup() end)
+		main:OpenPopup(660,236,"Observed Allflame settings",popup,nil,nil,"close")
+	end)
 	button(controls,"configure",16,231,416,"Configure fossil combination / donor item",function()
 		local method=controls.method:GetSelValueByKey("val")
 		local popup={}
@@ -112,9 +149,28 @@ function Panel.Open(build,project)
 				local ids={};for i=1,4 do local value=popup["fossil"..i]:GetSelValue(); if value.id then ids[#ids+1]=value.id end end
 				assert(#ids > 0,"Choose at least one fossil"); configured.fossil={method="fossil",fossils=ids,tangledOutcome=popup.tangled:GetSelValueByKey("id")}; main:ClosePopup()
 			end)
-		elseif method == "awakener" or method == "recombine" then
+		elseif method == "awakener" or method == "recombine" or method == "recombine_predictable" then
 			edit(popup,"donor",16,36,608,170,"","Paste the donor item",24000)
-			button(popup,"use",16,222,180,"Use donor",function() configured[method]={method=method,donorItem=popup.donor.buf}; main:ClosePopup() end)
+			if method == "recombine_predictable" then
+				edit(popup,"chance",16,216,180,24,"","In-game success %",12)
+				label(popup,"selectionHint",208,221,"Exact target IDs select mods from each input.")
+			end
+			button(popup,"use",16,260,180,"Use donor",function()
+				local craft={method=method,donorItem=popup.donor.buf}
+				if method == "recombine_predictable" then
+					local donor=simulator.model(popup.donor.buf);local selected={left={},right={}}
+					for _,group in ipairs(targets) do
+						assert(#group.anyOf == 1 and not group.negate and (group.atLeast or 1) == 1 and (group.scope or "explicit") == "explicit","Use exact explicit targets without alternatives for predictable selections")
+						local id=group.anyOf[1];local side
+						for key,input in pairs({left=state,right=donor.initial}) do for _,entry in ipairs(input.affixes) do if entry.id == id and not entry.fractured then assert(not side,"Selected modifier appears on both inputs; use the MCP action to select its input explicitly");side=key end end end
+						assert(side,"Each selected target must be present on one input");selected[side][#selected[side]+1]=id
+					end
+					assert(#selected.left > 0 and #selected.right > 0,"Select at least one exact target from each input")
+					craft.selectedMods=selected;craft.reportedSuccessChance=assert(tonumber(popup.chance.buf),"Enter the game's displayed success percentage")
+					assert(craft.reportedSuccessChance >= 0 and craft.reportedSuccessChance <= 100,"Success percentage must be between 0 and 100")
+				end
+				configured[method]=craft;main:ClosePopup()
+			end)
 		else error("Select a fossil, Awakener's Orb or recombination first") end
 		button(popup,"close",508,260,116,"Cancel",function() main:ClosePopup() end)
 		main:OpenPopup(640,310,"Craft options",popup,nil,nil,"close")
@@ -241,7 +297,7 @@ function Panel.Open(build,project)
 	button(controls,"close",748,height-48,116,"Close",function() main:ClosePopup() end)
 	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,52,416,24},{"Emulate item","Target conditions","Simulate recipe"})
 	local pages={
-		["Emulate item"]={methodLabel=96,method=116,optionLabel=160,option=180,seedLabel=220,seed=240,apply=240,undo=240,configure=282,keepRecipe=330,reset=330,exact=374},
+		["Emulate item"]={methodLabel=96,method=116,optionLabel=160,option=180,seedLabel=220,seed=240,apply=240,undo=240,configure=282,keepRecipe=330,reset=330,exact=374,allflame=410},
 		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetConditions=202},
 		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354},
 	}

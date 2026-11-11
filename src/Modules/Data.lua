@@ -667,6 +667,7 @@ data.itemMods = {
 	JewelCharm = LoadModule("Data/ModJewelCharm"),
 	Foulborn = LoadModule("Data/ModFoulborn"),
 	Mercenary = LoadModule("Data/ModMercenary"),
+	Ducat = LoadModule("Data/ModDucat"),
 	Vestigial = {}
 }
 for modId, mod in pairs(data.itemMods.ItemExclusive) do
@@ -687,7 +688,7 @@ data.enchantments = {
 
 -- combined table of many mod categories
 data.itemMods.Item = {}
-for _, key in ipairs({ "Explicit", "ItemExclusive", "Corrupted", "Delve", "Synthesis", "Scourge", "Eldritch", "Mercenary" }) do
+for _, key in ipairs({ "Explicit", "ItemExclusive", "Corrupted", "Delve", "Synthesis", "Scourge", "Eldritch", "Mercenary", "Ducat" }) do
 	local itemData = data.itemMods[key]
 	for k, v in pairs(itemData) do
 		data.itemMods.Item[k] = v

@@ -112,6 +112,6 @@ function R.extend(M,A,api)
 		for _,kind in ipairs({"Armour","Evasion","EnergyShield","Ward"}) do if base.item.base.armour and base.item.base.armour[kind.."BaseMin"] then state.percentiles[kind]=random() end end
 		return state
 	end
-	M.limits[#M.limits+1]="Unpredictable recombination is experimental: rounded count tables are normalized and eligible entries are chosen uniformly. Exclusive modifiers contribute at most one count per side under 3.26 observations. Exclusive-only side ordering is unresolved and rejected. Hidden weights remain uncertain; predictable recombination is not modeled."
+	M.limits[#M.limits+1]="Unpredictable recombination is experimental: rounded count tables are normalized and eligible entries are chosen uniformly. Exclusive modifiers contribute at most one count per side under 3.26 observations. Exclusive-only side ordering is unresolved and rejected. Hidden weights remain uncertain."
 end
 return R

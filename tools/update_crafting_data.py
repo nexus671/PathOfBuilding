@@ -23,6 +23,10 @@ for source in (ROOT / "src" / "Data").glob("*.lua"):
 fields = ["groups", "stats", "domain", "implicit_tags", "adds_tags", "generation_weights",
           "spawn_weights", "is_essence_only", "required_level", "generation_type"]
 generation = {"prefix", "suffix", "corrupted", "searing_exarch_implicit", "eater_of_worlds_implicit", "synthesis_a"}
+ducat_mods = {key: mod for key, mod in mods.items()
+              if mod["domain"] == "ducat_crafted" and mod["generation_type"] in {"prefix", "suffix"}
+              and key.startswith("DeepwaterHazard")}
+identifiers.update(ducat_mods)
 compiled = {identifier: {key: mod[key] for key in fields} for identifier, mod in mods.items()
             if identifier in identifiers and mod["generation_type"] in generation}
 result = {
@@ -38,4 +42,23 @@ encoded = '{"_comment":"Generated GGG data from RePoE. cspell:disable",\n' + jso
 destination = ROOT / "src" / "Data" / "Crafting" / "3.29.json"
 destination.parent.mkdir(parents=True, exist_ok=True)
 destination.write_text(encoded, encoding="utf-8")
+def lua_string(value):
+    return json.dumps(value, ensure_ascii=False)
+
+lines = ["-- Generated from immutable RePoE game exports by tools/update_crafting_data.py.",
+         "-- Item data (c) Grinding Gear Games", "return {"]
+for key, mod in sorted(ducat_mods.items()):
+    parts = [f"type = {lua_string(mod['generation_type'].title())}",
+             f"affix = {lua_string(mod['name'])}"]
+    parts.extend(lua_string(line) for line in mod["text"].splitlines())
+    parts.append("statOrder = { " + ", ".join(str(100000 + i) for i, _ in enumerate(mod["text"].splitlines())) + " }")
+    parts.append("tradeHashes = { }")
+    parts.extend([f"level = {mod['required_level']}", f"group = {lua_string(mod['groups'][0])}"])
+    for name, values in [("weightKey", [w["tag"] for w in mod["spawn_weights"]]),
+                         ("weightVal", [w["weight"] for w in mod["spawn_weights"]]),
+                         ("modTags", mod["implicit_tags"])]:
+        parts.append(name + " = { " + ", ".join(lua_string(v) if isinstance(v, str) else str(v) for v in values) + " }")
+    lines.append("\t[" + lua_string(key) + "] = { " + ", ".join(parts) + " },")
+lines.append("}")
+(ROOT / "src" / "Data" / "ModDucat.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
 print(f"Compiled {len(compiled)} native modifier records for {PATCH}")

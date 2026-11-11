@@ -367,7 +367,7 @@ function M.simulate(raw,recipe,options)
 	for _,entry in ipairs(model.essences) do available[entry.modId]=true end
 	for _,entry in ipairs(model.initial.affixes) do available[entry.id]=true end
 	for id in pairs(model.special or {}) do available[id]=true end
-	for _,step in ipairs(recipe.steps) do if step.method == "recombine" and step.donorItem then
+	for _,step in ipairs(recipe.steps) do if (step.method == "recombine" or step.method == "recombine_predictable") and step.donorItem then
 		local donor=M.model(step.donorItem)
 		for _,entry in ipairs(donor.mods) do available[entry.id]=true end
 		for _,entry in ipairs(donor.initial.affixes) do available[entry.id]=true end
@@ -441,8 +441,8 @@ end
 function M.perform(raw,action,seed,initialState)
 	local model=M.model(raw)
 	if initialState then model.initial=M.validateState(model,initialState) end
-	local state=M.action(model,model.initial,action,rng(encounter.seed(integer(seed or 104729,1,2147483646,"seed"),1,31)))
-	return {itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
+	local state,details=M.action(model,model.initial,action,rng(encounter.seed(integer(seed or 104729,1,2147483646,"seed"),1,31)))
+	return {itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
 end
 
 function M.catalog(raw,query,limit)
