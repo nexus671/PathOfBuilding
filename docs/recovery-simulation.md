@@ -30,17 +30,21 @@ item-preview calculations to keep ordinary comparisons fast.
 
 Enable **Simulate main-skill attacks** to pay native configured costs on outgoing
 attempts. Unaffordable attempts are skipped; Calcs shows their affordable fraction.
+
 Successful hits apply native average instant leech/gain on hit and create leech
 instances. Each instance expires separately. Combined rates obey native caps;
 ordinary instances clear at full unreserved life/mana/ES unless retention is
 allowed. A Petrified Blood recovery cap below full unreserved life therefore
 allows instances to remain. Eldritch Battery pays mana costs from ES first.
+
 **Hit/Poison DPS** integrates native average hit damage and expected
 poisons from landed, paid attacks. Skipped attempts add neither. Every poison
 snapshots the native profile at application, retains its own expiry, and obeys
 native stack limits and the shared DoT cap. Existing poisons continue through
 attack gaps and after death until expiry or the scenario window ends. Damage is
-divided by the full window, not only the time alive. Other ailments, impales,
+divided by the full window, not only the time alive.
+
+Other ailments, impales,
 secondary skills, minions and culling-equivalent DPS are excluded. Poison chance
 and additional applications use native expected amounts per landed hit rather
 than individual poison rolls. Stack-limited poisons are admitted only while capacity remains. Other conditional damage, Wither and configured
@@ -58,8 +62,11 @@ recipient. A random eligible equipped flask is chosen and its local plus global
 chance is rolled. Full/unchecked equipped flasks participate in charge distribution;
 only available flasks are used. Random charge non-consumption is rolled separately.
 No kill charges are invented, and cooldown recovery does not shorten these intervals.
+
 Native defenses/recovery are recalculated when the active flask set changes,
-using isolated projection caches without editing the build. Elusive avoidance
+using isolated projection caches without editing the build.
+
+Elusive avoidance
 decays from its configured initial effect; Nightblade can reapply it on outgoing
 critical hits after it expires. Other sources of Elusive generation and changes
 to damage/critical modifiers while Elusive are not simulated.
@@ -67,12 +74,15 @@ to damage/critical modifiers while Elusive are not simulated.
 Recovery flasks that end at full trigger below **Recovery flask trigger (%)** of
 the recoverable pool (default 50%), with **Recovery flask reaction (ms)** (default
 100ms). Threshold observation is at most 50ms apart. A lethal hit cannot be rescued.
+
 Instant recovery and conditional instant recovery on low life are evaluated on use;
 gradual recovery ends at full unless enduring. Life flasks may heal above Petrified
 Blood's non-flask cap, to full unreserved life. Ordinary recovery does not erase
 that extra life or continue healing above its own cap. Hybrid flask effects end
 at full only when both source pools are full. Recovery copied to ES ends with its
-source flask. Blood of the Karui recovers missing Life on natural effect expiry;
+source flask.
+
+Blood of the Karui recovers missing Life on natural effect expiry;
 early termination at full cancels that recovery. Life-flask ES copying receives
 the same missing-Life recovery, capped by available ES. Global and local charge
 cost modifiers are combined before integer rounding, including the boundary
@@ -90,7 +100,9 @@ native damage taken as and mitigation, alongside incoming hits. Existing build
 degeneration is included. The enemy **Damage over Time** category also supports
 DoT-only trials, using its existing damage inputs. These are continuously active
 scenario sources; expected enemy bleed/ignite/poison from hits are not silently
-treated as permanent ailments. Damage follows current ES/bypass, Eldritch Battery
+treated as permanent ailments.
+
+Damage follows current ES/bypass, Eldritch Battery
 and typed/shared Mind over Matter, including pool depletion and regeneration at an
 empty pool. It interrupts ordinary recharge and continuously reserves Dissolution
 life; it does not trigger recoup, Ghost Dance, Crab losses or other on-hit effects.

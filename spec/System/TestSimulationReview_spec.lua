@@ -172,7 +172,7 @@ describe("Simulation review regressions", function()
 		build.calcsTab.input.skill_number = 2
 		equip("Rarity: Normal\nGranite Flask", "Flask 1")
 		local config = { recoverySimulationAttacking=true, recoverySimulationWindow=20 }
-		local mods = "+1000 to maximum Mana\nRegenerate 1000 Mana per second"
+		local mods = "+10000 to maximum Life\n+1000 to maximum Mana\nRegenerate 1000 Mana per second"
 		local _,actor = calculate(mods, config)
 		local selected = actor.recoverySimulationResults[1].directDamage
 		build.mainSocketGroup = 2
