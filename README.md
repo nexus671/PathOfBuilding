@@ -1,4 +1,7 @@
-# Path of Building Community
+# Path of Building AI Edition
+
+A personal fork of [Path of Building Community](https://github.com/PathOfBuildingCommunity/PathOfBuilding), with encounter simulation and calculation fixes. Upstream contributions are maintained separately from the experimental fork features.
+
 ## Welcome to Path of Building, an offline build planner for Path of Exile!
 
 <p float="middle">

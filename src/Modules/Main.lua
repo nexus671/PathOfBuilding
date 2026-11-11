@@ -251,7 +251,7 @@ function main:Init()
 	end
 	self.controls.forkLabel = new("LabelControl"):LabelControl({"BOTTOMLEFT",self.anchorMain,"BOTTOMLEFT"}, {148, -26, 0, 16}, "")
 	self.controls.forkLabel.label = function()
-		return "^8PoB Community Fork"
+		return "^8PoB AI Edition"
 	end
 	self.controls.versionLabel = new("LabelControl"):LabelControl({"BOTTOMLEFT",self.anchorMain,"BOTTOMLEFT"}, {148, -2, 0, 16}, "")
 	self.controls.versionLabel.label = function()
@@ -1463,10 +1463,10 @@ function main:OpenAboutPopup(helpSectionIndex)
 	controls.close = new("ButtonControl"):ButtonControl({"TOPRIGHT",nil,"TOPRIGHT"}, {-10, 10, 50, 20}, "Close", function()
 		self:ClosePopup()
 	end)
-	controls.version = new("LabelControl"):LabelControl(nil, {0, 18, 0, 18}, "^7Path of Building Community Fork v"..launch.versionNumber)
+	controls.version = new("LabelControl"):LabelControl(nil, {0, 18, 0, 18}, "^7Path of Building AI Edition v"..launch.versionNumber)
 	controls.forum = new("LabelControl"):LabelControl(nil, {0, 36, 0, 18}, "^7Based on Openarl's Path of Building")
-	controls.github = new("ButtonControl"):ButtonControl(nil, {0, 62, 438, 18}, "^7GitHub page: ^x4040FFhttps://github.com/PathOfBuildingCommunity/PathOfBuilding", function(control)
-		OpenURL("https://github.com/PathOfBuildingCommunity/PathOfBuilding")
+	controls.github = new("ButtonControl"):ButtonControl(nil, {0, 62, 438, 18}, "^7GitHub: ^x4040FFnexus671/PathOfBuilding-AI-Edition", function(control)
+		OpenURL("https://github.com/nexus671/PathOfBuilding-AI-Edition")
 	end)
 	controls.verLabel = new("ButtonControl"):ButtonControl({"TOPLEFT", nil, "TOPLEFT"}, {10, 85, 100, 18}, "^7Version history:", function()
 		controls.changelog.list = changeList
