@@ -1574,17 +1574,16 @@ function calcs.defence(env, actor)
 	output.EnergyShieldOnSpellBlock = modDB:Sum("BASE", nil, "EnergyShieldOnSpellBlock")
 	output.EnergyShieldOnSuppress = modDB:Sum("BASE", nil, "EnergyShieldOnSuppress")
 	
-	-- damage avoidances
+	-- All-damage and type-specific avoidance share the same capped roll (3.29).
+	output.AvoidAllDamageFromHitsChance = m_min(modDB:Sum("BASE", nil, "AvoidAllDamageFromHitsChance"), data.misc.AvoidChanceCap)
 	output.specificTypeAvoidance = false
 	for _, damageType in ipairs(dmgTypeList) do
-		output["Avoid"..damageType.."DamageChance"] = m_min(modDB:Sum("BASE", nil, "Avoid"..damageType.."DamageChance"), data.misc.AvoidChanceCap)
+		output["Avoid"..damageType.."DamageChance"] = m_min(modDB:Sum("BASE", nil, "Avoid"..damageType.."DamageChance", "AvoidAllDamageFromHitsChance"), data.misc.AvoidChanceCap)
 		if output["Avoid"..damageType.."DamageChance"] > 0 then
 			output.specificTypeAvoidance = true
 		end
 	end
 	output.AvoidProjectilesChance = m_min(modDB:Sum("BASE", nil, "AvoidProjectilesChance"), data.misc.AvoidChanceCap)
-	-- hit avoidance
-	output.AvoidAllDamageFromHitsChance = m_min(modDB:Sum("BASE", nil, "AvoidAllDamageFromHitsChance"), data.misc.AvoidChanceCap)
 	-- other avoidances etc
 	output.BlindAvoidChance = modDB:Flag(nil, "BlindImmune") and 100 or m_min(modDB:Sum("BASE", nil, "AvoidBlind"), 100)
 	output.ImpaleAvoidChance = modDB:Flag(nil, "ImpaleImmune") and 100 or m_min(modDB:Sum("BASE", nil, "AvoidImpale"), 100)
@@ -1688,11 +1687,11 @@ function calcs.buildDefenceEstimations(env, actor)
 	-- chance to not be hit calculations
 	if damageCategoryConfig ~= "DamageOverTime" then
 		local worstOf = env.configInput.EHPUnluckyWorstOf or 1
-		output.MeleeNotHitChance = 100 - (1 - output.MeleeEvadeChance / 100) * (1 - output.EffectiveAttackDodgeChance / 100) * (1 - output.AvoidAllDamageFromHitsChance / 100) * 100
-		output.ProjectileNotHitChance = 100 - (1 - output.ProjectileEvadeChance / 100) * (1 - output.EffectiveAttackDodgeChance / 100) * (1 - output.AvoidAllDamageFromHitsChance / 100) * (1 - (output.specificTypeAvoidance and 0 or output.AvoidProjectilesChance) / 100) * 100
-		output.SpellNotHitChance = 100 - (1 - output.EffectiveSpellDodgeChance / 100) * (1 - output.AvoidAllDamageFromHitsChance / 100) * 100
-		output.SpellProjectileNotHitChance = 100 - (1 - output.EffectiveSpellDodgeChance / 100) * (1 - output.AvoidAllDamageFromHitsChance / 100) * (1 - (output.specificTypeAvoidance and 0 or output.AvoidProjectilesChance) / 100) * 100
-		output.UntypedNotHitChance = 100 - (1 - output.AvoidAllDamageFromHitsChance / 100) * 100
+		output.MeleeNotHitChance = 100 - (1 - output.MeleeEvadeChance / 100) * (1 - output.EffectiveAttackDodgeChance / 100) * 100
+		output.ProjectileNotHitChance = 100 - (1 - output.ProjectileEvadeChance / 100) * (1 - output.EffectiveAttackDodgeChance / 100) * (1 - output.AvoidProjectilesChance / 100) * 100
+		output.SpellNotHitChance = 100 - (1 - output.EffectiveSpellDodgeChance / 100) * 100
+		output.SpellProjectileNotHitChance = 100 - (1 - output.EffectiveSpellDodgeChance / 100) * (1 - output.AvoidProjectilesChance / 100) * 100
+		output.UntypedNotHitChance = 0
 		output.AverageNotHitChance = (output.MeleeNotHitChance + output.ProjectileNotHitChance + output.SpellNotHitChance + output.SpellProjectileNotHitChance) / 4
 		output.AverageEvadeChance = (output.MeleeEvadeChance + output.ProjectileEvadeChance) / 4
 		output.ConfiguredNotHitChance = output[damageCategoryConfig.."NotHitChance"]
@@ -2678,8 +2677,30 @@ function calcs.buildDefenceEstimations(env, actor)
 		local iterationMultiplier = 1
 		local damageTotal = 0
 		local maxDamage = data.misc.ehpCalcMaxDamage
-		local maxIterations = data.misc.ehpCalcMaxIterationsToCalc
+		-- Recovery must happen between individual hits. Crediting a batch's recovery
+		-- up front can exceed the recoverable pool and cross low-life/ES/MoM
+		-- boundaries that no individual hit would cross.
+		local maxIterations = DamageIn.GainWhenHit and m_huge or data.misc.ehpCalcMaxIterationsToCalc
+		local function remainingProtection()
+			local total = 0
+			for _, value in pairs(poolTable.Aegis) do
+				total = total + value
+			end
+			for _, value in pairs(poolTable.Guard) do
+				total = total + value
+			end
+			for _, ally in pairs(poolTable.AlliesTakenBeforeYou) do
+				total = total + ally.remaining
+			end
+			return total
+		end
 		while poolTable.Life > 0 and DamageIn["iterations"] < maxIterations do
+			local previousLife, previousMana, previousES, previousWard, previousWardChance, previousProtection, previousVaalHits
+			if DamageIn.GainWhenHit then
+				previousLife, previousMana, previousES = poolTable.Life, poolTable.Mana, poolTable.EnergyShield
+				previousWard, previousWardChance = poolTable.Ward, poolTable.WardActiveChance
+				previousProtection, previousVaalHits = remainingProtection(), m_max(VaalArcticArmourHitsLeft, 0)
+			end
 			DamageIn["iterations"] = DamageIn["iterations"] + 1
 			local Damage = { }
 			damageTotal = 0
@@ -2720,6 +2741,14 @@ function calcs.buildDefenceEstimations(env, actor)
 				poolTable.Life = m_min(poolTable.Life + DamageIn.LifeWhenHit, output.LifeRecoverable or 0)
 				poolTable.Mana = m_min(poolTable.Mana + DamageIn.ManaWhenHit, output.ManaUnreserved or 0)
 				poolTable.EnergyShield = m_min(poolTable.EnergyShield + DamageIn.EnergyShieldWhenHit, output.EnergyShieldRecoveryCap)
+				-- With identical surviving pools and protection, every subsequent hit
+				-- repeats this state. Tracking counters do not affect damage reduction.
+				if (poolTable.Life == previousLife and poolTable.Mana == previousMana and poolTable.EnergyShield == previousES
+					and poolTable.Ward == previousWard and poolTable.WardActiveChance == previousWardChance
+					and remainingProtection() == previousProtection and m_max(VaalArcticArmourHitsLeft, 0) == previousVaalHits)
+					or (numHits + 1) * damageTotal >= maxDamage then
+					return m_huge
+				end
 			end
 			iterationMultiplier = 1
 			-- to speed it up, run recursively but accelerated
@@ -2728,7 +2757,7 @@ function calcs.buildDefenceEstimations(env, actor)
 			local speedUp = DamageIn["LimitEHPSpeedup"] and 4 or data.misc.ehpCalcSpeedUp
 			DamageIn["cyclesRan"] = DamageIn["cyclesRan"] or false
 			local wardAvoidBreakActive = wardAvoidBreakChance < 1 and (poolTable.WardActiveChance or 0) > 0.01
-			if not DamageIn["cyclesRan"] and not wardAvoidBreakActive and poolTable.Life > 0 and DamageIn["iterations"] < maxIterations then
+			if not DamageIn.GainWhenHit and not DamageIn["cyclesRan"] and not wardAvoidBreakActive and poolTable.Life > 0 and DamageIn["iterations"] < maxIterations then
 				Damage = { }
 				for _, damageType in ipairs(dmgTypeList) do
 					Damage[damageType] = DamageIn[damageType] * speedUp
@@ -2801,7 +2830,6 @@ function calcs.buildDefenceEstimations(env, actor)
 			local blockEffect = (1 - BlockChance * output.BlockEffect / 100)
 			local suppressChance = 0
 			local suppressionEffect = 1
-			local ExtraAvoidChance = 0
 			local averageAvoidChance = 0
 			if not env.configInput.DisableEHPGainOnBlock and (output["NumberOfDamagingHits"] > 1) then
 				DamageIn.LifeWhenHit = output.LifeOnBlock * BlockChance
@@ -2829,12 +2857,6 @@ function calcs.buildDefenceEstimations(env, actor)
 				DamageIn.EnergyShieldWhenHit = (DamageIn.EnergyShieldWhenHit or 0) + output.EnergyShieldOnSuppress * ( damageCategoryConfig == "Average" and 0.5 or 1 )
 				DamageIn.LifeWhenHit = (DamageIn.LifeWhenHit or 0) + output.LifeOnSuppress * ( damageCategoryConfig == "Average" and 0.5 or 1 )
 			end
-			-- extra avoid chance
-			if damageCategoryConfig == "Projectile" or damageCategoryConfig == "SpellProjectile" then
-				ExtraAvoidChance = ExtraAvoidChance + output.AvoidProjectilesChance
-			elseif damageCategoryConfig == "Average" then
-				ExtraAvoidChance = ExtraAvoidChance + output.AvoidProjectilesChance / 2
-			end
 			-- gain when hit (currently just gain on block/suppress, and Defiance of Destiny)
 			if not env.configInput.DisableEHPGainOnBlock and (output["NumberOfDamagingHits"] > 1) then
 				DamageIn.MissingLifeBeforeEnemyHit = modDB:Sum("BASE", nil, "MissingLifeBeforeEnemyHit")
@@ -2854,7 +2876,7 @@ function calcs.buildDefenceEstimations(env, actor)
 				end
 				local AvoidChance = 0
 				if output.specificTypeAvoidance then
-					AvoidChance = m_min(output["Avoid"..damageType.."DamageChance"] + ExtraAvoidChance, data.misc.AvoidChanceCap)
+					AvoidChance = output["Avoid"..damageType.."DamageChance"]
 					-- unlucky config to lower the value of block, dodge, evade etc for ehp
 					local worstOf = env.configInput.EHPUnluckyWorstOf or 1
 					if worstOf > 1 then
@@ -2913,14 +2935,14 @@ function calcs.buildDefenceEstimations(env, actor)
 					if output.AttackDodgeChance > 0 then
 						t_insert(breakdown["ConfiguredNotHitChance"], s_format("x %.2f ^8(chance for dodge to fail)", 1 - output.AttackDodgeChance / 100))
 					end
-					if damageCategoryConfig == "Projectile" and not output.specificTypeAvoidance and output.AvoidProjectilesChance > 0 then
+					if damageCategoryConfig == "Projectile" and output.AvoidProjectilesChance > 0 then
 						t_insert(breakdown["ConfiguredNotHitChance"], s_format("x %.2f ^8(chance for avoidance to fail)", 1 - output.AvoidProjectilesChance / 100))
 					end
 				elseif damageCategoryConfig == "Spell" or damageCategoryConfig == "SpellProjectile" then
 					if output.SpellDodgeChance > 0 then
 						t_insert(breakdown["ConfiguredNotHitChance"], s_format("%.2f ^8(chance for dodge to fail)", 1 - output.SpellDodgeChance / 100))
 					end
-					if damageCategoryConfig == "SpellProjectile" and not output.specificTypeAvoidance and output.AvoidProjectilesChance > 0 then
+					if damageCategoryConfig == "SpellProjectile" and output.AvoidProjectilesChance > 0 then
 						t_insert(breakdown["ConfiguredNotHitChance"], s_format("x %.2f ^8(chance for avoidance to fail)", 1 - output.AvoidProjectilesChance / 100))
 					end
 				elseif damageCategoryConfig == "Average" then
@@ -2930,12 +2952,9 @@ function calcs.buildDefenceEstimations(env, actor)
 					if output.AttackDodgeChance > 0  or output.SpellDodgeChance > 0 then
 						t_insert(breakdown["ConfiguredNotHitChance"], s_format("x%.2f ^8(chance for dodge to fail)", 1 - (output.AttackDodgeChance + output.SpellDodgeChance) / 2 / 100))
 					end
-					if not output.specificTypeAvoidance and output.AvoidProjectilesChance > 0 then
+					if output.AvoidProjectilesChance > 0 then
 						t_insert(breakdown["ConfiguredNotHitChance"], s_format("x %.2f ^8(chance for avoidance to fail)", 1 - output.AvoidProjectilesChance / 2 / 100))
 					end
-				end
-				if output.AvoidAllDamageFromHitsChance > 0 then
-					t_insert(breakdown["ConfiguredNotHitChance"], s_format("x %.2f ^8(chance for damage avoidance to fail)", 1 - output.AvoidAllDamageFromHitsChance / 100))
 				end
 				local worstOf = env.configInput.EHPUnluckyWorstOf or 1
 				if worstOf > 1 then
