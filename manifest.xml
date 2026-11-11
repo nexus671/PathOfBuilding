@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-nexus.95ba5d30" />
+	<Version number="2.67.2-nexus.c9e46144" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/" />
 	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/runtime/" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/src/" />
@@ -387,19 +387,19 @@
 	<File name="Modules/CalcActiveSkill.lua" part="program" sha1="de0804a64cb7a0d98b6265611f37b5fd4dde7068" />
 	<File name="Modules/CalcBase.lua" part="program" sha1="d4b5f492c68c8600aedfdcb5efdc44e6ac885c6e" />
 	<File name="Modules/CalcBreakdown.lua" part="program" sha1="33c7c12a0b079034d9534335143eda0e4dba70a1" />
-	<File name="Modules/CalcDefence.lua" part="program" sha1="721d8ab424a9eb1e7417f4b066f0883ed09198de" />
+	<File name="Modules/CalcDefence.lua" part="program" sha1="6e3905c31e38ece86dcdfc015086760dacd10706" />
 	<File name="Modules/CalcFormat.lua" part="program" sha1="eacfddab6dc96067db1822b48d906d20d25708dc" />
 	<File name="Modules/CalcMirages.lua" part="program" sha1="bac0e5323fabbda5536a896b965b99006830cb3a" />
-	<File name="Modules/CalcOffence.lua" part="program" sha1="98ae424e9ca389baea2fa3b705fa77b5b94dc213" />
-	<File name="Modules/CalcPerform.lua" part="program" sha1="a5252a1c9b3d65068d33726c5724662e0de03616" />
+	<File name="Modules/CalcOffence.lua" part="program" sha1="7f6f3aabd0d72d8df5cb600339359a9fbb501d8a" />
+	<File name="Modules/CalcPerform.lua" part="program" sha1="ef631f97370b8e023e6e46bacfb043efebbbef87" />
 	<File name="Modules/Calcs.lua" part="program" sha1="827dcf77d65ce8ce5ecc58d712b9b9824ec9b810" />
-	<File name="Modules/CalcSections.lua" part="program" sha1="0d75f1db45d2bd46a4e9e396584806dfc20270a4" />
+	<File name="Modules/CalcSections.lua" part="program" sha1="6b65888de2d831140b36d9dd2d2e3edf3519b244" />
 	<File name="Modules/CalcSetup.lua" part="program" sha1="ee6cd12e17a57538b956b264c08937418c49a465" />
 	<File name="Modules/CalcTools.lua" part="program" sha1="6d39e85eef9e3c71a9aa2e11e7031848f4c2fb9f" />
 	<File name="Modules/CalcTriggers.lua" part="program" sha1="34e19cf6f5abb5d95cd78dadf6e512c580e9b020" />
 	<File name="Modules/Common.lua" part="program" sha1="bc179fdb025d02e46ceb0da9db23531d18cf9149" />
 	<File name="Modules/ConfigModBrowser.lua" part="program" sha1="6c32488700943decebee20dc939d8a2bde291bb0" />
-	<File name="Modules/ConfigOptions.lua" part="program" sha1="4fd410a2334a89b429596f5779569bf8a3b7801d" />
+	<File name="Modules/ConfigOptions.lua" part="program" sha1="16c910560711d2a4a5cfba2cb7f4b5a6596b8108" />
 	<File name="Modules/ConfigVisibility.lua" part="program" sha1="ad4a825bfe36dc94dca1ac7033d815110fd46d3c" />
 	<File name="Modules/Data.lua" part="program" sha1="54b1463cbbfc6a8b84d59b41fa2b2d11c62324cd" />
 	<File name="Modules/DataAbyssJewelLookUpTableHelper.lua" part="program" sha1="c95c4e8af0e9ab9c2abec801e5a279952754cf05" />
@@ -1403,4 +1403,5 @@
 	<File name="TreeData/VaalJewelCircle2.png" part="tree" sha1="facc5d2fea2f0027d09fdb6e4692f9f298aff293" />
 	<File name="TreeData/VerdantOil.png" part="tree" sha1="97e77b6e96accf440c17a81d622bf629b8c78fe7" />
 	<File name="TreeData/VioletOil.png" part="tree" sha1="1e9e4f0683a5156c27cb7ddafada8bed877e1c25" />
+	<File name="Modules/CalcTime.lua" part="program" sha1="f0ffcaafd31cab9e2c75083a399fdab0b1fda761" />
 </PoBVersion>

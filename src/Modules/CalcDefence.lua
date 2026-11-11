@@ -5,6 +5,7 @@
 --
 ---@class Calcs
 local calcs = require("Modules.CalcBase")
+local timeCalcs = require("Modules.CalcTime")
 
 local pairs = pairs
 local ipairs = ipairs
@@ -1673,6 +1674,7 @@ end
 
 -- Performs all extra defensive calculations ( eg EHP, maxHit )
 function calcs.buildDefenceEstimations(env, actor)
+	actor.recoverySimulationDamage = nil
 	local modDB = actor.modDB
 	local enemyDB = actor.enemy.modDB
 	---@class Output
@@ -2945,6 +2947,9 @@ function calcs.buildDefenceEstimations(env, actor)
 			DamageIn["LimitEHPSpeedup"] = DamageIn["TrackRecoupable"] or DamageIn["TrackLifeLossOverTime"] or DamageIn.GainWhenHit
 			averageAvoidChance = averageAvoidChance / 5
 			output["ConfiguredDamageChance"] = 100 * (blockSuppressionEffect * (1 - averageAvoidChance / 100))
+			if env.configInput.simulateRecovery then
+				actor.recoverySimulationDamage = copyTable(DamageIn)
+			end
 			output["NumberOfMitigatedDamagingHits"] = (output["ConfiguredDamageChance"] ~= 100 or DamageIn["TrackRecoupable"] or DamageIn["TrackLifeLossOverTime"] or DamageIn.GainWhenHit) and numberOfHitsToDie(DamageIn) or output["NumberOfDamagingHits"]
 			if breakdown then
 				breakdown["ConfiguredDamageChance"] = {
@@ -3936,6 +3941,107 @@ function calcs.buildDefenceEstimations(env, actor)
 		end
 	end
 	--endregion
+end
+
+
+-- Finite, opt-in expected-hit scenario. The existing EHP calculation remains
+-- the burst metric; this model includes recovery and delayed life loss.
+function calcs.recoveryOverTime(env, actor)
+	local o, mods, breakdown = actor.output, actor.modDB, actor.breakdown
+	actor.mainSkill.skillFlags.recoverySimulation = env.configInput.simulateRecovery and true or false
+	if not env.configInput.simulateRecovery then return end
+	local damageIn = actor.recoverySimulationDamage
+	local unsupported
+	if not damageIn then unsupported = "Select a hit damage type; damage-over-time scenarios are not supported."
+	elseif mods:Flag(nil, "DamageInsteadReservesLife") then unsupported = "Dissolution of the Flesh's reservation/release cycle is not supported."
+	elseif (o.Ward or 0) > 0 then unsupported = "Timed Ward restoration is not supported."
+	elseif o.EnergyShieldRechargeAppliesToLife then unsupported = "Energy Shield recharge applied to Life is not supported."
+	elseif o.NetEnergyShieldRegen and o.NetEnergyShieldRegen < (o.EnergyShieldRegenRecovery or 0) then unsupported = "Damage over time affecting Energy Shield requires dynamic routing/recharge interruption, which is not supported."
+	elseif not o.enemySkillTime or o.enemySkillTime < 0.02 then unsupported = "Set an enemy attack/cast time of at least 20ms." end
+	if unsupported then
+		o.RecoverySimulationUnsupported = true
+		if breakdown then breakdown.RecoverySimulationUnsupported = { unsupported } end
+		return
+	end
+	local window = m_min(m_max(env.configInput.recoverySimulationWindow or 60, 0.02), 300)
+	local connect = 1 - (o.ConfiguredNotHitChance or 0) / 100
+	local caps = { Life = o.LifeRecoverable, Mana = o.ManaUnreserved or 0, EnergyShield = o.EnergyShieldRecoveryCap }
+	local pools = { Life = caps.Life, Mana = caps.Mana, EnergyShield = caps.EnergyShield, Ward = 0,
+		Aegis = { shared = o.sharedAegis or 0, sharedElemental = o.sharedElementalAegis or 0 },
+		Guard = { shared = o.sharedGuardAbsorb or 0 }, AlliesTakenBeforeYou = buildAllyLifePools(o) }
+	for _, damageType in ipairs(dmgTypeList) do
+		pools.Aegis[damageType] = o[damageType.."Aegis"] or 0
+		pools.Guard[damageType] = o[damageType.."GuardAbsorb"] or 0
+	end
+	local rates = { Life = o.NetLifeRegen or o.LifeRegenRecovery or 0, Mana = o.NetManaRegen or o.ManaRegenRecovery or 0,
+		EnergyShield = o.NetEnergyShieldRegen or o.EnergyShieldRegenRecovery or 0 }
+	if env.configInput.recoverySimulationAttacking then
+		for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
+			local costKey = resource == "EnergyShield" and "ES" or resource
+			rates[resource] = rates[resource] + (o[resource.."LeechGainRate"] or 0) - (o[costKey.."PerSecondCost"] or 0)
+		end
+	end
+	local vaalHits = o.VaalArcticArmourLife or 0
+	local result = timeCalcs.survival({ pools = pools, caps = caps, rates = rates, window = window,
+		interval = connect > 0 and o.enemySkillTime / connect or math.huge,
+		recharge = o.EnergyShieldRecharge or 0, rechargeDelay = o.EnergyShieldRechargeDelay or math.huge,
+		hit = function(state, t)
+			if connect <= 0 then return state, { } end
+			if (damageIn.MissingLifeBeforeEnemyHit or 0) ~= 0 then
+				state.Life = m_min(caps.Life, state.Life + damageIn.MissingLifeBeforeEnemyHit * ((o.LifeUnreserved or 0) - state.Life) / 100)
+			end
+			if (damageIn.MissingManaBeforeEnemyHit or 0) ~= 0 then
+				state.Mana = m_min(caps.Mana, state.Mana + damageIn.MissingManaBeforeEnemyHit * (caps.Mana - state.Mana) / 100)
+			end
+			state.LifeLossLostOverTime, state.LifeBelowHalfLossLostOverTime = 0, 0
+			state.damageTakenThatCanBeRecouped = { }
+			local damage = { }
+			for _, damageType in ipairs(dmgTypeList) do
+				damage[damageType] = damageIn[damageType] * (vaalHits > 0 and (1 - (o.VaalArcticArmourMitigation or 0)) or 1)
+			end
+			vaalHits = vaalHits - 1
+			local previousES = state.EnergyShield
+			state = calcs.reducePoolsByDamage(state, damage, actor)
+			local esDamaged = state.EnergyShield < previousES
+			local cohorts = { }
+			if state.Life <= 0 then return state, cohorts end
+			if damageIn.GainWhenHit then
+				for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
+					state[resource] = m_min(caps[resource], state[resource] + (damageIn[resource.."WhenHit"] or 0))
+				end
+			end
+			for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
+				local amount = 0
+				for _, damageType in ipairs(dmgTypeList) do
+					amount = amount + (state.damageTakenThatCanBeRecouped[damageType] or 0) * ((o[resource.."Recoup"] or 0)
+						+ (o[damageType..resource.."Recoup"] or 0) + (isElemental[damageType] and (o["Elemental"..resource.."Recoup"] or 0) or 0)) / 100
+				end
+				if amount > 0 then
+					local duration = (mods:Flag(nil, "3Second"..resource.."Recoup") or mods:Flag(nil, "3SecondRecoup")) and 3 or 4
+					cohorts[#cohorts + 1] = { [resource] = amount / duration, expires = t + duration }
+				end
+			end
+			local delayedLoss = state.LifeLossLostOverTime + state.LifeBelowHalfLossLostOverTime * mods:Sum("BASE", nil, "LifeLossBelowHalfLost") / 100
+			if delayedLoss > 0 then cohorts[#cohorts + 1] = { Life = -delayedLoss / 4, expires = t + 4 } end
+			return state, cohorts, esDamaged
+		end,
+	})
+	o.RecoverySimulationTime = result.time
+	o.RecoverySimulationWindow = window
+	o.RecoverySimulationSurvived = result.survived
+	o.RecoverySimulationDied = not result.survived
+	o.RecoverySimulationIncomingDamage = connect > 0 and result.hits / connect * o.totalEnemyDamageIn or 0
+	if breakdown then
+		local lines = {
+			"Expected-value scenario, not a guarantee against an unlucky burst.",
+			s_format("%.2fs window; first connected hit at time zero, then every %.3fs on average.", window, connect > 0 and o.enemySkillTime / connect or math.huge),
+			"Includes capped Life/ES/Mana, regeneration/degen, recoup ramp, delayed Life loss, gain on block/suppression and ordinary ES recharge.",
+			env.configInput.recoverySimulationAttacking and "Includes sustained main-skill leech/on-hit rates and costs. Assumes the skill can be sustained; leech startup/removal at full is not simulated." or "Standing still: main-skill leech, gain on hit and skill costs are excluded.",
+			"Initial protection is not refreshed. Flask use, temporary-buff expiry, Ward restoration and special recharge rules are not simulated.",
+			result.survived and "Survived the selected window; this does not establish infinite survival." or s_format("Died at %.3fs.", result.time),
+		}
+		for _, stat in ipairs({ "RecoverySimulationTime", "RecoverySimulationWindow", "RecoverySimulationSurvived", "RecoverySimulationDied", "RecoverySimulationIncomingDamage" }) do breakdown[stat] = lines end
+	end
 end
 
 return calcs

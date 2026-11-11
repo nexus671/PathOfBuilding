@@ -1073,6 +1073,17 @@ return {
 		{ breakdown = "OffHand.TotalPoisonDPS" },
 		{ breakdown = "TotalPoisonDPS" },
 	}, },
+	{ label = "Time to Stack Limit", haveOutput = "PoisonDamageWindow", { format = "{2:output:PoisonRampTime}s", { breakdown = "PoisonRampTime" } } },
+	{ label = "Average DPS in Ramp", haveOutput = "PoisonDamageWindow", { format = "{1:output:PoisonRampAverageDPS}", { breakdown = "PoisonRampAverageDPS" } } },
+	{ label = "Poison Window", haveOutput = "PoisonWindowUnsupported", { format = "Unsupported", { breakdown = "PoisonWindowUnsupported" } } },
+	{ label = "Poison DPS at 1s", haveOutput = "PoisonDamageWindow", { format = "{1:output:PoisonDPSAt1}", { breakdown = "PoisonDPSAt1" } } },
+	{ label = "Poison DPS at 3s", haveOutput = "PoisonDamageWindow", { format = "{1:output:PoisonDPSAt3}", { breakdown = "PoisonDPSAt3" } } },
+	{ label = "Poison DPS at 5s", haveOutput = "PoisonDamageWindow", { format = "{1:output:PoisonDPSAt5}", { breakdown = "PoisonDPSAt5" } } },
+	{ label = "Poison DPS at 10s", haveOutput = "PoisonDamageWindow", { format = "{1:output:PoisonDPSAt10}", { breakdown = "PoisonDPSAt10" } } },
+	{ label = "Combat Window", haveOutput = "PoisonDamageWindow", { format = "{2:output:PoisonDamageWindow}s", { breakdown = "PoisonDamageWindow" } } },
+	{ label = "DPS at Window End", haveOutput = "PoisonDamageWindow", { format = "{1:output:PoisonWindowDPS}", { breakdown = "PoisonWindowDPS" } } },
+	{ label = "Window Average DPS", haveOutput = "PoisonDamageWindow", { format = "{1:output:PoisonWindowAverageDPS}", { breakdown = "PoisonWindowAverageDPS" } } },
+	{ label = "Window Poison Damage", haveOutput = "PoisonDamageWindow", { format = "{1:output:PoisonWindowDamage}", { breakdown = "PoisonWindowDamage" } } },
 } }
 } },
 { 1, "Ignite", 1, colorCodes.OFFENCE, {{ defaultCollapsed = false, label = "Ignite", data = {	
@@ -2340,6 +2351,14 @@ return {
 		{ breakdown = "EHPSurvivalTime" }, 
 		{ label = "Enemy modifiers", modName = { "TemporalChainsActionSpeed", "ActionSpeed", "Speed", "MinimumActionSpeed" }, enemy = true },
 	},}
+}, }, { defaultCollapsed = false, label = "Recovery over Time", data = {
+	flag = "recoverySimulation",
+	{ label = "Scenario", haveOutput = "RecoverySimulationUnsupported", { format = "Unsupported", { breakdown = "RecoverySimulationUnsupported" } } },
+	{ label = "Simulation Window", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationWindow}s", { breakdown = "RecoverySimulationWindow" } } },
+	{ label = "Time Simulated", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationTime}s", { breakdown = "RecoverySimulationTime" } } },
+	{ label = "Window Survived", haveOutput = "RecoverySimulationSurvived", { format = "Yes", { breakdown = "RecoverySimulationSurvived" } } },
+	{ label = "Window Survived", haveOutput = "RecoverySimulationDied", { format = "No", { breakdown = "RecoverySimulationDied" } } },
+	{ label = "Incoming Damage", haveOutput = "RecoverySimulationWindow", { format = "{0:output:RecoverySimulationIncomingDamage}", { breakdown = "RecoverySimulationIncomingDamage" } } },
 }, }, { defaultCollapsed = false, label = "Maximum Hit Taken", data = {
 	colWidth = 114,
 	{
