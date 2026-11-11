@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-a69391d6d" />
-	<Source part="default" url="https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding/{branch}/" />
-	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding/{branch}/runtime/" />
-	<Source part="program" url="https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding/{branch}/src/" />
-	<Source part="tree" url="https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding/{branch}/src/" />
+	<Version number="2.67.2-nexus.95ba5d30" />
+	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/" />
+	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/runtime/" />
+	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/src/" />
+	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/src/" />
 	<File name="changelog.txt" part="default" sha1="4525463231d4e32bfdf7328e25270c0088469868" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
@@ -387,13 +387,13 @@
 	<File name="Modules/CalcActiveSkill.lua" part="program" sha1="de0804a64cb7a0d98b6265611f37b5fd4dde7068" />
 	<File name="Modules/CalcBase.lua" part="program" sha1="d4b5f492c68c8600aedfdcb5efdc44e6ac885c6e" />
 	<File name="Modules/CalcBreakdown.lua" part="program" sha1="33c7c12a0b079034d9534335143eda0e4dba70a1" />
-	<File name="Modules/CalcDefence.lua" part="program" sha1="1329e344cde78af2113559aabbadd84d9fab7281" />
+	<File name="Modules/CalcDefence.lua" part="program" sha1="721d8ab424a9eb1e7417f4b066f0883ed09198de" />
 	<File name="Modules/CalcFormat.lua" part="program" sha1="eacfddab6dc96067db1822b48d906d20d25708dc" />
 	<File name="Modules/CalcMirages.lua" part="program" sha1="bac0e5323fabbda5536a896b965b99006830cb3a" />
 	<File name="Modules/CalcOffence.lua" part="program" sha1="98ae424e9ca389baea2fa3b705fa77b5b94dc213" />
 	<File name="Modules/CalcPerform.lua" part="program" sha1="a5252a1c9b3d65068d33726c5724662e0de03616" />
 	<File name="Modules/Calcs.lua" part="program" sha1="827dcf77d65ce8ce5ecc58d712b9b9824ec9b810" />
-	<File name="Modules/CalcSections.lua" part="program" sha1="5e07d7ba3e2aaa4005386df618c3910f15b46bf8" />
+	<File name="Modules/CalcSections.lua" part="program" sha1="0d75f1db45d2bd46a4e9e396584806dfc20270a4" />
 	<File name="Modules/CalcSetup.lua" part="program" sha1="ee6cd12e17a57538b956b264c08937418c49a465" />
 	<File name="Modules/CalcTools.lua" part="program" sha1="6d39e85eef9e3c71a9aa2e11e7031848f4c2fb9f" />
 	<File name="Modules/CalcTriggers.lua" part="program" sha1="34e19cf6f5abb5d95cd78dadf6e512c580e9b020" />
@@ -408,7 +408,7 @@
 	<File name="Modules/ItemSlotHelper.lua" part="program" sha1="4b7d441f9ade5d57c413aa1f8f8067b654cfb927" />
 	<File name="Modules/ItemTools.lua" part="program" sha1="754bbbed69c10706aa403446433c3741e21c4556" />
 	<File name="Modules/Main.lua" part="program" sha1="ded64c6fe8e5653979824497da4c784501cdf92a" />
-	<File name="Modules/ModParser.lua" part="program" sha1="41b1069aae82348c5f0cb18726d162a1568abbe1" />
+	<File name="Modules/ModParser.lua" part="program" sha1="9df68d6b5a6a91174fa3039a3f0134e87019b863" />
 	<File name="Modules/ModTools.lua" part="program" sha1="c987491da4021b5bdc4744b5eec84fb5995284cf" />
 	<File name="Modules/PantheonTools.lua" part="program" sha1="ebe91a7d8f8444a6061acf4758da0e775cc8c314" />
 	<File name="Modules/StatDescriber.lua" part="program" sha1="db58472a9bf736f2a1fe5fbe2dec9cf224f36a0f" />
