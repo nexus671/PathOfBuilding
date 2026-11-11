@@ -42,8 +42,12 @@ def main():
     image, audit = render(negative)
     image.save(directory / "expected-audit-failures.png")
     assert audit["lowContrast"] and audit["horizontalClipping"], "UI audits failed to detect the deliberate bad fixture"
-    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).splitlines()
+    try:
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
+        dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).splitlines()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        revision = environment.get("GITHUB_SHA")
+        dirty = None
     sources = list((ROOT / "src/Classes").glob("*.lua")) + list((ROOT / "src/Modules").glob("*.lua"))
     sources += list((ROOT / "runtime/SimpleGraphic/Fonts").glob("*"))
     sources += [ROOT / "src/Data/Global.lua", Path(__file__), ROOT / "tools/render_headless_ui.py", ROOT / "tools/test_headless_ui.lua"]

@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/pathofbuildingcommunity/pathofbuilding-tests:latest
     steps:
-      - uses: actions/checkout@v4
       # cspell:ignore py3
-      - name: Install headless frame renderer
-        run: apk add python3 py3-pillow
+      - name: Install headless test dependencies
+        run: apk add git python3 py3-pillow
+      - uses: actions/checkout@v4
       - name: Exercise controls and audit frames
         run: python3 tools/check_headless_ui.py
       - name: Upload headless UI evidence
