@@ -5,6 +5,7 @@
 --
 ---@class Calcs
 local calcs = require("Modules.CalcBase")
+local timeCalcs = require("Modules.CalcTime")
 
 local pairs = pairs
 local ipairs = ipairs
@@ -2019,6 +2020,7 @@ function calcs.offence(env, actor, activeSkill)
 
 	-- Configure damage passes
 	local passList = { }
+	local poisonTimeProfiles = { }
 	if isAttack then
 		output.MainHand = { }
 		output.OffHand = { }
@@ -4756,6 +4758,7 @@ function calcs.offence(env, actor, activeSkill)
 			local poisonStackLimit = skillModList:Min(cfg, "PoisonStackLimit")
 			local PoisonStacks = output.HitChance / 100 * poisonChance * additionalPoisonStacks * skillData.dpsMultiplier * (skillData.stackMultiplier or 1) * quantityMultiplier
 			local uncappedPoisonStacks
+			local poisonApplicationsPerSecond = PoisonStacks * (globalOutput.HitSpeed or globalOutput.Speed or 0)
 			if (globalOutput.HitSpeed or globalOutput.Speed) > 0 then
 				--assume skills with no cast, attack, or cooldown time are single cast
 				PoisonStacks = PoisonStacks * globalOutput.PoisonDuration * (globalOutput.HitSpeed or globalOutput.Speed) 
@@ -4925,6 +4928,10 @@ function calcs.offence(env, actor, activeSkill)
 					PoisonDPSUncapped = singlePoisonDPSCapped * PoisonStacks
 					PoisonDPSCapped = m_min(PoisonDPSUncapped, data.misc.DotDpsCap)
 					output.TotalPoisonDPS = PoisonDPSCapped
+					local weight = skillFlags.bothWeaponAttack and not skillData.doubleHitsWhenDualWielding and 0.5 or 1
+					if not skillModList:Flag(nil, "Condition:NonPoisonedOnly") then
+						t_insert(poisonTimeProfiles, { slope = singlePoisonDPSCapped * poisonApplicationsPerSecond * weight, ceiling = PoisonDPSUncapped * weight })
+					end
 				end
 				if breakdown then
 					if output.CritPoisonDotMulti and (output.CritPoisonDotMulti ~= output.PoisonDotMulti) then
@@ -6290,4 +6297,43 @@ function calcs.offence(env, actor, activeSkill)
 	output.CullingDPS = output.CombinedDPS * (bestCull - 1)
 	output.ReservationDPS = output.CombinedDPS * (output.ReservationDpsMultiplier - 1)
 	output.CombinedDPS = output.CombinedDPS * bestCull * output.ReservationDpsMultiplier
+
+	if #poisonTimeProfiles > 0 then
+		if quantityMultiplier > 1 then
+			for _, profile in ipairs(poisonTimeProfiles) do
+				profile.slope = profile.slope * quantityMultiplier
+				profile.ceiling = profile.ceiling * quantityMultiplier
+			end
+		end
+		local window = m_min(m_max(env.configInput.poisonDamageWindow or 5, 0.01), 300)
+		local cap = m_min(data.misc.DotDpsCap, output.TotalPoisonDPS)
+		local result = timeCalcs.poisonWindow(poisonTimeProfiles, window, cap)
+		output.PoisonDamageWindow = window
+		output.PoisonWindowDPS = result.dps
+		output.PoisonWindowAverageDPS = result.average
+		output.PoisonWindowDamage = result.damage
+		output.PoisonRampTime = result.ramp
+		output.PoisonRampAverageDPS = timeCalcs.poisonWindow(poisonTimeProfiles, result.ramp, cap).average
+		for _, seconds in ipairs({1, 3, 5, 10}) do
+			output["PoisonDPSAt"..seconds] = timeCalcs.poisonWindow(poisonTimeProfiles, seconds, cap).dps
+		end
+		if breakdown then
+			local assumptions = {
+				"Selected skill, continuous application from an initially unpoisoned target.",
+				"Uses configured damage, attack/cast rate, hit/poison chance and additional poisons.",
+				"Configured buffs/debuffs stay constant; no Wither or conditional-damage ramp is simulated.",
+				"Other skills, minions and poison damage after the window are not included.",
+				s_format("%.2fs combat window", window),
+				s_format("%.2fs to configured steady-state stack limit", result.ramp),
+				s_format("%.1f poison damage dealt inside the window", result.damage),
+				s_format("%.1f average poison DPS inside the window", result.average),
+			}
+			for _, stat in ipairs({"PoisonDamageWindow", "PoisonWindowDPS", "PoisonWindowAverageDPS", "PoisonWindowDamage", "PoisonRampTime", "PoisonRampAverageDPS", "PoisonDPSAt1", "PoisonDPSAt3", "PoisonDPSAt5", "PoisonDPSAt10"}) do
+				breakdown[stat] = assumptions
+			end
+		end
+	elseif skillFlags.poison then
+		output.PoisonWindowUnsupported = true
+		if breakdown then breakdown.PoisonWindowUnsupported = { "Continuous poison application is not modelled for single-use/average-damage skills or non-poisoned-only calculations." } end
+	end
 end

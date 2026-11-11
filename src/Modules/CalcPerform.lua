@@ -3825,6 +3825,8 @@ function calcs.perform(env, skipEHP)
 		return false -- Rejected trigger-source probes are never cached
 	end
 
+	if not skipEHP then calcs.recoveryOverTime(env, env.player) end
+
 	if env.minion then
 		calcs.defence(env, env.minion)
 		if not skipEHP then -- main.build.calcsTab.input.showMinion and -- should be disabled unless "calcsTab.input.showMinion" is true
