@@ -27,6 +27,7 @@ function M.snapshot(build)
 	end
 	result.mainGroup = build.mainSocketGroup
 	result.craftingProjects = copyTable(build.savers.CraftingProjects.projects)
+	result.atlasPlans = copyTable(build.savers.AtlasPlans.plans)
 	for _,node in pairs(build.spec.nodes) do if node.alloc then result.passives[node.id] = (node.name or node.dn or node.type or "Passive")..(build.spec.masterySelections[node.id] and " (mastery "..build.spec.masterySelections[node.id]..")" or "") end end
 	return result
 end
@@ -55,7 +56,16 @@ function M.changes(before, after)
 		add("Crafting projects updated (saved only with an explicit build Save)")
 		for _,project in ipairs(after.craftingProjects) do for _,line in ipairs(require("Modules.CraftingProjects").lines(project)) do add(line) end end
 	end
-	if #lines == 0 then add("No character, equipment, gem, passive, configuration or notes changes.") end
+	if not tableDeepEquals(before.atlasPlans,after.atlasPlans) then
+		add("Atlas plans updated (planning only; character stats are unchanged by Atlas nodes)")
+		for _,plan in ipairs(after.atlasPlans or {}) do
+			local report=require("Modules.AtlasPlanner").report(plan)
+			add(plan.title.." ["..plan.version.."] "..report.used.." points; budget "..report.budget.." + "..report.bonus)
+			for _,id in ipairs(plan.nodes) do add("  #"..id.." "..require("Modules.AtlasPlanner").tree(plan.version).nodes[id].name) end
+			if plan.notes ~= "" then add("  "..plan.notes) end
+		end
+	end
+	if #lines == 0 then add("No character, equipment, gem, passive, configuration, Atlas plan or notes changes.") end
 	return lines
 end
 

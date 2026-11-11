@@ -165,3 +165,30 @@ test('bounds native recipe work and rejects unsupported methods and invalid rout
   const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
   assert.equal(queued.kind,'craftSimulate'); assert.equal(queued.options.trials,100);
 });
+
+
+test('queues versioned Atlas searches and routing without changing build context', t => {
+  const f=fixture(t);
+  const plan={id:'atlas',title:'Essence maps',version:'3.29.1',budget:120,nodes:[],notes:'Start with sustain'};
+  assert.equal(f.call('get_atlas_plans',{}).plans.length,0);
+  f.call('search_atlas_nodes',{baseRevision:f.state.revision,version:'3.29.1',query:'Essence',limit:20});
+  let queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(queued.kind,'atlasSearch'); assert.equal(queued.proposal,undefined);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  f.call('plan_atlas_tree',{baseRevision:f.state.revision,plan,targets:[123],avoid:[456]});
+  queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(queued.kind,'atlasConnect'); assert.deepEqual(queued.targets,[123]);
+  assert.equal(f.call('get_build_context',{}).context.level,80);
+});
+
+test('keeps Atlas proposals in the desktop review flow and rejects unsupported versions', t => {
+  const f=fixture(t);
+  const plan={id:'atlas',title:'Essence maps',version:'3.27.0',budget:120,nodes:[]};
+  assert.throws(() => f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan:{...plan,version:'3.28.0'}}),/arguments/);
+  assert.throws(() => f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan:{...plan,code:'anything'}}),/arguments/);
+  assert.throws(() => f.call('plan_atlas_tree',{baseRevision:f.state.revision,plan,targets:Array(31).fill(123)}),/arguments/);
+  f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan});
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(queued.proposal.operations[0].type,'set_atlas_plan');
+  assert.equal(queued.proposal.operations[0].plan.version,'3.27.0');
+});

@@ -199,12 +199,13 @@ function Panel.Open(build)
 	controls.analysis = button(16,184,210,"Checks and death analysis",function() Panel.Analysis(build) end)
 	controls.diagnostics = button(242,184,210,"Connection diagnostics",Panel.Diagnostics)
 	controls.crafting = button(468,184,210,"Crafting projects",function() safely(function() require("Classes.CraftingProjectControl").Open(build) end) end)
-	controls.detail = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,234,0,14},function()
+	controls.atlas = button(16,222,210,"Atlas planner",function() safely(function() require("Classes.AtlasPlannerControl").Open(build) end) end)
+	controls.detail = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,262,0,14},function()
 		local text = bridge.lastError or bridge.status and bridge.status.title or "Enable the bridge, connect your MCP client, then ask it to plan or compare builds."
 		return #text > 100 and text:sub(1,97).."..." or text
 	end)
-	controls.close = button(562,276,116,"Close",function() main:ClosePopup() end)
-	main:OpenPopup(698,320,"AI build planner",controls,nil,nil,"close")
+	controls.close = button(562,302,116,"Close",function() main:ClosePopup() end)
+	main:OpenPopup(698,346,"AI build planner",controls,nil,nil,"close")
 end
 
 return Panel

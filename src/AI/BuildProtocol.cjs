@@ -9,6 +9,8 @@ const array = (items,maxItems) => ({type:'array',items,maxItems});
 const boolean = {type:'boolean'};
 const number = (minimum,maximum) => ({type:'number',minimum,maximum});
 const quoteSchema = object({amount:number(0,1e12),currency:{type:'string',pattern:'^[A-Za-z][A-Za-z0-9 _-]{0,23}$'},quotedAt:integer(0,4102444800),source:string(240)},['amount','currency','quotedAt','source']);
+const atlasVersion={enum:['3.27.0','3.29.1']};
+const atlasPlan=object({id:{type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$'},title:string(120),version:atlasVersion,budget:integer(0,138),nodes:array(integer(1,65535),300),notes:string(8000)},['id','title','version','budget','nodes']);
 const craftingMethods=['transmute','alteration','augmentation','regal','alchemy','chaos','exalt','annul','scour','divine','bench','remove_crafted','essence'];
 const craftingTargets={type:'array',minItems:1,maxItems:6,items:object({anyOf:{type:'array',minItems:1,maxItems:30,items:string(160)}},['anyOf'])};
 const craftingState=object({rarity:{enum:['NORMAL','MAGIC','RARE']},affixes:array(object({id:string(160),range:{oneOf:[number(-100,100),{type:'array',minItems:1,maxItems:20,items:number(-100,100)}]},fractured:boolean,crafted:boolean},['id']),6)},['rarity','affixes']);
@@ -26,6 +28,7 @@ const operations = [
     mainActiveSkill:integer(1,12),gems:array(object({name:string(160),level:integer(1,40),quality:integer(0,100),enabled:boolean},['name']),12)},['gems']),40)},['type','groups']),
   object({type:{const:'set_config'},values:{type:'object',maxProperties:100,additionalProperties:{type:['string','number','boolean']}}},['type','values']),
   object({type:{const:'set_notes'},text:string(64000)},['type','text']),
+  object({type:{const:'set_atlas_plan'},plan:atlasPlan},['type','plan']),
   object({type:{const:'set_crafting_project'},project:craftingProjectSchema},['type','project']),
 ];
 const metricNames = ['LifeUnreserved','EnergyShield','ManaUnreserved','CombinedDPS','FullDPS','TotalEHP','PhysicalMaximumHitTaken','ChaosMaximumHitTaken','RecoverySimulationSurvivalChance','RecoverySimulationDamageDPS','RecoverySimulationAttackUptime','ManaRegen','Speed','EffectiveMovementSpeedMod','FireResist','ColdResist','LightningResist','ChaosResist','Str','Dex','Int'];
@@ -58,6 +61,10 @@ function validate(value,schema) {
 }
 const readOnly = {readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false};
 const tools = [
+  {name:'get_atlas_plans',description:'Read named Atlas plans and bundled Standard tree versions from the connected build. Atlas allocations are separate from character passives and do not change character DPS/EHP. Build Save persists reviewed plans.',inputSchema:object({}),annotations:readOnly},
+  {name:'search_atlas_nodes',description:'Queue search over pinned official Atlas node names and stat text. Select the exact version. Returns native IDs, links, positions and stats. Decorative mastery labels are excluded. Poll get_proposal_status and match the request ID.',inputSchema:object({baseRevision:{type:'string',pattern:'^[a-f0-9]{40}$'},version:atlasVersion,query:string(160),limit:integer(1,100)},['baseRevision','version','query']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
+  {name:'plan_atlas_tree',description:'Connect desired Atlas node IDs to an existing plan by deterministic shortest paths, optionally avoiding nodes. Targets are processed in order; this is a greedy heuristic, not globally optimal. Enforces supplied budget plus native granted points and connectivity, including gateways. Returns a separate draft and verbatim stat summary; cannot apply/save. Poll get_proposal_status and match its ID.',inputSchema:object({baseRevision:{type:'string',pattern:'^[a-f0-9]{40}$'},plan:atlasPlan,targets:array(integer(1,65535),30),avoid:array(integer(1,65535),300)},['baseRevision','plan','targets']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
+  {name:'propose_atlas_plan',description:'Submit an Atlas plan for desktop review. Only Apply in PoB keeps it in the build, and an explicit Save persists it. Version-specific allocations must be connected and within the supplied progression budget. Atlas stats do not affect character calculations; no farming profit guarantees.',inputSchema:object({baseRevision:{type:'string',pattern:'^[a-f0-9]{40}$'},plan:atlasPlan},['baseRevision','plan']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
   {name:'get_build_context',description:'Read the connected desktop build: revision, character, current gear, socket groups, passives, configuration, native stats and warnings. Enable Build proposals in PoB first.',inputSchema:object({}),annotations:readOnly},
   {name:'search_build_catalog',description:'Search the desktop build\'s native gems, passive nodes (including mastery effects), configuration choices or classes. Passive paths are recomputed during a proposal; IDs are tree-version specific.',
     inputSchema:object({kind:{enum:['gems','passives','config','classes']},query:string(160),limit:integer(1,50)},['kind','query']),annotations:readOnly},
@@ -119,6 +126,10 @@ function createBridge(reportPath) {
         session:current.session,revision:current.revision,proposalStatus:current.proposal?.status,diagnostics:current.diagnostics,
         steps:['Keep PoB open and wait for calculations to finish.','Enable build proposals, then reconnect your AI client if tools are missing.','A ready desktop heartbeat does not verify that your AI client is connected.']};
     }
+    if (name === 'propose_atlas_plan') {
+      args={mode:'edit',title:args.plan.title,baseRevision:args.baseRevision,operations:[{type:'set_atlas_plan',plan:args.plan}]};
+      name='propose_build';
+    }
     if (name === 'propose_crafting_plan') {
       const project=args.project;
       if (project.simulation && project.simulation.successes > project.simulation.trials) throw new Error('Simulation successes cannot exceed trials.');
@@ -131,6 +142,7 @@ function createBridge(reportPath) {
     if (name === 'get_proposal_status') return {session:current.session,revision:current.revision,proposal:current.proposal ?? null};
     const captured = read('context');
     if (captured.schemaVersion !== 1 || captured.session !== current.session || captured.context?.revision !== current.revision) throw new Error('Desktop context is refreshing. Try again after calculations finish.');
+    if (name === 'get_atlas_plans') return {revision:current.revision,plans:captured.context.atlasPlans ?? [],versions:captured.context.atlasVersions ?? [],warning:captured.context.atlasWarning,limitations:['Atlas plans are separate from character calculations.','Budgets are supplied progression. No account completion or live farming profit is inferred.']};
     if (name === 'get_crafting_projects') return {revision:current.revision,projects:captured.context.craftingProjects ?? [],warning:captured.context.craftingWarning,limitations:['Plans and cost/simulation results are supplied data, not independently verified recipes.','Use desktop review before applying; build Save persists projects.']};
     if (name === 'get_build_analysis') return {revision:current.revision,capturedAt:captured.capturedAt,audit:captured.context.audit,encounter:captured.context.encounter,plan:current.plan};
     if (name === 'get_build_context') {
@@ -172,7 +184,7 @@ function createBridge(reportPath) {
     if (nodeCount > 400) throw new Error('Use at most 400 passive changes per request.');
     if (name === 'set_build_goals' && args.budget !== undefined && !args.currency) throw new Error('Budget needs a currency.');
     const id = randomUUID();
-    const payload = name === 'apply_crafting_action' ? {kind:'craftAction',...args} : name === 'simulate_crafting' ? {kind:'craftSimulate',...args} : name === 'inspect_crafting_item' ? {kind:'craftInspect',...args} : name === 'set_build_goals' ? {kind:'plan',plan:args} : name === 'compare_build_candidates' ? {kind:'compare',...args} : name === 'plan_leveling_build' ? {kind:'leveling',...args} : {proposal:args};
+    const payload = name === 'search_atlas_nodes' ? {kind:'atlasSearch',...args} : name === 'plan_atlas_tree' ? {kind:'atlasConnect',...args} : name === 'apply_crafting_action' ? {kind:'craftAction',...args} : name === 'simulate_crafting' ? {kind:'craftSimulate',...args} : name === 'inspect_crafting_item' ? {kind:'craftInspect',...args} : name === 'set_build_goals' ? {kind:'plan',plan:args} : name === 'compare_build_candidates' ? {kind:'compare',...args} : name === 'plan_leveling_build' ? {kind:'leveling',...args} : {proposal:args};
     const request = JSON.stringify({id,session:current.session,...payload});
     if (Buffer.byteLength(request) > 262144) throw new Error('Proposal exceeds 256 KiB.');
     const temporary = filename(`request-${id}`);

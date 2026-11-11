@@ -479,6 +479,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	self.controls.aiBuild = new("ButtonControl"):ButtonControl({"LEFT",self.controls.modeCompare,"RIGHT"},{4,0,148,20},function()
 		return require("Modules.DesktopBuildBridge").prepared and "AI: Review proposal" or "AI builds"
 	end,function() require("Classes.BuildProposalControl").Open(self) end)
+	self.controls.atlas = new("ButtonControl"):ButtonControl({"LEFT",self.controls.aiBuild,"RIGHT"},{4,0,72,20},"Atlas",function() require("Classes.AtlasPlannerControl").Open(self) end)
 	-- Skills
 	self.controls.mainSkillLabel = new("LabelControl"):LabelControl({"TOPLEFT",self.anchorSideBar,"TOPLEFT"}, {0, 80, 300, 16}, "^7Main Skill:")
 	self.controls.mainSocketGroup = new("DropDownControl"):DropDownControl({"TOPLEFT",self.controls.mainSkillLabel,"BOTTOMLEFT"}, {0, 2, 300, 18}, nil, function(index, value)
@@ -630,6 +631,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 
 	-- Load sections from the build file
 	self.savers = {
+		["AtlasPlans"] = require("Modules.AtlasPlanner").new(self),
 		["CraftingProjects"] = require("Modules.CraftingProjects").new(self),
 		["Config"] = self.configTab,
 		["Notes"] = self.notesTab,
