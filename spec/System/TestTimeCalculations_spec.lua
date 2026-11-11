@@ -252,4 +252,19 @@ describe("Finite combat windows", function()
 		local out = calculate("Life that would be lost by taking Damage is instead Reserved")
 		assert.are.equal(true, out.RecoverySimulationUnsupported)
 	end)
+
+	it("copies physical-prevention regeneration through Pious Path", function()
+		build.configTab.input.conditionOnConsecratedGround = true
+		local mods = "+300 to maximum Energy Shield\n+2000 to Armour\n100% less Energy Shield Recharge Rate\nLife recovery from regeneration is not applied\n3% of Physical Damage prevented from Hits in the past 4 seconds is Regenerated as Life per second"
+		calculate(mods)
+		build.configTab.input.enemyColdDamage = "0"
+		build.configTab.input.enemyPhysicalDamage = "100"
+		build.configTab.input.recoverySimulationWindow = 60
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		local before = build.calcsTab.calcsOutput.RecoverySimulationTime
+		build.configTab.input.customMods = "+100 to maximum Life\n"..mods.."\nConsecrated Ground you create causes Life Regeneration to also Recover Energy Shield for you and Allies"
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.is_true(build.calcsTab.calcsEnv.player.modDB:Flag(nil, "LifeRegenerationRecoversEnergyShield"))
+		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime > before)
+	end)
 end)

@@ -3983,7 +3983,7 @@ function calcs.recoveryOverTime(env, actor)
 	elseif actor.recoverySimulationImpale then unsupported = "Enemy impale stacks are not supported."
 	elseif not o.enemySkillTime or o.enemySkillTime < 0.02 then unsupported = "Set an enemy attack/cast time of at least 20ms."
 	elseif dissolution and ((o.preventedLifeLossTotal or 0) > 0 or (o.TotalBuildDegen or 0) > 0 or env.configInput.recoverySimulationAttacking and (o.LifePerSecondCost or 0) > 0 or (o.LifeReserved or 0) > 0) then
-		unsupported = "Dissolution currently supports hits without delayed Life loss, degen, Life skill costs or cancellable Life reservations."
+		unsupported = "Dissolution currently supports hits without delayed Life loss, degen, Life skill costs or existing Life reservations."
 	end
 	if unsupported then
 		o.RecoverySimulationUnsupported = true
@@ -4083,20 +4083,30 @@ function calcs.recoveryOverTime(env, actor)
 					shroudsUsed, shroudRecovery = shroudsUsed + 1, shroudRecovery + gain
 				end
 				local physicalPrevented = m_max(0, (o.PhysicalTakenDamage or 0) - (damage.Physical or 0))
-				for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
+				for sourceIndex, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
 					local amount = 0
 					for _, damageType in ipairs(dmgTypeList) do
 						amount = amount + (state.damageTakenThatCanBeRecouped[damageType] or 0) * ((o[resource.."Recoup"] or 0)
 							+ (o[damageType..resource.."Recoup"] or 0) + (isElemental[damageType] and (o["Elemental"..resource.."Recoup"] or 0) or 0)) / 100
 					end
-				if amount > 0 and recoveryAllowed[resource] and not (dissolution and resource == "Life") then
+					if amount > 0 and recoveryAllowed[resource] and not (dissolution and resource == "Life") then
 						local duration = (mods:Flag(nil, "3Second"..resource.."Recoup") or mods:Flag(nil, "3SecondRecoup")) and 3 or 4
 						cohorts[#cohorts + 1] = { [resource] = amount / duration, expires = t + duration }
 					end
 					local pseudo = (o["PhysicalDamageMitigated"..resource.."PseudoRecoup"] or 0) * physicalPrevented / 100
-				if pseudo > 0 and recoveryAllowed[resource] and not (dissolution and resource == "Life") then
+					if pseudo > 0 then
 						local duration = o["PhysicalDamageMitigated"..resource.."PseudoRecoupDuration"] or 4
-						cohorts[#cohorts + 1] = { [resource] = pseudo / duration, expires = t + duration }
+						if recoveryAllowed[resource] and not mods:Flag(nil, "UnaffectedBy"..resource.."Regen") and not (dissolution and resource == "Life") then
+							cohorts[#cohorts + 1] = { [resource] = pseudo / duration, expires = t + duration }
+						end
+						-- Match native regeneration copying, e.g. Pious Path, before
+						-- discarding regeneration that the source pool is unaffected by.
+						for targetIndex, target in ipairs({ "Life", "Mana", "EnergyShield" }) do
+							if targetIndex > sourceIndex and mods:Flag(nil, resource.."RegenerationRecovers"..target) and recoveryAllowed[target] and not mods:Flag(nil, "UnaffectedBy"..target.."Regen", "No"..target.."Regen") then
+								local copied = pseudo * o[target.."RecoveryRateMod"] / o[resource.."RecoveryRateMod"]
+								cohorts[#cohorts + 1] = { [target] = copied / duration, expires = t + duration }
+							end
+						end
 					end
 				end
 				local delayedLoss = state.LifeLossLostOverTime + state.LifeBelowHalfLossLostOverTime * mods:Sum("BASE", nil, "LifeLossBelowHalfLost") / 100

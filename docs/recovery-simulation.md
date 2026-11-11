@@ -40,7 +40,7 @@ Existing burst EHP and poison/steady-state DPS calculations are unchanged.
 ## Next improvements
 
 1. Track leech instances: creation from outgoing hits, duration, caps, removal at
-   full, overleech and instant leech. Track actual outgoing gain-on-hit events and
+   full, leech persisting at full and instant leech. Track actual outgoing gain-on-hit events and
    stop attacking when resources cannot pay costs.
 2. Extend Dissolution with a separate actual-life pool, delayed life loss and
    reservation cancellation. Petrified Blood/Eternal Youth interactions must not
