@@ -33,6 +33,7 @@ end
 
 
 dofile("Launch.lua")
+launch.headless = true
 
 -- Prevents loading of ModCache
 -- Allows running mod parsing related tests without pushing ModCache
@@ -44,6 +45,9 @@ runCallback("OnFrame") -- Need at least one frame for everything to initialise
 
 if __mainObject__.promptMsg then
 	-- Something went wrong during startup
+	if os.getenv("CI") or os.getenv("REGENERATE_MOD_CACHE") == "1" then
+		error(__mainObject__.promptMsg, 0)
+	end
 	print(__mainObject__.promptMsg)
 	io.read("*l")
 	return

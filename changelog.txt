@@ -1,6 +1,14 @@
 VERSION[ai][2026/11/11]
 
 --- AI Edition ---
+* Keep tree edits responsive while recovery simulations finish between frames.
+* Replace outdated simulation work when the build changes, with an Updating indicator.
+* Cache repeated recovery calculations and give node-power work a shorter frame budget.
+* Preserve trial counts, seeds, timeline results and isolated build previews.
+
+VERSION[ai][2026/11/11]
+
+--- AI Edition ---
 * Plan the Atlas natively with pinned Standard 3.27.0 and 3.29.1 graphs.
 * Search nodes, connect paths, avoid nodes, track point budgets and keep named plans with builds.
 * Share versioned plans and official links, and propose Atlas strategies through MCP desktop review.

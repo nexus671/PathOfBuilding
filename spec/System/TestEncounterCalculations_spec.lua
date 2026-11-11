@@ -349,4 +349,90 @@ describe("Encounter reporting and comparisons",function()
 		local karui=new("Item"):Item("Rarity: Unique\nBlood of the Karui\nSanctified Life Flask\nRecover Full Life at the end of the Effect")
 		assert.are.equal(true,karui.flaskData.finishLife)
 	end)
+	it("finishes deferred recovery with identical trials and an isolated calculator cache",function()
+		calculate()
+		local tab=build.calcsTab;local tasks=require("Modules.RecoveryTasks")
+		local expected=copyTable(tab.calcsEnv.player.recoverySimulationResults)
+		local expectedTrace=copyTable(tab.calcsEnv.player.recoverySimulationTrace.points)
+		wipeGlobalCache();tab:BuildOutput(true)
+		assert.is_true(tab.calcsOutput.RecoverySimulationPending)
+		assert.is_nil(tab.calcsEnv.player.recoverySimulationResults)
+		assert.is_true(require("Modules.EncounterReport").capture(build).calculationPending)
+		local originalCache=GlobalCache;local calculator=GlobalCache.cachedData.CALCULATOR
+		local steps=0
+		while tab.recoveryJob do
+			tasks.tick(tab,0);steps=steps+1;assert.is_true(steps < 1000)
+			assert.are.equal(originalCache,GlobalCache);assert.are.equal(calculator,GlobalCache.cachedData.CALCULATOR)
+		end
+		assert.is_true(steps > 2);assert.is_nil(tab.calcsOutput.RecoverySimulationPending)
+		assert.are.same(expected,tab.calcsEnv.player.recoverySimulationResults)
+		assert.are.same(expectedTrace,tab.calcsEnv.player.recoverySimulationTrace.points)
+	end)
+	it("replaces pending recovery on edits and keeps captured level and configuration",function()
+		calculate()
+		local tab=build.calcsTab;local tasks=require("Modules.RecoveryTasks")
+		local expected=copyTable(tab.calcsEnv.player.recoverySimulationResults)
+		tab:BuildOutput(true);local previous=tab.recoveryJob;tasks.tick(tab,0)
+		tab:BuildOutput(true);assert.are_not.equal(previous,tab.recoveryJob)
+		local level=build.characterLevel;build.characterLevel=100
+		build.configTab.input.enemyColdDamage="9999999"
+		local steps=0;while tab.recoveryJob do tasks.tick(tab,0);steps=steps+1;assert.is_true(steps < 1000) end
+		assert.are.same(expected,tab.calcsEnv.player.recoverySimulationResults)
+		assert.is_nil(previous.current.player.recoverySimulationResults)
+		build.characterLevel=level
+	end)
+
+	it("keeps paired configuration comparisons identical when recovery yields",function()
+		calculate();local config=build.configTab
+		local target=config:NewConfigSet(nil,"Background comparison")
+		target.input=copyTable(config.input);target.placeholder=copyTable(config.placeholder)
+		target.customModsList=copyTable(config.configSets[config.activeConfigSetId].customModsList)
+		table.insert(config.configSetOrderList,target.id)
+		config.input.recoverySimulationCompareSet=target.id;config:BuildModList()
+		build.calcsTab:BuildOutput()
+		local expected=copyTable(build.calcsTab.calcsEnv.player.recoveryComparisonResults)
+		assert.is_true(build.calcsTab.calcsOutput.RecoveryComparisonReady)
+		build.calcsTab:BuildOutput(true)
+		local steps=0;local cache=GlobalCache
+		while build.calcsTab.recoveryJob do
+			require("Modules.RecoveryTasks").tick(build.calcsTab,0);steps=steps+1;assert.is_true(steps<2000)
+			assert.are.equal(cache,GlobalCache)
+		end
+		assert.is_true(build.calcsTab.calcsOutput.RecoveryComparisonReady)
+		assert.are.same(expected,build.calcsTab.calcsEnv.player.recoveryComparisonResults)
+	end)
+
+	it("restores calculator caches and clears pending results after a background error",function()
+		calculate();local tab=build.calcsTab;local tasks=require("Modules.RecoveryTasks")
+		tab:BuildOutput(true)
+		local original=tab.calcs.recoveryOverTime;local cache=GlobalCache
+		tab.calcs.recoveryOverTime=function(env)
+			GlobalCache.cachedData.CALCULATOR.failureSentinel=true
+			env.recoveryCheckpoint();error("deliberate recovery failure")
+		end
+		local ok,message=pcall(function() tasks.tick(tab,0);tasks.tick(tab,0) end)
+		tab.calcs.recoveryOverTime=original
+		assert(ok,message);assert.are.equal(cache,GlobalCache)
+		assert.is_nil(GlobalCache.cachedData.CALCULATOR.failureSentinel)
+		assert.is_nil(tab.recoveryJob);assert.is_nil(tab.calcsOutput.RecoverySimulationPending)
+		assert.is_true(tab.calcsOutput.RecoverySimulationUnsupported)
+		assert.is_nil(tab.calcsEnv.player.recoverySimulationResults)
+	end)
+	it("yields node power work within a short frame budget",function()
+		local nodes={};for id=1,50 do nodes[id]={id=id,modKey="same",power={},pathDist=1} end
+		local control=setmetatable({powerStat={stat="Life"},mainEnv={grantedPassives={}},
+			build={spec={nodes=nodes,tree={clusterNodeMap={}},masterySelections={}}}}, {__index=common.classes.CalcsTab})
+		local evaluated=0
+		control.GetMiscCalculator=function() return function(override)
+			evaluated=evaluated+1;local node=next(override.addNodes);return {Life=100+node.id}
+		end,{Life=100} end
+		local original=_G.GetTime;local clock=0;_G.GetTime=function() clock=clock+5;return clock end
+		local thread=coroutine.create(function() control:PowerBuilder() end)
+		local first,firstError=coroutine.resume(thread);local second,secondError=coroutine.resume(thread)
+		_G.GetTime=original
+		assert(first,firstError);assert(second,secondError)
+		assert.are.equal("suspended",coroutine.status(thread))
+		assert.is_true(evaluated>0 and evaluated<50)
+	end)
+
 end)
