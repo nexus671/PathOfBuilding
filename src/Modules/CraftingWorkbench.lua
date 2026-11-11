@@ -114,7 +114,7 @@ function M.currencies(controls,selectMethod,currentMethod,isShown,usage)
 		controls["currency_"..method]=control;control.shown=isShown
 		local art=image("Assets/Crafting/"..method..".png")
 		control.tooltipText=simulator.labels[method] or caption
-		function control:Draw(viewPort)
+		function control:Draw(viewPort,noTooltip)
 			local x,y=self:GetPos();local selected=currentMethod() == method
 			box(x,y,66,61,selected and "^xD3B987" or self:IsMouseOver() and "^xAAAAAA" or "^x4E473A")
 			box(x+1,y+1,64,59,selected and "^x302B20" or "^x18181C")
@@ -122,7 +122,9 @@ function M.currencies(controls,selectMethod,currentMethod,isShown,usage)
 			SetDrawColor("^xDDDDDD");DrawString(x+33,y+44,"CENTER_X",13,"VAR",caption)
 			local count=usage(method)
 			if count>0 then text(x+48,y+3,12,tostring(count),"^xFFFF77") end
-			if self:IsMouseOver() then self:DrawTooltip(x,y,66,61,viewPort) end
+			if self:IsMouseOver() and not noTooltip then
+				SetDrawLayer(nil,100);self:DrawTooltip(x,y,66,61,viewPort);SetDrawLayer(nil,0)
+			end
 		end
 	end
 end

@@ -8,8 +8,9 @@ local frames=0
 for _,size in ipairs({{1280,720},{1024,768}}) do
 	newBuild();main.popups={}
 	local ui=UI.install({width=size[1],height=size[2]})
-	local function frame(name)
+	local function frame(name,hover)
 		ui.cursorX,ui.cursorY=-100,-100
+		if hover then local x,y=main.popups[1].controls[hover]:GetPos();ui.cursorX,ui.cursorY=x+10,y+10 end
 		ui:frame():write(directory.."/"..size[1].."-"..name..".json");frames=frames+1
 		assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
 	end
@@ -18,7 +19,7 @@ for _,size in ipairs({{1280,720},{1024,768}}) do
 	build.savers.CraftingProjects:Upsert(project)
 	require("Classes.CraftingProjectControl").Open(build)
 	frame("projects");ui:click("native")
-	frame("emulator")
+	frame("emulator");frame("currency-tooltip","currency_alchemy")
 	ui:click("currency_alchemy");ui:click("item")
 	frame("crafted")
 	assert(#main.popups[1].controls.itemMods.list>=4,"Clicking the item did not apply Alchemy")
