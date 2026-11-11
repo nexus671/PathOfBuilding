@@ -26,6 +26,7 @@ function M.snapshot(build)
 		result.skills[#result.skills+1] = (group.label or "").." ["..(group.slot or "unassigned").."] "..table.concat(names," + ")..(group.enabled == false and " (disabled)" or "")..(group.includeInFullDPS and " [Full DPS]" or "").." main="..tostring(group.mainActiveSkill or 1)
 	end
 	result.mainGroup = build.mainSocketGroup
+	result.craftingProjects = copyTable(build.savers.CraftingProjects.projects)
 	for _,node in pairs(build.spec.nodes) do if node.alloc then result.passives[node.id] = (node.name or node.dn or node.type or "Passive")..(build.spec.masterySelections[node.id] and " (mastery "..build.spec.masterySelections[node.id]..")" or "") end end
 	return result
 end
@@ -50,6 +51,10 @@ function M.changes(before, after)
 	for key in pairs(after.config) do config[key]=true end
 	for _,key in ipairs(sortedKeys(config)) do if before.config[key] ~= after.config[key] then add("Configuration "..key..": "..tostring(before.config[key]).." -> "..tostring(after.config[key])) end end
 	if before.notes ~= after.notes then add("Notes updated:"); for line in after.notes:gmatch("[^\n]+") do add("  "..line) end end
+	if not tableDeepEquals(before.craftingProjects,after.craftingProjects) then
+		add("Crafting projects updated (saved only with an explicit build Save)")
+		for _,project in ipairs(after.craftingProjects) do for _,line in ipairs(require("Modules.CraftingProjects").lines(project)) do add(line) end end
+	end
 	if #lines == 0 then add("No character, equipment, gem, passive, configuration or notes changes.") end
 	return lines
 end

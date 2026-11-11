@@ -359,6 +359,9 @@ holding Shift will put it in the second.]])
 	self.controls.displayItemBuySimilar.shown = function()
 		return self.displayItem
 	end
+	self.controls.displayItemCrafting = new("ButtonControl"):ButtonControl({"LEFT",self.controls.displayItemBuySimilar,"RIGHT",true}, {8,0,100,20}, "Crafting plan",function()
+		require("Classes.CraftingProjectControl").Open(self.build,self.displayItem,self:GetComparisonSlotNameForItem(self.displayItem))
+	end)
 	-- Section: Variant(s)
 
 	self.controls.displayItemSectionVariant = new("Control"):Control({"TOPLEFT",self.controls.addDisplayItem,"BOTTOMLEFT"}, {0, 8, 0, function()

@@ -1,6 +1,14 @@
 VERSION[ai][2026/11/11]
 
 --- AI Edition ---
+* Emulate currency, bench and essence crafts with a native crafting engine.
+* Run bounded recipes with modeled success, sampling intervals and supplied costs.
+* Keep crafting projects with builds and preview outcomes through desktop review.
+* Unsupported methods fail explicitly; see the crafting guide for coverage and assumptions.
+
+VERSION[ai][2026/11/11]
+
+--- AI Edition ---
 * Plan around goals and budgets with supplied price quotes.
 * Compare candidates and calculate cumulative leveling milestones.
 * Review readable changes, dependencies and encounter evidence.

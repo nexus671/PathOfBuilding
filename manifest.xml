@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.0f0077e6" />
+	<Version number="2.67.2-ai.20e1d1f0" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
-	<File name="changelog.txt" part="default" sha1="f6caf599dae34057bda13ba0bced6321d51b5b7b" />
+	<File name="changelog.txt" part="default" sha1="7729006de9c8bcf319aadc4466e4f7121ec4d125" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
 	<File name="Assets/ascendancypassiveheaderleft.png" part="program" sha1="6a65683dcc3b14382dc083198fe9361454e91b15" />
@@ -150,7 +150,7 @@
 	<File name="Classes/ItemListControl.lua" part="program" sha1="01546a91c647cb978ffb757cbe75a7afaa2d0cba" />
 	<File name="Classes/ItemSetListControl.lua" part="program" sha1="5ff494b708b1b633f0cf4157e30ad295c1044ed4" />
 	<File name="Classes/ItemSlotControl.lua" part="program" sha1="994edcab55ba363f6c82c497f7d5353927172020" />
-	<File name="Classes/ItemsTab.lua" part="program" sha1="e6acd2b432bdcfe118368842e47ac03a7bfb812c" />
+	<File name="Classes/ItemsTab.lua" part="program" sha1="f4979d9932b152ae0177854d40c67f2ba84df387" />
 	<File name="Classes/LabelControl.lua" part="program" sha1="7a8f38d225087ba6941537444b0ea0ec0ac150cd" />
 	<File name="Classes/ListControl.lua" part="program" sha1="9223f7e90e7fa3f67ad0cf8224e1266e59b9681f" />
 	<File name="Classes/MinionListControl.lua" part="program" sha1="655a6ddb06ba75011e51d5a6130db8cf7a9f3895" />
@@ -379,7 +379,7 @@
 	<File name="Launch.lua" part="program" sha1="df7c5af61dc46797e6fdf3d751f84865895f4fb6" />
 	<File name="LaunchServer.lua" part="program" sha1="f15bdfbedaf887e19556490dce49b720f8365379" />
 	<File name="Modules/AddImplicitPopup.lua" part="program" sha1="f68d391d10b95c0feef70b7e8e82326a745dcb3b" />
-	<File name="Modules/Build.lua" part="program" sha1="3645bc125b04f38ef7541ce861ce680b198453b9" />
+	<File name="Modules/Build.lua" part="program" sha1="38443954e14fadc16e75ddaf9963934fbfaf120c" />
 	<File name="Modules/BuildDisplayStats.lua" part="program" sha1="ffc4da3b13c3d50f3580b452622429f0bd7e70ab" />
 	<File name="Modules/BuildList.lua" part="program" sha1="daa0c88f606ade9687f037b6e99c9cec2904200e" />
 	<File name="Modules/BuildListHelpers.lua" part="program" sha1="a95770f18b54c05ed1d68f870f3693cac53a0fab" />
@@ -1405,11 +1405,15 @@
 	<File name="TreeData/VioletOil.png" part="tree" sha1="1e9e4f0683a5156c27cb7ddafada8bed877e1c25" />
 	<File name="Modules/CalcTime.lua" part="program" sha1="b6a569cc6b3199be190f4f04acf6ad51886f7fab" />
 	<File name="Modules/CalcEncounter.lua" part="program" sha1="51e5db31fa6d953ee6f5bdec0387db87bc1eabfa" />
-	<File name="AI/McpServer.cjs" part="program" sha1="36ada15da7481af141eb80c85aad4b37d4245474" />
+	<File name="AI/McpServer.cjs" part="program" sha1="2c1087451ec16f38ed4adbd72a7dac4342bb3c74" />
 	<File name="Classes/EncounterWorkspaceControl.lua" part="program" sha1="7f223c0e703ac1ca4b040d2c2ff82494ef977003" />
 	<File name="Modules/EncounterReport.lua" part="program" sha1="e7ce56fc160712aa2e6357600953c0820426dfb3" />
-	<File name="AI/BuildProtocol.cjs" part="program" sha1="d1ceba52614bf87cc71d1144bba829879f0c01bb" />
-	<File name="Classes/BuildProposalControl.lua" part="program" sha1="2858c3f73bb8a2c33360db7363dbf8983a288823" />
-	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="0fcb6647e62c339e32e8c2b300548f42e5aa7c05" />
-	<File name="Modules/BuildInsights.lua" part="program" sha1="954b1c85a0260284d3a64675dc9e8c470c2ca811" />
+	<File name="AI/BuildProtocol.cjs" part="program" sha1="3c50ed810a2086ab81a2717c73841f2b44e2c13b" />
+	<File name="Classes/BuildProposalControl.lua" part="program" sha1="848f052b26be5bfe7b3ee448acb77a49327c344a" />
+	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="162a0cfa5c1bfab912b14056fb340d64192be11b" />
+	<File name="Modules/BuildInsights.lua" part="program" sha1="73cfed0b78ff67270ebded06f34c492b78e925b8" />
+	<File name="Classes/CraftingProjectControl.lua" part="program" sha1="c445d907709f2958da624549bda8e3db55c6efe0" />
+	<File name="Classes/CraftingSimulatorControl.lua" part="program" sha1="34fb7eb780355a0138521791c179fbbd89fa73cf" />
+	<File name="Modules/CraftingProjects.lua" part="program" sha1="92ca592c937dde44b06f5c6a23952b5b1eb60c4a" />
+	<File name="Modules/CraftingSimulator.lua" part="program" sha1="198bc0c6f283b3c131a4d688ead3566f01e66ade" />
 </PoBVersion>
