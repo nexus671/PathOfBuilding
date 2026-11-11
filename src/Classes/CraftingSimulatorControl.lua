@@ -61,7 +61,7 @@ function Panel.Open(build,project)
 		for index,group in ipairs(targets) do
 			local names={ }
 			for _,id in ipairs(group.anyOf) do names[#names+1]=model.byId[id] and table.concat(model.byId[id]," / ") or id end
-			lines[#lines+1]=index..". "..(group.negate and "Exclude " or "Require ")..(group.atLeast or 1).." | "..table.concat(names," OR ")..(group.minRoll and " | minimum roll "..(group.minRoll*100).."%" or "")
+			lines[#lines+1]=index..". "..(group.negate and "Exclude " or "Require ")..(group.atLeast or 1).." | "..table.concat(names," OR ")..(group.fractured == true and " | fractured" or group.fractured == false and " | not fractured" or "")..(group.crafted == true and " | crafted" or group.crafted == false and " | not crafted" or "")..(group.minRoll and " | minimum roll "..(group.minRoll*100).."%" or "")
 		end
 		for key,value in pairsSortByKey(requirements or {}) do lines[#lines+1]=key..": "..tostring(value) end
 		lines[#lines+1]=""
@@ -80,7 +80,13 @@ function Panel.Open(build,project)
 	end
 	controls.method.selFunc=updateOptions
 	controls.option.enabled=function() return #controls.option.list > 0 end
-	controls.option.selFunc=function() configured[controls.method:GetSelValueByKey("val")]=nil end
+	controls.option.selFunc=function()
+		local method=controls.method:GetSelValueByKey("val");local previous=configured[method]
+		configured[method]=nil
+		if previous and previous.allflame and previous.allflame.auto then
+			configured[method]=copyTable(controls.option:GetSelValue().action);configured[method].allflame=copyTable(previous.allflame)
+		end
+	end
 	label(controls,"seedLabel",16,184,"Seed")
 	edit(controls,"seed",16,204,130,24,"104729","Seed",12)
 	local function action()
@@ -95,7 +101,7 @@ function Panel.Open(build,project)
 		local result=simulator.perform(draft.startingItem,craft,usedSeed,state)
 		local function keep(nextState,index)
 			history[#history+1]=copyTable(state);if #history > 40 then table.remove(history,1) end
-			if index then craft.allflame.choiceIndex=index end
+			if index then craft.allflame=craft.allflame or copyTable(result.allflame.settings);craft.allflame.choiceIndex=index end
 			state=nextState;actions[#actions+1]=craft;updateOptions();refresh({"Last action seed: "..usedSeed})
 		end
 		if result.choices and #result.choices > 1 then
@@ -115,24 +121,42 @@ function Panel.Open(build,project)
 		else keep(result.state) end
 	end)
 	button(controls,"undo",308,204,124,"Undo currency",function() assert(#history > 0,"No currency action to undo"); state=table.remove(history); table.remove(actions); updateOptions(); refresh() end)
-	button(controls,"allflame",16,410,416,"Allflame: enter observed Vesper settings",function()
+	button(controls,"allflame",16,410,416,"Allflame settings",function()
 		local craft=action();local profile=craft.allflame or {};local popup={}
-		label(popup,"hint",16,28,"Use the maximum outcomes, gain range and cost shown for this craft.")
-		edit(popup,"outcomes",16,60,140,24,tostring(profile.outcomes or ""),"Max outcomes 1-4",12)
-		edit(popup,"gainMin",172,60,140,24,tostring(profile.gainMin or ""),"Min gain %",12)
-		edit(popup,"gainMax",328,60,140,24,tostring(profile.gainMax or ""),"Max gain %",12)
-		edit(popup,"sulphur",16,100,296,24,tostring(profile.sulphur or ""),"Dead Man's Sulphur cost",12)
-		label(popup,"policy",16,144,"Recipes prefer the most matching current target groups; ties keep the first.")
-		button(popup,"use",16,186,200,"Use Allflame settings",function()
-			local values={};for _,key in ipairs({"outcomes","gainMin","gainMax","sulphur"}) do values[key]=assert(tonumber(popup[key].buf),"Enter all four observed settings") end
-			assert(values.outcomes == math.floor(values.outcomes) and values.outcomes >= 1 and values.outcomes <= 4,"Choose one to four outcomes")
-			assert(values.gainMin >= 0 and values.gainMax >= values.gainMin and values.gainMax <= 100,"Invalid Intangibility gain range")
+		popup.mode=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,296,24},{"Current game data","Observed override"})
+		popup.mode:SelByValue(profile.outcomes and not profile.auto and "Observed override" or "Current game data")
+		popup.upgrade=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{328,28,300,24},{{label="Ship: basic",val=0},{label="Ship: one upgrade",val=1},{label="Ship: fully upgraded",val=2}})
+		popup.upgrade:SelByValue(profile.upgradeTier or 2,"val")
+		popup.preview=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,70,628,100},nil,{})
+		local function automatic() return popup.mode:GetSelValue() == "Current game data" end
+		local function updateProfile()
+			local copy=copyTable(craft);copy.allflame={auto=true,upgradeTier=popup.upgrade:GetSelValueByKey("val")}
+			local ok,value=pcall(simulator.allflameProfile,model,state,copy)
+			popup.preview.list=rows(ok and {value.outcomes.." ghost outcomes",string.format("Intangibility gain: %d-%d%% | Sulphur: %d",value.gainMin,value.gainMax,value.sulphur),"Choose the ship upgrades you have unlocked."} or {tostring(value):match("^[^\n]+")})
+		end
+		popup.upgrade.selFunc=updateProfile;popup.preview.shown=automatic;popup.upgrade.enabled=automatic
+		edit(popup,"outcomes",16,80,140,24,tostring(profile.outcomes or ""),"Max outcomes 1-4",12)
+		edit(popup,"gainMin",172,80,140,24,tostring(profile.gainMin or ""),"Min gain %",12)
+		edit(popup,"gainMax",328,80,140,24,tostring(profile.gainMax or ""),"Max gain %",12)
+		edit(popup,"sulphur",16,120,296,24,tostring(profile.sulphur or ""),"Dead Man's Sulphur cost",12)
+		for _,key in ipairs({"outcomes","gainMin","gainMax","sulphur"}) do popup[key].shown=function() return not automatic() end end
+		label(popup,"policy",16,184,"Recipes prefer the most matching target groups; ties keep the first.")
+		button(popup,"use",16,228,200,"Use Allflame settings",function()
+			local values
+			if automatic() then
+				values={auto=true,upgradeTier=popup.upgrade:GetSelValueByKey("val")}
+				local copy=copyTable(craft);copy.allflame=values;simulator.allflameProfile(model,state,copy)
+			else
+				values={};for _,key in ipairs({"outcomes","gainMin","gainMax","sulphur"}) do values[key]=assert(tonumber(popup[key].buf),"Enter all four observed settings") end
+				assert(values.outcomes == math.floor(values.outcomes) and values.outcomes >= 1 and values.outcomes <= 4,"Choose one to four outcomes")
+				assert(values.gainMin >= 0 and values.gainMax >= values.gainMin and values.gainMax <= 100,"Invalid Intangibility gain range")
+			end
 			if #targets > 0 then values.preferredTargets=copyTable(targets) end
 			craft.allflame=values;configured[craft.method]=craft;main:ClosePopup();refresh({"Allflame settings enabled for "..simulator.labels[craft.method]})
 		end)
-		button(popup,"disable",232,186,200,"Use ordinary currency",function() craft.allflame=nil;configured[craft.method]=craft;main:ClosePopup() end)
-		button(popup,"close",448,186,116,"Cancel",function() main:ClosePopup() end)
-		main:OpenPopup(660,236,"Observed Allflame settings",popup,nil,nil,"close")
+		button(popup,"disable",232,228,200,"Use ordinary currency",function() craft.allflame=nil;configured[craft.method]=craft;main:ClosePopup() end)
+		button(popup,"close",448,228,116,"Cancel",function() main:ClosePopup() end)
+		updateProfile();main:OpenPopup(660,280,"Allflame settings",popup,nil,nil,"close")
 	end)
 	button(controls,"configure",16,231,416,"Configure fossil combination / donor item",function()
 		local method=controls.method:GetSelValueByKey("val")
@@ -198,6 +222,7 @@ function Panel.Open(build,project)
 	label(controls,"priceLabel",16,418,"Price per selected action / currency (optional)")
 	edit(controls,"price",16,438,130,24,"","Unit price",16)
 	edit(controls,"currency",162,438,130,24,"chaos","Currency",24)
+	edit(controls,"baseCost",308,438,124,24,"","Starting item cost",16)
 	local function showSimulation(recipe,fromInitial)
 		local budget=assert(tonumber(controls.budget.buf),"Invalid action budget")
 		local prices
@@ -205,7 +230,7 @@ function Panel.Open(build,project)
 			local a=action(); local key=simulator.priceKey(a)
 			prices={[key]=assert(tonumber(controls.price.buf),"Invalid unit price")}
 		end
-		local options={trials=assert(tonumber(controls.trials.buf),"Invalid trial count"),maxActions=budget,seed=assert(tonumber(controls.seed.buf),"Invalid seed"),
+		local options={retainSuccesses=10,baseCost=controls.baseCost.buf ~= "" and assert(tonumber(controls.baseCost.buf),"Invalid starting item cost") or 0,trials=assert(tonumber(controls.trials.buf),"Invalid trial count"),maxActions=budget,seed=assert(tonumber(controls.seed.buf),"Invalid seed"),
 			initialState=copyTable(fromInitial and initial or state),prices=prices,currency=controls.currency.buf}
 		local capturedRecipe=copyTable(recipe)
 		require("Modules.CraftingTasks").start(build,function(checkpoint)
@@ -252,11 +277,17 @@ function Panel.Open(build,project)
 			refresh(lines)
 		end,function(message) refresh({message}) end,function(progress) refresh({"Fossil combination "..progress.combination.." / "..progress.combinations}) end)
 	end)
-	button(controls,"exact",232,574,200,"Exact next-mod odds",function()
-		local result=simulator.calculate(draft.startingItem,action(),targets,state)
-		local lines={string.format("Exact next-mod target chance: %.6f%%",result.successChance),result.exactFor}
-		for _,entry in ipairs(result.outcomes) do if entry.matches then lines[#lines+1]=string.format("%.6f%% | %s",entry.chance,entry.text) end end
-		refresh(lines)
+	button(controls,"exact",232,574,200,"Calculate action odds",function()
+		local craft=action();local captured=copyTable(state);local capturedTargets=copyTable(targets)
+		local options={trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
+		require("Modules.CraftingTasks").start(build,function(checkpoint)
+			options.checkpoint=checkpoint;return simulator.calculate(draft.startingItem,craft,capturedTargets,captured,options)
+		end,function(result)
+			local lines={string.format("Target chance under model: %.6f%%",result.successChance),result.exactFor or result.estimateFor}
+			if result.sampled then lines[#lines+1]=string.format("%d trials | 95%% interval %.2f%% to %.2f%%",result.trials,result.confidenceLow,result.confidenceHigh) end
+			for _,entry in ipairs(result.outcomes) do if entry.matches then lines[#lines+1]=string.format("%.6f%% | %s",entry.chance,entry.text or "Finite item outcome") end end
+			refresh(lines)
+		end,function(message) refresh({message}) end,function(progress) refresh({"Calculating odds: trial "..progress.trial.." / "..progress.trials}) end)
 	end)
 	button(controls,"distribution",448,height-48,140,"Results / distribution",function()
 		local result=assert(lastSimulation,"Run a simulation first")
@@ -274,12 +305,29 @@ function Panel.Open(build,project)
 		show("Actions among successful trials only",result.successfulActionQuantiles)
 		show("Spending across all trials ("..result.costCurrency..")",result.spendingQuantiles)
 		show("Spending among successful trials only",result.successfulSpendingQuantiles)
+		lines[#lines+1]={height=26,"Final modifier frequencies (all trials / successful trials)"}
+		for id,bucket in pairsSortByKey(result.affixDistribution or {}) do
+			lines[#lines+1]={height=22,string.format("%d / %d | %s",bucket.trials,bucket.successes,model.byId[id] and table.concat(model.byId[id]," / ") or id)}
+		end
 		for i,route in pairsSortByKey(result.routeCounts) do lines[#lines+1]={height=24,string.format("Step %d: %d visits, %d actions, %d success routes, %d failure routes",i,route.visits,route.executed,route.success,route.failure)} end
 		local popup={}
 		local resultHeight=math.max(420,math.min(650,main.screenH-60))
-		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,828,resultHeight-90},nil,lines)
+		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,828,resultHeight-130},nil,lines)
+		local kept={};for i,entry in ipairs(result.retainedSuccesses or {}) do kept[#kept+1]={label="Successful item "..i.." (trial "..entry.trial..")",val=i} end
+		popup.item=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,resultHeight-84,540,24},kept)
+		button(popup,"preview",572,resultHeight-84,272,"Preview retained item",function()
+			local index=assert(popup.item:GetSelValueByKey("val"),"No successful items retained")
+			local entry=copyTable(draft);entry.targetItem=result.retainedSuccesses[index].itemText
+			require("Classes.CraftingProjectControl").Preview(build,entry)
+		end)
 		button(popup,"close",728,resultHeight-42,116,"Close",function() main:ClosePopup() end)
 		main:OpenPopup(860,resultHeight,"Crafting simulation results",popup,nil,nil,"close")
+	end)
+	button(controls,"manual",16,448,416,"Edit hypothetical item",function()
+		require("Classes.CraftingItemEditorControl").Open(model,state,function(edited)
+			state=edited;initial=copyTable(edited);history={};actions={};lastSimulation=nil
+			updateOptions();refresh({"Manual edits set a new recipe starting state."})
+		end)
 	end)
 	button(controls,"reset",232,530,200,"Reset item",function() state=copyTable(initial); history={}; actions={}; updateOptions();refresh() end)
 	button(controls,"preview",16,height-48,200,"Preview outcome in build",function()
@@ -297,9 +345,9 @@ function Panel.Open(build,project)
 	button(controls,"close",748,height-48,116,"Close",function() main:ClosePopup() end)
 	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,52,416,24},{"Emulate item","Target conditions","Simulate recipe"})
 	local pages={
-		["Emulate item"]={methodLabel=96,method=116,optionLabel=160,option=180,seedLabel=220,seed=240,apply=240,undo=240,configure=282,keepRecipe=330,reset=330,exact=374,allflame=410},
+		["Emulate item"]={methodLabel=96,method=116,optionLabel=160,option=180,seedLabel=220,seed=240,apply=240,undo=240,configure=282,keepRecipe=330,reset=330,exact=374,allflame=410,manual=448},
 		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetConditions=202},
-		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354},
+		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354},
 	}
 	for page,layout in pairs(pages) do for key,y in pairs(layout) do
 		local control=controls[key];control.y=y;control.shown=function() return controls.page:GetSelValue() == page end

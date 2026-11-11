@@ -675,7 +675,7 @@ function A.extend(M,api)
 	end
 	M.limits={"Independent PoE 1 crafting model pinned to extracted 3.29.3.6 data; this is not complete Craft of Exile parity.",
 		"Current coverage includes core currencies, ordinary jewels/flasks/tinctures, bench crafts, essences, weighted fossils, Harvest tag crafts, influence slams, Awakener, fractures, veiled choices, Bestiary, Eldritch crafts, base implicit/defence rerolls and deterministic socket/link bench crafts.",
-		"Tangled Fossils require a revealed resonator outcome. Automatic predictable recombination odds, unique generation, automatic Allflame settings and unreleased 3.30 rules are not implemented.",
+		"Tangled Fossils require a revealed resonator outcome. Automatic predictable recombination odds, unique generation and unreleased 3.30 rules are not implemented.",
 		"Rare modifier counts and Eldritch Chaos counts are model assumptions. Numeric display rolls and sampling intervals do not establish exact in-game odds.",
 		"Every result is a separate hypothetical item. Costs use supplied prices; no game currency is spent."}
 	require("Modules.CraftingProperties").extend(M,A,api)
@@ -684,6 +684,7 @@ function A.extend(M,api)
 	require("Modules.CraftingMemory").extend(M,A,api)
 	require("Modules.CraftingRecombination").extend(M,A,api)
 	require("Modules.CraftingPredictable").extend(M,A,api)
+	require("Modules.CraftingLeague").extend(M,A,api)
 	require("Modules.CraftingAllflame").extend(M,A,api)
 end
 return A

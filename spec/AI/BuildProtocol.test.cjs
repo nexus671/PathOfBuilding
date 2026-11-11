@@ -244,3 +244,18 @@ test('queues observed Allflame profiles without allowing unbounded ghost work', 
   assert.throws(()=>f.call('apply_crafting_action',{...args,action:{...args.action,allflame:{...args.action.allflame,outcomes:1000}}}),/arguments/);
   assert.throws(()=>f.call('apply_crafting_action',{...args,initialState:{...args.initialState,intangibility:101}}),/arguments/);
 });
+
+
+test('queues automatic Allflame profiles and typed fracture goals', t => {
+  const f=fixture(t);const base={baseRevision:f.state.revision,itemText:craftingProject().startingItem};
+  const action={method:'ducat_kishara',allflame:{auto:true,upgradeTier:2}};
+  f.call('inspect_crafting_item',{...base,action});
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  const recipe={steps:[action],targets:[{anyOf:['IncreasedLife1'],fractured:true,crafted:false}],requirements:{minFractured:1,maxFractured:2,maxIntangibility:50}};
+  f.call('simulate_crafting',{...base,recipe,options:{trials:10,maxActions:1,retainSuccesses:3,baseCost:5,currency:"chaos"}});
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  for (const allflame of [{auto:true,outcomes:4},{auto:false},{auto:true,upgradeTier:3}]) {
+    assert.throws(()=>f.call('apply_crafting_action',{...base,action:{...action,allflame}}),/arguments/);
+  }
+  assert.throws(()=>f.call('simulate_crafting',{...base,recipe:{...recipe,requirements:{minFractured:7}}}),/arguments/);
+});

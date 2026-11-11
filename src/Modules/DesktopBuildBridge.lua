@@ -458,7 +458,7 @@ function M.poll(build, force)
 			if not raw then local slot=assert(build.itemsTab.slots[request.slot],"Unknown item slot"); raw=assert(build.itemsTab.items[slot.selItemId],"Selected slot is empty").raw end
 			local simulator=require("Modules.CraftingSimulator")
 			M.status={id=request.id,status="calculating"}; M.publishState()
-			if request.kind == "craftSimulate" or request.kind == "craftOptimize" then
+			if request.kind == "craftSimulate" or request.kind == "craftOptimize" or request.kind == "craftCalculate" then
 				local session=M.session;local options=copyTable(request.options or {})
 				local function publish(status,values)
 					if not M.enabled or M.session ~= session then return end
@@ -467,11 +467,12 @@ function M.poll(build, force)
 				end
 				local job=require("Modules.CraftingTasks").start(build,function(checkpoint)
 					options.checkpoint=checkpoint
+					if request.kind == "craftCalculate" then return simulator.calculate(raw,request.action,request.targets,request.initialState,options) end
 					return request.kind == "craftOptimize" and simulator.optimizeFossils(raw,request.targets,options) or simulator.simulate(raw,request.recipe,options)
 				end,function(result) publish("crafted",{nativeCrafting=result}) end,function(message) publish("failed",{error=message}) end,function(progress) publish("calculating",{progress=progress}) end)
 				job.requestId=request.id
 			else
-				local result=request.kind == "craftCalculate" and simulator.calculate(raw,request.action,request.targets,request.initialState) or simulator.perform(raw,request.action,request.seed,request.initialState)
+				local result=simulator.perform(raw,request.action,request.seed,request.initialState)
 				M.status={id=request.id,status="crafted",nativeCrafting=result}; M.publishState()
 			end
 			return
@@ -485,7 +486,16 @@ function M.poll(build, force)
 			end
 			M.status = {id=request.id,status="inspected",crafting=require("Modules.CraftingProjects").inspect(raw,request.query,request.limit)}
 			local ok,catalog=pcall(require("Modules.CraftingSimulator").catalog,raw,request.query,request.limit)
-			if ok then M.status.crafting.nativeEngine=catalog else M.status.crafting.nativeEngineUnavailable=tostring(catalog):match("^[^\n]+") end
+			if ok then
+				M.status.crafting.nativeEngine=catalog
+				if request.action then
+					local simulator=require("Modules.CraftingSimulator");local model=simulator.model(raw)
+					local state=request.initialState and simulator.validateState(model,request.initialState) or model.initial
+					local action=copyTable(request.action);action.allflame=action.allflame or {auto=true}
+					local valid,profile=pcall(simulator.allflameProfile,model,state,action)
+					if valid then catalog.allflameProfile=profile else catalog.allflameUnavailable=tostring(profile):match("^[^\n]+") end
+				end
+			else M.status.crafting.nativeEngineUnavailable=tostring(catalog):match("^[^\n]+") end
 			M.publishState()
 			return
 		end

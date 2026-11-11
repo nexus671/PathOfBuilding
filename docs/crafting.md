@@ -24,7 +24,9 @@ Use a blank base or item text whose modifier IDs PoB resolves. Unresolved explic
 
 **Predictable recombination (observed odds)** needs the game's displayed success percentage for the exact inputs and selected modifiers. Add one exact target for each selected modifier, with at least one from each input, then configure the donor and percentage. MCP accepts explicit `selectedMods.left` and `selectedMods.right` ID lists. The model preserves the chosen base's item level and treats failure as destruction. It fits a shared constant to your observation; its base shares remain estimates. It cannot independently calculate the game's displayed percentage.
 
-**Allflame: enter observed Vesper settings** enables ghost outcomes for the selected currency. Enter its maximum outcome count, Intangibility gain range and Dead Man's Sulphur cost. Apply the currency, inspect each ghost and keep one. Cancel keeps the emulated input. Intangibility can reduce the entire craft to one outcome; ordinary crafting still works. Import this property with `Intangibility: 30%`, or continue the returned structured state.
+**Allflame settings** uses current client data for currency outcomes and Sulphur costs. Choose your unlocked ship upgrades; **Observed override** accepts settings read in game. After applying currency, inspect each ghost before keeping one. Recipes prefer the most matching target groups. Existing imprints are consumed. Kishara offers four retained-modifier choices; Tzamoto attempts to reset Intangibility, with destruction modeled as an assumed 50/50 branch.
+
+**Edit hypothetical item** stages modifier additions, removals, replacements, rolls, fractures and basic properties. Keeping edits sets a new recipe start and clears the recorded currency sequence; Cancel discards them.
 
 For recipes, Allflame prefers the outcome matching the most captured target groups, with ties keeping the first. A manually selected ghost is recorded as a fixed choice index; after collapse it keeps the only outcome. Costs include one currency use and one Sulphur charge, rather than charging for every ghost. These are conditional models using your settings, not an automatic Vesper data table. MCP supplies the same values in `action.allflame` and receives bounded `choices` with each emulated result.
 
@@ -34,7 +36,7 @@ Add a modifier on **Target conditions**. Separate groups require all groups by d
 
 - Required or excluded modifiers, matching counts and minimum roll percentages.
 - Explicit or implicit modifiers, and how many groups must match.
-- Open affix slots, affix counts, quality, sockets, links, corruption and memory strands.
+- Specific fractured or crafted modifiers, open affix slots, affix/fracture counts, quality, sockets, links, corruption, memory strands and Intangibility.
 
 Roll percentage means the position within a modifier's native range. For several sampled values, every value must meet the threshold. An unfinished unveil never counts as a completed target.
 
@@ -42,11 +44,11 @@ Roll percentage means the position within a modifier's native range. For several
 
 Set trials and the action budget. **Simulate selected action** repeats the action until its conditions match or the budget ends. **Keep actions as recipe** retains the emulator sequence. **Recipe routes** edits attempts and success/failure destinations, including bounded loops. **Simulate saved recipe** uses its captured initial state.
 
-Jobs run in the background. **Cancel crafting job** stops them. Results include success frequency, a 95% Wilson sampling interval, currency uses, failed transitions and missing prices. **Results / distribution** shows action counts, spending percentiles and route visits. Successful-trial percentiles exclude failures; all-trial spending includes them. Trials stopped by the budget are reported separately.
+Jobs run in the background. **Cancel crafting job** stops them. Results include success frequency, a 95% Wilson sampling interval, currency uses, failed transitions and missing prices. **Results / distribution** shows action counts, spending percentiles, route visits and final modifier frequencies. Up to ten successful items are retained for a separate build preview. Successful-trial percentiles exclude failures; all-trial spending includes them. Trials stopped by the budget are reported separately.
 
-The price field applies to the selected action. MCP can supply prices for each action or fossil/resonator component in one currency. Spending divided by observed successes is not a guaranteed in-game cost. Zero successes does not establish impossibility.
+The price field applies to the selected action. The starting-item cost field adds the base cost to every trial in the same currency. MCP can supply prices for each action or fossil/resonator component in one currency. Spending divided by observed successes is not a guaranteed in-game cost. Zero successes does not establish impossibility.
 
-**Exact next-mod odds** enumerates one legal weighted draw for Augmentation, Regal, Exalted or influenced Exalted orbs, conditional on the supplied state and pool. **Compare subsets of the configured fossils** samples all combinations from the configured candidates and current state; it is not a global optimizer.
+**Calculate action odds** enumerates supported finite outcomes, including next-affix draws, Talisman fractures and Allflame selection. Other supported actions and roll thresholds use bounded sampling with a confidence interval. Results state which method was used. **Compare subsets of the configured fossils** samples all combinations from the configured candidates and current state; it is not a global optimizer.
 
 ## Keep a project
 
@@ -61,15 +63,15 @@ Enable the desktop connection and reconnect the client after updating.
 | Tool | Purpose |
 | --- | --- |
 | `get_crafting_projects` | Read saved projects. |
-| `inspect_crafting_item` | Read native IDs, initial state, options and coverage. |
+| `inspect_crafting_item` | Read native IDs, initial state and coverage; supply an action to inspect its Allflame profile. |
 | `apply_crafting_action` | Emulate an action; continue with the original text and returned state. |
 | `simulate_crafting` | Run a background recipe with targets, routes and prices. |
-| `calculate_crafting` | Enumerate one next-affix draw. |
+| `calculate_crafting` | Enumerate finite outcomes or sample other actions in a cancellable job. |
 | `optimize_crafting_fossils` | Compare combinations from up to eight candidates. |
 | `cancel_crafting_simulation` | Cancel using the job request ID. |
 | `propose_crafting_plan` | Propose a saved project and equipment preview for review. |
 
-Poll `get_proposal_status` for results. Requests allow at most 2,000 trials, 2,000 actions per trial and 20,000 budgeted actions overall. Results include seeds, versions and limitations. MCP never automatically equips an outcome or saves the build.
+Poll `get_proposal_status` for results. Requests allow at most 2,000 trials, 2,000 actions per trial and 20,000 budgeted actions overall. Results include seeds, versions and limitations. Simulation options accept `baseCost` and `retainSuccesses` (0-100); retained successes are the first successful trials. MCP never automatically equips an outcome or saves the build.
 
 ## External cross-check
 

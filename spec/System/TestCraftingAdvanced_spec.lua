@@ -40,7 +40,7 @@ describe("Advanced native crafting", function()
 		assert.are.equal(3,trials.meanCost)
 		assert.are.equal(10,trials.currencySpent.exalt)
 		assert.are.equal(1000,trials.currencySpent.dead_mans_sulphur)
-		assert.are.equal(false,pcall(sim.calculate,raw,craft,{{anyOf={"FireResist1"}}},state))
+		assert.is_truthy(sim.calculate(raw,craft,{{anyOf={"FireResist1"}}},state).allflameProfile)
 		local free=copyTable(craft);free.allflame.sulphur=0
 		local noSulphur=sim.simulate(raw,{steps={free},targets={},requirements={minAffixes=2}},{initialState=state,trials=1,maxActions=1,prices={exalt=2},currency="chaos"})
 		assert.are.equal(2,noSulphur.meanCost)

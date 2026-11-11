@@ -256,7 +256,7 @@ function M.matches(state,targets,rarity,model,requirements,requiredGroups)
   local count=0
   for _,entry in ipairs(group.scope == "implicit" and (state.corruptedImplicits or state.implicits or {}) or state.affixes) do
    local roll=type(entry.range) == "table" and math.min(unpack(entry.range)) or entry.range or 0.5
-   for _,id in ipairs(group.anyOf) do if entry.id == id and roll >= (group.minRoll or 0) then count=count+1; break end end
+   for _,id in ipairs(group.anyOf) do if entry.id == id and roll >= (group.minRoll or 0) and (group.fractured == nil or (entry.fractured or false) == group.fractured) and (group.crafted == nil or (entry.crafted or false) == group.crafted) then count=count+1; break end end
   end
   local hit=count >= (group.atLeast or 1)
   if group.negate then hit=not hit end
@@ -271,6 +271,9 @@ function M.matches(state,targets,rarity,model,requirements,requiredGroups)
   if requirements.openPrefixes and caps.Prefix-prefix < requirements.openPrefixes then return false end
   if requirements.openSuffixes and caps.Suffix-suffix < requirements.openSuffixes then return false end
   if requirements.minAffixes and c.total < requirements.minAffixes or requirements.maxAffixes and c.total > requirements.maxAffixes then return false end
+  local fractures=0;for _,entry in ipairs(state.affixes) do if entry.fractured then fractures=fractures+1 end end
+  if requirements.minFractured and fractures < requirements.minFractured or requirements.maxFractured and fractures > requirements.maxFractured then return false end
+  if requirements.minIntangibility and (state.intangibility or 0) < requirements.minIntangibility or requirements.maxIntangibility and (state.intangibility or 0) > requirements.maxIntangibility then return false end
   if requirements.minQuality and (state.quality or model.item.quality or 0) < requirements.minQuality then return false end
   if requirements.minMemoryStrands and (state.memoryStrands or 0) < requirements.minMemoryStrands then return false end
   if requirements.maxMemoryStrands and (state.memoryStrands or 0) > requirements.maxMemoryStrands then return false end
@@ -294,8 +297,11 @@ function M.validateRecipe(recipe)
 	local function validateRequirements(requirements)
 		if not requirements then return end
 		assert(type(requirements) == "table" and next(requirements),"Choose at least one property condition")
-		local limits={openPrefixes=3,openSuffixes=3,minAffixes=6,maxAffixes=6,minQuality=30,sockets=6,links=6,minMemoryStrands=100,maxMemoryStrands=100}
+		local limits={openPrefixes=3,openSuffixes=3,minAffixes=6,maxAffixes=6,minQuality=30,sockets=6,links=6,minMemoryStrands=100,maxMemoryStrands=100,minFractured=6,maxFractured=6,minIntangibility=100,maxIntangibility=100}
 		for key,value in pairs(requirements) do if key == "corrupted" then assert(type(value) == "boolean","Invalid corruption condition") else integer(value,0,assert(limits[key],"Unknown property condition"),key) end end
+		for _,pair in ipairs({{"minAffixes","maxAffixes"},{"minMemoryStrands","maxMemoryStrands"},{"minFractured","maxFractured"},{"minIntangibility","maxIntangibility"}}) do
+			assert(not requirements[pair[1]] or not requirements[pair[2]] or requirements[pair[1]] <= requirements[pair[2]],"Minimum property condition exceeds maximum")
+		end
 	end
 	validateRequirements(recipe.requirements)
 	if recipe.requiredGroups then integer(recipe.requiredGroups,0,#recipe.targets,"required target groups") end
@@ -307,6 +313,7 @@ function M.validateRecipe(recipe)
 		if group.atLeast then integer(group.atLeast,1,6,"matching modifiers") end
 		if group.minRoll then assert(type(group.minRoll) == "number" and group.minRoll >= 0 and group.minRoll <= 1,"Invalid minimum roll") end
 		assert(not group.scope or group.scope == "explicit" or group.scope == "implicit","Invalid target scope")
+		for _,key in ipairs({"fractured","crafted"}) do assert(group[key] == nil or type(group[key]) == "boolean","Invalid modifier condition") end
 		assert(group.negate == nil or type(group.negate) == "boolean","Invalid exclusion condition")
 	end
 	end
@@ -354,6 +361,10 @@ function M.simulate(raw,recipe,options)
 	options=options or { }
 	recipe=M.validateRecipe(recipe)
 	local trials=integer(options.trials or 200,1,2000,"trial count")
+	local baseCost=options.baseCost or 0
+	assert(type(baseCost) == "number" and baseCost == baseCost and baseCost >= 0 and baseCost <= 1e12,"Invalid starting item cost")
+	assert(baseCost == 0 or type(options.currency) == "string" and #options.currency > 0,"Name the currency for the starting item cost")
+	local retain=integer(options.retainSuccesses or 0,0,100,"retained successful items")
 	local maxActions=integer(options.maxActions or 100,1,2000,"action budget")
 	assert(trials*maxActions <= 20000,"Use at most 20000 total budgeted actions per simulation")
 	local seed=integer(options.seed or 104729,1,2147483646,"seed")
@@ -374,18 +385,23 @@ function M.simulate(raw,recipe,options)
 	end end
 	local function checkTargets(targets) for _,group in ipairs(targets) do for _,id in ipairs(group.anyOf) do assert(available[id],"Target modifier ID is unavailable for this base: "..id) end end end
 	checkTargets(recipe.targets)
-	for _,step in ipairs(recipe.steps) do if step.untilTargets then checkTargets(step.untilTargets) end end
+	for _,step in ipairs(recipe.steps) do
+		if step.untilTargets then checkTargets(step.untilTargets) end
+		if step.method == "ducat_kishara" and not step.allflame then step.allflame={auto=true,upgradeTier=2} end
+		if step.allflame and not step.allflame.preferredTargets and #recipe.targets > 0 then step.allflame.preferredTargets=copyTable(step.untilTargets or recipe.targets) end
+	end
 	local successes,totalCost,totalActions,totalExecuted=0,0,0,0
 	local spent,missing,errors,times={},{},{},{}
 	local actionHistogram,costSamples,successfulCosts,routes={},{},{},{}
 	local budgetExhausted,destroyedTrials=0,0
 	local sample,sampleSuccess
+	local retained,affixDistribution,propertyDistribution={},{},{affixes={},fractured={},intangibility={},memoryStrands={}}
 	for trial=1,trials do
 		if options.checkpoint then options.checkpoint({trial=trial,trials=trials,successes=successes}) end
 		local state=copyState(model.initial)
 		local random=rng(encounter.seed(seed,trial,31))
-		local at,actions,cost=1,0,0
-		while at <= #recipe.steps and actions < maxActions and not state.destroyed and not M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups) do
+		local at,actions,cost=1,0,baseCost
+		while at <= #recipe.steps and actions < maxActions and not state.destroyed and (options.forceFirstAction and actions == 0 or not M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups)) do
 			local step=recipe.steps[at]
 			local route=routes[at] or {visits=0,success=0,failure=0,executed=0};routes[at]=route;route.visits=route.visits+1
 			local success=false
@@ -399,7 +415,7 @@ function M.simulate(raw,recipe,options)
 				route.executed=route.executed+1
 				totalExecuted=totalExecuted+1
 				local setupKey=(M.priceKey or priceKey)(step)
-				local components=options.prices and options.prices[setupKey] ~= nil and {[setupKey]=1} or M.components and M.components(step,state) or {[setupKey]=1}
+				local components=options.prices and options.prices[setupKey] ~= nil and {[setupKey]=1} or M.components and M.components(step,state,model) or {[setupKey]=1}
 				for key,amount in pairs(components) do
 					spent[key]=(spent[key] or 0)+amount
 					local price=options.prices and options.prices[key]
@@ -414,6 +430,19 @@ function M.simulate(raw,recipe,options)
 		end
 		local hit=M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups)
 		if hit then successes=successes+1; times[#times+1]=actions end
+		if hit and #retained < retain then retained[#retained+1]={trial=trial,actions=actions,cost=not next(missing) and cost or nil,state=copyTable(state),itemText=M.toItem(model,state).raw} end
+		local fractures=0
+		for _,entry in ipairs(state.affixes) do
+			local bucket=affixDistribution[entry.id] or {trials=0,successes=0,fractured=0,crafted=0};affixDistribution[entry.id]=bucket
+			bucket.trials=bucket.trials+1;if hit then bucket.successes=bucket.successes+1 end
+			if entry.fractured then bucket.fractured=bucket.fractured+1;fractures=fractures+1 end
+			if entry.crafted then bucket.crafted=bucket.crafted+1 end
+		end
+		if not state.destroyed then
+			for key,value in pairs({affixes=#state.affixes,fractured=fractures,intangibility=state.intangibility or 0,memoryStrands=state.memoryStrands or 0}) do
+				local histogram=propertyDistribution[key];histogram[value]=(histogram[value] or 0)+1
+			end
+		end
 		if state.destroyed then destroyedTrials=destroyedTrials+1 end
 		if not hit and not state.destroyed and at <= #recipe.steps and actions >= maxActions then budgetExhausted=budgetExhausted+1 end
 		local bucket=actionHistogram[actions] or {actions=actions,trials=0,successes=0};actionHistogram[actions]=bucket;bucket.trials=bucket.trials+1;if hit then bucket.successes=bucket.successes+1 end
@@ -433,7 +462,7 @@ function M.simulate(raw,recipe,options)
 	local result={trials=trials,successes=successes,successChance=successes/trials*100,confidenceLow=low,confidenceHigh=high,seed=seed,maxActions=maxActions,
 		meanActions=totalActions/trials,currencySpent=spent,unpriced=missing,transitionErrors=errors,limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
 		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units",
-		actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
+		baseCost=baseCost,retainedSuccesses=retained,retentionLimit=retain,affixDistribution=affixDistribution,propertyDistribution=propertyDistribution,actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
 	if not next(missing) then result.meanCost=totalCost/trials; result.costPerSuccess=successes > 0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts) end
 	return result
 end
@@ -471,4 +500,5 @@ function M.capacities(model,state)
  return {Prefix=prefix,Suffix=suffix,total=prefix+suffix}
 end
 require("Modules.CraftingAdvanced").extend(M,{counts=counts,flags=flags,clear=clear,protected=protected,add=add,integer=integer,priceKey=priceKey})
+require("Modules.CraftingCalculator").extend(M)
 return M
