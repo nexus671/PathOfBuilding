@@ -20,6 +20,8 @@ local function downloadFileText(source, file)
 		local text = ""
 		local easy = curl.easy()
 		local escapedUrl = source..easy:escape(file)
+		-- A cached branch manifest can queue a rollback immediately after publishing.
+		if file == "manifest.xml" then escapedUrl = escapedUrl.."?check="..os.time() end
 		easy:setopt_url(escapedUrl)
 		easy:setopt(curl.OPT_ACCEPT_ENCODING, "")
 		if connectionProtocol then
