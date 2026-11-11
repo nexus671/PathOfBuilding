@@ -55,12 +55,15 @@ end
 
 function M.toItem(model,state)
 	local item=new("Item"):Item(model.raw)
+	item.affixes=model.byId
+	if M.decorateItem then M.decorateItem(model,state,item) end
 	item.rarity=state.rarity; item.title=state.rarity == "RARE" and "Simulated craft" or nil
 	item.name=item.title or item.baseName
 	item.crafted=true; item.prefixes={}; item.suffixes={}; item.explicitModLines={}
-	item.affixLimit=state.rarity == "MAGIC" and 2 or 6
-	item.prefixes.limit=state.rarity == "MAGIC" and 1 or 3
-	item.suffixes.limit=item.prefixes.limit
+	local caps=M.capacities(model,state)
+	item.affixLimit=caps.Prefix+caps.Suffix
+	item.prefixes.limit=caps.Prefix
+	item.suffixes.limit=caps.Suffix
 	for _,entry in ipairs(state.affixes) do
 		local mod=model.byId[entry.id]
 		if not entry.crafted then
@@ -75,7 +78,7 @@ function M.toItem(model,state)
 		hasBench=true
 		local mod=model.byId[entry.id]
 		item.requirements.level=math.max(item.requirements.level or 0,math.floor((mod.level or 0)*0.8))
-		for _,line in ipairs(mod) do item.explicitModLines[#item.explicitModLines+1]={line=itemLib.applyRange(line,entry.range or 0.5),crafted=true,prefix=mod.type == "Prefix",suffix=mod.type == "Suffix"} end
+		for _,line in ipairs(mod) do item.explicitModLines[#item.explicitModLines+1]={line=itemLib.applyRange(line,entry.range or 0.5),crafted=true,fractured=entry.fractured,prefix=mod.type == "Prefix",suffix=mod.type == "Suffix"} end
 	end end
 	if hasBench then
 		for _,list in ipairs({item.prefixes,item.suffixes}) do for _,entry in ipairs(list) do if type(entry.range) == "number" then entry.range={entry.range} end end end
@@ -91,13 +94,13 @@ function M.model(raw)
 	assert(not raw:find("\nUnidentified",1,true),"Identify the starting item before importing its modifiers")
 	integer(item.itemLevel,1,100,"item level")
 	assert(item.rarity == "NORMAL" or item.rarity == "MAGIC" or item.rarity == "RARE","Unique and relic crafting is not supported")
-	assert(not item.corrupted and not item.mirrored and not item.foulborn,"Corrupted, mirrored or foulborn items are not supported")
+	assert(not item.foulborn,"Foulborn items need a separate modifier-mutation model")
 	local equipment={Helmet=true,["Body Armour"]=true,Gloves=true,Boots=true,Shield=true,Quiver=true,Amulet=true,Ring=true,Belt=true}
-	assert(equipment[item.type] or data.weaponTypeInfo[item.type],"This engine currently supports ordinary equipment; this item type is unsupported")
+	assert(equipment[item.type] or item.type == "Jewel" or item.type == "Flask" or item.type == "Tincture" or data.weaponTypeInfo[item.type],"This engine currently supports ordinary equipment; this item type is unsupported")
 	if item.fractured then for _,info in ipairs(itemLib.influenceInfo.all) do assert(not item[info.key],"Fractured and influenced combinations are unsupported") end end
 	local model={raw=item.raw,item=item,byId={},mods={},bench={},essences={}}
 	for id,mod in pairs(item.affixes or { }) do model.byId[id]=mod end
-	for id,mod in pairs(data.itemMods.Explicit) do
+	for id,mod in pairs((item.type == "Jewel" or item.type == "Flask" or item.type == "Tincture") and item.affixes or data.itemMods.Explicit) do
 		if (mod.type == "Prefix" or mod.type == "Suffix") and mod.level <= item.itemLevel and not mod.affix:find("Elevated",1,true) then
 			local weight=item:GetModSpawnWeight(mod)
 			if weight > 0 then model.mods[#model.mods+1]={id=id,mod=mod,weight=weight} end
@@ -131,7 +134,8 @@ function M.model(raw)
 	end end
 	local c=counts(model,state)
 	for _,entry in ipairs(state.affixes) do if entry.fractured then for _,info in ipairs(itemLib.influenceInfo.all) do assert(not item[info.key],"Fractured and influenced combinations are unsupported") end end end
-	assert(c.Prefix <= (state.rarity == "MAGIC" and 1 or 3) and c.Suffix <= (state.rarity == "MAGIC" and 1 or 3),"Starting item exceeds affix limits")
+	local caps=M.capacities(model,state)
+	assert(c.Prefix <= caps.Prefix and c.Suffix <= caps.Suffix,"Starting item exceeds affix limits")
 	assert(renderLines(M.toItem(model,state)) == renderLines(item),"Starting modifiers could not be resolved exactly. Use a blank base or advanced item text with recognized modifier IDs.")
 	model.initial=state
 	return model
@@ -140,11 +144,11 @@ end
 function M.pool(model,state)
 	local c,f=counts(model,state),flags(model,state)
 	for key,value in pairs(state.rollBlock or { }) do f[key]=value end
-	local cap=state.rarity == "MAGIC" and 1 or 3
+	local caps=M.capacities(model,state)
 	local result,total={},0
 	for _,entry in ipairs(model.mods) do
 		local mod=entry.mod
-		local blocked=c[mod.type] >= cap or c.groups[mod.group]
+		local blocked=c[mod.type] >= caps[mod.type] or c.groups[mod.group]
 		for _,tag in ipairs(mod.modTags or { }) do if f[tag] then blocked=true end end
 		if not blocked then
 			local weight=next(c.tags) and model.item:GetModSpawnWeight(mod,c.tags) or entry.weight
@@ -172,7 +176,7 @@ local function add(model,state,random)
 	local pick=random()*total
 	for _,entry in ipairs(pool) do
 		pick=pick-entry.weight
-		if pick < 0 then state.affixes[#state.affixes+1]={id=entry.id,range=rollRange(model.byId[entry.id],random)}; return end
+		if pick < 0 then state.affixes[#state.affixes+1]={id=entry.id,range=M.rollRange(model.byId[entry.id],random)}; return end
 	end
 	error("Could not select a modifier")
 end
@@ -195,10 +199,11 @@ function M.action(model,input,action,random)
 		state.rarity=magic and "MAGIC" or "RARE"
 		local value=random()
 		local target=magic and (value < 0.5 and 1 or 2) or (value < 8/12 and 4 or value < 11/12 and 5 or 6)
+		target=math.min(target,M.capacities(model,state).total)
 		while #state.affixes < target do add(model,state,random) end
 	elseif method == "augmentation" or method == "regal" or method == "exalt" then
 		assert(state.rarity == (method == "exalt" and "RARE" or "MAGIC"),"This currency cannot be used on the current rarity")
-		assert(c.total < (method == "augmentation" and 2 or 6),"The item has no open affix")
+		assert(c.total < (method == "augmentation" and 2 or M.capacities(model,{rarity="RARE"}).total),"The item has no open affix")
 		if method == "regal" then state.rarity="RARE" end
 		add(model,state,random)
 	elseif method == "annul" then
@@ -214,15 +219,15 @@ function M.action(model,input,action,random)
 		state.rarity=left.total == 0 and "NORMAL" or left.Prefix <= 1 and left.Suffix <= 1 and "MAGIC" or "RARE"
 	elseif method == "divine" then
 		assert(state.rarity ~= "NORMAL","Divine requires a magic or rare item")
-		for _,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then entry.range=rollRange(model.byId[entry.id],random) end end
+		for _,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then entry.range=M.rollRange(model.byId[entry.id],random) end end
 	elseif method == "bench" then
 		local mod=assert(model.byId[action.modId],"Unknown bench modifier")
 		assert(action.modId:match("^bench:"),"Select a bench modifier")
 		assert(c.crafted < (f.multipleCrafts and 3 or 1),"Crafted modifier limit reached")
 		assert(not c.groups[mod.group],"A modifier from this group is already present")
-		assert(c[mod.type] < (state.rarity == "RARE" and 3 or 1),"No open affix for this bench craft")
+		assert(c[mod.type] < M.capacities(model,state)[mod.type],"No open affix for this bench craft")
 		if state.rarity == "NORMAL" then state.rarity="MAGIC" end
-		state.affixes[#state.affixes+1]={id=action.modId,range=rollRange(mod,random),crafted=true}
+		state.affixes[#state.affixes+1]={id=action.modId,range=M.rollRange(mod,random),crafted=true}
 	elseif method == "remove_crafted" then
 		assert(c.crafted > 0,"The item has no crafted modifiers")
 		for i=#state.affixes,1,-1 do if state.affixes[i].crafted then table.remove(state.affixes,i) end end
@@ -234,42 +239,82 @@ function M.action(model,input,action,random)
 		clear(model,state,true); state.rarity="RARE"
 		local mod=model.byId[selected.modId]
 		assert(not counts(model,state).groups[mod.group],"The essence modifier conflicts with a fractured modifier")
-		state.affixes[#state.affixes+1]={id=selected.modId,range=rollRange(mod,random)}
+		state.affixes[#state.affixes+1]={id=selected.modId,range=M.rollRange(mod,random)}
 		local value=random(); local target=value < 8/12 and 4 or value < 11/12 and 5 or 6
+		target=math.min(target,M.capacities(model,state).total)
 		while #state.affixes < target do add(model,state,random) end
 	else error("Unsupported crafting action: "..tostring(method)) end
 	state.rollBlock=nil
 	return state
 end
 
-function M.matches(state,targets,rarity)
-	if rarity and state.rarity ~= rarity then return false end
-	for _,group in ipairs(targets) do
-		local hit=false
-		for _,entry in ipairs(state.affixes) do for _,id in ipairs(group.anyOf) do if entry.id == id then hit=true end end end
-		if not hit then return false end
-	end
-	return true
+function M.matches(state,targets,rarity,model,requirements,requiredGroups)
+ if state.veil then return false end
+ if rarity and state.rarity ~= rarity then return false end
+ local matched=0
+ for _,group in ipairs(targets) do
+  local count=0
+  for _,entry in ipairs(group.scope == "implicit" and (state.corruptedImplicits or state.implicits or {}) or state.affixes) do
+   local roll=type(entry.range) == "table" and math.min(unpack(entry.range)) or entry.range or 0.5
+   for _,id in ipairs(group.anyOf) do if entry.id == id and roll >= (group.minRoll or 0) then count=count+1; break end end
+  end
+  local hit=count >= (group.atLeast or 1)
+  if group.negate then hit=not hit end
+  if hit then matched=matched+1 end
+ end
+ if matched < (requiredGroups or #targets) then return false end
+ if requirements then
+  assert(model,"A native item model is required for property conditions")
+  local c=counts(model,state); local caps=M.capacities(model,state)
+  local prefix=c.Prefix+(state.veil and state.veil.type == "Prefix" and 1 or 0)
+  local suffix=c.Suffix+(state.veil and state.veil.type == "Suffix" and 1 or 0)
+  if requirements.openPrefixes and caps.Prefix-prefix < requirements.openPrefixes then return false end
+  if requirements.openSuffixes and caps.Suffix-suffix < requirements.openSuffixes then return false end
+  if requirements.minAffixes and c.total < requirements.minAffixes or requirements.maxAffixes and c.total > requirements.maxAffixes then return false end
+  if requirements.minQuality and (state.quality or model.item.quality or 0) < requirements.minQuality then return false end
+  if requirements.corrupted ~= nil and (state.corrupted or false) ~= requirements.corrupted then return false end
+  if requirements.sockets and #(state.sockets or model.item.sockets or {}) < requirements.sockets then return false end
+  if requirements.links then
+   local groups={}; local best=0
+   for _,socket in ipairs(state.sockets or model.item.sockets or {}) do groups[socket.group]=(groups[socket.group] or 0)+1;best=math.max(best,groups[socket.group]) end
+   if best < requirements.links then return false end
+  end
+ end
+ return true
 end
 function M.validateRecipe(recipe)
 	assert(type(recipe) == "table" and type(recipe.steps) == "table" and #recipe.steps >= 1 and #recipe.steps <= 20,"Use one to twenty recipe steps")
-	assert(type(recipe.targets) == "table" and #recipe.targets >= 1 and #recipe.targets <= 6,"Choose one to six target groups")
+	assert(type(recipe.targets) == "table" and #recipe.targets <= 6,"Choose up to six target groups")
+	assert(#recipe.targets > 0 or recipe.requirements,"Choose targets or item property conditions")
 	assert(not recipe.rarity or recipe.rarity == "MAGIC" or recipe.rarity == "RARE","Invalid target rarity")
 	local methods={ }
 	for _,method in ipairs(M.methods) do methods[method]=true end
+	local function validateRequirements(requirements)
+		if not requirements then return end
+		assert(type(requirements) == "table" and next(requirements),"Choose at least one property condition")
+		local limits={openPrefixes=3,openSuffixes=3,minAffixes=6,maxAffixes=6,minQuality=30,sockets=6,links=6}
+		for key,value in pairs(requirements) do if key == "corrupted" then assert(type(value) == "boolean","Invalid corruption condition") else integer(value,0,assert(limits[key],"Unknown property condition"),key) end end
+	end
+	validateRequirements(recipe.requirements)
+	if recipe.requiredGroups then integer(recipe.requiredGroups,0,#recipe.targets,"required target groups") end
 	local function validateTargets(targets)
 	assert(type(targets) == "table" and #targets >= 1 and #targets <= 6,"Choose one to six target groups")
 	for _,group in ipairs(targets) do
 		assert(type(group.anyOf) == "table" and #group.anyOf >= 1 and #group.anyOf <= 30,"Use one to thirty modifier IDs per target group")
 		for _,id in ipairs(group.anyOf) do assert(type(id) == "string" and #id <= 160,"Invalid target modifier ID") end
+		if group.atLeast then integer(group.atLeast,1,6,"matching modifiers") end
+		if group.minRoll then assert(type(group.minRoll) == "number" and group.minRoll >= 0 and group.minRoll <= 1,"Invalid minimum roll") end
+		assert(not group.scope or group.scope == "explicit" or group.scope == "implicit","Invalid target scope")
+		assert(group.negate == nil or type(group.negate) == "boolean","Invalid exclusion condition")
 	end
 	end
-	validateTargets(recipe.targets)
+	if #recipe.targets > 0 then validateTargets(recipe.targets) end
 	for _,step in ipairs(recipe.steps) do
 		assert(methods[step.method],"Unsupported crafting action: "..tostring(step.method))
 		integer(step.maxAttempts or 1,1,200,"step attempt limit")
-		if (step.maxAttempts or 1) > 1 then assert(step.untilTargets,"Repeated steps need target conditions") end
+		if (step.maxAttempts or 1) > 1 then assert(step.untilTargets or step.untilRequirements,"Repeated steps need target or property conditions") end
 		if step.untilTargets then validateTargets(step.untilTargets) end
+		validateRequirements(step.untilRequirements)
 		for _,key in ipairs({"onSuccess","onFailure"}) do if step[key] then integer(step[key],1,#recipe.steps+1,"recipe route") end end
 	end
 	return copyTable(recipe)
@@ -298,8 +343,8 @@ function M.validateState(model,state)
 		for _,value in ipairs(ranges) do assert(type(value) == "number" and value == value and math.abs(value) <= 100,"Invalid modifier roll range") end
 	end
 	local c=counts(model,state)
-	local cap=state.rarity == "MAGIC" and 1 or 3
-	assert(c.Prefix <= cap and c.Suffix <= cap and (state.rarity ~= "NORMAL" or c.total == 0),"State exceeds rarity affix limits")
+	local caps=M.capacities(model,state)
+	assert(c.Prefix <= caps.Prefix and c.Suffix <= caps.Suffix and (state.rarity ~= "NORMAL" or c.total == 0),"State exceeds rarity affix limits")
 	return copyState(state)
 end
 
@@ -319,43 +364,72 @@ function M.simulate(raw,recipe,options)
 	for _,entry in ipairs(model.bench) do available[entry.id]=true end
 	for _,entry in ipairs(model.essences) do available[entry.modId]=true end
 	for _,entry in ipairs(model.initial.affixes) do available[entry.id]=true end
+	for id in pairs(model.special or {}) do available[id]=true end
+	for _,step in ipairs(recipe.steps) do if step.method == "recombine" and step.donorItem then
+		local donor=M.model(step.donorItem)
+		for _,entry in ipairs(donor.mods) do available[entry.id]=true end
+		for _,entry in ipairs(donor.initial.affixes) do available[entry.id]=true end
+	end end
 	local function checkTargets(targets) for _,group in ipairs(targets) do for _,id in ipairs(group.anyOf) do assert(available[id],"Target modifier ID is unavailable for this base: "..id) end end end
 	checkTargets(recipe.targets)
 	for _,step in ipairs(recipe.steps) do if step.untilTargets then checkTargets(step.untilTargets) end end
-	local successes,totalCost,totalActions=0,0,0
+	local successes,totalCost,totalActions,totalExecuted=0,0,0,0
 	local spent,missing,errors,times={},{},{},{}
+	local actionHistogram,costSamples,successfulCosts,routes={},{},{},{}
+	local budgetExhausted=0
 	local sample,sampleSuccess
 	for trial=1,trials do
+		if options.checkpoint then options.checkpoint({trial=trial,trials=trials,successes=successes}) end
 		local state=copyState(model.initial)
 		local random=rng(encounter.seed(seed,trial,31))
 		local at,actions,cost=1,0,0
-		while at <= #recipe.steps and actions < maxActions and not M.matches(state,recipe.targets,recipe.rarity) do
+		while at <= #recipe.steps and actions < maxActions and not M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups) do
 			local step=recipe.steps[at]
+			local route=routes[at] or {visits=0,success=0,failure=0,executed=0};routes[at]=route;route.visits=route.visits+1
 			local success=false
 			for _=1,(step.maxAttempts or 1) do
 				if actions >= maxActions then break end
+				if options.checkpoint then options.checkpoint({trial=trial,trials=trials,actions=actions,successes=successes}) end
 				actions=actions+1
 				local ok,nextState=pcall(M.action,model,state,step,random)
 				if not ok then local message=tostring(nextState):match("[^:]+$") or tostring(nextState); errors[message]=(errors[message] or 0)+1; break end
 				state=nextState
-				local key=priceKey(step); spent[key]=(spent[key] or 0)+1
-			local price=options.prices and options.prices[key]
-				if price then assert(type(price) == "number" and price >= 0 and price < math.huge,"Invalid currency price"); cost=cost+price else missing[key]=true end
-				if not step.untilTargets or M.matches(state,step.untilTargets) then success=true; break end
+				route.executed=route.executed+1
+				totalExecuted=totalExecuted+1
+				local setupKey=(M.priceKey or priceKey)(step)
+				local components=options.prices and options.prices[setupKey] ~= nil and {[setupKey]=1} or M.components and M.components(step,state) or {[setupKey]=1}
+				for key,amount in pairs(components) do
+					spent[key]=(spent[key] or 0)+amount
+					local price=options.prices and options.prices[key]
+					if price then cost=cost+price*amount else missing[key]=true end
+				end
+				if not (step.untilTargets or step.untilRequirements) or M.matches(state,step.untilTargets or {},nil,model,step.untilRequirements) then success=true; break end
 			end
+			route[success and "success" or "failure"]=route[success and "success" or "failure"]+1
 			at=success and (step.onSuccess or at+1) or (step.onFailure or at+1)
 		end
-		local hit=M.matches(state,recipe.targets,recipe.rarity)
+		local hit=M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups)
 		if hit then successes=successes+1; times[#times+1]=actions end
+		if not hit and actions >= maxActions then budgetExhausted=budgetExhausted+1 end
+		local bucket=actionHistogram[actions] or {actions=actions,trials=0,successes=0};actionHistogram[actions]=bucket;bucket.trials=bucket.trials+1;if hit then bucket.successes=bucket.successes+1 end
+		costSamples[#costSamples+1]=cost;if hit then successfulCosts[#successfulCosts+1]=cost end
 		if not sample or hit and not sampleSuccess then sample,sampleSuccess=state,hit end
 		totalActions=totalActions+actions; totalCost=totalCost+cost
 	end
 	local low,high=encounter.wilson(successes,trials)
-	assert(next(spent) or successes > 0,"Recipe could not execute a supported action; inspect its starting rarity and open affixes")
+	local function quantiles(values)
+		if #values == 0 then return nil end
+		table.sort(values)
+		local result={};for _,percent in ipairs({10,25,50,75,90,95,99}) do result["p"..percent]=values[math.max(1,math.ceil(#values*percent/100))] end
+		return result
+	end
+	local distribution={};for _,bucket in pairs(actionHistogram) do distribution[#distribution+1]=bucket end;table.sort(distribution,function(a,b) return a.actions < b.actions end)
+	assert(totalExecuted > 0 or successes > 0,"Recipe could not execute a supported action; inspect its starting rarity and open affixes")
 	local result={trials=trials,successes=successes,successChance=successes/trials*100,confidenceLow=low,confidenceHigh=high,seed=seed,maxActions=maxActions,
 		meanActions=totalActions/trials,currencySpent=spent,unpriced=missing,transitionErrors=errors,limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=M.toItem(model,sample).raw,sampleState=sample,
-		engineVersion=1,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units"}
-	if not next(missing) then result.meanCost=totalCost/trials; result.costPerSuccess=successes > 0 and totalCost/successes or nil end
+		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units",
+		actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted}
+	if not next(missing) then result.meanCost=totalCost/trials; result.costPerSuccess=successes > 0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts) end
 	return result
 end
 
@@ -363,7 +437,7 @@ function M.perform(raw,action,seed,initialState)
 	local model=M.model(raw)
 	if initialState then model.initial=M.validateState(model,initialState) end
 	local state=M.action(model,model.initial,action,rng(encounter.seed(integer(seed or 104729,1,2147483646,"seed"),1,31)))
-	return {itemText=M.toItem(model,state).raw,state=state,limitations=copyTable(M.limits)}
+	return {itemText=not state.veil and M.toItem(model,state).raw or nil,state=state,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
 end
 
 function M.catalog(raw,query,limit)
@@ -375,4 +449,21 @@ function M.catalog(raw,query,limit)
 	for _,entry in ipairs(model.essences) do if #result.essences < limit and entry.name:lower():find(query,1,true) then result.essences[#result.essences+1]=copyTable(entry) end end
 	return result
 end
+M.rollRange=rollRange
+function M.capacities(model,state)
+ local prefix,suffix=3,3
+ if model.item.type == "Jewel" then prefix,suffix=2,2 end
+ if model.item.type == "Jewel" and model.item.base.subType == "Abyss" and state.corrupted then prefix,suffix=3,3 end
+ if model.item.type == "Flask" or model.item.type == "Tincture" then prefix,suffix=1,1 end
+ if state.rarity == "MAGIC" then prefix,suffix=1,1 end
+ for _,line in ipairs(model.item.implicitModLines or {}) do
+  local value=tonumber(line.line:match("(%d+) additional Prefix"));if value then prefix=prefix+value end
+  value=tonumber(line.line:match("(%d+) fewer Prefix"));if value then prefix=prefix-value end
+  value=tonumber(line.line:match("(%d+) additional Suffix"));if value then suffix=suffix+value end
+  value=tonumber(line.line:match("(%d+) fewer Suffix"));if value then suffix=suffix-value end
+ end
+ prefix,suffix=math.max(0,prefix),math.max(0,suffix)
+ return {Prefix=prefix,Suffix=suffix,total=prefix+suffix}
+end
+require("Modules.CraftingAdvanced").extend(M,{counts=counts,flags=flags,clear=clear,protected=protected,add=add,integer=integer,priceKey=priceKey})
 return M

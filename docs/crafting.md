@@ -1,52 +1,64 @@
 # Native crafting
 
-Open **AI builds -> Crafting projects**, or select an item in **Items -> Crafting plan**. Create a project with a starting base, an explicit item level, targets and planning notes. Choose **Native crafting** to open our built-in emulator and simulator. It runs locally and does not depend on Craft of Exile.
+Open **AI builds -> Crafting projects**, or choose **Items -> Crafting plan**. Create a project with a starting item and explicit item level, then choose **Native crafting**.
+
+The pages separate **Emulate item**, **Target conditions**, and **Simulate recipe**. Crafting runs locally. Equipped gear changes only through the desktop preview and review flow.
 
 ## Emulate an item
 
-Choose a currency, bench modifier or essence, then **Apply currency**. The emulated item stays separate from equipped gear. **Undo currency** reverses an action and **Reset item** restores the starting state. **Preview outcome in build** calculates its damage and defenses in a separate candidate; desktop review still controls application.
+Choose an action and its options, then **Apply currency**. **Configure fossil combination / donor item** accepts up to four fossils or a second item for Awakener and recombination. A Tangled Fossil requires the effect already revealed by the socketed resonator.
 
-The current engine supports ordinary weapons, armour and jewellery:
+**Undo currency** reverses an action; **Reset item** restores the starting state. Veiled Orbs leave an unfinished choice: select **Choose an unveil** and pick an offered modifier before previewing. An imprint belongs to this starting item and can be restored once.
 
-- Transmutation, Alteration, Augmentation, Regal, Alchemy, Chaos and Exalted orbs.
-- Annulment, Scouring and Divine orbs.
-- Bench modifiers, crafted-mod removal and essences.
-- Affix limits, modifier-group conflicts, item-level and influence spawn weights, fractured modifiers, prefix/suffix locks and attack/caster blocking for supported actions.
+The engine covers core currencies, bench modifiers, essences, fossils, Harvest tag crafts and resistance swaps, fractures, influence slams, Awakener, Dominance, veiled choices, Bestiary, Eldritch crafting, quality, catalysts, selected Ducats, corruption and selected tainted currencies. Jewels, flasks and tinctures have their own affix limits; flasks and tinctures remain magic. Cluster jewels need a known small-passive skill.
 
-Start with a blank base or advanced item text whose modifier IDs PoB can resolve. Unresolved existing modifiers are rejected rather than silently omitted. Bench modifiers can also be continued using the returned structured state through MCP.
+Unpredictable recombination can choose either base, and later actions continue on that base. Its probability model is experimental. See [coverage and assumptions](crafting-coverage.md) for missing or incomplete methods.
 
-## Simulate a plan
+Use a blank base or item text whose modifier IDs PoB resolves. Unresolved explicit modifiers are rejected. Imported Eldritch implicits with ambiguous tiers need a structured state before Eldritch crafting continues.
 
-Add target modifier tiers. Separate groups are **AND** conditions; **Add alternative** makes an **OR** choice within the last group. Targets currently match modifier IDs, not numeric roll thresholds. Integer roll values are sampled inclusively. Fractional display ranges use illustrative rolls because their underlying precision is unavailable in the exported data.
+## Set targets
 
-Set the seed, trial count and per-trial action budget. **Simulate selected action** repeats that action until targets are met or the budget is exhausted. **Keep actions as recipe** saves the emulator's sequence and targets with the project. **Simulate saved recipe** tests it from its original starting state. AI-authored recipes can also repeat steps and route success/failure to other steps.
+Add a modifier on **Target conditions**. Separate groups require all groups by default; **Add alternative** makes an OR choice within the last group. **Target counts, rolls and item properties** edits the last group and final conditions:
 
-Results show modeled success frequency, a 95% Wilson sampling interval, currency uses, failed transitions and supplied-price costs. The price field applies to the selected action; other recipe actions remain unpriced unless prices are supplied through MCP. Mean spending includes failed trials. Cost per observed success is aggregate spending divided by observed successes, not a guaranteed in-game cost.
+- Required or excluded modifiers, matching counts and minimum roll percentages.
+- Explicit or implicit modifiers, and how many groups must match.
+- Open affix slots, affix counts, quality, sockets, links and corruption.
 
-The model assumes 4/5/6 rare affixes with weights 8/3/1 and equal chances of 1/2 magic affixes, then samples the legal modifier pool by spawn weight. These assumptions and PoB's data coverage affect results. Sampling intervals do not cover uncertainty in the game rules. Zero observed successes is not proof that a craft is impossible.
+Roll percentage means the position within a modifier's native range. For several sampled values, every value must meet the threshold. An unfinished unveil never counts as a completed target.
 
-Fossils, Harvest, recombination, influence orbs, corruption, sockets/links, unveiling and special league actions are not implemented in this version. Unsupported methods fail explicitly. Jewels, flasks, tinctures, grafts, corrupted, mirrored and foulborn items are outside the current engine's scope.
+## Simulate a recipe
 
-## Keep projects with the build
+Set trials and the action budget. **Simulate selected action** repeats the action until its conditions match or the budget ends. **Keep actions as recipe** retains the emulator sequence. **Recipe routes** edits attempts and success/failure destinations, including bounded loops. **Simulate saved recipe** uses its captured initial state.
 
-A project holds starting and target items, desired modifiers, human-readable steps, stop/failure notes, supplied estimates and an optional executable native recipe. **Keep project in build** marks the build unsaved. Use normal build **Save** to persist it. Up to eight projects fit in a build. Completing and undoing planning steps does not spend currency.
+Jobs run in the background. **Cancel crafting job** stops them. Results include success frequency, a 95% Wilson sampling interval, currency uses, failed transitions and missing prices. **Results / distribution** shows action counts, spending percentiles and route visits. Successful-trial percentiles exclude failures; all-trial spending includes them. Trials stopped by the budget are reported separately.
 
-Projects live in AI Edition build XML. Other editions may ignore the section and drop it on re-save. AI Edition preserves unreadable/newer crafting metadata unchanged rather than silently erasing it.
+The price field applies to the selected action. MCP can supply prices for each action or fossil/resonator component in one currency. Spending divided by observed successes is not a guaranteed in-game cost. Zero successes does not establish impossibility.
+
+**Exact next-mod odds** enumerates one legal weighted draw for Augmentation, Regal, Exalted or influenced Exalted orbs, conditional on the supplied state and pool. **Compare subsets of the configured fossils** samples all combinations from the configured candidates and current state; it is not a global optimizer.
+
+## Keep a project
+
+Keeping a recipe marks the build unsaved. Use normal build **Save** to persist it. Up to eight projects fit in a build. Projects and recipes live in AI Edition XML; other editions may discard them on re-save. AI Edition preserves unreadable or newer metadata unchanged.
+
+**Preview outcome in build** calculates a separate candidate. Review controls application, and the existing undo flow restores the build. Simulation and planning never spend game currency.
 
 ## Use AI through MCP
 
-Enable the desktop connection and reconnect your MCP client after updating:
+Enable the desktop connection and reconnect the client after updating.
 
-- `get_crafting_projects` reads the saved plans.
-- `inspect_crafting_item` returns native modifiers, bench and essence IDs. Poll `get_proposal_status` for results.
-- `apply_crafting_action` emulates one action on a separate item. Continue a sequence using the same original item text and its returned structured state.
-- `simulate_crafting` runs bounded native recipes, with optional supplied prices in one common currency. It supports AND/OR target groups, an optional final rarity, per-step attempt limits and success/failure routes. The total budget is limited to 20,000 attempted actions per request.
-- `propose_crafting_plan` proposes a project, optional `nativeRecipe`, and optional hypothetical equipment preview for desktop review. It never changes equipment or saves a build automatically.
+| Tool | Purpose |
+| --- | --- |
+| `get_crafting_projects` | Read saved projects. |
+| `inspect_crafting_item` | Read native IDs, initial state, options and coverage. |
+| `apply_crafting_action` | Emulate an action; continue with the original text and returned state. |
+| `simulate_crafting` | Run a background recipe with targets, routes and prices. |
+| `calculate_crafting` | Enumerate one next-affix draw. |
+| `optimize_crafting_fossils` | Compare combinations from up to eight candidates. |
+| `cancel_crafting_simulation` | Cancel using the job request ID. |
+| `propose_crafting_plan` | Propose a saved project and equipment preview for review. |
 
-Native results include source/engine versions, seeds, coverage and distribution assumptions. A calculated target item's stats do not prove that a particular crafting plan can produce it.
+Poll `get_proposal_status` for results. Requests allow at most 2,000 trials, 2,000 actions per trial and 20,000 budgeted actions overall. Results include seeds, versions and limitations. MCP never automatically equips an outcome or saves the build.
 
-## Optional Craft of Exile handoff
+## External cross-check
 
-Craft of Exile remains an optional external cross-check. Its [documented item-import links](https://beta.craftofexile.com/developers?game=poe1) accept advanced game-copy text; it provides no API. Other handoffs are labeled **base-only**, since PoB's internal item format cannot reliably preserve every modifier there. Verify imported modifiers, quality, item level, influences and patch before simulating.
-
-External simulator exports can be attached and copied as opaque text. External trial/cost results remain supplied evidence, separately labeled from our native calculations. Neither path spends currency in the game.
+Craft of Exile remains an optional independent check. Its [documented import links](https://beta.craftofexile.com/developers?game=poe1) accept advanced game-copy text; it provides no public crafting API. Other handoffs are labeled **base-only**. Verify the imported item and patch. External exports remain opaque data; supplied external results stay separately labeled from native calculations.

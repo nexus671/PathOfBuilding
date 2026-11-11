@@ -1,0 +1,79 @@
+-- cspell:ignore Siveran
+-- Current colour model follows Siveran's CC0 calculator (3.29).
+local S={}
+function S.extend(M,A,api)
+	local methods={chromatic="Chromatic Orb",socket_colour_bench="Bench: non-white sockets",tainted_chromatic="Tainted Chromatic Orb",tainted_jeweller="Tainted Jeweller's Orb",tainted_fusing="Tainted Orb of Fusing"}
+	for method,label in pairs(methods) do M.methods[#M.methods+1]=method;M.labels[method]=label end;table.sort(M.methods)
+	local originalAction,originalOptions,originalPrice,originalComponents=M.action,M.actionOptions,M.priceKey,M.components
+	local function colourWeights(model,tainted)
+		if tainted then return {1/3,1/3,1/3} end
+		local values={model.item.requirements.str or 0,model.item.requirements.dex or 0,model.item.requirements.int or 0}
+		local total,n=0,0;for _,value in ipairs(values) do total=total+value;if value > 0 then n=n+1 end end
+		if n == 0 then return {1/3,1/3,1/3} end
+		local result={}
+		for i,value in ipairs(values) do
+			if n == 1 then result[i]=value > 0 and 0.9*(value+10)/(total+20) or 0.05+4.5/(total+20)
+			elseif n == 2 then result[i]=value > 0 and 0.9*value/total or 0.1
+			else result[i]=value/total end
+		end
+		return result
+	end
+	local function colour(weights,random)
+		local pick=random();for i,value in ipairs(weights) do pick=pick-value;if pick < 0 then return ({"R","G","B"})[i] end end;return "B"
+	end
+	function M.action(model,input,craft,random)
+		local method=craft.method
+		if not methods[method] then return originalAction(model,input,craft,random) end
+		assert(not input.mirrored and not input.veil,"Cannot modify a mirrored item or unfinished unveil")
+		local tainted=method:find("tainted_",1,true) ~= nil
+		assert(method == "socket_colour_bench" or (input.corrupted or false) == tainted,tainted and "Tainted socket currency requires corruption" or "Use tainted currency or the bench on corrupted items")
+		local state=copyTable(input);local sockets=state.sockets or {};state.sockets=sockets
+		assert(#sockets > 0,"This item has no sockets")
+		for _,socket in ipairs(sockets) do assert(socket.color ~= "A","Abyssal sockets need a separate socket model") end
+		if method == "tainted_jeweller" then
+			local limit=math.min(model.item.base.socketLimit or 0,model.item.itemLevel >= 50 and 6 or model.item.itemLevel >= 35 and 5 or model.item.itemLevel >= 25 and 4 or model.item.itemLevel >= 2 and 3 or 2)
+			if random() < 0.5 then if #sockets < limit then
+				local free=0;for _,socket in ipairs(sockets) do free=math.max(free,socket.group+1) end
+				sockets[#sockets+1]={color="W",group=free}
+			end
+			elseif #sockets > 1 then table.remove(sockets) end
+		elseif method == "tainted_fusing" then
+			assert(#sockets >= 2,"Link crafting needs at least two sockets")
+			local groups={};local biggest={}
+			for i,socket in ipairs(sockets) do groups[socket.group]=groups[socket.group] or {};local group=groups[socket.group];group[#group+1]=i;if #group > #biggest then biggest=group end end
+			assert(#biggest < #sockets,"The item is already fully linked")
+			if random() < 0.5 then
+				local neighbour=biggest[#biggest]+1;if neighbour > #sockets then neighbour=biggest[1]-1 end
+				sockets[neighbour].group=sockets[biggest[1]].group
+			elseif #biggest > 1 then
+				local free=0;for _,socket in ipairs(sockets) do free=math.max(free,socket.group+1) end
+				sockets[biggest[#biggest]].group=free
+			end
+		else
+			local forced=method == "socket_colour_bench" and api.integer(craft.count,2,4,"minimum non-white sockets") or 1
+			assert(forced <= #sockets,"Not enough sockets for this colour craft")
+			local indices={};for i=1,#sockets do indices[i]=i end
+			for i=#indices,2,-1 do local j=math.floor(random()*i)+1;indices[i],indices[j]=indices[j],indices[i] end
+			local weights=colourWeights(model,tainted)
+			local chance=math.min(1,0.00375*math.max(model.item.itemLevel-14,1)*(1+math.min(state.quality or 0,30)/100))
+			for i,index in ipairs(indices) do sockets[index].color=(i <= forced or random() < chance) and colour(weights,random) or "W" end
+		end
+		local previous,group=nil,-1
+		for _,socket in ipairs(sockets) do local old=socket.group;if old ~= previous then group=group+1;previous=old end;socket.group=group end
+		return state
+	end
+	function M.actionOptions(model,state,method)
+		if method ~= "socket_colour_bench" then return originalOptions(model,state,method) end
+		local result={};for count=2,math.min(4,#(state.sockets or {})) do result[#result+1]={label="At least "..count.." non-white sockets",action={method=method,count=count}} end;return result
+	end
+	function M.priceKey(action) if action.method == "socket_colour_bench" then return action.method..":"..tostring(action.count) end;return originalPrice(action) end
+	function M.components(action,state)
+		if action.method == "socket_colour_bench" then
+			local amount=({[2]=5,[3]=20,[4]=75})[action.count]
+			local result={chromatic=amount};if state and state.corrupted then result["Metadata/Items/Currency/CurrencyCorrupt"]=amount end;return result
+		end
+		return originalComponents(action,state)
+	end
+	M.limits[#M.limits+1]="Socket colours use Siveran's empirical 3.29 model, with attribute bias for ordinary Chromatics and uniform RGB for tainted Chromatics. Tainted socket/link currencies assume 50/50 addition/removal; added sockets are white."
+end
+return S

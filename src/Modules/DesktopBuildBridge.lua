@@ -308,12 +308,16 @@ end
 
 function M.disable(build)
 	if not M.enabled or M.build ~= build then return end
+	local tasks=require("Modules.CraftingTasks")
+	if tasks.job and tasks.job.requestId then tasks.cancel("Desktop connection closed") end
 	M.enabled,M.prepared = false,nil
 	M.publishState()
 end
 
 function M.close(build)
 	if M.owner ~= build and M.build ~= build then return end
+	local tasks=require("Modules.CraftingTasks")
+	if tasks.job and tasks.job.requestId then tasks.cancel("Desktop connection closed") end
 	M.enabled,M.prepared,M.status,M.build,M.owner = false,nil,nil,nil,nil
 	M.history,M.undo,M.previous,M.previousCache,M.comparison = {},{},nil,nil,nil
 	pcall(M.publishState)
@@ -411,6 +415,7 @@ function M.calculateBatch(build, request)
 end
 
 function M.poll(build, force)
+	require("Modules.CraftingTasks").tick(build)
 	if not M.enabled then return end
 	if M.build ~= build then M.close(M.build); return end
 	if not force and GetTime() < (M.nextPoll or 0) then return end
@@ -429,6 +434,13 @@ function M.poll(build, force)
 		assert(type(request.id) == "string" and request.id:match("^[%w%-]+$") and #request.id <= 80,"Invalid proposal ID")
 		if M.prepared then return end
 		M.lastRequest,M.lastError = os.time(),nil
+		if request.kind == "craftCancel" then
+			local tasks=require("Modules.CraftingTasks")
+			assert(tasks.job and tasks.job.requestId == request.requestId,"No matching active crafting request")
+			tasks.cancel("Cancelled from the MCP client")
+			M.status={id=request.id,status="cancelled",cancelledId=request.requestId};M.publishState();return
+		end
+		assert(not require("Modules.CraftingTasks").job,"Finish or cancel the active crafting job first")
 		if request.kind == "atlasSearch" or request.kind == "atlasConnect" then
 			assert(request.baseRevision == M.revision(build),"Build changed. Refresh Atlas context.")
 			local planner=require("Modules.AtlasPlanner")
@@ -440,14 +452,28 @@ function M.poll(build, force)
 			end
 			M.status={id=request.id,status="atlas",atlas=result}; M.publishState(); return
 		end
-		if request.kind == "craftAction" or request.kind == "craftSimulate" then
+		if request.kind == "craftAction" or request.kind == "craftSimulate" or request.kind == "craftCalculate" or request.kind == "craftOptimize" then
 			assert(request.baseRevision == M.revision(build),"Build changed. Refresh crafting context.")
 			local raw=request.itemText
 			if not raw then local slot=assert(build.itemsTab.slots[request.slot],"Unknown item slot"); raw=assert(build.itemsTab.items[slot.selItemId],"Selected slot is empty").raw end
 			local simulator=require("Modules.CraftingSimulator")
 			M.status={id=request.id,status="calculating"}; M.publishState()
-			local result=request.kind == "craftAction" and simulator.perform(raw,request.action,request.seed,request.initialState) or simulator.simulate(raw,request.recipe,request.options)
-			M.status={id=request.id,status="crafted",nativeCrafting=result}; M.publishState()
+			if request.kind == "craftSimulate" or request.kind == "craftOptimize" then
+				local session=M.session;local options=copyTable(request.options or {})
+				local function publish(status,values)
+					if not M.enabled or M.session ~= session then return end
+					M.status={id=request.id,status=status,baseRevision=request.baseRevision}
+					for key,value in pairs(values) do M.status[key]=value end;M.publishState()
+				end
+				local job=require("Modules.CraftingTasks").start(build,function(checkpoint)
+					options.checkpoint=checkpoint
+					return request.kind == "craftOptimize" and simulator.optimizeFossils(raw,request.targets,options) or simulator.simulate(raw,request.recipe,options)
+				end,function(result) publish("crafted",{nativeCrafting=result}) end,function(message) publish("failed",{error=message}) end,function(progress) publish("calculating",{progress=progress}) end)
+				job.requestId=request.id
+			else
+				local result=request.kind == "craftCalculate" and simulator.calculate(raw,request.action,request.targets,request.initialState) or simulator.perform(raw,request.action,request.seed,request.initialState)
+				M.status={id=request.id,status="crafted",nativeCrafting=result}; M.publishState()
+			end
 			return
 		end
 		if request.kind == "craftInspect" then

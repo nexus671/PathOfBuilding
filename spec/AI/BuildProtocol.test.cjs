@@ -192,3 +192,35 @@ test('keeps Atlas proposals in the desktop review flow and rejects unsupported v
   assert.equal(queued.proposal.operations[0].type,'set_atlas_plan');
   assert.equal(queued.proposal.operations[0].plan.version,'3.27.0');
 });
+
+
+test('queues advanced crafting states and rejects untyped execution data', t => {
+  const f=fixture(t);
+  const args={baseRevision:f.state.revision,itemText:craftingProject().startingItem,action:{method:'fossil',fossils:['Metadata/Items/Currency/CurrencyDelveCraftingLife']},initialState:{rarity:'RARE',affixes:[],influences:[],quality:20,sockets:[{color:'W',group:0}],catalyst:8,catalystQuality:20}};
+  f.call('apply_crafting_action',args);
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.deepEqual(queued.initialState,args.initialState);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  assert.throws(()=>f.call('apply_crafting_action',{...args,initialState:{...args.initialState,runCode:'no'}}),/arguments/);
+  assert.throws(()=>f.call('apply_crafting_action',{...args,action:{method:'recombine',donorItem:'item',path:'elsewhere'}}),/arguments/);
+});
+
+test('queues property-only recipes, exact odds and bounded fossil optimization', t => {
+  const f=fixture(t);const base={baseRevision:f.state.revision,itemText:craftingProject().startingItem};
+  f.call('simulate_crafting',{...base,recipe:{steps:[{method:'quality',maxAttempts:20,untilRequirements:{minQuality:20}}],targets:[],requirements:{minQuality:20}},options:{trials:10,maxActions:20}});
+  let queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.equal(queued.kind,'craftSimulate');
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  f.call('calculate_crafting',{...base,action:{method:'exalt'},targets:[{anyOf:['IncreasedLife1'],negate:true,atLeast:1}]});
+  queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.equal(queued.kind,'craftCalculate');
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  f.call('optimize_crafting_fossils',{...base,targets:[{anyOf:['IncreasedLife1']}],options:{fossils:['life','mana'],maxSockets:2,trials:10}});
+  queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.equal(queued.kind,'craftOptimize');
+});
+
+test('queues crafting cancellation with an explicit request identifier', t => {
+  const f=fixture(t);f.state.status='calculating';f.state.id='active-craft';f.write('state',f.state);
+  f.call('cancel_crafting_simulation',{requestId:'active-craft'});
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(queued.kind,'craftCancel');assert.equal(queued.requestId,'active-craft');
+  assert.equal(queued.proposal,undefined);
+});

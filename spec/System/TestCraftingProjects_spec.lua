@@ -45,13 +45,18 @@ describe("Crafting projects", function()
 
 	it("rejects invalid equipment targets and bounds saved projects", function()
 		local store=build.savers.CraftingProjects
-		local entry=project(); entry.targetItem="Rarity: NORMAL\nLeather Cap"
+		local entry=project(); entry.targetItem="Rarity: NORMAL\nGold Ring"
 		assert.are.equal(false,pcall(store.Upsert,store,entry))
 		assert.are.equal(0,#store.projects)
 		for i=1,8 do entry=project(); entry.id="project-"..i; store:Upsert(entry) end
 		entry=project(); entry.id="project-9"
 		assert.are.equal(false,pcall(store.Upsert,store,entry))
 		assert.are.equal(8,#store.projects)
+	end)
+	it("keeps a different equipment base after recombination without changing its slot", function()
+		local entry=project();entry.targetItem="Rarity: NORMAL\nLeather Cap"
+		build.savers.CraftingProjects:Upsert(entry)
+		assert.are.equal("Leather Cap",projects.item(build.savers.CraftingProjects.projects[1].targetItem).baseName)
 	end)
 
 	it("labels lossy base handoffs and retains advanced game copies", function()
@@ -111,7 +116,9 @@ describe("Crafting projects", function()
 		popup.controls.apply:Click()
 		popup.controls.undo:Click()
 		popup.controls.apply:Click()
+		popup.controls.page:SelByValue("Target conditions")
 		popup.controls.addTarget:Click()
+		popup.controls.page:SelByValue("Emulate item")
 		popup.controls.keepRecipe:Click()
 		assert.is_truthy(build.savers.CraftingProjects.projects[1].nativeRecipe)
 		assert.are.equal(1,#build.savers.CraftingProjects.projects[1].nativeRecipe.steps)

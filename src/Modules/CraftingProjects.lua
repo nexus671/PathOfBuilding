@@ -74,7 +74,7 @@ function M.new(build)
 		assert(build.itemsTab:IsItemValidForSlot(start,entry.slot),"Starting item cannot use this slot")
 		if entry.targetItem and entry.targetItem ~= "" then
 			local target=M.item(entry.targetItem)
-			assert(target.baseName == start.baseName,"Crafting target must use the starting item's base")
+			assert(target.type == start.type and build.itemsTab:IsItemValidForSlot(target,entry.slot),"Crafting target must use the same item class and equipment slot")
 		end
 		local replacement=copyTable(self.projects)
 		local found=false
