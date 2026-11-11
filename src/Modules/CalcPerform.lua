@@ -1106,7 +1106,7 @@ local function doActorCharges(env, actor)
 	output.SpiritInfusions = m_min(modDB:Override(nil, "SpiritInfusion") or 0, output.SpiritInfusionsMax)
 
 
-	output.CrabBarriers = m_min(modDB:Override(nil, "CrabBarriers") or output.CrabBarriersMax, output.CrabBarriersMax)
+	output.CrabBarriers = m_min(env.recoveryCrabBarriers or modDB:Override(nil, "CrabBarriers") or output.CrabBarriersMax, output.CrabBarriersMax)
 	if modDB:Flag(nil, "HaveMaximumPowerCharges") then
 		output.PowerCharges = output.PowerChargesMax
 	end
@@ -1655,6 +1655,7 @@ function calcs.perform(env, skipEHP)
 
 	local function calcFlaskRecovery(type, item)
 		local out = {}
+		if env.recoveryManualFlasks then return out end
 		local lType = type:lower()
 
 		if not item.flaskData[lType.."EffectNotRemoved"] and not modDB:Flag(nil, type.."FlaskEffectNotRemoved") then

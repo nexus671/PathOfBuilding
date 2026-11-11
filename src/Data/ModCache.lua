@@ -3593,7 +3593,7 @@ c["10% chance that if you would gain Endurance Charges, you instead gain up to m
 c["10% chance that if you would gain Frenzy Charges, you instead gain up to your maximum number of Frenzy Charges"]={{}," that if you would gainCharges, you instead gain up to your maximum number of Frenzy Charges "}
 c["10% chance that if you would gain Power Charges, you instead gain up to your maximum number of Power Charges"]={{}," that if you would gain Power Charges, you instead gain up to your maximum number of Power Charges "}
 c["10% chance that if you would gain a Crab Barrier, you instead gain up to"]={{}," that if you would gain a Crab Barrier, you instead gain up to "}
-c["10% chance that if you would gain a Crab Barrier, you instead gain up to your maximum number of Crab Barriers"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersMax",type="BASE",value=10}}," that if you would gain a Crab Barrier, you instead gain up to your  "}
+c["10% chance that if you would gain a Crab Barrier, you instead gain up to your maximum number of Crab Barriers"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersGainMaximumChance",type="BASE",value=10}},nil}
 c["10% chance to Aggravate Bleeding on targets you Hit with Attacks"]={{}," to Aggravate Bleeding on targets you Hit  "}
 c["10% chance to Avoid Bleeding"]={{[1]={flags=0,keywordFlags=0,name="AvoidBleed",type="BASE",value=10}},nil}
 c["10% chance to Avoid Cold Damage from Hits"]={{[1]={flags=0,keywordFlags=0,name="AvoidColdDamageChance",type="BASE",value=10}},nil}
@@ -14644,7 +14644,7 @@ c["Cannot inflict Elemental Ailments"]={{[1]={flags=0,keywordFlags=0,name="Canno
 c["Cannot inflict Freeze or Chill"]={{[1]={flags=0,keywordFlags=0,name="CannotFreeze",type="FLAG",value=true},[2]={flags=0,keywordFlags=0,name="CannotChill",type="FLAG",value=true}},nil}
 c["Cannot inflict Ignite"]={{[1]={flags=0,keywordFlags=0,name="CannotIgnite",type="FLAG",value=true}},nil}
 c["Cannot inflict Shock"]={{[1]={flags=0,keywordFlags=0,name="CannotShock",type="FLAG",value=true}},nil}
-c["Cannot lose Crab Barriers if you have lost Crab Barriers Recently"]={nil,"Cannot lose Crab Barriers if you have lost Crab Barriers Recently "}
+c["Cannot lose Crab Barriers if you have lost Crab Barriers Recently"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersProtectedRecently",type="FLAG",value=true}},nil}
 c["Cannot lose Crab Barriers if you have lost Crab Barriers Recently +3% Chance to Block Attack Damage while you have at least 5 Crab Barriers"]={nil,"Cannot lose Crab Barriers if you have lost Crab Barriers Recently +3% Chance to Block Attack Damage while you have at least 5 Crab Barriers "}
 c["Cannot recover Mana"]={nil,"Cannot recover Mana "}
 c["Cannot roll Caster Modifiers"]={{},nil}
@@ -22943,9 +22943,9 @@ c["You lose all Endurance Charges when Hit"]={nil,"You lose all Endurance Charge
 c["You lose all Endurance Charges when Hit You gain an Endurance Charge on Kill"]={nil,"You lose all Endurance Charges when Hit You gain an Endurance Charge on Kill "}
 c["You lose all Spirit Charges when taking a Savage Hit"]={nil,"You lose all Spirit Charges when taking a Savage Hit "}
 c["You lose all Spirit Charges when taking a Savage Hit Recover 3% of Life when you lose a Spirit Charge"]={nil,"You lose all Spirit Charges when taking a Savage Hit Recover 3% of Life when you lose a Spirit Charge "}
-c["You only lose 5 Crab Barriers when you take Physical Damage from a Hit"]={nil,"You only lose 5 Crab Barriers when you take Physical Damage from a Hit "}
-c["You only lose 6 Crab Barriers when you take Physical Damage from a Hit"]={nil,"You only lose 6 Crab Barriers when you take Physical Damage from a Hit "}
-c["You only lose 7 Crab Barriers when you take Physical Damage from a Hit"]={nil,"You only lose 7 Crab Barriers when you take Physical Damage from a Hit "}
+c["You only lose 5 Crab Barriers when you take Physical Damage from a Hit"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersLost",type="OVERRIDE",value=5}},nil}
+c["You only lose 6 Crab Barriers when you take Physical Damage from a Hit"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersLost",type="OVERRIDE",value=6}},nil}
+c["You only lose 7 Crab Barriers when you take Physical Damage from a Hit"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersLost",type="OVERRIDE",value=7}},nil}
 c["You take 0 Chaos Damage per second for 3 seconds on Kill"]={{[1]={[1]={type="Condition",var="KilledLast3Seconds"},flags=0,keywordFlags=0,name="ChaosDegen",type="BASE",value=0}},nil}
 c["You take 10% of Damage from Blocked Hits"]={{[1]={flags=0,keywordFlags=0,name="BlockEffect",type="BASE",value=10}},nil}
 c["You take 10% of your maximum Life as Chaos Damage on use"]={nil,"You take 10% of your maximum Life as Chaos Damage on use "}

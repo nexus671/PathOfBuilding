@@ -2357,13 +2357,15 @@ return {
 	{ label = "Simulation Window", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationWindow}s", { breakdown = "RecoverySimulationWindow" } } },
 	{ label = "Trials", haveOutput = "RecoverySimulationWindow", { format = "{0:output:RecoverySimulationTrials}", { breakdown = "RecoverySimulationTrials" } } },
 	{ label = "Attacks Affordable", haveOutput = "RecoverySimulationWindow", { format = "{1:output:RecoverySimulationAttackUptime}%", { breakdown = "RecoverySimulationAttackUptime" } } },
+	{ label = "Mean Flask Uses", haveOutput = "RecoverySimulationWindow", { format = "{1:output:RecoverySimulationFlaskUses}", { breakdown = "RecoverySimulationFlaskUses" } } },
+	{ label = "Mean Crab Barriers Lost", haveOutput = "RecoverySimulationWindow", { format = "{1:output:RecoverySimulationCrabLost}", { breakdown = "RecoverySimulationCrabLost" } } },
 	{ label = "Window Survival Rate", haveOutput = "RecoverySimulationWindow", { format = "{1:output:RecoverySimulationSurvivalChance}%", { breakdown = "RecoverySimulationSurvivalChance" } } },
 	{ label = "Time Alive (Median)", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationTime}s", { breakdown = "RecoverySimulationTime" } } },
 	{ label = "Time Alive (10th %)", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationTimeLow}s", { breakdown = "RecoverySimulationTimeLow" } } },
 	{ label = "Time Alive (90th %)", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationTimeHigh}s", { breakdown = "RecoverySimulationTimeHigh" } } },
 	{ label = "Mean Shrouds Used", haveOutput = "RecoverySimulationShroudsUsed", { format = "{1:output:RecoverySimulationShroudsUsed}", { breakdown = "RecoverySimulationShroudsUsed" } } },
 	{ label = "Mean ES from Shrouds", haveOutput = "RecoverySimulationShroudsUsed", { format = "{0:output:RecoverySimulationShroudRecovery}", { breakdown = "RecoverySimulationShroudRecovery" } } },
-	{ label = "Incoming Damage", haveOutput = "RecoverySimulationWindow", { format = "{0:output:RecoverySimulationIncomingDamage}", { breakdown = "RecoverySimulationIncomingDamage" } } },
+	{ label = "Incoming Hit Damage", haveOutput = "RecoverySimulationWindow", { format = "{0:output:RecoverySimulationIncomingDamage}", { breakdown = "RecoverySimulationIncomingDamage" } } },
 }, }, { defaultCollapsed = false, label = "Maximum Hit Taken", data = {
 	colWidth = 114,
 	{
