@@ -71,6 +71,7 @@ describe("Native Atlas planner", function()
 		assert.is_true(tableDeepEquals(result.nodes,decoded.nodes))
 		assert.are.equal(false,pcall(atlas.import,"https://example.com/tree",result.version))
 		assert.are.equal(false,pcall(atlas.import,atlas.url(result):sub(1,-7),result.version))
+		assert.are.equal(#result.nodes,#atlas.import(" \n"..atlas.url(result).."\r\n",result.version).nodes)
 		-- A known empty v6 Atlas payload: version, Standard mode, one start ID, two empty sections.
 		local payload=string.char(0,0,0,6,0,0,1,113,117,0,0)
 		local url="https://www.pathofexile.com/fullscreen-atlas-skill-tree/"..common.base64.encode(payload):gsub("+","-"):gsub("/","_")
@@ -83,6 +84,8 @@ describe("Native Atlas planner", function()
 		assert.are.equal(false,pcall(store.Upsert,store,plan()))
 		store=atlas.new(build); store:Load({{elem="Unknown",attrib={},"opaque"}})
 		xml={}; store:Save(xml); assert.are.equal("Unknown",xml[1].elem)
+		store=atlas.new(build); raw='{"schemaVersion":1,"plans":[{"id":"x","title":"x","version":"3.27.0","budget":132,"nodes":{"unexpected":true}}]}'
+		store:Load({raw}); assert.is_truthy(store.warning); xml={};store:Save(xml);assert.are.equal(raw,xml[1])
 	end)
 	it("persists native plans through candidate XML without changing character stats or live state", function()
 		local entry=atlas.connect(plan(),{65225}); local revision=bridge.revision(build)
@@ -101,12 +104,11 @@ describe("Native Atlas planner", function()
 		local panel=require("Classes.AtlasPlannerControl")
 		local controls=panel.Open(build,plan())
 		controls.canvas:Draw()
-		local cursor=GetCursorPos
-		local x,y=controls.canvas:GetPos()
-		GetCursorPos=function() return x+100,y+100 end
+		local mouseOver=controls.canvas.IsMouseOver
+		controls.canvas.IsMouseOver=function() return true end
 		local scale=controls.canvas.scale
-		main.popups[1]:ProcessControlsInput({{type="KeyUp",key="WHEELUP"}},{x=0,y=0,width=1920,height=1080})
-		GetCursorPos=cursor
+		main.popups[1]:ProcessControlsInput({{type="KeyUp",key="WHEELUP"}},{x=-10000,y=-10000,width=20000,height=20000})
+		controls.canvas.IsMouseOver=mouseOver
 		assert.is_true(controls.canvas.scale > scale)
 		controls.search:SetText("Unwavering Vision"); controls.find:Click()
 		assert.are.equal(65225,controls.canvas.focus)
@@ -117,5 +119,15 @@ describe("Native Atlas planner", function()
 		assert.is_true(#build.savers.AtlasPlans.plans[1].nodes > 0)
 		panel.Library(build); main.popups[1].controls.open:Click()
 		assert.is_truthy(main.popups[1].controls.canvas)
+		controls=main.popups[1].controls
+		local imported=plan("3.29.1"); imported.notes="Imported strategy notes"
+		local environment=getfenv(panel.Open); local paste=environment.Paste
+		environment.Paste=function() return atlas.export(imported) end
+		controls.import:Click(); environment.Paste=paste
+		assert.are.equal(imported.notes,controls.notes.buf)
+		assert.are.equal("3.29.1",controls.canvas.tree.version)
+		controls.undo:Click(); controls.canvas:Draw()
+		assert.are.equal("3.27.0",controls.canvas.tree.version)
+		assert.are.equal("Map sustain first",controls.notes.buf)
 	end)
 end)

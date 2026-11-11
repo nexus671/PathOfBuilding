@@ -102,7 +102,11 @@ function Panel.Open(build,source)
 		return atlas.validate(result)
 	end
 	local function refresh(id)
-		if controls.canvas.tree.version ~= draft.version then controls.canvas.tree=atlas.tree(draft.version); controls.canvas:Fit() end
+		if controls.canvas.tree.version ~= draft.version then
+			controls.canvas.tree=atlas.tree(draft.version); controls.canvas:Fit(); avoided={}
+			controls.results:SetList({}); controls.matchCount.label="Search matches names and stat text"
+			controls.avoid.label="Avoid selected"
+		end
 		if not controls.canvas.tree.nodes[controls.canvas.focus] then controls.canvas.focus=nil end
 		controls.version:SelByValue(draft.version)
 		local report=atlas.report(draft)
@@ -140,10 +144,13 @@ function Panel.Open(build,source)
 	end)
 	controls.matchCount=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{side,172,0,14},"Search matches names and stat text")
 	controls.details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{side,200,294,math.max(100,graphHeight-160)},nil,{})
-	local function change(nextPlan) undo[#undo+1]=copyTable(draft); if #undo > 40 then table.remove(undo,1) end; draft=nextPlan; refresh() end
+	local function syncEditors()
+		controls.title:SetText(draft.title); controls.budget:SetText(tostring(draft.budget)); controls.notes:SetText(draft.notes)
+	end
+	local function change(nextPlan) undo[#undo+1]=copyTable(draft); if #undo > 40 then table.remove(undo,1) end; draft=nextPlan; syncEditors(); refresh() end
 	controls.allocate=button(side,height-208,140,"Connect selected",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.connect(current(),{controls.canvas.focus},avoided)) end)
 	controls.remove=button(side+154,height-208,140,"Remove branch",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.remove(current(),controls.canvas.focus)) end)
-	controls.undo=button(16,height-148,90,"Undo",function() assert(#undo > 0,"No changes to undo"); draft=table.remove(undo); controls.budget:SetText(tostring(draft.budget)); refresh() end)
+	controls.undo=button(16,height-148,90,"Undo",function() assert(#undo > 0,"No changes to undo"); draft=table.remove(undo); syncEditors(); refresh() end)
 	controls.fit=button(118,height-148,90,"Fit tree",function() controls.canvas:Fit() end)
 	controls.help=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,height-184,0,14},"Wheel: zoom | Drag: pan | Remove prunes disconnected nodes")
 	controls.avoid=button(side,height-176,140,"Avoid selected",function()

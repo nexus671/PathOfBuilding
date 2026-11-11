@@ -9,6 +9,13 @@ local function text(value,limit,label)
 	assert(type(value) == "string" and #value <= limit,"Invalid "..label)
 	return value
 end
+local function array(value,limit,label)
+	assert(type(value) == "table" and value ~= json.null and #value <= limit,"Invalid "..label)
+	local meta=getmetatable(value)
+	assert(not meta or meta.__jsontype ~= "object","Expected an array for "..label)
+	for key in pairs(value) do assert(type(key) == "number" and key == math.floor(key) and key >= 1 and key <= #value,"Invalid array for "..label) end
+	return value
+end
 function M.tree(version)
 	assert(version == "3.27.0" or version == "3.29.1","Unsupported Atlas version; choose a bundled Standard tree")
 	if not M.cache[version] then
@@ -23,7 +30,7 @@ function M.tree(version)
 	return M.cache[version]
 end
 local function nodeSet(tree,ids)
-	assert(type(ids) == "table" and #ids <= 300,"Use up to 300 Atlas node IDs")
+	array(ids,300,"Atlas node IDs")
 	local set={}
 	for _,id in ipairs(ids) do
 		integer(id,1,65535,"Atlas node ID")
@@ -82,7 +89,7 @@ function M.connect(plan,targets,avoid)
 	local set=nodeSet(tree,plan.nodes); set[tree.start]=true
 	local blocked=nodeSet(tree,avoid or {})
 	for id in pairs(blocked) do assert(not set[id],"Cannot avoid an allocated Atlas node") end
-	assert(type(targets) == "table" and #targets <= 30,"Use up to thirty Atlas targets")
+	array(targets,30,"Atlas targets")
 	local additions={}
 	for _,target in ipairs(targets) do
 		integer(target,1,65535,"Atlas target")
@@ -132,6 +139,7 @@ function M.export(plan)
 end
 function M.import(raw,version,id,title,budget)
 	text(raw,64000,"Atlas import")
+	raw=raw:match("^%s*(.-)%s*$")
 	if raw:match("^%s*{") then
 		local decoded=assert(json.decode(raw),"Invalid Atlas JSON")
 		assert(decoded.schemaVersion == 1,"Unsupported Atlas export version")
@@ -161,7 +169,7 @@ function M.new(build)
 		local ok,plans=pcall(function()
 			local raw=table.concat(xml); assert(#raw <= 128000,"Atlas metadata too large")
 			if not raw:match("%S") then return {} end
-			local decoded=assert(json.decode(raw)); assert(decoded.schemaVersion == 1 and type(decoded.plans) == "table" and #decoded.plans <= 8)
+			local decoded=assert(json.decode(raw)); assert(decoded.schemaVersion == 1); array(decoded.plans,8,"saved Atlas plans")
 			local result,ids={},{}
 			for _,plan in ipairs(decoded.plans) do local entry=M.validate(plan); assert(not ids[entry.id]); ids[entry.id]=true; result[#result+1]=entry end
 			return result
