@@ -74,7 +74,7 @@ Intrinsic resource loss such as Mana Burn remains resource loss, not damage.
 
 ## Inspecting and comparing encounters
 
-- **Timeline** in Calcs opens a native hoverable chart and chronological
+- **Timeline** in Calcs opens a native interactive chart and chronological
   event table for **Timeline trial** (default 1). It shows Life/ES/Mana, total and
   per-slot flask charges, Crab Barriers, Ghost Shrouds and active expected poison
   DPS. Chart legends give each series' reference maximum; values are normalized
