@@ -1,8 +1,9 @@
 -- Desktop build proposals are calculated separately and applied only in the UI.
 local json = require("dkjson")
 local sha1 = require("sha1")
-local M = { enabled=false }
-local metrics = { "LifeUnreserved", "EnergyShield", "ManaUnreserved", "CombinedDPS", "FullDPS", "TotalEHP", "PhysicalMaximumHitTaken", "ChaosMaximumHitTaken", "RecoverySimulationSurvivalChance", "RecoverySimulationDamageDPS" }
+local insights = require("Modules.BuildInsights")
+local M = { enabled=false, history={}, undo={}, plan={goal="balanced"} }
+local metrics = { "LifeUnreserved", "EnergyShield", "ManaUnreserved", "CombinedDPS", "FullDPS", "TotalEHP", "PhysicalMaximumHitTaken", "ChaosMaximumHitTaken", "RecoverySimulationSurvivalChance", "RecoverySimulationDamageDPS", "RecoverySimulationAttackUptime", "ManaRegen", "Speed", "EffectiveMovementSpeedMod", "FireResist", "ColdResist", "LightningResist", "ChaosResist", "Str", "Dex", "Int" }
 
 local function serialize(build)
 	-- The native Notes saver temporarily hides color codes. Preserve the editor.
@@ -194,7 +195,25 @@ function M.prepare(build, proposal)
 	local before = stats(build)
 	local delta = { }
 	for key,value in pairs(after) do if before[key] then delta[key] = value-before[key] end end
-	return {candidate=candidate,cache=computed.cache,baseRevision=proposal.baseRevision,mode=proposal.mode,title=title,operations=proposal.operations,before=before,after=after,delta=delta,base=build,warnings=copyTable(candidate.controls.warnings.lines)}
+	local audit = insights.audit(candidate)
+	local baseAudit = insights.audit(build)
+	local known = { }
+	for _,entry in ipairs(baseAudit.dependencies) do known[entry.key..entry.text]=true end
+	audit.introduced = { }
+	for _,entry in ipairs(audit.dependencies) do if not known[entry.key..entry.text] then audit.introduced[#audit.introduced+1]=entry end end
+	local beforeSnapshot,afterSnapshot = insights.snapshot(build),insights.snapshot(candidate)
+	local evaluation = insights.evaluate(before,after,M.plan,proposal.quote,audit)
+	local changedConfig = false
+	for key,value in pairs(beforeSnapshot.config) do if afterSnapshot.config[key] ~= value then changedConfig=true end end
+	for key,value in pairs(afterSnapshot.config) do if beforeSnapshot.config[key] ~= value then changedConfig=true end end
+	if changedConfig then
+		evaluation.eligible=false
+		evaluation.issues[#evaluation.issues+1]="Configuration differs from the base. Excluded from ranking; review assumptions and compare under matching settings."
+	end
+	evaluation.configurationChanged = changedConfig
+	return {candidate=candidate,cache=computed.cache,baseRevision=proposal.baseRevision,mode=proposal.mode,title=title,operations=proposal.operations,before=before,after=after,delta=delta,base=build,warnings=copyTable(candidate.controls.warnings.lines),
+		changes=insights.changes(beforeSnapshot,afterSnapshot),audit=audit,quote=proposal.quote,
+		evaluation=evaluation}
 end
 
 function M.apply(prepared)
@@ -202,10 +221,12 @@ function M.apply(prepared)
 	local candidate = prepared.candidate
 	if prepared.mode == "edit" then candidate.dbFileName,candidate.dbFileSubPath = prepared.base.dbFileName,prepared.base.dbFileSubPath end
 	candidate.modFlag,candidate.unsaved = true,true
+	M.undo[#M.undo+1] = {build=prepared.base,cache=GlobalCache}
+	if #M.undo > 5 then table.remove(M.undo,1) end
 	M.previousCache,GlobalCache = GlobalCache,prepared.cache
 	main.modes.BUILD = candidate
 	candidate.spec:SetWindowTitleWithBuildClass()
-	M.previous,M.build = prepared.base,candidate
+	M.previous,M.build,M.owner = prepared.base,candidate,candidate
 	M.appliedRevision = M.revision(candidate)
 	M.prepared = nil
 	return candidate
@@ -223,7 +244,7 @@ local function path(name) return main.userPath.."AI-build-"..name..".json" end
 function M.capture(build)
 	local context = {revision=M.revision(build),name=build.buildName,level=build.characterLevel,className=build.spec.curClassName,ascendancy=build.spec.curAscendClassName,
 		stats=stats(build),items={},skills={},passives={},masteries=copyTable(build.spec.masterySelections),config=copyTable(build.configTab.input),
-		warnings=copyTable(build.controls.warnings.lines),slots={}}
+		warnings=copyTable(build.controls.warnings.lines),slots={},plan=M.plan,audit=insights.audit(build),encounter=insights.diagnose(build)}
 	local catalog = {gems={},passives={},config={},classes={}}
 	for name,slot in pairs(build.itemsTab.slots) do
 		context.slots[#context.slots+1] = name
@@ -259,18 +280,21 @@ function M.capture(build)
 end
 
 function M.publishState()
-	writeFile(path("state"),{schemaVersion=1,session=M.session,enabled=M.enabled,heartbeat=os.time(),revision=M.contextRevision,proposal=M.status})
+	writeFile(path("state"),{schemaVersion=1,session=M.session,enabled=M.enabled,heartbeat=os.time(),revision=M.contextRevision,proposal=M.status,history=M.historySummary(),plan=M.plan,diagnostics={lastPoll=M.lastPoll,lastContext=M.lastContext,lastRequest=M.lastRequest,lastError=M.lastError,undoDepth=#M.undo}})
 end
 
 function M.refresh(build)
 	local captured = M.capture(build)
 	M.contextRevision = captured.context.revision
+	M.lastContext = os.time()
 	writeFile(path("context"),captured)
 	M.publishState()
 end
 
 function M.enable(build)
 	M.enabled,M.build,M.prepared,M.status,M.contextRevision = true,build,nil,nil,nil
+	if M.owner ~= build then M.history,M.undo,M.previous,M.previousCache,M.comparison = {},{},nil,nil,nil end
+	M.owner = build
 	M.session = sha1(tostring({})..tostring(os.time())..tostring(GetTime()))
 	local ok,err = pcall(M.refresh,build)
 	if not ok then M.enabled=false; error(err) end
@@ -282,11 +306,106 @@ function M.disable(build)
 	M.publishState()
 end
 
+function M.close(build)
+	if M.owner ~= build and M.build ~= build then return end
+	M.enabled,M.prepared,M.status,M.build,M.owner = false,nil,nil,nil,nil
+	M.history,M.undo,M.previous,M.previousCache,M.comparison = {},{},nil,nil,nil
+	pcall(M.publishState)
+end
+
+function M.configure(plan)
+	assert(type(plan) == "table","Invalid build goals")
+	local valid = false
+	for _,goal in ipairs(insights.goals) do if plan.goal == goal then valid=true end end
+	assert(valid,"Unknown build goal")
+	if plan.budget then assert(type(plan.budget) == "number" and plan.budget >= 0 and plan.budget < math.huge and type(plan.currency) == "string" and #plan.currency > 0,"Budget needs a currency and a finite amount") end
+	local allowed = { }
+	for _,key in ipairs(metrics) do allowed[key]=true end
+	for key,value in pairs(plan.minimums or { }) do assert(allowed[key] and type(value) == "number" and value == value and math.abs(value) < math.huge,"Invalid minimum metric") end
+	M.plan = copyTable(plan)
+end
+
+function M.evaluate(prepared)
+	local evaluation = insights.evaluate(prepared.before,prepared.after,M.plan,prepared.quote,prepared.audit)
+	if prepared.evaluation.configurationChanged then
+		evaluation.eligible=false; evaluation.configurationChanged=true
+		evaluation.issues[#evaluation.issues+1]="Configuration differs from the base; excluded from ranking."
+	end
+	return evaluation
+end
+
+function M.summary(prepared)
+	local resolved = M.capture(prepared.candidate).context
+	return {id=prepared.id,title=prepared.title,baseRevision=prepared.baseRevision,before=prepared.before,after=prepared.after,delta=prepared.delta,warnings=prepared.warnings,
+		resolved=resolved,changes=prepared.changes,audit=prepared.audit,evaluation=prepared.evaluation,
+		instructions="Open AI builds in PoB to review. Only a desktop button can apply this proposal."}
+end
+
+function M.historySummary()
+	local result = { }
+	for _,entry in ipairs(M.history) do entry.evaluation=M.evaluate(entry); result[#result+1] = {id=entry.id,title=entry.title,baseRevision=entry.baseRevision,after=entry.after,evaluation=entry.evaluation} end
+	return result
+end
+
+function M.remember(prepared)
+	M.history[#M.history+1] = prepared
+	if #M.history > 8 then table.remove(M.history,1) end
+end
+
+function M.selectHistory(id)
+	for _,entry in ipairs(M.history) do
+		if entry.id == id then
+			assert(entry.base == main.modes.BUILD and entry.baseRevision == M.revision(main.modes.BUILD),"This candidate uses an older base. Restore that base or request a fresh proposal.")
+			entry.evaluation = M.evaluate(entry)
+			M.prepared = entry
+			M.status = M.summary(entry); M.status.status = "review"
+			M.publishState()
+			return entry
+		end
+	end
+	error("Candidate is no longer in session history")
+end
+
+function M.calculateBatch(build, request)
+	local entries = request.candidates or request.stages
+	assert(type(entries) == "table" and #entries >= 1 and #entries <= (request.kind == "leveling" and 8 or 5),"Invalid candidate count")
+	local results,cumulative,previousLevel = {},{},0
+	for index,entry in ipairs(entries) do
+		local proposal
+		if request.kind == "leveling" then
+			integer(entry.level,1,100,"milestone level")
+			assert(entry.level > previousLevel,"Milestone levels must increase")
+			previousLevel = entry.level
+			for _,operation in ipairs(entry.operations or { }) do assert(operation.type ~= "set_character","Milestone character level is set by the stage"); cumulative[#cumulative+1]=operation end
+			local operations = {{type="set_character",level=entry.level}}
+			for _,operation in ipairs(cumulative) do operations[#operations+1]=operation end
+			proposal = {mode="edit",title=entry.title,baseRevision=request.baseRevision,operations=operations,quote=entry.quote}
+		else proposal = entry end
+		local ok,prepared = pcall(M.prepare,build,proposal)
+		if ok then
+			prepared.id = request.id.."-"..index
+			M.remember(prepared)
+			local summary = M.summary(prepared)
+			summary.status="calculated"; summary.level=prepared.candidate.characterLevel
+			results[#results+1] = summary
+		else
+			results[#results+1] = {title=entry.title,status="failed",error=tostring(prepared):match("^[^\n]+")}
+		end
+	end
+	local ranking = { }
+	for _,entry in ipairs(results) do if entry.evaluation and entry.evaluation.eligible and entry.evaluation.score then ranking[#ranking+1] = {id=entry.id,title=entry.title,score=entry.evaluation.score,cost=entry.evaluation.quote and entry.evaluation.quote.amount,scorePerCurrency=entry.evaluation.scorePerCurrency} end end
+	table.sort(ranking,function(a,b) if a.score == b.score then return a.id < b.id end; return a.score > b.score end)
+	M.status = {id=request.id,status="compared",kind=request.kind,results=results,ranking=ranking,plan=M.plan,
+		instructions="Candidates are calculated against the same desktop base. Select one in AI builds > Candidates to review and apply. Leveling stages accumulate changes; no stage has been applied."}
+	M.comparison = M.status
+end
+
 function M.poll(build, force)
 	if not M.enabled then return end
-	if M.build ~= build then M.disable(M.build); return end
+	if M.build ~= build then M.close(M.build); return end
 	if not force and GetTime() < (M.nextPoll or 0) then return end
 	M.nextPoll = GetTime()+1000
+	M.lastPoll = os.time()
 	local ok,err = pcall(function()
 		if build.buildFlag then return end
 		if M.contextRevision ~= M.revision(build) then M.refresh(build) else M.publishState() end
@@ -299,18 +418,30 @@ function M.poll(build, force)
 		assert(request.session == M.session,"Proposal belongs to another desktop session")
 		assert(type(request.id) == "string" and request.id:match("^[%w%-]+$") and #request.id <= 80,"Invalid proposal ID")
 		if M.prepared then return end
+		M.lastRequest,M.lastError = os.time(),nil
+		if request.kind == "plan" then
+			M.configure(request.plan)
+			M.status = {id=request.id,status="configured",title="Build goals updated"}
+			M.refresh(build)
+			return
+		end
 		M.status = {id=request.id,title=request.proposal and request.proposal.title,status="calculating"}
 		M.publishState()
-		local prepared = M.prepare(build,request.proposal)
-		M.prepared = prepared
-		local resolved = M.capture(prepared.candidate).context
-		resolved.xml = nil
-		M.status = {id=request.id,title=prepared.title,status="review",before=prepared.before,after=prepared.after,delta=prepared.delta,warnings=prepared.warnings,resolved=resolved,
-			instructions="Open AI tools > Build proposals in PoB to review. Only a desktop button can apply this proposal."}
+		if request.kind == "compare" or request.kind == "leveling" then
+			M.calculateBatch(build,request)
+		else
+			local prepared = M.prepare(build,request.proposal)
+			prepared.id = request.id
+			M.remember(prepared)
+			M.prepared = prepared
+			M.status = M.summary(prepared)
+			M.status.status = "review"
+		end
 		M.publishState()
 	end)
 	if not ok then
-		M.status = {id=M.status and M.status.id,status="failed",error=tostring(err):match("^[^\n]+")}
+		M.lastError = tostring(err):match("^[^\n]+")
+		M.status = {id=M.status and M.status.id,status="failed",error=M.lastError}
 		pcall(M.publishState)
 	end
 end
@@ -325,11 +456,16 @@ function M.restore()
 	assert(M.previous and main.modes.BUILD == M.build,"No original build available")
 	assert(M.revision(M.build) == M.appliedRevision,"The proposed build has been edited. Save your work before switching builds.")
 	local original = M.previous
-	GlobalCache = M.previousCache
-	M.previousCache = nil
+	local entry = M.undo[#M.undo]
+	assert(entry and entry.build == original,"Undo history is unavailable")
+	table.remove(M.undo)
+	GlobalCache = entry.cache
 	main.modes.BUILD = original
 	original.spec:SetWindowTitleWithBuildClass()
-	M.previous,M.build = nil,original
+	local previous = M.undo[#M.undo]
+	M.previous,M.previousCache,M.build = previous and previous.build,previous and previous.cache,original
+	M.appliedRevision = M.revision(original)
+	M.owner = original
 	if M.status then M.status.status = "reverted" end
 	M.refresh(original)
 	return original

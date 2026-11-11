@@ -1,6 +1,14 @@
 VERSION[ai][2026/11/11]
 
 --- AI Edition ---
+* Plan around goals and budgets with supplied price quotes.
+* Compare candidates and calculate cumulative leveling milestones.
+* Review readable changes, dependencies and encounter evidence.
+* Keep bounded session history, multiple undo steps and connection diagnostics.
+
+VERSION[ai][2026/11/11]
+
+--- AI Edition ---
 * Create and edit builds through MCP proposals with native calculations.
 * Review changes in the desktop before applying an unsaved candidate.
 * Keep the original build in memory for restoration; never save automatically.
