@@ -154,4 +154,25 @@ describe("Native crafting simulator", function()
 		assert.are.equal(100,result.currencySpent.regal)
 		assert.are.equal("RARE",result.sampleState.rarity)
 	end)
+
+	it("includes bench modifiers in native level requirements and supports three crafted modifiers", function()
+		local model=simulator.model(raw)
+		local multi,a,b
+		for _,entry in ipairs(model.bench) do
+			if entry.mod[1] == "Can have up to 3 Crafted Modifiers" then multi=entry end
+			if entry.mod.type == "Prefix" and entry.mod.level > 1 and #entry.mod == 1 then
+				if not a then a=entry elseif entry.mod.group ~= a.mod.group then b=entry end
+			end
+		end
+		assert.is_truthy(multi); assert.is_truthy(a); assert.is_truthy(b)
+		local random=function() return 0.5 end
+		local state={rarity="RARE",affixes={}}
+		state=simulator.action(model,state,{method="bench",modId=multi.id},random)
+		state=simulator.action(model,state,{method="bench",modId=a.id},random)
+		state=simulator.action(model,state,{method="bench",modId=b.id},random)
+		assert.are.equal(3,#state.affixes)
+		assert.are.equal(false,pcall(simulator.action,model,state,{method="bench",modId=a.id},random))
+		local item=simulator.toItem(model,state)
+		assert.is_true(item.requirements.level >= math.floor(math.max(a.mod.level,b.mod.level)*0.8))
+	end)
 end)

@@ -74,6 +74,7 @@ function M.toItem(model,state)
 	for _,entry in ipairs(state.affixes) do if entry.crafted then
 		hasBench=true
 		local mod=model.byId[entry.id]
+		item.requirements.level=math.max(item.requirements.level or 0,math.floor((mod.level or 0)*0.8))
 		for _,line in ipairs(mod) do item.explicitModLines[#item.explicitModLines+1]={line=itemLib.applyRange(line,entry.range or 0.5),crafted=true,prefix=mod.type == "Prefix",suffix=mod.type == "Suffix"} end
 	end end
 	if hasBench then
@@ -338,7 +339,7 @@ function M.simulate(raw,recipe,options)
 				if not ok then local message=tostring(nextState):match("[^:]+$") or tostring(nextState); errors[message]=(errors[message] or 0)+1; break end
 				state=nextState
 				local key=priceKey(step); spent[key]=(spent[key] or 0)+1
-				local price=options.prices and options.prices[key]
+			local price=options.prices and options.prices[key]
 				if price then assert(type(price) == "number" and price >= 0 and price < math.huge,"Invalid currency price"); cost=cost+price else missing[key]=true end
 				if not step.untilTargets or M.matches(state,step.untilTargets) then success=true; break end
 			end
