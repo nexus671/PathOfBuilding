@@ -34,6 +34,78 @@ function M.shrouds(initial)
 	end
 end
 
+-- Individual leech instances retain their own expiry; the total rate is capped.
+-- Full is the unreserved pool, which can exceed a Petrified Blood recovery cap.
+function M.leech(profiles)
+	local instances = { }
+	local leech = { }
+	function leech:add(resource, t)
+		local p = profiles[resource]
+		if p and p.duration > 0 and p.rate > 0 then
+			instances[#instances + 1] = { resource = resource, expires = t + p.duration }
+		end
+	end
+	function leech:rates(t, pools)
+		local rates, nextExpiry = { }, math.huge
+		for i = #instances, 1, -1 do
+			local instance = instances[i]
+			local p = profiles[instance.resource]
+			local full = p.reservation and p.full - (pools.LifeReservation or 0) or p.full
+			if instance.expires <= t + 1e-9 or not p.persist and pools[instance.resource] >= full - 1e-9 then
+				table.remove(instances, i)
+			else
+				rates[instance.resource] = (rates[instance.resource] or 0) + p.rate
+				nextExpiry = min(nextExpiry, instance.expires)
+			end
+		end
+		for resource, rate in pairs(rates) do rates[resource] = min(rate, profiles[resource].cap) end
+		return rates, nextExpiry
+	end
+	return leech
+end
+
+function M.payCost(pools, cost, battery)
+	local life, mana, es = max(0, cost.Life or 0), max(0, cost.Mana or 0), max(0, cost.EnergyShield or 0)
+	if battery then
+		local fromES = min(mana, max(0, pools.EnergyShield - es))
+		mana, es = mana - fromES, es + fromES
+	end
+	if life >= pools.Life or mana > pools.Mana + 1e-9 or es > pools.EnergyShield + 1e-9 then return false end
+	pools.Life, pools.Mana, pools.EnergyShield = pools.Life - life, max(0, pools.Mana - mana), max(0, pools.EnergyShield - es)
+	return true
+end
+
+-- Dissolution reserves damage without treating healing as released reservation.
+-- Delayed loss remains actual life loss and can kill independently of reservation.
+function M.reserveLife(state, damage, config)
+	local reserved = state.LifeReservation or 0
+	local generic = damage * config.prevent / 100
+	local immediate = damage - generic
+	local aboveHalf = state.Life > config.life / 2 and max(0, config.maximum - reserved - config.life / 2) or 0
+	local below = max(0, immediate - aboveHalf) * config.below / 100
+	local added = immediate - below
+	state.LifeReservation = reserved + added
+	state.Life = min(state.Life, max(0, config.maximum - state.LifeReservation))
+	return added, generic, below
+end
+
+-- Charge-limited use policy: use at expiry, starting with a full flask.
+-- No kill charges are invented. Callers supply known passive generation only.
+function M.flask(config)
+	local charges, last, activeUntil = config.charges, 0, -math.huge
+	local uses = 0
+	return function(t, wanted)
+		charges = min(config.charges, charges + (t - last) * (config.generation or 0))
+		last = t
+		local used = false
+		if wanted and t >= activeUntil - 1e-9 and charges >= config.used and config.used > 0 then
+			charges, activeUntil, uses, used = charges - config.used, t + config.duration, uses + 1, true
+		end
+		local nextEvent = t < activeUntil and activeUntil or config.generation and config.generation > 0 and t + max(0, config.used - charges) / config.generation or math.huge
+		return t < activeUntil, used, nextEvent, uses
+	end
+end
+
 function M.summarise(results)
 	local times, survived, incoming = { }, 0, 0
 	for _, result in ipairs(results) do
@@ -95,53 +167,90 @@ function M.survival(config)
 	local interval = config.interval
 	assert(interval and interval >= 0.02, "hit interval must be at least 20ms")
 	local t, nextHit, hits, lastRechargeDamage = 0, 0, 0, 0
+	local nextAttack, attempts, attacks = config.attack and 0 or math.huge, 0, 0
+	local rechargeActive, rechargeBegan = false, -math.huge
 	local reservationRelease = math.huge
 	local cohorts = { }
 	local resources = { "Life", "Mana", "EnergyShield" }
+	local function result(survived, at)
+		return { time = at, hits = hits, survived = survived, pools = pools, attacks = attacks, attempts = attempts }
+	end
 	while t <= window do
 		if t >= reservationRelease - 1e-9 then
-			pools.Life, reservationRelease = config.caps.Life, math.huge
+			if config.actualDissolution then pools.LifeReservation = 0
+			else pools.Life = config.caps.Life end
+			reservationRelease = math.huge
 		end
+		local external = config.before and config.before(pools, t) or math.huge
 		if t >= nextHit - 1e-9 then
-			local oldES = pools.EnergyShield
-			local oldLife = pools.Life
-			local added, rechargeInterrupted
-			pools, added, rechargeInterrupted = config.hit(pools, t)
+			local oldES, oldLife = pools.EnergyShield, pools.Life
+			local added, interrupted
+			pools, added, interrupted = config.hit(pools, t)
 			hits = hits + 1
-			if rechargeInterrupted or pools.EnergyShield < oldES then lastRechargeDamage = t end
-			if config.dissolution and pools.Life < oldLife then reservationRelease = t + 2 end
-			if pools.Life <= 0 then return { time = t, hits = hits, survived = false, pools = pools } end
+			if interrupted or pools.EnergyShield < oldES then
+				if not (config.wickedWard and rechargeActive and t - rechargeBegan < 4 - 1e-9) then
+					lastRechargeDamage, rechargeActive = t, false
+				end
+			end
+			if config.dissolution and (config.actualDissolution and (pools.LifeDamageReserved or 0) > 0 or not config.actualDissolution and pools.Life < oldLife) then reservationRelease = t + 2 end
+			if pools.Life <= 0 then return result(false, t) end
 			for _, cohort in ipairs(added or { }) do cohorts[#cohorts + 1] = cohort end
 			nextHit = nextHit + interval
 		end
+		if t >= nextAttack - 1e-9 then
+			local paid
+			pools, paid = config.attack(pools, t)
+			attempts, attacks = attempts + 1, attacks + (paid and 1 or 0)
+			if pools.Life <= 0 then return result(false, t) end
+			local attackInterval = type(config.attackInterval) == "function" and config.attackInterval(pools, t) or config.attackInterval
+			nextAttack = t + max(0.005, attackInterval)
+		end
 		if t >= window then break end
-		local dt = min(config.step or 0.02, window - t, nextHit - t, reservationRelease - t)
+		local dt = min(config.step or 0.02, window - t, nextHit - t, nextAttack - t, reservationRelease - t, external - t)
 		local rates = { }
-		for _, resource in ipairs(resources) do rates[resource] = (config.rates or { })[resource] or 0 end
+		local baseRates = type(config.rates) == "function" and config.rates(pools, t) or config.rates or { }
+		for _, resource in ipairs(resources) do rates[resource] = baseRates[resource] or 0 end
 		for i = #cohorts, 1, -1 do
 			local cohort = cohorts[i]
-			if cohort.expires <= t + 1e-9 then
-				table.remove(cohorts, i)
+			if cohort.expires <= t + 1e-9 then table.remove(cohorts, i)
 			else
 				dt = min(dt, cohort.expires - t)
 				for _, resource in ipairs(resources) do rates[resource] = rates[resource] + (cohort[resource] or 0) end
 			end
 		end
-		local rechargeStart = lastRechargeDamage + (config.rechargeDelay or math.huge)
-		if t >= rechargeStart - 1e-9 then
-			rates.EnergyShield = rates.EnergyShield + (config.recharge or 0)
-		elseif rechargeStart < t + dt then
-			dt = rechargeStart - t
+		if config.leech then
+			local leechRates, expiry = config.leech:rates(t, pools)
+			dt = min(dt, expiry - t)
+			for _, resource in ipairs(resources) do rates[resource] = rates[resource] + (leechRates[resource] or 0) end
+		end
+		local delay = type(config.rechargeDelay) == "function" and config.rechargeDelay(pools, t) or config.rechargeDelay or math.huge
+		local rechargeStart = lastRechargeDamage + delay
+		if not rechargeActive and t >= rechargeStart - 1e-9 then rechargeActive, rechargeBegan = true, t end
+		if rechargeActive then
+			local resource = config.rechargeResource or "EnergyShield"
+			local recharge = type(config.recharge) == "function" and config.recharge(pools, t) or config.recharge or 0
+			rates[resource] = rates[resource] + recharge
+		elseif rechargeStart < t + dt then dt = rechargeStart - t end
+		-- Split when a pool reaches full so ordinary leech ends at the actual time.
+		for _, resource in ipairs(resources) do
+			if rates[resource] > 0 and pools[resource] < config.caps[resource] - 1e-9 then
+				dt = min(dt, (config.caps[resource] - pools[resource]) / rates[resource])
+			end
 		end
 		if rates.Life < 0 and pools.Life + rates.Life * dt <= 0 then
-			return { time = t - pools.Life / rates.Life, hits = hits, survived = false, pools = pools }
+			local death = t - pools.Life / rates.Life
+			pools.Life = 0
+			return result(false, death)
 		end
 		for _, resource in ipairs(resources) do
-			pools[resource] = min(config.caps[resource], max(0, pools[resource] + rates[resource] * dt))
+			local cap = resource == "Life" and config.actualDissolution and min(config.caps.Life, config.reservationMax - (pools.LifeReservation or 0)) or config.caps[resource]
+			local value = max(0, pools[resource] + rates[resource] * dt)
+			pools[resource] = config.actualDissolution and resource == "Life" and min(cap, value) or min(max(cap, pools[resource]), value)
 		end
+		if dt <= 0 then error("Recovery timeline failed to advance") end
 		t = min(window, t + dt)
 	end
-	return { time = window, hits = hits, survived = true, pools = pools }
+	return result(true, window)
 end
 
 return M

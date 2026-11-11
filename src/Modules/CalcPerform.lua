@@ -832,6 +832,10 @@ local function doActorMisc(env, actor)
 				output.ElusiveEffectMod = (elusiveEffectMod + elusiveEffectMinThreshold) / 2
 			end
 			-- if we want the max skill to not be noted as its own breakdown table entry, comment out below
+			output.ElusiveEffectMax = elusiveEffectMod
+			output.ElusiveEffectLossRate = 20 / (1 + modDB:Sum("INC", nil, "ElusiveEffectLossSlower") / 100)
+			output.ElusiveEffectIncreaseDuration = elusiveEffectIncreaseDuration
+			output.ElusiveEffectMinThreshold = elusiveEffectMinThreshold
 			modDB:NewMod("ElusiveEffect", "INC", maxSkillInc, "Max Skill Effect")
 			-- Override elusive effect if set.
 			if modDB:Override(nil, "ElusiveEffect") then
@@ -3341,6 +3345,7 @@ function calcs.perform(env, skipEHP)
 	end
 
 	-- Process guard buffs
+	if env.recoveryGuardSuppressed then guards = { } end
 	local guardSlots = { }
 	local nonVaal = false
 	for name, modList in pairs(guards) do

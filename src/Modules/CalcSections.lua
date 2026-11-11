@@ -2356,6 +2356,7 @@ return {
 	{ label = "Scenario", haveOutput = "RecoverySimulationUnsupported", { format = "Unsupported", { breakdown = "RecoverySimulationUnsupported" } } },
 	{ label = "Simulation Window", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationWindow}s", { breakdown = "RecoverySimulationWindow" } } },
 	{ label = "Trials", haveOutput = "RecoverySimulationWindow", { format = "{0:output:RecoverySimulationTrials}", { breakdown = "RecoverySimulationTrials" } } },
+	{ label = "Attacks Affordable", haveOutput = "RecoverySimulationWindow", { format = "{1:output:RecoverySimulationAttackUptime}%", { breakdown = "RecoverySimulationAttackUptime" } } },
 	{ label = "Window Survival Rate", haveOutput = "RecoverySimulationWindow", { format = "{1:output:RecoverySimulationSurvivalChance}%", { breakdown = "RecoverySimulationSurvivalChance" } } },
 	{ label = "Time Alive (Median)", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationTime}s", { breakdown = "RecoverySimulationTime" } } },
 	{ label = "Time Alive (10th %)", haveOutput = "RecoverySimulationWindow", { format = "{2:output:RecoverySimulationTimeLow}s", { breakdown = "RecoverySimulationTimeLow" } } },

@@ -4162,6 +4162,8 @@ function calcs.offence(env, actor, activeSkill)
 	skillFlags.leechLife = output.LifeLeechRate > 0
 	skillFlags.leechES = output.EnergyShieldLeechRate > 0
 	skillFlags.leechMana = output.ManaLeechRate > 0
+	output.RecoveryAttackRate = (output.HitSpeed or output.Speed or 0) * (skillData.dpsMultiplier or 1)
+	output.RecoveryHitRate = output.RecoveryAttackRate * (output.HitChance or 0) / 100
 	if skillData.showAverage then
 		output.LifeLeechGainPerHit = output.LifeLeechPerHit + output.LifeOnHit
 		output.EnergyShieldLeechGainPerHit = output.EnergyShieldLeechPerHit + output.EnergyShieldOnHit

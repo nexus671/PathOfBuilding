@@ -173,10 +173,44 @@ describe("Finite combat windows", function()
 		assert.is_true(after.RecoverySimulationTime > before)
 	end)
 
-	it("rejects unsupported Ward scenarios explicitly", function()
+	it("supports ordinary Ward restoration", function()
 		local out = calculate("+100 to Ward")
-		assert.are.equal(true, out.RecoverySimulationUnsupported)
-		assert.is_nil(out.RecoverySimulationTime)
+		assert.is_nil(out.RecoverySimulationUnsupported)
+		assert.is_true(out.RecoverySimulationTime > 0)
+	end)
+
+	it("ramps leech instances, caps their combined rate and removes them at full", function()
+		local leech = time.leech({ Life = { duration = 5, rate = 10, cap = 15, full = 100 } })
+		leech:add("Life", 0)
+		assert.are.equal(10, leech:rates(0, {Life=50}).Life)
+		leech:add("Life", 1)
+		assert.are.equal(15, leech:rates(1, {Life=50}).Life)
+		assert.is_nil(leech:rates(2, {Life=100}).Life)
+		assert.is_nil(leech:rates(3, {Life=50}).Life)
+	end)
+
+	it("retains leech at full when allowed and expires each instance separately", function()
+		local leech = time.leech({ Life = { duration = 5, rate = 10, cap = 50, full = 100, persist = true } })
+		leech:add("Life", 0); leech:add("Life", 1)
+		assert.are.equal(20, leech:rates(2, {Life=100}).Life)
+		assert.are.equal(10, leech:rates(5, {Life=50}).Life)
+		assert.is_nil(leech:rates(6, {Life=50}).Life)
+	end)
+
+	it("limits flask uptime to available charges", function()
+		local flask = time.flask({ charges = 20, used = 10, duration = 2 })
+		assert.are.equal(true, flask(0, true))
+		assert.are.equal(true, flask(2, true))
+		assert.are.equal(false, flask(4, true))
+	end)
+
+	it("Wicked Ward protects a recharge that began recently", function()
+		for _, wicked in ipairs({false, true}) do
+			local result = simulate({ window=3.5, interval=3, wickedWard=wicked, recharge=20, rechargeDelay=2, step=math.huge,
+				pools={Life=100,Mana=0,EnergyShield=100},caps={Life=100,Mana=0,EnergyShield=100},
+				hit=function(p,t) p.EnergyShield=p.EnergyShield-(t==0 and 80 or 10);return p,{},true end })
+			assert.are.near(wicked and 40 or 30, result.pools.EnergyShield, 1e-8)
+		end
 	end)
 
 	it("applies Petrified Blood's delayed loss between widely spaced hits", function()
@@ -246,11 +280,106 @@ describe("Finite combat windows", function()
 		assert.is_true(after.RecoverySimulationShroudsUsed < before)
 	end)
 
-	it("rejects Dissolution with delayed Life loss rather than healing reservation", function()
+	it("supports separate Dissolution reservation and delayed Life loss", function()
 		build.skillsTab:PasteSocketGroup("Petrified Blood 20/0  1")
 		build.skillsTab:ProcessSocketGroup(build.skillsTab.socketGroupList[1])
 		local out = calculate("Life that would be lost by taking Damage is instead Reserved")
-		assert.are.equal(true, out.RecoverySimulationUnsupported)
+		assert.is_nil(out.RecoverySimulationUnsupported)
+		assert.is_true(out.RecoverySimulationTime >= 0)
+	end)
+
+	it("keeps actual life independent from Dissolution reservation", function()
+		local state = { Life = 50, LifeReservation = 0 }
+		local added, generic, delayed = time.reserveLife(state, 50, {life=100,maximum=100,prevent=0,below=40})
+		assert.are.equal(30, added)
+		assert.are.equal(20, delayed)
+		assert.are.equal(0, generic)
+		assert.are.equal(50, state.Life)
+		assert.are.equal(30, state.LifeReservation)
+	end)
+
+	it("Eternal Youth recharges actual life without clearing reservation", function()
+		local state = { Life=20, Mana=0, EnergyShield=0, LifeReservation=40 }
+		local result = simulate({ actualDissolution=true,dissolution=true,reservationMax=100,pools=state,interval=20,window=1,
+			caps={Life=50,Mana=0,EnergyShield=0},rechargeResource="Life",rechargeDelay=0,recharge=10,
+			hit=function(p) p.LifeDamageReserved=0; return p end })
+		assert.are.near(30,result.pools.Life,1e-8)
+		assert.are.equal(40,result.pools.LifeReservation)
+	end)
+
+	it("can die to delayed loss after Dissolution reservation has been released", function()
+		local result = simulate({ actualDissolution=true,dissolution=true,reservationMax=100,interval=20,window=4,
+			pools={Life=50,Mana=0,EnergyShield=0},caps={Life=50,Mana=0,EnergyShield=0},
+			hit=function(p,t)
+				local added,generic,below = time.reserveLife(p,120,{life=100,maximum=100,prevent=0,below=40})
+				p.LifeDamageReserved=added
+				return p,{{Life=-(generic+below*0.81)/4,expires=t+4}},true
+			end })
+		assert.are.equal(false,result.survived)
+		assert.are.near(28/9.72,result.time,1e-8)
+		assert.are.equal(0,result.pools.LifeReservation)
+	end)
+
+	it("expires Wicked Ward's protection four seconds after recharge begins", function()
+		local result = simulate({window=7,interval=3,wickedWard=true,recharge=20,rechargeDelay=2,step=math.huge,
+			pools={Life=100,Mana=0,EnergyShield=100},caps={Life=100,Mana=0,EnergyShield=100},
+			hit=function(p,t) p.EnergyShield=p.EnergyShield-(t==0 and 80 or 10); return p,{},true end})
+		assert.are.near(80,result.pools.EnergyShield,1e-8)
+	end)
+
+	it("pays Eldritch Battery costs from ES before mana without partial payment", function()
+		local pools = {Life=100,Mana=10,EnergyShield=10}
+		assert.are.equal(true, time.payCost(pools, {Mana=15}, true))
+		assert.are.equal(5, pools.Mana)
+		assert.are.equal(0, pools.EnergyShield)
+		assert.are.equal(false, time.payCost(pools, {Mana=10}, true))
+		assert.are.equal(5, pools.Mana)
+	end)
+
+	it("removes ordinary leech at the current Dissolution unreserved maximum", function()
+		local leech = time.leech({ Life={duration=5,rate=10,cap=20,full=100,reservation=true} })
+		leech:add("Life",0)
+		assert.is_nil(leech:rates(1,{Life=70,LifeReservation=30}).Life)
+	end)
+
+	it("skips native main-skill attacks when mana cannot pay their cost", function()
+		build.skillsTab:PasteSocketGroup("Ethereal Knives 20/0  1")
+		build.skillsTab:ProcessSocketGroup(build.skillsTab.socketGroupList[1])
+		build.configTab.input.recoverySimulationAttacking = true
+		local out = calculate("+10000 to maximum Life\nCannot Regenerate Mana")
+		assert.is_true(out.RecoverySimulationAttackUptime > 0)
+		assert.is_true(out.RecoverySimulationAttackUptime < 100)
+	end)
+
+	it("expires native flask defenses without changing the configured burst calculation", function()
+		local item = new("Item"):Item("Rarity: Normal\nGranite Flask")
+		build.itemsTab:AddItem(item)
+		build.itemsTab.slots["Flask 1"].selItemId = item.id
+		build.itemsTab.slots["Flask 1"].active = true
+		calculate("+3000 to maximum Life")
+		build.configTab.input.enemyColdDamage = "0"
+		build.configTab.input.enemyPhysicalDamage = "100"
+		build.configTab.input.recoverySimulationWindow = 60
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert(not __mainObject__.promptMsg, __mainObject__.promptMsg)
+		local out = build.calcsTab.calcsOutput
+		local timed, ehp = out.RecoverySimulationTime, out.TotalEHP
+		build.configTab.input.recoverySimulationTimedEffects = false
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime > timed)
+		assert.are.near(ehp, build.calcsTab.calcsOutput.TotalEHP, 1e-8)
+	end)
+
+	it("expires guard protection and supports a paid recast policy", function()
+		build.skillsTab:PasteSocketGroup("Molten Shell 20/0  1")
+		build.skillsTab:ProcessSocketGroup(build.skillsTab.socketGroupList[1])
+		local out = calculate("+500 to maximum Life")
+		assert(not __mainObject__.promptMsg, __mainObject__.promptMsg)
+		local before = out.RecoverySimulationTime
+		build.configTab.input.recoverySimulationRecastGuard = true
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert(not __mainObject__.promptMsg, __mainObject__.promptMsg)
+		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime > before)
 	end)
 
 	it("copies physical-prevention regeneration through Pious Path", function()
