@@ -1,3 +1,10 @@
+VERSION[ai][2026/11/11]
+
+--- AI Edition ---
+* Fix recovery, flasks and temporary defenses in encounter simulations.
+* Improve tincture quality calculations and poison stack limits.
+* Clean up the project page and simulation guide.
+
 VERSION[beta][2026/11/10]
 
 --- New to Path of Building ---

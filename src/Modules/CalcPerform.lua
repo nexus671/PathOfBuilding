@@ -1897,7 +1897,7 @@ function calcs.perform(env, skipEHP)
 			-- Tincture effect multiplier is rounded to 2 decimal places before applying it.
 			local effectMod = math.floor((1 + (tinctureEffectInc) / 100) * (1 + (item.quality or 0) / 100) * 100) / 100 
 			if item.tinctureValues == "Final" then
-				local localEffect = math.floor((1 + item.tinctureData.effectInc / 100) * (1 + (item.quality or 0) / 100) * 100) / 100
+				local localEffect = math.floor((1 + item.tinctureData.effectInc / 100) * (1 + (item.tinctureImportedQuality or item.quality or 0) / 100) * 100) / 100
 				effectMod = effectMod / m_max(localEffect, 0.01)
 			end
 
