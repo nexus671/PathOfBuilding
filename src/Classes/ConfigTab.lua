@@ -339,6 +339,7 @@ function ConfigTabClass:ConfigTab(build)
 					self:BuildModList()
 					self.build.buildFlag = true
 				end)
+				if varData.configSets then control.enableDroppedWidth = true end
 			elseif varData.type == "text" and not varData.resizable then
 				control = new("EditControl"):EditControl({"TOPLEFT",lastSection,"TOPLEFT"}, {8, 0, 344, 118}, "", nil, "^%C\t\n", nil, function(buf, placeholder)
 					if placeholder then

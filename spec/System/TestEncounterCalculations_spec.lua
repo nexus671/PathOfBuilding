@@ -284,6 +284,9 @@ describe("Encounter reporting and comparisons",function()
 		assert.are.near(0,o.RecoveryComparisonSurvivalDelta,1e-8)
 		assert.are.near(0,o.RecoveryComparisonTimeDelta,1e-8)
 		assert.are.near(0,o.RecoveryComparisonDamageDelta,1e-6)
+		assert.are.equal(true,o.RecoveryComparisonReady)
+		assert.are.equal(true,build.calcsTab:CheckFlag({haveOutput="RecoveryComparisonReady"}))
+		assert.are.equal(true,tab.varControls.recoverySimulationCompareSet.enableDroppedWidth)
 		assert.are.equal(original,tab.activeConfigSetId)
 		assert.are.equal(target.id,tab.input.recoverySimulationCompareSet)
 		assert.are.equal(99,target.input.recoverySimulationTrials)
@@ -322,13 +325,14 @@ describe("Encounter reporting and comparisons",function()
 		for _,row in ipairs(control.sectionList[3].rowList) do assert.are_not.equals("Sample",row.event) end
 		assert.are.equal(true,control.isTimeline)
 		control:Draw({x=0,y=0,width=1920,height=1080})
-		local savedDrawControls,savedLayer,savedQuad=control.DrawControls,SetDrawLayer,DrawImageQuad
+		local drawEnv,plotEnv=getfenv(control.Draw),getfenv(control.DrawEncounterTimeline)
+		local savedDrawControls,savedLayer,savedQuad=control.DrawControls,rawget(drawEnv,"SetDrawLayer"),rawget(plotEnv,"DrawImageQuad")
 		local layer,plotted=0,false
-		control.DrawControls=function() SetDrawLayer(nil,0) end
-		SetDrawLayer=function(_,subLayer) layer=subLayer or 0 end
-		DrawImageQuad=function(...) assert.are.equal(10,layer); plotted=true end
+		control.DrawControls=function() drawEnv.SetDrawLayer(nil,0) end
+		drawEnv.SetDrawLayer=function(_,subLayer) layer=subLayer or 0 end
+		plotEnv.DrawImageQuad=function(...) assert.are.equal(10,layer); plotted=true end
 		local ok,err=pcall(function() control:Draw({x=0,y=0,width=1920,height=1080}) end)
-		control.DrawControls,SetDrawLayer,DrawImageQuad=savedDrawControls,savedLayer,savedQuad
+		control.DrawControls,drawEnv.SetDrawLayer,plotEnv.DrawImageQuad=savedDrawControls,savedLayer,savedQuad
 		assert(ok,err); assert.are.equal(true,plotted)
 		build.configTab:ShowEncounterSimulation()
 		assert.are.equal("Encounter Simulation",build.configTab.controls.search.buf)
