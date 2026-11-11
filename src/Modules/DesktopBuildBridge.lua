@@ -162,6 +162,8 @@ local function applyOperation(build, op)
 		build.notesTab.controls.edit:SetText(text(op.text,64000,"notes"))
 	elseif op.type == "set_crafting_project" then
 		build.savers.CraftingProjects:Upsert(op.project)
+	elseif op.type == "set_atlas_plan" then
+		build.savers.AtlasPlans:Upsert(op.plan)
 	else error("Unknown operation: "..tostring(op.type)) end
 end
 
@@ -247,7 +249,8 @@ function M.capture(build)
 	local context = {revision=M.revision(build),name=build.buildName,level=build.characterLevel,className=build.spec.curClassName,ascendancy=build.spec.curAscendClassName,
 		stats=stats(build),items={},skills={},passives={},masteries=copyTable(build.spec.masterySelections),config=copyTable(build.configTab.input),
 		warnings=copyTable(build.controls.warnings.lines),slots={},plan=M.plan,audit=insights.audit(build),encounter=insights.diagnose(build),
-		craftingProjects=copyTable(build.savers.CraftingProjects.projects),craftingWarning=build.savers.CraftingProjects.warning}
+		craftingProjects=copyTable(build.savers.CraftingProjects.projects),craftingWarning=build.savers.CraftingProjects.warning,
+		atlasPlans=copyTable(build.savers.AtlasPlans.plans),atlasWarning=build.savers.AtlasPlans.warning,atlasVersions=copyTable(require("Modules.AtlasPlanner").versions)}
 	local catalog = {gems={},passives={},config={},classes={}}
 	for name,slot in pairs(build.itemsTab.slots) do
 		context.slots[#context.slots+1] = name
@@ -426,6 +429,17 @@ function M.poll(build, force)
 		assert(type(request.id) == "string" and request.id:match("^[%w%-]+$") and #request.id <= 80,"Invalid proposal ID")
 		if M.prepared then return end
 		M.lastRequest,M.lastError = os.time(),nil
+		if request.kind == "atlasSearch" or request.kind == "atlasConnect" then
+			assert(request.baseRevision == M.revision(build),"Build changed. Refresh Atlas context.")
+			local planner=require("Modules.AtlasPlanner")
+			local result
+			if request.kind == "atlasSearch" then result=planner.search(request.version,request.query,request.limit)
+			else
+				local plan,added=planner.connect(request.plan,request.targets,request.avoid)
+				result={plan=plan,added=added,report=planner.report(plan),officialUrl=planner.url(plan)}
+			end
+			M.status={id=request.id,status="atlas",atlas=result}; M.publishState(); return
+		end
 		if request.kind == "craftAction" or request.kind == "craftSimulate" then
 			assert(request.baseRevision == M.revision(build),"Build changed. Refresh crafting context.")
 			local raw=request.itemText

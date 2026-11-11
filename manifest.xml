@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.20e1d1f0" />
+	<Version number="2.67.2-ai.7b9a22e6" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
-	<File name="changelog.txt" part="default" sha1="7729006de9c8bcf319aadc4466e4f7121ec4d125" />
+	<File name="changelog.txt" part="default" sha1="4e9ca2f33ab996e169924f5b7f716197faab946f" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
 	<File name="Assets/ascendancypassiveheaderleft.png" part="program" sha1="6a65683dcc3b14382dc083198fe9361454e91b15" />
@@ -379,7 +379,7 @@
 	<File name="Launch.lua" part="program" sha1="df7c5af61dc46797e6fdf3d751f84865895f4fb6" />
 	<File name="LaunchServer.lua" part="program" sha1="f15bdfbedaf887e19556490dce49b720f8365379" />
 	<File name="Modules/AddImplicitPopup.lua" part="program" sha1="f68d391d10b95c0feef70b7e8e82326a745dcb3b" />
-	<File name="Modules/Build.lua" part="program" sha1="38443954e14fadc16e75ddaf9963934fbfaf120c" />
+	<File name="Modules/Build.lua" part="program" sha1="444e7b3cfc332a1933056aa404d2992f9b280286" />
 	<File name="Modules/BuildDisplayStats.lua" part="program" sha1="ffc4da3b13c3d50f3580b452622429f0bd7e70ab" />
 	<File name="Modules/BuildList.lua" part="program" sha1="daa0c88f606ade9687f037b6e99c9cec2904200e" />
 	<File name="Modules/BuildListHelpers.lua" part="program" sha1="a95770f18b54c05ed1d68f870f3693cac53a0fab" />
@@ -1405,15 +1405,19 @@
 	<File name="TreeData/VioletOil.png" part="tree" sha1="1e9e4f0683a5156c27cb7ddafada8bed877e1c25" />
 	<File name="Modules/CalcTime.lua" part="program" sha1="b6a569cc6b3199be190f4f04acf6ad51886f7fab" />
 	<File name="Modules/CalcEncounter.lua" part="program" sha1="51e5db31fa6d953ee6f5bdec0387db87bc1eabfa" />
-	<File name="AI/McpServer.cjs" part="program" sha1="2c1087451ec16f38ed4adbd72a7dac4342bb3c74" />
+	<File name="AI/McpServer.cjs" part="program" sha1="9bc6f0583953162bb7f378bcaef4b2bb34023a08" />
 	<File name="Classes/EncounterWorkspaceControl.lua" part="program" sha1="7f223c0e703ac1ca4b040d2c2ff82494ef977003" />
 	<File name="Modules/EncounterReport.lua" part="program" sha1="e7ce56fc160712aa2e6357600953c0820426dfb3" />
-	<File name="AI/BuildProtocol.cjs" part="program" sha1="3c50ed810a2086ab81a2717c73841f2b44e2c13b" />
-	<File name="Classes/BuildProposalControl.lua" part="program" sha1="848f052b26be5bfe7b3ee448acb77a49327c344a" />
-	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="162a0cfa5c1bfab912b14056fb340d64192be11b" />
-	<File name="Modules/BuildInsights.lua" part="program" sha1="73cfed0b78ff67270ebded06f34c492b78e925b8" />
+	<File name="AI/BuildProtocol.cjs" part="program" sha1="d8b2c254d9c3058f9eb0157b93d5824c25f86732" />
+	<File name="Classes/BuildProposalControl.lua" part="program" sha1="a444e0ab25a49ded75e6a2326cefc7cd9a05f706" />
+	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="74aa151f7a77824d0e1af92967eb9fe684dbd6c6" />
+	<File name="Modules/BuildInsights.lua" part="program" sha1="e4f6f636f4088fb7f62167adc02c6963d91aeb4a" />
 	<File name="Classes/CraftingProjectControl.lua" part="program" sha1="c445d907709f2958da624549bda8e3db55c6efe0" />
 	<File name="Classes/CraftingSimulatorControl.lua" part="program" sha1="34fb7eb780355a0138521791c179fbbd89fa73cf" />
 	<File name="Modules/CraftingProjects.lua" part="program" sha1="92ca592c937dde44b06f5c6a23952b5b1eb60c4a" />
 	<File name="Modules/CraftingSimulator.lua" part="program" sha1="198bc0c6f283b3c131a4d688ead3566f01e66ade" />
+	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="cbf1ee681fd6952730d594c352fabeb04f2b66e0" />
+	<File name="Data/Atlas/3.27.0.json" part="program" sha1="8e66351e84a7b8faad0f6f6c17508af74e10b1a8" />
+	<File name="Data/Atlas/3.29.1.json" part="program" sha1="d19e286eb82bd94fba3d18d5e8a46258def4e838" />
+	<File name="Modules/AtlasPlanner.lua" part="program" sha1="e97b2b10ea45139f69d61553a7d198e5c68bcbf4" />
 </PoBVersion>
