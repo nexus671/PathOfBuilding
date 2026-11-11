@@ -38,13 +38,16 @@ function fixture(t) {
   fs.writeFileSync(file,JSON.stringify(report));
   return {file,report};
 }
-test('negotiates versions, requires initialization, and exposes only read-only tools', async t => {
+test('negotiates versions, requires initialization, and keeps applying builds in the desktop UI', async t => {
   const {file} = fixture(t); const c = client(t,file);
   assert.equal((await c.request('tools/list')).error.code,-32000);
   assert.equal((await c.initialize('2025-03-26')).result.protocolVersion,'2025-03-26');
   const list = (await c.request('tools/list')).result.tools;
-  assert.equal(list.length,3);
-  assert.ok(list.every(tool => tool.annotations.readOnlyHint && !tool.annotations.openWorldHint));
+  assert.equal(list.length,7);
+  assert.ok(list.every(tool => !tool.annotations.openWorldHint));
+  assert.equal(list.filter(tool => !tool.annotations.readOnlyHint).length,1);
+  assert.equal(list.find(tool => !tool.annotations.readOnlyHint).name,'propose_build');
+  assert.ok(!list.some(tool => /apply|save/.test(tool.name)));
   assert.equal((await c.request('tools/call',{name:'get_encounter_report',arguments:{path:'elsewhere'}})).error.code,-32602);
   assert.equal((await c.request('run_lua',{code:'anything'})).error.code,-32601);
 });

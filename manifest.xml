@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.186f32a6" />
+	<Version number="2.67.2-ai.4a9c4713" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
-	<File name="changelog.txt" part="default" sha1="3ab4d0dd6dc8b85154faf9b9bcbb4fb46473a560" />
+	<File name="changelog.txt" part="default" sha1="7c795252508d94a37950580029124bebaa02aef0" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
 	<File name="Assets/ascendancypassiveheaderleft.png" part="program" sha1="6a65683dcc3b14382dc083198fe9361454e91b15" />
@@ -379,7 +379,7 @@
 	<File name="Launch.lua" part="program" sha1="df7c5af61dc46797e6fdf3d751f84865895f4fb6" />
 	<File name="LaunchServer.lua" part="program" sha1="f15bdfbedaf887e19556490dce49b720f8365379" />
 	<File name="Modules/AddImplicitPopup.lua" part="program" sha1="f68d391d10b95c0feef70b7e8e82326a745dcb3b" />
-	<File name="Modules/Build.lua" part="program" sha1="561ec3e79257b3a18d735ef6ff8b1b3f0cb78966" />
+	<File name="Modules/Build.lua" part="program" sha1="d5de1dc97b52182337a16fba1af33eb79e3b566e" />
 	<File name="Modules/BuildDisplayStats.lua" part="program" sha1="ffc4da3b13c3d50f3580b452622429f0bd7e70ab" />
 	<File name="Modules/BuildList.lua" part="program" sha1="daa0c88f606ade9687f037b6e99c9cec2904200e" />
 	<File name="Modules/BuildListHelpers.lua" part="program" sha1="a95770f18b54c05ed1d68f870f3693cac53a0fab" />
@@ -1405,7 +1405,10 @@
 	<File name="TreeData/VioletOil.png" part="tree" sha1="1e9e4f0683a5156c27cb7ddafada8bed877e1c25" />
 	<File name="Modules/CalcTime.lua" part="program" sha1="b6a569cc6b3199be190f4f04acf6ad51886f7fab" />
 	<File name="Modules/CalcEncounter.lua" part="program" sha1="51e5db31fa6d953ee6f5bdec0387db87bc1eabfa" />
-	<File name="AI/McpServer.cjs" part="program" sha1="83d1627c5f129452c15ce438ad560313279269fa" />
-	<File name="Classes/EncounterWorkspaceControl.lua" part="program" sha1="c25c5984e8d213f6e42cfcc4a3529277c3810f78" />
+	<File name="AI/McpServer.cjs" part="program" sha1="c966ab0ac1a8b976c7b62f3ca35af3566a13a109" />
+	<File name="Classes/EncounterWorkspaceControl.lua" part="program" sha1="7f223c0e703ac1ca4b040d2c2ff82494ef977003" />
 	<File name="Modules/EncounterReport.lua" part="program" sha1="e7ce56fc160712aa2e6357600953c0820426dfb3" />
+	<File name="AI/BuildProtocol.cjs" part="program" sha1="4ea6e58b6e9cd9cbfdd589dd55cc52da9d445c44" />
+	<File name="Classes/BuildProposalControl.lua" part="program" sha1="78dfd0231728281f46668e643aee3991d653c84f" />
+	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="2844d94497cd6e3959d92801337c0008bb8ec226" />
 </PoBVersion>

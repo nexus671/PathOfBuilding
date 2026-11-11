@@ -13,6 +13,7 @@ Builds/
 *.cfg
 Settings.xml
 AI-encounter.json
+AI-build-*.json
 
 # Testing
 luajit/

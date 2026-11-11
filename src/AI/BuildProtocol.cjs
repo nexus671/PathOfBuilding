@@ -1,0 +1,108 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const { randomUUID } = require('node:crypto');
+const string = maxLength => ({type:'string',maxLength});
+const integer = (minimum,maximum) => ({type:'integer',minimum,maximum});
+const object = (properties,required = []) => ({type:'object',properties,required,additionalProperties:false});
+const array = (items,maxItems) => ({type:'array',items,maxItems});
+const boolean = {type:'boolean'};
+const operations = [
+  object({type:{const:'set_character'},level:integer(1,100),className:string(40),ascendancy:string(40)},['type']),
+  object({type:{const:'allocate_passives'},add:array(integer(1,1000000),200),remove:array(integer(1,1000000),200),
+    masteries:array(object({nodeId:integer(1,1000000),effectId:integer(1,65535)},['nodeId','effectId']),50)},['type']),
+  object({type:{const:'equip_item'},slot:string(80),text:string(24000),active:boolean},['type','slot','text']),
+  object({type:{const:'set_skills'},mainGroup:integer(1,40),groups:array(object({label:string(120),slot:string(80),enabled:boolean,includeInFullDPS:boolean,
+    mainActiveSkill:integer(1,12),gems:array(object({name:string(160),level:integer(1,40),quality:integer(0,100),enabled:boolean},['name']),12)},['gems']),40)},['type','groups']),
+  object({type:{const:'set_config'},values:{type:'object',maxProperties:100,additionalProperties:{type:['string','number','boolean']}}},['type','values']),
+  object({type:{const:'set_notes'},text:string(64000)},['type','text']),
+];
+const proposalSchema = object({mode:{enum:['edit','new']},title:string(120),baseRevision:{type:'string',pattern:'^[a-f0-9]{40}$'},
+  operations:{type:'array',minItems:1,maxItems:100,items:{oneOf:operations}}},['mode','title','baseRevision','operations']);
+
+// Validate the same closed JSON schema advertised to clients, without an extra runtime dependency.
+function validate(value,schema) {
+  if (schema.oneOf) return schema.oneOf.filter(s => validate(value,s)).length === 1;
+  if (schema.const !== undefined && value !== schema.const) return false;
+  if (schema.enum && !schema.enum.includes(value)) return false;
+  const type = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
+  if (schema.type) {
+    const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+    if (!types.includes(type) && !(types.includes('integer') && Number.isInteger(value))) return false;
+  }
+  if (type === 'number' && (!Number.isFinite(value) || value < (schema.minimum ?? -Infinity) || value > (schema.maximum ?? Infinity))) return false;
+  if (type === 'string' && (value.length > (schema.maxLength ?? Infinity) || schema.pattern && !new RegExp(schema.pattern).test(value))) return false;
+  if (type === 'array' && (value.length < (schema.minItems ?? 0) || value.length > (schema.maxItems ?? Infinity) || value.some(v => !validate(v,schema.items)))) return false;
+  if (type === 'object') {
+    if (Object.keys(value).length > (schema.maxProperties ?? Infinity) || (schema.required ?? []).some(k => !Object.hasOwn(value,k))) return false;
+    for (const [key,entry] of Object.entries(value)) {
+      const member = schema.properties && Object.hasOwn(schema.properties,key) ? schema.properties[key] : undefined;
+      if (member ? !validate(entry,member) : schema.additionalProperties === false || typeof schema.additionalProperties === 'object' && !validate(entry,schema.additionalProperties)) return false;
+    }
+  }
+  return true;
+}
+const readOnly = {readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false};
+const tools = [
+  {name:'get_build_context',description:'Read the connected desktop build: revision, character, current gear, socket groups, passives, configuration, native stats and warnings. Enable Build proposals in PoB first.',inputSchema:object({}),annotations:readOnly},
+  {name:'search_build_catalog',description:'Search the desktop build\'s native gems, passive nodes (including mastery effects), configuration choices or classes. Passive paths are recomputed during a proposal; IDs are tree-version specific.',
+    inputSchema:object({kind:{enum:['gems','passives','config','classes']},query:string(160),limit:integer(1,50)},['kind','query']),annotations:readOnly},
+  {name:'propose_build',description:'Calculate a new build or edits in PoB for desktop review. Use the latest baseRevision from get_build_context. set_skills replaces all active socket groups; allocate_passives adds native connecting paths and removes dependent nodes. No changes are applied or saved by this tool. Read get_proposal_status for calculated results and resolved gear/gems/tree. Only the desktop Apply button commits changes.',
+    inputSchema:proposalSchema,annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
+  {name:'get_proposal_status',description:'Read proposal status, calculated before/after stats, native warnings and review instructions. It cannot apply a proposal.',inputSchema:object({}),annotations:readOnly},
+];
+
+function createBridge(reportPath) {
+  const filename = name => path.join(path.dirname(reportPath || '.'),`AI-build-${name}.json`);
+  function read(name) {
+    const file = filename(name);
+    if (fs.statSync(file).size > 16 * 1024 * 1024) throw new Error('Desktop build data exceeds the supported size.');
+    return JSON.parse(fs.readFileSync(file,'utf8'));
+  }
+  function state() {
+    let result;
+    try { result = read('state'); } catch (_) { throw new Error('Enable Build proposals in PoB > Simulation > AI tools first.'); }
+    if (result.schemaVersion !== 1 || !result.enabled || typeof result.session !== 'string' || !Number.isFinite(result.heartbeat) || Math.abs(Date.now()/1000-result.heartbeat) > (result.proposal?.status === 'calculating' ? 120 : 15)) {
+      throw new Error('Desktop connection is disabled or not responding. Open the build in PoB and enable Build proposals.');
+    }
+    return result;
+  }
+  return function call(name,args) {
+    const tool = tools.find(t => t.name === name);
+    if (!tool || !validate(args ?? {},tool.inputSchema)) throw new Error('Invalid build tool arguments. Follow the advertised schema.');
+    const current = state();
+    if (name === 'get_proposal_status') return {session:current.session,revision:current.revision,proposal:current.proposal ?? null};
+    const captured = read('context');
+    if (captured.schemaVersion !== 1 || captured.session !== current.session || captured.context?.revision !== current.revision) throw new Error('Desktop context is refreshing. Try again after calculations finish.');
+    if (name === 'get_build_context') {
+      const {xml,...context} = captured.context;
+      return {session:current.session,capturedAt:captured.capturedAt,context};
+    }
+    if (name === 'search_build_catalog') {
+      const query = args.query.toLocaleLowerCase();
+      const entries = captured.catalog?.[args.kind];
+      if (!Array.isArray(entries)) throw new Error('Catalog unavailable. Refresh the desktop connection.');
+      const matches = entries.filter(entry => JSON.stringify(entry).toLocaleLowerCase().includes(query));
+      return {revision:current.revision,kind:args.kind,total:matches.length,matches:matches.slice(0,args.limit ?? 20)};
+    }
+    if (current.proposal?.status === 'review' || current.proposal?.status === 'calculating') throw new Error('Review or reject the pending proposal in PoB first.');
+    if (args.baseRevision !== current.revision) throw new Error('Build revision changed. Read get_build_context and submit a fresh proposal.');
+    if (!args.title.trim() || /[\x00-\x1f\x7f]/.test(args.title)) throw new Error('Proposal title must be a nonempty single line.');
+    const nodes = args.operations.reduce((n,op) => n+(op.add?.length ?? 0)+(op.remove?.length ?? 0)+(op.masteries?.length ?? 0),0);
+    if (nodes > 400) throw new Error('Use at most 400 passive changes per proposal.');
+    const id = randomUUID();
+    const request = JSON.stringify({id,session:current.session,proposal:args});
+    if (Buffer.byteLength(request) > 262144) throw new Error('Proposal exceeds 256 KiB.');
+    const temporary = filename(`request-${id}`);
+    try {
+      fs.writeFileSync(temporary,request,{flag:'wx'});
+      // Publish a complete file exclusively; the desktop cannot read a half-written request.
+      fs.linkSync(temporary,filename('request'));
+    } catch (err) {
+      if (err.code === 'EEXIST') throw new Error('A proposal is already queued. Wait for PoB to process it.');
+      throw err;
+    } finally { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); }
+    return {id,status:'queued',instructions:'PoB will calculate this candidate separately. Poll get_proposal_status, then review it in PoB > AI tools > Build proposals. Nothing has been applied or saved.'};
+  };
+}
+module.exports = {tools,createBridge,validate};

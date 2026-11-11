@@ -18,9 +18,21 @@ Use **Close** to return to Calcs. **Show samples** adds periodic resource sample
 
 For a local MCP client, install Node.js, choose **Refresh MCP context**, then **Copy MCP configuration** and add that configuration to your client's local stdio servers. The server is included with AI Edition and has no additional package dependencies. The copied `mcpServers` format may need adapting to your client's settings format.
 
-The connection is read-only and reads `AI-encounter.json` in PoB's user folder. It exposes the encounter report, selected death details, assumptions, and three prompts. It includes the build/configuration name and selected-trial history, but does not export your full build XML. Refresh after changing the build or configuration: the report includes its capture time and is not a live connection to the desktop. The server cannot detect subsequent unsaved changes. No API key or model subscription is configured in PoB; your MCP client supplies the model.
+Encounter tools are read-only and read `AI-encounter.json` in PoB's user folder. They expose the encounter report, selected death details, assumptions, and three prompts. Refresh after changing the build or configuration: this report is an explicit snapshot, and the encounter tools cannot detect later unsaved changes. No API key or model subscription is configured in PoB; your MCP client supplies the model.
 
 Death details show the actual pools before and after a lethal hit. Recovery after that hit cannot rescue an already lethal outcome. An explanation identifies observed events; proposed improvements still need a comparison experiment.
+
+### Creating and editing builds with AI
+
+Open **AI builds** in the left sidebar, or **AI tools / MCP → Build proposals**, then **Enable build proposals**. This connects the current unsaved desktop build. Use **Copy MCP configuration** in a client that supports local stdio servers. The same MCP server supplies encounter reports and build tools.
+
+AI can read the current character, equipped items, gems, passives, configuration and calculated stats. It can search native gem, passive, mastery, class and configuration data, then submit a new build or edits with `propose_build`. Operations include character level/class/ascendancy, passive allocation and removal, mastery selection, item equipment, socket groups, configuration and notes. Passive allocation uses native connecting paths; removal also removes dependent nodes. Replacing skills replaces every group in the active skill set. Gear/tree/skill/config edits use their currently active sets; other saved sets remain available.
+
+PoB calculates the candidate separately. **AI: Review proposal** opens the requested changes, calculated before/after stats and native warnings. Only **Apply proposed build** switches to it. The result is unsaved; a new build has no file path, while edits keep the original file destination for an explicit Save. **Reject proposal** leaves the desktop build unchanged. **Restore previous build** returns to the exact in-memory original while the candidate remains unedited. Later manual edits block that shortcut so they are not discarded.
+
+The build context updates while the connection is enabled and PoB is running. Proposals are tied to a session and build revision; a stale proposal cannot be applied. Disable the connection when finished. Local `AI-build-*.json` files hold the current context, heartbeat and proposal queue, without build history or automatic saves. There is no MCP tool to apply a proposal, save a build, execute code or choose arbitrary file paths.
+
+AI suggestions are not an automatic optimizer. Native calculations and warnings help assess a candidate; check configuration assumptions, point budgets, equipment requirements and skill interactions before using it.
 
 [Results](#reading-the-results) · [Attacks](#attacks-and-recovery) · [Flasks](#flasks-and-temporary-defenses) · [Damage over time](#damage-over-time) · [Comparisons](#inspecting-and-comparing-encounters) · [Coverage](#mechanic-coverage) · [Limits](#known-limits)
 

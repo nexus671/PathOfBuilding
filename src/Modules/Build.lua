@@ -476,6 +476,9 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		self.viewMode = "COMPARE"
 	end)
 	self.controls.modeCompare.locked = function() return self.viewMode == "COMPARE" end
+	self.controls.aiBuild = new("ButtonControl"):ButtonControl({"LEFT",self.controls.modeCompare,"RIGHT"},{4,0,148,20},function()
+		return require("Modules.DesktopBuildBridge").prepared and "AI: Review proposal" or "AI builds"
+	end,function() require("Classes.BuildProposalControl").Open(self) end)
 	-- Skills
 	self.controls.mainSkillLabel = new("LabelControl"):LabelControl({"TOPLEFT",self.anchorSideBar,"TOPLEFT"}, {0, 80, 300, 16}, "^7Main Skill:")
 	self.controls.mainSocketGroup = new("DropDownControl"):DropDownControl({"TOPLEFT",self.controls.mainSkillLabel,"BOTTOMLEFT"}, {0, 2, 300, 18}, nil, function(index, value)
@@ -949,6 +952,7 @@ function buildMode:CanExit(mode)
 end
 
 function buildMode:Shutdown()
+	require("Modules.DesktopBuildBridge").disable(self)
 	if launch.devMode and (not main.disableDevAutoSave) and self.targetVersion and not self.abortSave then
 		if self.dbFileName then
 			self:SaveDBFile()
@@ -1158,6 +1162,7 @@ function buildMode:UpdateSecondaryAscendancyDropdown(forceListUpdate)
 end
 
 function buildMode:OnFrame(inputEvents)
+	require("Modules.DesktopBuildBridge").poll(self)
 	-- Stop at drawing the background if the loaded build needs to be converted
 	if not self.targetVersion then
 		main:DrawBackground(main.viewPort)
