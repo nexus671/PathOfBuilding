@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-nexus.9f44f57b" />
-	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/" />
-	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/runtime/" />
-	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/src/" />
-	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/src/" />
+	<Version number="2.67.2-nexus.37e5c37f" />
+	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
+	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" />
+	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
+	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="changelog.txt" part="default" sha1="4525463231d4e32bfdf7328e25270c0088469868" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
@@ -376,7 +376,7 @@
 	<File name="Data/Uniques/wand.lua" part="program" sha1="1ea0bee9d0b375d6f7201d3c16fde817f01fce75" />
 	<File name="Data/Vestigial.lua" part="program" sha1="f34c42a3423c598c0c1e2f5660f1d6b83c59a555" />
 	<File name="GameVersions.lua" part="program" sha1="60a2ae47b2f20a625fe1bfbdb7d0e18e5d0a0d88" />
-	<File name="Launch.lua" part="program" sha1="49aa75bfb3aa68bd38daf6b6870012794e40cf89" />
+	<File name="Launch.lua" part="program" sha1="df7c5af61dc46797e6fdf3d751f84865895f4fb6" />
 	<File name="LaunchServer.lua" part="program" sha1="f15bdfbedaf887e19556490dce49b720f8365379" />
 	<File name="Modules/AddImplicitPopup.lua" part="program" sha1="f68d391d10b95c0feef70b7e8e82326a745dcb3b" />
 	<File name="Modules/Build.lua" part="program" sha1="561ec3e79257b3a18d735ef6ff8b1b3f0cb78966" />
@@ -407,7 +407,7 @@
 	<File name="Modules/DataLegionLookUpTableHelper.lua" part="program" sha1="40ed81537142296d67827de9f25930f2daac8ccf" />
 	<File name="Modules/ItemSlotHelper.lua" part="program" sha1="4b7d441f9ade5d57c413aa1f8f8067b654cfb927" />
 	<File name="Modules/ItemTools.lua" part="program" sha1="754bbbed69c10706aa403446433c3741e21c4556" />
-	<File name="Modules/Main.lua" part="program" sha1="ded64c6fe8e5653979824497da4c784501cdf92a" />
+	<File name="Modules/Main.lua" part="program" sha1="82f7ff06f0daedcdfcb9557879ac006ec7fc94af" />
 	<File name="Modules/ModParser.lua" part="program" sha1="c9ca999857afba47d1c1b264b1808c3cadc370a2" />
 	<File name="Modules/ModTools.lua" part="program" sha1="c987491da4021b5bdc4744b5eec84fb5995284cf" />
 	<File name="Modules/PantheonTools.lua" part="program" sha1="ebe91a7d8f8444a6061acf4758da0e775cc8c314" />
