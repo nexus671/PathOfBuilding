@@ -88,8 +88,62 @@ describe("Finite combat windows", function()
 		build.configTab.input.customMods = "+100 to maximum Life\n+60% to Cold Resistance\n"..mods
 		build.configTab:BuildModList()
 		runCallback("OnFrame")
+		assert(not __mainObject__.promptMsg, __mainObject__.promptMsg)
 		return build.calcsTab.calcsOutput
 	end
+
+	it("uses reproducible randomness and entropy rather than independent evade rolls", function()
+		local a, b = time.random(12345), time.random(12345)
+		for i = 1, 20 do assert.are.equal(a(), b()) end
+		local evades = time.evasion(function() return 0.25 end)
+		assert.are.equal(false, evades(50, 0))
+		assert.are.equal(true, evades(50, 1))
+		assert.are.equal(false, evades(50, 2))
+		assert.are.equal(true, evades(50, 3))
+	end)
+
+	it("resets entropy after an attack-free gap", function()
+		local calls = 0
+		local evade = time.evasion(function() calls = calls + 1; return 0.25 end)
+		evade(50, 0); evade(50, 1); evade(50, 5)
+		assert.are.equal(2, calls)
+	end)
+
+	it("consumes finite shrouds and regenerates them on their two-second cadence", function()
+		local shrouds = time.shrouds(3)
+		assert.are.equal(true, shrouds(0, true))
+		assert.are.equal(false, shrouds(0.1, false)) -- blocked/evaded hit
+		assert.are.equal(true, shrouds(0.2, true))
+		assert.are.equal(true, shrouds(0.3, true))
+		assert.are.equal(false, shrouds(1.99, true))
+		assert.are.equal(true, shrouds(2, true))
+		assert.are.equal(false, shrouds(2.1, true))
+	end)
+
+	it("permits full or partial recharge only in actual damage-free gaps", function()
+		for _, window in ipairs({ 2.5, 4 }) do
+			local result = simulate({ interval = 1, window = window, step = math.huge, recharge = 50, rechargeDelay = 2,
+				pools = { Life = 100, Mana = 0, EnergyShield = 100 }, caps = { Life = 100, Mana = 0, EnergyShield = 100 },
+				hit = function(p, t) if t == 0 then p.EnergyShield = 0; return p, {}, true end; return p end })
+			assert.are.near(window == 2.5 and 25 or 100, result.pools.EnergyShield, 1e-8)
+		end
+	end)
+
+	it("releases Dissolution reservation after a gap but resets its timer on damage", function()
+		for _, interval in ipairs({ 1.9, 2.1 }) do
+			local result = simulate({ dissolution = true, interval = interval, step = math.huge,
+				hit = function(p) p.Life = p.Life - 60; return p end })
+			assert.are.equal(interval > 2, result.survived)
+		end
+	end)
+
+	it("reports bounded trial percentiles and survival frequency", function()
+		local result = time.summarise({{time=1,survived=false},{time=4,survived=false},{time=10,survived=true}})
+		assert.are.equal(4, result.time)
+		assert.are.equal(1, result.low)
+		assert.are.equal(10, result.high)
+		assert.are.near(100 / 3, result.chance, 1e-8)
+	end)
 
 	it("includes regeneration without changing burst EHP", function()
 		local before = calculate("")
@@ -137,5 +191,80 @@ describe("Finite combat windows", function()
 		assert.is_true(out.RecoverySimulationTime > 0)
 		assert.is_true(out.RecoverySimulationTime < 4)
 		assert.are.equal(false, out.RecoverySimulationSurvived)
+	end)
+
+	it("consumes actual Ghost Dance charges without changing burst EHP", function()
+		local out = calculate("Ghost Dance\n+2000 to Evasion Rating\n+500 to maximum Energy Shield\n100% less Energy Shield Recharge Rate")
+		assert.is_true(out.RecoverySimulationShroudsUsed > 0)
+		assert.is_true(out.RecoverySimulationShroudRecovery > 0)
+		local ehp = out.TotalEHP
+		build.configTab.input.simulateRecovery = false
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.are.near(ehp, build.calcsTab.calcsOutput.TotalEHP, 1e-8)
+	end)
+
+	it("adds native physical-prevention regeneration over its recent duration", function()
+		build.configTab.input.enemyDamageType = "Melee"
+		local mods = "+500 to maximum Energy Shield\n100% less Energy Shield Recharge Rate\n+2000 to Armour\nDivine Shield"
+		calculate(mods)
+		build.configTab.input.recoverySimulationWindow = 60
+		build.configTab.input.enemyColdDamage = "0"
+		build.configTab.input.enemyPhysicalDamage = "100"
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		local withShield = build.calcsTab.calcsOutput.RecoverySimulationTime
+		build.configTab.input.customMods = "+100 to maximum Life\n"..mods:gsub("Divine Shield", "")
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.is_true(withShield > build.calcsTab.calcsOutput.RecoverySimulationTime)
+	end)
+
+	it("models basic Dissolution without letting regeneration clear reservation", function()
+		local mods = "Life that would be lost by taking Damage is instead Reserved\nRemoves all Energy Shield"
+		local before = calculate(mods).RecoverySimulationTime
+		local after = calculate(mods.."\nRegenerate 10000 Life per second")
+		assert.are.near(before, after.RecoverySimulationTime, 1e-8)
+		build.configTab.input.enemySpeed = 2100
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.are.equal(true, build.calcsTab.calcsOutput.RecoverySimulationSurvived)
+	end)
+
+	it("does not apply guaranteed spell suppression twice", function()
+		calculate("+10000 to maximum Life\n+100% chance to Suppress Spell Damage")
+		build.configTab.input.enemyDamageType = "Spell"
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		local o = build.calcsTab.calcsOutput
+		local expected = math.ceil(o.LifeRecoverable / o.ColdTakenHit) - 1
+		build.configTab.input.recoverySimulationWindow = 300
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		o = build.calcsTab.calcsOutput
+		assert.are.near(expected, o.RecoverySimulationTime, 1e-8)
+	end)
+
+	it("does not consume Ghost Shrouds on blocked hits", function()
+		local mods = "Ghost Dance\n+10000 to maximum Life\n+1000 to maximum Energy Shield\n+1000 to Evasion Rating"
+		local before = calculate(mods).RecoverySimulationShroudsUsed
+		local after = calculate(mods.."\n+75% chance to Block Attack Damage")
+		assert.is_true(after.RecoverySimulationShroudsUsed < before)
+	end)
+
+	it("rejects Dissolution with delayed Life loss rather than healing reservation", function()
+		build.skillsTab:PasteSocketGroup("Petrified Blood 20/0  1")
+		build.skillsTab:ProcessSocketGroup(build.skillsTab.socketGroupList[1])
+		local out = calculate("Life that would be lost by taking Damage is instead Reserved")
+		assert.are.equal(true, out.RecoverySimulationUnsupported)
+	end)
+
+	it("copies physical-prevention regeneration through Pious Path", function()
+		build.configTab.input.conditionOnConsecratedGround = true
+		local mods = "+300 to maximum Energy Shield\n+2000 to Armour\n100% less Energy Shield Recharge Rate\nLife recovery from regeneration is not applied\n3% of Physical Damage prevented from Hits in the past 4 seconds is Regenerated as Life per second"
+		calculate(mods)
+		build.configTab.input.enemyColdDamage = "0"
+		build.configTab.input.enemyPhysicalDamage = "100"
+		build.configTab.input.recoverySimulationWindow = 60
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		local before = build.calcsTab.calcsOutput.RecoverySimulationTime
+		build.configTab.input.customMods = "+100 to maximum Life\n"..mods.."\nConsecrated Ground you create causes Life Regeneration to also Recover Energy Shield for you and Allies"
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.is_true(build.calcsTab.calcsEnv.player.modDB:Flag(nil, "LifeRegenerationRecoversEnergyShield"))
+		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime > before)
 	end)
 end)
