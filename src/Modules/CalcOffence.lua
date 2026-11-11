@@ -6319,7 +6319,7 @@ function calcs.offence(env, actor, activeSkill)
 		end
 		if breakdown then
 			local assumptions = {
-				"Selected skill, continuous application from an initially unpoisoned target.",
+				"Selected skill, continuous application against a target with no existing poisons.",
 				"Uses configured damage, attack/cast rate, hit/poison chance and additional poisons.",
 				"Configured buffs/debuffs stay constant; no Wither or conditional-damage ramp is simulated.",
 				"Other skills, minions and poison damage after the window are not included.",
