@@ -1,4 +1,5 @@
 -- Native Atlas plans use pinned GGG data, independently of character passives.
+-- cspell:ignore jsontype
 local json = require("dkjson")
 local M = {versions={"3.27.0","3.29.1"},cache={}}
 local function integer(value,low,high,label)
