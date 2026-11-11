@@ -34,6 +34,84 @@ function M.shrouds(initial)
 	end
 end
 
+-- Barrier generation has a fixed phase from combat start, independent of hits.
+function M.crab(config, random)
+	local count, tick, lost = config.initial or config.maximum, 0, -math.huge
+	return function(t, physicalHit)
+		local now = math.floor(t * 2 + 1e-9)
+		for _ = tick + 1, now do
+			count = min(config.maximum, count + 1)
+			if (config.maximumChance or 0) > 0 and random() * 100 < config.maximumChance then count = config.maximum end
+		end
+		tick = now
+		if physicalHit and count > 0 and not (config.protect and t - lost < 4 - 1e-9) then
+			count, lost = max(0, count - (config.loss or config.maximum)), t
+		end
+		return count, (tick + 1) / 2
+	end
+end
+
+-- Simultaneous continuous damage. Empty pools can intercept damage with their
+-- current recovery; allocate that supply proportionally across damage types.
+function M.dotRates(pools, rates, damage, config)
+	local esDemand, manaDemand, life, flows = 0, 0, 0, { }
+	for kind, amount in pairs(damage) do
+		local bypass = min(1, max(0, (config.bypass[kind] or 0) / 100))
+		local mom = min(1, max(0, (config.mom[kind] or 0) / 100))
+		local es = amount * (1 - bypass) * (config.battery and mom or 1)
+		flows[#flows + 1] = { amount = amount, es = es, mom = mom }
+		esDemand = esDemand + es
+	end
+	local esTaken = pools.EnergyShield > 1e-8 and esDemand or min(esDemand, max(0, rates.EnergyShield or 0))
+	for _, flow in ipairs(flows) do
+		local es = esDemand > 0 and flow.es * esTaken / esDemand or 0
+		local mana = config.battery and flow.amount * flow.mom - es or (flow.amount - es) * flow.mom
+		manaDemand, life = manaDemand + mana, life + flow.amount - es - mana
+	end
+	local manaTaken = pools.Mana > 1e-8 and manaDemand or min(manaDemand, max(0, rates.Mana or 0))
+	life = life + manaDemand - manaTaken
+	return { Life = life, Mana = manaTaken, EnergyShield = esTaken }
+end
+
+-- Reactive recovery flasks use finite charges and a delayed threshold policy.
+-- Each resource ends independently at full unless the flask is enduring.
+function M.recoveryFlask(config)
+	local charges, last, pending, expires, uses = config.charges, 0, math.huge, -math.huge, 0
+	local effects = { }
+	return function(t, pools, full, trigger, profile)
+		charges = min(config.charges, charges + (t - last) * (config.generation or 0)); last = t
+		local active = false
+		for resource, effect in pairs(effects) do
+			if t >= (effect.expires or expires) - 1e-9 or not effect.enduring and pools[resource] >= full[resource] - 1e-8 then effects[resource] = nil
+			else active = true end
+		end
+		local wanted = config.auto or false
+		for resource in pairs(config.resources) do
+			if pools[resource] < trigger[resource] * config.threshold - 1e-8 then wanted = true end
+		end
+		if not wanted then pending = math.huge end
+		if not active and wanted and charges >= config.used and config.used > 0 then
+			if pending == math.huge then pending = t + config.reaction end
+			if t >= pending - 1e-9 then
+				charges, pending, uses = charges - config.used, math.huge, uses + 1
+				local duration
+				effects, duration = profile(pools)
+				expires = t + duration
+				for resource, effect in pairs(effects) do
+					effect.expires = t + (effect.duration or duration)
+					pools[resource] = min(full[resource], pools[resource] + (effect.instant or 0))
+					if (effect.rate or 0) <= 0 or not effect.enduring and pools[resource] >= full[resource] - 1e-8 then effects[resource] = nil end
+				end
+			end
+		end
+		local recovery = { }
+		active = false
+		local event = pending
+		for resource, effect in pairs(effects) do recovery[resource] = effect.rate; active = true; event = min(event, effect.expires) end
+		return active, recovery, event, uses
+	end
+end
+
 -- Individual leech instances retain their own expiry; the total rate is capped.
 -- Full is the unreserved pool, which can exceed a Petrified Blood recovery cap.
 function M.leech(profiles)
@@ -182,7 +260,10 @@ function M.survival(config)
 			reservationRelease = math.huge
 		end
 		local external = config.before and config.before(pools, t) or math.huge
+		if pools.Life <= 0 then return result(false, t) end
+		local occurred = false
 		if t >= nextHit - 1e-9 then
+			occurred = true
 			local oldES, oldLife = pools.EnergyShield, pools.Life
 			local added, interrupted
 			pools, added, interrupted = config.hit(pools, t)
@@ -198,6 +279,7 @@ function M.survival(config)
 			nextHit = nextHit + interval
 		end
 		if t >= nextAttack - 1e-9 then
+			occurred = true
 			local paid
 			pools, paid = config.attack(pools, t)
 			attempts, attacks = attempts + 1, attacks + (paid and 1 or 0)
@@ -205,6 +287,7 @@ function M.survival(config)
 			local attackInterval = type(config.attackInterval) == "function" and config.attackInterval(pools, t) or config.attackInterval
 			nextAttack = t + max(0.005, attackInterval)
 		end
+		if occurred and config.before then external = min(external, config.before(pools, t)) end
 		if t >= window then break end
 		local dt = min(config.step or 0.02, window - t, nextHit - t, nextAttack - t, reservationRelease - t, external - t)
 		local rates = { }
@@ -226,27 +309,72 @@ function M.survival(config)
 		local delay = type(config.rechargeDelay) == "function" and config.rechargeDelay(pools, t) or config.rechargeDelay or math.huge
 		local rechargeStart = lastRechargeDamage + delay
 		if not rechargeActive and t >= rechargeStart - 1e-9 then rechargeActive, rechargeBegan = true, t end
+		local rechargeAdded = 0
 		if rechargeActive then
 			local resource = config.rechargeResource or "EnergyShield"
 			local recharge = type(config.recharge) == "function" and config.recharge(pools, t) or config.recharge or 0
 			rates[resource] = rates[resource] + recharge
+			rechargeAdded = pools[resource] > config.caps[resource] + 1e-8 and 0 or recharge
 		elseif rechargeStart < t + dt then dt = rechargeStart - t end
+		if config.wickedWard and rechargeActive and t - rechargeBegan < 4 - 1e-9 then dt = min(dt, rechargeBegan + 4 - t) end
+		local flaskRates, flaskCaps = { }, config.caps
+		if config.flaskRecovery then flaskRates, flaskCaps = config.flaskRecovery(pools, t) end
+		for _, resource in ipairs(resources) do
+			if pools[resource] > config.caps[resource] + 1e-8 then rates[resource] = min(0, rates[resource]) end
+			rates[resource] = rates[resource] + (flaskRates[resource] or 0)
+		end
+		local reservationRate, dotInterrupted = 0, false
+		if config.dot then
+			local damage = config.dot(pools, rates, t)
+			local protected = config.protectedResource or "Life"
+			local protectedDamaged = damage[protected] > 0
+			if config.actualDissolution and protected == "Life" then protectedDamaged = protectedDamaged and config.reservationMax - (pools.LifeReservation or 0) <= pools.Life + 1e-8 end
+			if damage.EnergyShield > 0 or protectedDamaged then
+				if not (config.wickedWard and rechargeActive and t - rechargeBegan < 4 - 1e-9) then
+					if rechargeActive then
+						local resource = config.rechargeResource or "EnergyShield"
+						rates[resource] = rates[resource] - rechargeAdded
+						damage = config.dot(pools, rates, t)
+					end
+					dotInterrupted, rechargeActive = true, false
+				end
+			end
+			for _, resource in ipairs(resources) do
+				if resource == "Life" and config.actualDissolution then reservationRate = damage.Life
+				else rates[resource] = rates[resource] - damage[resource] end
+			end
+			if reservationRate > 0 then
+				dt = min(dt, max(0, config.reservationMax - (pools.LifeReservation or 0)) / reservationRate)
+				local gap = config.reservationMax - (pools.LifeReservation or 0) - pools.Life
+				if gap > 1e-8 and reservationRate + rates.Life > 0 then dt = min(dt, gap / (reservationRate + rates.Life)) end
+			end
+		end
 		-- Split when a pool reaches full so ordinary leech ends at the actual time.
 		for _, resource in ipairs(resources) do
+			if pools[resource] >= config.caps[resource] - 1e-8 then rates[resource] = min(rates[resource], max(0, flaskRates[resource] or 0)) end
 			if rates[resource] > 0 and pools[resource] < config.caps[resource] - 1e-9 then
 				dt = min(dt, (config.caps[resource] - pools[resource]) / rates[resource])
 			end
+			if rates[resource] < 0 and pools[resource] > 1e-8 then dt = min(dt, -pools[resource] / rates[resource]) end
+			if (flaskRates[resource] or 0) > 0 and rates[resource] > 0 and pools[resource] < flaskCaps[resource] - 1e-8 then dt = min(dt, (flaskCaps[resource] - pools[resource]) / rates[resource]) end
 		end
 		if rates.Life < 0 and pools.Life + rates.Life * dt <= 0 then
 			local death = t - pools.Life / rates.Life
 			pools.Life = 0
 			return result(false, death)
 		end
+		if dotInterrupted then lastRechargeDamage = t + dt end
+		if reservationRate > 0 then
+			pools.LifeReservation = (pools.LifeReservation or 0) + reservationRate * dt
+			reservationRelease = t + dt + 2
+		end
 		for _, resource in ipairs(resources) do
-			local cap = resource == "Life" and config.actualDissolution and min(config.caps.Life, config.reservationMax - (pools.LifeReservation or 0)) or config.caps[resource]
+			local recoveryCap = (flaskRates[resource] or 0) > 0 and flaskCaps[resource] or config.caps[resource]
+			local cap = resource == "Life" and config.actualDissolution and min(max(recoveryCap, pools.Life), config.reservationMax - (pools.LifeReservation or 0)) or recoveryCap
 			local value = max(0, pools[resource] + rates[resource] * dt)
 			pools[resource] = config.actualDissolution and resource == "Life" and min(cap, value) or min(max(cap, pools[resource]), value)
 		end
+		if pools.Life <= 1e-8 then pools.Life = 0; return result(false, t + dt) end
 		if dt <= 0 then error("Recovery timeline failed to advance") end
 		t = min(window, t + dt)
 	end

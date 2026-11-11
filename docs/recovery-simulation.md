@@ -31,6 +31,28 @@ decays from its configured initial effect; Nightblade can reapply it on outgoing
 critical hits after it expires. Other sources of Elusive generation and changes
 to damage/critical modifiers while Elusive are not simulated.
 
+Recovery flasks that end at full trigger below **Recovery flask trigger (%)** of
+the recoverable pool (default 50%), with **Recovery flask reaction (ms)** (default
+100ms). Threshold observation is at most 50ms apart. A lethal hit cannot be rescued.
+Instant recovery and conditional instant recovery on low life are evaluated on use;
+gradual recovery ends at full unless enduring. Life flasks may heal above Petrified
+Blood's non-flask cap, to full unreserved life. Ordinary recovery does not erase
+that extra life or continue healing above its own cap. Charges start full and only
+known passive generation is included. **Include equipped recovery flasks** also
+makes unchecked life/mana flasks available, without editing their item checkboxes.
+Selected enduring flasks retain the start-at-zero/reuse-at-expiry policy.
+
+The five **Continuous [type] damage/s** inputs add raw continuous damage before
+native damage taken as and mitigation, alongside incoming hits. Existing build
+degeneration is included. The enemy **Damage over Time** category also supports
+DoT-only trials, using its existing damage inputs. These are continuously active
+scenario sources; expected enemy bleed/ignite/poison from hits are not silently
+treated as permanent ailments. Damage follows current ES/bypass, Eldritch Battery
+and typed/shared Mind over Matter, including pool depletion and regeneration at an
+empty pool. It interrupts ordinary recharge and continuously reserves Dissolution
+life; it does not trigger recoup, Ghost Dance, Crab losses or other on-hit effects.
+Intrinsic resource loss such as Mana Burn remains resource loss, not damage.
+
 | Mechanic | Treatment |
 | --- | --- |
 | Regeneration, configured resource loss | Native rates between events with recovery caps. |
@@ -47,6 +69,8 @@ to damage/critical modifiers while Elusive are not simulated.
 | Ward | Ordinary timed restoration after a break. Partial chance not to break is explicitly unsupported. |
 | Aegis | Native skill recharge delays, separate pool timers; depleted pools can refill. |
 | Guard | Native duration, early depletion and cooldown. Optional **Recast guard when ready** pays native costs. This is a manual-use policy, not trigger-threshold simulation. Vaal guards are not automatically reused. |
+| Crab Barriers | Start at the configured count, gain one every 0.5s with a fixed phase from combat start, lose stacks on physical hit damage. Craiceann's Tracks/Chitin/Pincers loss limits, four-second protection and gain-to-maximum chance are parsed and simulated. Native reduction and threshold block bonuses are recalculated for each state. |
+| Recovery flasks | Finite charges, activation/reaction policy, dynamic low-life instant recovery, gradual recovery, full-pool termination, enduring recovery and PB's flask exception. Mean total flask uses and Crab Barriers lost are shown in Calcs. |
 | Allied protection | Configured initial pools; no resummoning schedule. |
 
 ## Explicit limits
@@ -55,10 +79,12 @@ to damage/critical modifiers while Elusive are not simulated.
   buff changes, and is unsupported. Upstream reports [#10193](https://github.com/PathOfBuildingCommunity/PathOfBuilding/issues/10193)
   and [#10258](https://github.com/PathOfBuildingCommunity/PathOfBuilding/issues/10258)
   are not claimed fixed.
-- Dynamic damage-over-time routing through ES/Dissolution is unsupported. Known
-  continuous degen on the protected resource disables ordinary recharge.
-- Instant recovery flasks and recovery flasks that end at full need activation,
-  termination and recovery-cap policies and are explicitly unsupported when selected.
+- Flasks with additional recovery on effect end (such as Blood of the Karui)
+  are explicitly unsupported. Charge-on-hit/critical/kill generation, random
+  non-consumption, flask queues and special Ward/flask interactions are not simulated.
+- Other conditional damage-taken modifiers remain configured, including Lethe
+  Shade and conditional Ward DoT reduction. Enemy ailment application/expiry is
+  not simulated; use explicit continuous inputs to test sustained damage.
 - Immortal Ambition's conditional leech redirection and enemy impale stacks are
   explicitly unsupported.
 - Other configured conditional buffs remain fixed, including recently-hit effects,
@@ -69,9 +95,9 @@ to damage/critical modifiers while Elusive are not simulated.
 
 ## Next improvements
 
-1. Life-aura cancellation and dynamic degen routing for Dissolution.
-2. Instant/ending recovery flasks, charge-on-hit/critical generation and explicit
-   activation policies; special Ward/flask interactions.
+1. Life-aura cancellation for Dissolution and enemy ailment application/expiry.
+2. Flask charge-on-hit/critical generation, effect-end recovery, queues and special
+   Ward/flask interactions.
 3. Conditional leech transformations and dynamic damage/critical modifiers.
 4. Multiple attackers, variable hit sizes, changing recently-hit/full-ES conditions,
    and resummoning/recasting other protective skills.
@@ -87,4 +113,8 @@ to damage/critical modifiers while Elusive are not simulated.
 - [Wicked Ward](https://poedb.tw/us/Wicked_Ward)
 - [Molten Shell](https://poedb.tw/us/Molten_Shell)
 - [Primal Aegis](https://poedb.tw/us/Primal_Aegis)
+- [Aspect of the Crab](https://poedb.tw/us/Aspect_of_the_Crab)
+- [Craiceann's Tracks](https://poedb.tw/us/Craiceanns_Tracks)
+- [Craiceann's Chitin](https://poedb.tw/us/Craiceanns_Chitin)
+- [Craiceann's Pincers](https://poedb.tw/us/Craiceanns_Pincers)
 - [GGG: prevented physical damage](https://old.reddit.com/r/pathofexile/comments/qd4crg/finally_i_can_now_take_105_of_damage_from_blocked/hhktpsc/)

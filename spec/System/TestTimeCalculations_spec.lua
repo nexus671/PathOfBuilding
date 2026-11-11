@@ -400,6 +400,162 @@ describe("Finite combat windows", function()
 		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime > before)
 	end)
 
+	it("tracks Crab Barrier ticks, partial losses and recent-loss protection", function()
+		local crab = time.crab({ maximum=12, initial=12, loss=5, protect=true }, function() return 1 end)
+		assert.are.equal(7, crab(0, true))
+		assert.are.equal(8, crab(0.5, true))
+		assert.are.equal(12, crab(3.99, true))
+		assert.are.equal(7, crab(4, true))
+		local all = time.crab({ maximum=10 }, function() return 1 end)
+		assert.are.equal(0, all(0, true))
+		assert.are.equal(0, all(0.49, false))
+		assert.are.equal(1, all(0.5, false))
+		local gain = time.crab({ maximum=10, initial=0, maximumChance=100 }, function() return 0 end)
+		assert.are.equal(10, gain(0.5, false))
+	end)
+
+	it("routes simultaneous DoTs through ES, bypass and empty-pool recovery", function()
+		local cfg = { bypass={ Fire=0, Chaos=100 }, mom={ Fire=50, Chaos=50 } }
+		local p = { Life=100, Mana=100, EnergyShield=100 }
+		local r = time.dotRates(p, {}, { Fire=100, Chaos=100 }, cfg)
+		assert.are.equal(100, r.EnergyShield); assert.are.equal(50, r.Mana); assert.are.equal(50, r.Life)
+		p.EnergyShield, p.Mana = 0, 0
+		r = time.dotRates(p, { EnergyShield=20, Mana=30 }, { Fire=100, Chaos=100 }, cfg)
+		assert.are.equal(20, r.EnergyShield); assert.are.equal(30, r.Mana); assert.are.equal(150, r.Life)
+		cfg.battery = true; p.EnergyShield, p.Mana = 100, 100
+		r = time.dotRates(p, {}, { Fire=100, Chaos=100 }, cfg)
+		assert.are.equal(50, r.EnergyShield); assert.are.equal(50, r.Mana); assert.are.equal(100, r.Life)
+	end)
+
+	it("recalculates native mitigation when Crab Barriers are lost", function()
+		build.configTab.input.recoverySimulationTrials=1
+		calculate("+1000 to maximum Life\n+10 to Maximum number of Crab Barriers\n2% additional Physical Damage Reduction per Crab Barrier\nYou only lose 5 Crab Barriers when you take Physical Damage from a Hit\nCannot lose Crab Barriers if you have lost Crab Barriers Recently\n10% chance that if you would gain a Crab Barrier, you instead gain up to your maximum number of Crab Barriers")
+		build.configTab.input.enemyColdDamage="0"; build.configTab.input.enemyPhysicalDamage="300"
+		build.configTab.input.recoverySimulationWindow=30
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
+		local o=build.calcsTab.calcsOutput
+		assert.are.equal(10,o.CrabBarriers)
+		assert.is_true(o.RecoverySimulationCrabLost > 0)
+		local mods=build.calcsTab.calcsEnv.player.modDB
+		assert.are.equal(5,mods:Override(nil,"CrabBarriersLost"))
+		assert.is_true(mods:Flag(nil,"CrabBarriersProtectedRecently"))
+		assert.are.equal(10,mods:Sum("BASE",nil,"CrabBarriersGainMaximumChance"))
+		local timed=o.RecoverySimulationTime
+		build.configTab.input.recoverySimulationTimedEffects=false
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime >= timed)
+	end)
+
+	it("splits DoT routing exactly at ES depletion and prevents recharge", function()
+		for _,step in ipairs({ math.huge, 0.013 }) do
+			local r = simulate({ step=step, window=10, interval=100, pools={ Life=100, Mana=0, EnergyShield=50 },
+				caps={ Life=100, Mana=0, EnergyShield=50 }, recharge=100, rechargeDelay=1, hit=function(p) return p end,
+				dot=function(p,rates) return time.dotRates(p,rates,{ Fire=25 },{ bypass={}, mom={} }) end })
+			assert.are.equal(false, r.survived)
+			assert.are.near(6, r.time, 1e-7)
+		end
+	end)
+
+	it("lets empty ES regeneration absorb part of continuous damage without oscillation", function()
+		local r = simulate({ step=math.huge, interval=100, pools={ Life=100, Mana=0, EnergyShield=0 },
+			caps={ Life=100, Mana=0, EnergyShield=50 }, rates={ EnergyShield=10 }, hit=function(p) return p end,
+			dot=function(p,rates) return time.dotRates(p,rates,{ Fire=30 },{ bypass={}, mom={} }) end })
+		assert.are.near(5, r.time, 1e-7)
+		assert.are.near(0, r.pools.EnergyShield, 1e-7)
+	end)
+
+	it("reserves continuous damage with Dissolution without using hit prevention", function()
+		local r = simulate({ step=math.huge, interval=100, actualDissolution=true, dissolution=true, reservationMax=100,
+			rates={ Life=1000 }, hit=function(p) return p end,
+			dot=function() return { Life=25, Mana=0, EnergyShield=0 } end })
+		assert.are.equal(false, r.survived)
+		assert.are.near(4, r.time, 1e-7)
+		assert.are.near(100, r.pools.LifeReservation, 1e-7)
+	end)
+
+	it("keeps Eternal Youth running until DoT reservation clamps actual life", function()
+		local r=simulate({ window=2, step=math.huge, interval=100, actualDissolution=true, dissolution=true, reservationMax=100,
+			pools={Life=10,Mana=0,EnergyShield=0}, recharge=10,rechargeDelay=0,rechargeResource="Life",hit=function(p) return p end,
+			dot=function() return { Life=25,Mana=0,EnergyShield=0 } end })
+		assert.are.near(30,r.pools.Life,1e-7)
+		assert.are.near(50,r.pools.LifeReservation,1e-7)
+	end)
+
+	it("protects active Wicked Ward recharge from continuous damage for four seconds", function()
+		local r=simulate({ window=5,step=math.huge,interval=100,wickedWard=true,recharge=50,rechargeDelay=0,
+			pools={Life=100,Mana=0,EnergyShield=0},caps={Life=100,Mana=0,EnergyShield=100},hit=function(p) return p end,
+			dot=function(p,rates) return time.dotRates(p,rates,{Fire=25},{bypass={},mom={}}) end })
+		assert.are.near(75,r.pools.EnergyShield,1e-7)
+		assert.are.equal(100,r.pools.Life)
+	end)
+
+	it("reacts with finite instant-flask charges and cancels an unneeded pending use", function()
+		local flask = time.recoveryFlask({ charges=20, used=10, resources={Life=true}, threshold=0.5, reaction=0.1 })
+		local p, full = {Life=20}, {Life=100}
+		local function profile() return { Life={ instant=60, rate=0 } }, 2 end
+		local _,_,event,uses = flask(0,p,full,full,profile)
+		assert.are.near(0.1,event,1e-8); assert.are.equal(0,uses)
+		flask(0.1,p,full,full,profile); assert.are.equal(80,p.Life)
+		p.Life=20; flask(1,p,full,full,profile); p.Life=80
+		flask(1.1,p,full,full,profile)
+		p.Life=20; flask(2,p,full,full,profile); flask(2.1,p,full,full,profile)
+		assert.are.equal(80,p.Life)
+		p.Life=20; flask(3,p,full,full,profile); flask(4,p,full,full,profile)
+		assert.are.equal(20,p.Life)
+	end)
+
+	it("ends gradual flasks at full and retains enduring recovery", function()
+		for _,enduring in ipairs({false,true}) do
+			local flask = time.recoveryFlask({ charges=10, used=10, resources={Life=true}, threshold=1, reaction=0 })
+			local p, full = {Life=20}, {Life=100}
+			local function profile() return { Life={ rate=20, enduring=enduring } }, 5 end
+			local active = flask(0,p,full,full,profile); assert.are.equal(true,active)
+			p.Life=100; active = flask(1,p,full,full,profile); assert.are.equal(enduring,active)
+		end
+	end)
+
+	it("allows flask recovery above PB's cap without raising the non-flask cap", function()
+		local r = simulate({ window=2, interval=100, pools={Life=40,Mana=0,EnergyShield=0}, caps={Life=50,Mana=0,EnergyShield=0},
+			rates={Life=1000}, hit=function(p) return p end,
+			flaskRecovery=function() return {Life=10},{Life=100,Mana=0,EnergyShield=0} end })
+		-- Reach 50 using both sources; only the flask may heal above 50.
+		assert.are.near(50 + 10 * (2 - 10 / 1010),r.pools.Life,1e-7)
+	end)
+
+	it("accepts native DoT-only and mixed DoT scenarios without changing burst EHP", function()
+		local o = calculate("+1000 to maximum Life\n+200 to maximum Energy Shield")
+		local ehp, before = o.TotalEHP, o.RecoverySimulationTime
+		build.configTab.input.recoverySimulationChaosDot=1000
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
+		o=build.calcsTab.calcsOutput
+		assert.are.near(ehp,o.TotalEHP,1e-8)
+		assert.is_true(o.RecoverySimulationTime < before)
+		build.configTab.input.enemyDamageType="DamageOverTime"
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
+		assert.is_true(not build.calcsTab.calcsOutput.RecoverySimulationUnsupported)
+	end)
+
+	it("activates a native instant recovery flask without editing its checkbox", function()
+		local item=new("Item"):Item("Rarity: Magic\nSeething Divine Life Flask\nDivine Life Flask\n66% reduced Amount Recovered\nInstant Recovery")
+		build.itemsTab:AddItem(item); build.itemsTab.slots["Flask 1"].selItemId=item.id
+		build.itemsTab.slots["Flask 1"].active=false
+		build.configTab.input.recoverySimulationTrials=1
+		local o=calculate("+1000 to maximum Life\nCannot Regenerate Life")
+		build.configTab.input.recoverySimulationWindow=60
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		o=build.calcsTab.calcsOutput
+		local before=o.RecoverySimulationTime
+		build.configTab.input.recoverySimulationEquippedFlasks=true
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
+		assert.is_true(not build.calcsTab.calcsOutput.RecoverySimulationUnsupported)
+		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime > before)
+		assert.are.equal(false,build.itemsTab.slots["Flask 1"].active)
+	end)
+
 	it("copies physical-prevention regeneration through Pious Path", function()
 		build.configTab.input.conditionOnConsecratedGround = true
 		local mods = "+300 to maximum Energy Shield\n+2000 to Armour\n100% less Energy Shield Recharge Rate\nLife recovery from regeneration is not applied\n3% of Physical Damage prevented from Hits in the past 4 seconds is Regenerated as Life per second"
