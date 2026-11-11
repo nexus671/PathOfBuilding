@@ -3956,6 +3956,7 @@ function calcs.recoveryOverTime(env, actor)
 	elseif mods:Flag(nil, "DamageInsteadReservesLife") then unsupported = "Dissolution of the Flesh's reservation/release cycle is not supported."
 	elseif (o.Ward or 0) > 0 then unsupported = "Timed Ward restoration is not supported."
 	elseif o.EnergyShieldRechargeAppliesToLife then unsupported = "Energy Shield recharge applied to Life is not supported."
+	elseif o.NetEnergyShieldRegen and o.NetEnergyShieldRegen < (o.EnergyShieldRegenRecovery or 0) then unsupported = "Damage over time affecting Energy Shield requires dynamic routing/recharge interruption, which is not supported."
 	elseif not o.enemySkillTime or o.enemySkillTime < 0.02 then unsupported = "Set an enemy attack/cast time of at least 20ms." end
 	if unsupported then
 		o.RecoverySimulationUnsupported = true
