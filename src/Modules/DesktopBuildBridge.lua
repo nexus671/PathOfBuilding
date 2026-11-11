@@ -169,7 +169,7 @@ function M.prepare(build, proposal)
 	local title = text(proposal.title,120,"proposal title")
 	assert(title:match("%S") and not title:find("[%c]"),"Title must be a nonempty single line")
 	local source = proposal.mode == "edit" and serialize(build) or nil
-	local candidate = sandbox(function(proxy)
+	local computed = sandbox(function(proxy)
 		local candidate = LoadModule("Modules/Build")
 		proxy.modes.BUILD = candidate
 		candidate:Init(nil,proposal.mode == "new" and title or build.buildName,source)
@@ -187,13 +187,14 @@ function M.prepare(build, proposal)
 		if candidate.characterLevel ~= calculatedLevel then candidate.calcsTab:BuildOutput(); candidate:RefreshStatList() end
 		candidate.controls.characterLevel:SetText(tostring(candidate.characterLevel))
 		candidate.buildFlag = false
-		return candidate
+		return {candidate=candidate,cache=GlobalCache}
 	end)
+	local candidate = computed.candidate
 	local after = stats(candidate)
 	local before = stats(build)
 	local delta = { }
 	for key,value in pairs(after) do if before[key] then delta[key] = value-before[key] end end
-	return {candidate=candidate,baseRevision=proposal.baseRevision,mode=proposal.mode,title=title,operations=proposal.operations,before=before,after=after,delta=delta,base=build,warnings=copyTable(candidate.controls.warnings.lines)}
+	return {candidate=candidate,cache=computed.cache,baseRevision=proposal.baseRevision,mode=proposal.mode,title=title,operations=proposal.operations,before=before,after=after,delta=delta,base=build,warnings=copyTable(candidate.controls.warnings.lines)}
 end
 
 function M.apply(prepared)
@@ -201,6 +202,7 @@ function M.apply(prepared)
 	local candidate = prepared.candidate
 	if prepared.mode == "edit" then candidate.dbFileName,candidate.dbFileSubPath = prepared.base.dbFileName,prepared.base.dbFileSubPath end
 	candidate.modFlag,candidate.unsaved = true,true
+	M.previousCache,GlobalCache = GlobalCache,prepared.cache
 	main.modes.BUILD = candidate
 	candidate.spec:SetWindowTitleWithBuildClass()
 	M.previous,M.build = prepared.base,candidate
@@ -323,6 +325,8 @@ function M.restore()
 	assert(M.previous and main.modes.BUILD == M.build,"No original build available")
 	assert(M.revision(M.build) == M.appliedRevision,"The proposed build has been edited. Save your work before switching builds.")
 	local original = M.previous
+	GlobalCache = M.previousCache
+	M.previousCache = nil
 	main.modes.BUILD = original
 	original.spec:SetWindowTitleWithBuildClass()
 	M.previous,M.build = nil,original

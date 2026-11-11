@@ -1,10 +1,11 @@
 describe("Desktop build proposals", function()
 	local bridge = require("Modules.DesktopBuildBridge")
 	local json = require("dkjson")
-	local original, files, open, remove
-	before_each(function() newBuild(); original=build end)
+	local original, originalCache, files, open, remove
+	before_each(function() newBuild(); original=build; originalCache=GlobalCache end)
 	after_each(function()
 		main.modes.BUILD=original; bridge.enabled=false; bridge.prepared=nil; bridge.previous=nil; bridge.build=nil
+		GlobalCache=originalCache; bridge.previousCache=nil
 		if open then io.open,os.remove=open,remove; open,remove=nil,nil end
 	end)
 	local function fakeFiles()
@@ -68,6 +69,7 @@ describe("Desktop build proposals", function()
 		local candidate = bridge.apply(prepared)
 		assert.are.equal(candidate,main.modes.BUILD)
 		assert.are.equal(original,bridge.previous)
+		assert.are.equal(prepared.cache,GlobalCache)
 		assert.is_true(candidate.unsaved)
 		assert.is_true(candidate.modFlag)
 	end)
@@ -117,6 +119,7 @@ describe("Desktop build proposals", function()
 		candidate.characterLevel=90
 		assert.are.equal(original,bridge.restore())
 		assert.are.equal(original,main.modes.BUILD)
+		assert.are.equal(originalCache,GlobalCache)
 	end)
 
 	it("keeps review navigation out of build revisions and renders the native review", function()
