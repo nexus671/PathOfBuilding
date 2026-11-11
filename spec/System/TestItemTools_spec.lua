@@ -52,6 +52,13 @@ describe("TestItemTools", function()
 		end)
 	end
 
+	it("supports independent range arrays in the scalability fallback", function()
+		local line = "(10-20) custom values and (30-40) other values"
+		assert.are.equals("10 custom values and 40 other values", itemLib.applyRange(line, { 0, 1 }, 1))
+		assert.are.equals("13 custom values and 38 other values", itemLib.applyRange(line, { 0.25, 0.75 }, 1))
+		assert.are.equals("20 custom values and 35 other values", itemLib.applyRange(line, { 1 }, 1))
+	end)
+
 	it("detects scalability after resolving ranges", function()
 		assert.is_true(itemLib.isModLineScalable("+(10-20) to maximum Life", 1, 1))
 		assert.is_false(itemLib.isModLineScalable("Your Maximum Resistances are (76-80)%", 1, 1))

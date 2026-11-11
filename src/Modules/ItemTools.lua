@@ -371,12 +371,15 @@ function itemLib.applyRange(line, range, valueScalar, baseValueScalar)
 	else -- fallback to old method for determining scalability
 		-- ConPrintf("Couldn't find scalability data falling back to old implementation: %s", strippedLine)
 		local precisionSame = true
+		local precisionIndex = 0
 		-- Create a line with ranges removed to check if the mod is a high precision mod.
 		local testLine = not line:find("-", 1, true) and line or
 			line:gsub("(%+?)%((%-?%d+%.?%d*)%-(%-?%d+%.?%d*)%)",
 				function(plus, min, max)
+					precisionIndex = precisionIndex + 1
+					local valueRange = ranges and (ranges[precisionIndex] or 0.5) or range
 					min = tonumber(min)
-					local maxPrecision = min + range * (tonumber(max) - min)
+					local maxPrecision = min + valueRange * (tonumber(max) - min)
 					local minPrecision = m_floor(maxPrecision + 0.5)
 					if minPrecision ~= maxPrecision then
 						precisionSame = false
@@ -409,8 +412,9 @@ function itemLib.applyRange(line, range, valueScalar, baseValueScalar)
 		line = line:gsub("(%+?)%((%-?%d+%.?%d*)%-(%-?%d+%.?%d*)%)",
 				function(plus, min, max)
 					numbers = numbers + 1
+					local valueRange = ranges and (ranges[numbers] or 0.5) or range
 					local power = 10 ^ (precision or 0)
-					local numVal = m_floor((tonumber(min) + range * (tonumber(max) - tonumber(min))) * power + 0.5) /
+					local numVal = m_floor((tonumber(min) + valueRange * (tonumber(max) - tonumber(min))) * power + 0.5) /
 						power
 					return (numVal < 0 and "" or plus) .. tostring(numVal)
 				end)

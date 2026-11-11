@@ -4,6 +4,8 @@ Open **AI builds -> Crafting projects**, or choose **Items -> Crafting plan**. C
 
 The pages separate **Emulate item**, **Target conditions**, and **Simulate recipe**. Crafting runs locally. Equipped gear changes only through the desktop preview and review flow.
 
+Plain item copies can be imported when their complete modifier identities and rolls resolve uniquely. Advanced copy text helps preserve identities. Missing item levels, overlapping modifier tiers and values the engine cannot reconstruct require an explicit choice; the importer does not guess. For a structured starting state through MCP, use the corresponding blank base as the starting text.
+
 ## Emulate an item
 
 Choose an action and its options, then **Apply currency**. **Configure fossil combination / donor item** accepts up to four fossils or a second item for Awakener and recombination. A Tangled Fossil requires the effect already revealed by the socketed resonator.

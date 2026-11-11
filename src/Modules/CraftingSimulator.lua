@@ -99,10 +99,12 @@ function M.model(raw)
 	assert(equipment[item.type] or item.type == "Jewel" or item.type == "Flask" or item.type == "Tincture" or data.weaponTypeInfo[item.type],"This engine currently supports ordinary equipment; this item type is unsupported")
 	if item.fractured then for _,info in ipairs(itemLib.influenceInfo.all) do assert(not item[info.key],"Fractured and influenced combinations are unsupported") end end
 	local model={raw=item.raw,item=item,byId={},mods={},bench={},essences={}}
+	local extraTags={}
+	if item.clusterJewel and item.clusterJewel.skills[item.clusterJewelSkill] then extraTags[item.clusterJewel.skills[item.clusterJewelSkill].tag]=true end
 	for id,mod in pairs(item.affixes or { }) do model.byId[id]=mod end
 	for id,mod in pairs((item.type == "Jewel" or item.type == "Flask" or item.type == "Tincture") and item.affixes or data.itemMods.Explicit) do
 		if (mod.type == "Prefix" or mod.type == "Suffix") and mod.level <= item.itemLevel and not mod.affix:find("Elevated",1,true) then
-			local weight=item:GetModSpawnWeight(mod)
+			local weight=item:GetModSpawnWeight(mod,extraTags)
 			if weight > 0 then model.mods[#model.mods+1]={id=id,mod=mod,weight=weight} end
 		end
 	end
@@ -125,18 +127,16 @@ function M.model(raw)
 			state.affixes[#state.affixes+1]={id=entry.modId,range=type(entry.range) == "table" and copyTable(entry.range) or entry.range,fractured=entry.fractured or false}
 		end
 	end end
-	-- Resolve bench lines by their native crafted flag and exact rendered values.
-	for _,line in ipairs(item.explicitModLines) do if line.crafted then
-		local matched
-		for _,entry in ipairs(model.bench) do if #entry.mod == 1 and itemLib.applyRange(entry.mod[1],line.range or 0.5) == itemLib.applyRange(line.line,line.range or 0.5) then matched=entry.id; break end end
-		assert(matched,"Import this bench modifier through the native engine; its exact modifier ID is unresolved")
-		state.affixes[#state.affixes+1]={id=matched,range=line.range or 0.5,crafted=true}
-	end end
+	local reconstructed=M.toItem(model,state)
+	if renderLines(reconstructed) ~= renderLines(item) then
+		state=require("Modules.CraftingImport").resolve(M,model,state)
+		reconstructed=M.toItem(model,state)
+	end
 	local c=counts(model,state)
 	for _,entry in ipairs(state.affixes) do if entry.fractured then for _,info in ipairs(itemLib.influenceInfo.all) do assert(not item[info.key],"Fractured and influenced combinations are unsupported") end end end
 	local caps=M.capacities(model,state)
 	assert(c.Prefix <= caps.Prefix and c.Suffix <= caps.Suffix,"Starting item exceeds affix limits")
-	assert(renderLines(M.toItem(model,state)) == renderLines(item),"Starting modifiers could not be resolved exactly. Use a blank base or advanced item text with recognized modifier IDs.")
+	assert(renderLines(reconstructed) == renderLines(item),"Starting modifiers could not be resolved exactly. Use a blank base or advanced item text with recognized modifier IDs.")
 	model.initial=state
 	return model
 end

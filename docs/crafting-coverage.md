@@ -6,6 +6,7 @@ The independent engine targets current PoE 1 using PoB modifiers and an immutabl
 | Area | Included | Limits |
 | --- | --- | --- |
 | Core | Ordinary currencies, bench IDs, multiple crafted modifiers, crafted-mod removal, essences, one/three-mod bench rerolls | Resolvable non-unique items. Essences/resonators reject meta modifiers. |
+| Import | Known native identities and uniquely resolvable plain copies, including multi-line flasks, tinctures and cluster tags | Explicit item level required. Ambiguous identities and values that cannot be reconstructed are rejected; no hidden tier or roll is guessed. |
 | Fossils | Combinations, tag weights, special added/forced mods, lucky rolls, fractures, corrupted implicits | Tangled needs a revealed outcome; Sanctified uses empirical level bias. |
 | Harvest | Tagged reforge, augment/remove, elemental resistance swaps | Supported current tags; arbitrary legacy crafts excluded. |
 | Influence | Six slams, Awakener, Dominance | Known native higher tiers and compatible bases. |

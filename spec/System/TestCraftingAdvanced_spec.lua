@@ -4,6 +4,21 @@ describe("Advanced native crafting", function()
 	local random=function() return 0.42 end
 	local function rare() return sim.perform(raw,{method="alchemy"},12).state end
 	local function tag(model,id,wanted) for _,value in ipairs(model.byId[id].modTags or {}) do if value == wanted then return true end end;return nil end
+	it("resolves plain tincture and multi-line flask values without losing their rolls", function()
+		local tincture="Rarity: MAGIC\nPersevering Prismatic Tincture of Mastery\nItem Level: 85\nQuality: 20\nImplicits: 1\n100% increased Elemental Damage with Melee Weapons\n26% reduced Mana Burn rate\n29% increased Melee Weapon Attack Speed"
+		local model=sim.model(tincture)
+		assert.are.equal(2,#model.initial.affixes)
+		local found={};for _,entry in ipairs(model.initial.affixes) do found[entry.id]=entry end
+		assert.is_truthy(found.TinctureToxicityRate4)
+		assert.is_truthy(found.TinctureIncreasedAttackSpeed3)
+		assert.is_truthy(sim.toItem(model,model.initial).raw:find("29%% increased Melee Weapon Attack Speed"))
+		local flask="Rarity: MAGIC\nPanicked Divine Life Flask of Assuaging\nItem Level: 81\nQuality: 20\nImplicits: 0\n11% reduced Amount Recovered\nInstant Recovery when on Low Life\nGrants Immunity to Bleeding for 17 seconds if used while Bleeding\nGrants Immunity to Corrupted Blood for 17 seconds if used while affected by Corrupted Blood"
+		local life=sim.model(flask)
+		assert.are.equal(2,#life.initial.affixes)
+		assert.are.equal(2,#sim.model(sim.toItem(life,life.initial).raw).initial.affixes)
+		local impossible=tincture:gsub("29%% increased Melee Weapon Attack Speed","999% increased Melee Weapon Attack Speed")
+		assert.are.equal(false,pcall(sim.model,impossible))
+	end)
 	it("offers independent Allflame outcomes and charges currency and Sulphur once", function()
 		local state=copyTable(sim.model(raw).initial);state.rarity="RARE";state.affixes={{id="IncreasedLife1",range=0.5}}
 		local craft={method="exalt",allflame={outcomes=4,gainMin=5,gainMax=5,sulphur=100}}
