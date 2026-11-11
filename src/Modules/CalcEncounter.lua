@@ -82,7 +82,17 @@ function M.poison(cap)
 		hitDamage = hitDamage + max(0, direct or 0)
 		for i,p in ipairs(profiles or { }) do
 			if p.duration > 0 and landedRate > 0 then
-				instances[#instances + 1] = { group=i, rate=p.slope / landedRate, expires=t + p.duration, limit=p.limit or math.huge }
+				local stacks = (p.applications or landedRate) / landedRate
+				local admitted = stacks
+				if p.stackLimit then
+					local active = 0
+					for _,instance in ipairs(instances) do if instance.expires > t + 1e-9 then active = active + instance.stacks end end
+					admitted = min(stacks, max(0, p.stackLimit - active))
+				end
+				if admitted > 0 then
+					instances[#instances + 1] = { group=i, rate=p.slope / landedRate * admitted / stacks,
+						expires=t + p.duration, limit=p.limit or math.huge, stacks=admitted }
+				end
 			end
 		end
 	end
@@ -101,6 +111,11 @@ function M.charges(config, random)
 		local gain = max(0,amount) * (config.gain or 1)
 		self.generated = self.generated + min(gain, config.charges - self.charges)
 		self.charges = min(config.charges, self.charges + gain)
+	end
+	function bank:update(t, generation, gain)
+		-- Accrue the elapsed interval using the previous projection's rates.
+		self:advance(t)
+		config.generation, config.gain = generation, gain
 	end
 	function bank:use(t)
 		self:advance(t)

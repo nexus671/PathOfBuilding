@@ -1795,7 +1795,9 @@ function ImportTabClass:ImportItem(itemData, slotName, ignoreWeaponSwap, itemSet
 	-- Add and equip the new item
 	-- The game API supplies displayed tincture values, already scaled by local
 	-- effect and quality. Keep that provenance when the raw item is saved.
-	if item.type == "Tincture" then item.tinctureValues = "Final" end
+	if item.type == "Tincture" then
+		item.tinctureValues, item.tinctureImportedQuality = "Final", item.quality or 0
+	end
 	item:BuildAndParseRaw()
 	--ConPrintf("%s", item.raw)
 	if item.base then

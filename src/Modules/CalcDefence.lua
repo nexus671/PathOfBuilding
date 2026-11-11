@@ -23,6 +23,8 @@ local s_format = string.format
 
 local tempTable1 = { }
 
+local function unchanged(value) return value end
+
 local isElemental = { Fire = true, Cold = true, Lightning = true }
 
 -- List of all damage types, ordered according to the conversion sequence
@@ -194,6 +196,10 @@ function calcs.reducePoolsByDamage(poolTable, damageTable, actor)
 	local output = actor.output
 	local modDB = actor.modDB
 	local poolTbl = poolTable or { }
+	-- Expected hits contain fractional damage and recovery. Rounding every
+	-- iteration compounds an error near the sustainable-recovery threshold.
+	local m_floor = poolTbl.PreserveFractions and unchanged or m_floor
+	local m_ceil = poolTbl.PreserveFractions and unchanged or m_ceil
 
 	local damageTotal = 0
 	for damageType, damage in pairs(damageTable) do
@@ -423,8 +429,12 @@ function calcs.reducePoolsByDamage(poolTable, damageTable, actor)
 	end
 	local hitPoolRemaining = (life >= 1 and calcLifeHitPoolWithLossPrevention(life, output.Life, output.preventedLifeLoss, lifeLossBelowHalfPrevented) or 0) +
 		(MoMPoolRemaining ~= m_huge and MoMPoolRemaining or 0) + (esPoolRemaining ~= m_huge and esPoolRemaining or 0)
+	-- Floating-point loss prevention can leave a tiny positive residue after a
+	-- fatal hit. Do not credit on-hit recovery to that residue.
+	if poolTbl.PreserveFractions and life < 1e-9 then life = 0 end
 
 	return {
+		PreserveFractions = poolTbl.PreserveFractions,
 		AlliesTakenBeforeYou = alliesTakenBeforeYou,
 		Aegis = aegis,
 		Guard = guard,
@@ -2692,6 +2702,7 @@ function calcs.buildDefenceEstimations(env, actor)
 		local alliesTakenBeforeYou = buildAllyLifePools(output)
 		
 		local poolTable = {
+			PreserveFractions = DamageIn.GainWhenHit,
 			AlliesTakenBeforeYou = alliesTakenBeforeYou,
 			Aegis = aegis,
 			Guard = guard,
@@ -4011,8 +4022,9 @@ function calcs.recoveryOverTime(env, actor)
 	local dotOnly = env.configInput.enemyDamageType == "DamageOverTime"
 	if not actor.recoverySimulationDamage and not dotOnly then unsupported = "Select a supported incoming damage category."
 	elseif actor.recoverySimulationImpale then unsupported = "Enemy impale stacks are not supported."
+	elseif env.configInput.recoverySimulationAttacking and (o.SelfHitDamage or 0) > 0 then unsupported = "Sustained attacking with skill self-damage is not supported."
 	elseif env.configInput.recoverySimulationAttacking and actor.mainSkill.skillModList:Flag(actor.mainSkill.skillCfg, "ImmortalAmbition") then unsupported = "Immortal Ambition's conditional leech redirection is not supported."
-	elseif mods:Sum("BASE", nil, "WardDoesNotBreakChance") > 0 and mods:Sum("BASE", nil, "WardDoesNotBreakChance") < 100 then unsupported = "Partial chance for Ward not to break requires separate outcome handling."
+	elseif mods:Sum("BASE", nil, "WardAvoidBreakChance") > 0 and mods:Sum("BASE", nil, "WardAvoidBreakChance") < 100 and not mods:Flag(nil, "Condition:WardNotBreak") then unsupported = "Partial chance for Ward not to break requires separate outcome handling."
 	elseif not dotOnly and (not o.enemySkillTime or o.enemySkillTime < 0.02) then unsupported = "Set an enemy attack/cast time of at least 20ms."
 	elseif dissolution and (o.LifeReserved or 0) > 0 then
 		unsupported = "Dissolution with cancellation of existing Life reservations is not supported."
@@ -4027,9 +4039,12 @@ function calcs.recoveryOverTime(env, actor)
 	local categoryConfig = env.configInput.enemyDamageType or "Average"
 	local caps = { Life = o.LifeRecoverable, Mana = o.ManaUnreserved or 0, EnergyShield = o.EnergyShieldRecoveryCap }
 	if mods.conditions.AffectedByPetrifiedBlood then caps.Life = m_min(caps.Life, o.Life * (o.LowLifePercentage or data.misc.LowPoolThreshold) / 100) end
-	local recoveryAllowed = { }
-	for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
-		recoveryAllowed[resource] = not mods:Flag(nil, "CannotGain"..resource) and not (resource == "Life" and mods:Flag(nil, "CannotRecoverLifeOutsideLeech"))
+	local function recoveryPermissions(currentMods)
+		local allowed = { }
+		for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
+			allowed[resource] = not currentMods:Flag(nil, "CannotGain"..resource) and not (resource == "Life" and currentMods:Flag(nil, "CannotRecoverLifeOutsideLeech"))
+		end
+		return allowed
 	end
 	local rates = { Life = o.LifeRegenRecovery or 0, Mana = o.ManaRegenRecovery or 0, EnergyShield = o.EnergyShieldRegenRecovery or 0 }
 	local attacking = env.configInput.recoverySimulationAttacking and (o.RecoveryAttackRate or 0) > 0
@@ -4094,7 +4109,7 @@ function calcs.recoveryOverTime(env, actor)
 				local previousCache = GlobalCache.cachedData.CALCULATOR
 				GlobalCache.cachedData.CALCULATOR = { }
 				local ok, projected = xpcall(function()
-					local projection = calcs.initEnv(env.build, "CALCULATOR", env.override)
+					local projection = calcs.initEnv(env.build, env.mode == "CALCS" and "CALCS" or "CALCULATOR", env.override)
 					projection.recoveryProjection = true
 					projection.recoveryGuardSuppressed = not guardActive
 					projection.recoveryManualFlasks = true
@@ -4116,11 +4131,13 @@ function calcs.recoveryOverTime(env, actor)
 		end
 		return profileCache[key]
 	end
-	local guardDuration, guardCooldown, guardCosts = 0, 0, { }
+	local guardDuration, guardCooldown, guardCosts, arcaneCloak = 0, 0, { }, false
+	local arcaneCloakManaFraction = mods:GetMultiplier("ArcaneCloakConsumedMana")
 	local aegisDelays = { }
 	for _,skill in ipairs(actor.activeSkillList) do
 		local name = skill.activeEffect.grantedEffect.name
 		if skill.skillTypes[SkillType.Guard] and mods.conditions["AffectedBy"..name:gsub(" ", "")] then
+			arcaneCloak = name == "Arcane Cloak"
 			guardDuration = (skill.skillData.duration or 0) * calcLib.mod(skill.skillModList, skill.skillCfg, "Duration")
 			guardCooldown = name:match("^Vaal") and math.huge or calcSkillCooldown(skill.skillModList, skill.skillCfg, skill.skillData)
 			local saved = GlobalCache.cachedData.CALCULATOR
@@ -4150,6 +4167,7 @@ function calcs.recoveryOverTime(env, actor)
 	local traceTrial = m_floor(m_min(trials,m_max(1,env.configInput.recoverySimulationTraceTrial or 1)))
 	for trial = 1, trials do
 		local o, mods, actor = o, mods, actor
+		local recoveryAllowed = recoveryPermissions(mods)
 		local caps = copyTable(caps)
 		local seed = encounter.seed(env.configInput.recoverySimulationSeed, trial)
 		local random = timeCalcs.random(encounter.seed(seed,0,1))
@@ -4196,15 +4214,22 @@ function calcs.recoveryOverTime(env, actor)
 			trace:add(t,state,event,{ crab=crab(t,false),shrouds=ghostDance and shroudCount or 0,charges=table.concat(charges," "),chargesTotal=total,poison=poison:advance(t) })
 		end
 		local crabLost = 0
+		local function chargeRates(item)
+			local generation = mods:Sum("BASE", nil, "FlaskChargesGenerated")
+			if item.base.flask.life then generation = generation + mods:Sum("BASE", nil, "LifeFlaskChargesGenerated") end
+			if item.base.flask.mana then generation = generation + mods:Sum("BASE", nil, "ManaFlaskChargesGenerated") end
+			if not item.base.flask.life and not item.base.flask.mana then generation = generation + mods:Sum("BASE", nil, "UtilityFlaskChargesGenerated") end
+			generation = generation + emptyFlasks * mods:Sum("BASE", nil, "FlaskChargesGeneratedPerEmptyFlask")
+			local gain = (item.flaskData.gainMod or 1) * (1 + mods:Sum("INC", nil, "FlaskChargesGained") / 100)
+			return generation * gain, gain
+		end
 		for i,item in ipairs(flaskList) do
 			local d = item.flaskData
 			local recovery = item.base.flask.life and "Life" or item.base.flask.mana and "Mana" or "Utility"
-			local generation = mods:Sum("BASE", nil, "FlaskChargesGenerated", recovery.."FlaskChargesGenerated")
-			generation = generation + emptyFlasks * mods:Sum("BASE", nil, "FlaskChargesGeneratedPerEmptyFlask")
-			local gain = (d.gainMod or 1) * (1 + mods:Sum("INC", nil, "FlaskChargesGained") / 100)
+			local generation, gain = chargeRates(item)
 			local duration = d.duration * (1 + mods:Sum("INC", nil, "FlaskDuration") / 100)
 			local config = { charges=d.chargesMax, used=encounter.chargesUsed(item.base.flask.chargesUsed,d.chargesUsedInc or 0,mods:Sum("INC", nil, "FlaskChargesUsed")),
-				duration=duration, generation=generation * gain,gain=gain,freeChance=mods:Sum("BASE",nil,"FlaskChanceNotConsumeCharges") }
+				duration=duration, generation=generation,gain=gain,freeChance=mods:Sum("BASE",nil,"FlaskChanceNotConsumeCharges") }
 			flaskBanks[i] = encounter.charges(config,timeCalcs.random(encounter.seed(seed,0,10+i)))
 			config.bank = flaskBanks[i]
 			if recovery == "Utility" then flaskSchedules[i] = timeCalcs.flask(config)
@@ -4236,6 +4261,8 @@ function calcs.recoveryOverTime(env, actor)
 		local aegisRestore = { }
 		local guardActive, guardExpires, guardReady = true, guardDuration > 0 and guardDuration or math.huge, math.huge
 		local guardRefillPending = false
+		local guardRefillScale = 1
+		local skillUse = timeCalcs.skillUses()
 		local function roll(chance) return random() * 100 < (chance or 0) end
 		local flaskProfiles={ }
 		for i,item in ipairs(flaskList) do flaskProfiles[i]=item.flaskData end
@@ -4255,13 +4282,16 @@ function calcs.recoveryOverTime(env, actor)
 					local dur = d.duration * durInc / (1 + mods:Sum("INC", nil, "FlaskRecoveryRate") / 100) / (1 + mods:Sum("INC", nil, "Flask"..resource.."RecoveryRate") / 100)
 					local effect = 1 + (mods:Sum("INC", { actor="player" }, "FlaskEffect") + (d.effectInc or 0)) / 100
 					local total = d[lower.."Base"] * (1 + mods:Sum("INC", nil, "Flask"..resource.."Recovery") / 100) * mods:More(nil, "Flask"..resource.."Recovery")
-					if resource == "Life" and state.Life <= o.Life * (o.LowLifePercentage or 50) / 100 then effect = effect + mods:More(nil, "FlaskLifeRecoveryLowLife") - 1 end
+					if resource == "Life" and state.Life <= o.Life * (o.LowLifePercentage or 50) / 100 then effect = effect + mods:More({ skillCond={ LowLife=true } }, "FlaskLifeRecoveryLowLife") - 1 end
 					local function add(target)
-						local blocked = mods:Flag(nil, "CannotGain"..target) or target == "Life" and mods:Flag(nil, "CannotRecoverLifeOutsideLeech")
+						local blocked = mods:Flag(nil, "FlasksDoNotApplyToPlayer", "CannotGain"..target) or target == "Life" and mods:Flag(nil, "CannotRecoverLifeOutsideLeech")
 						local recovery = total * effect * (o[target.."RecoveryRateMod"] or 1)
 						local e = effects[target] or { instant=0, rate=0 }; effects[target] = e
 						e.instant = e.instant + (blocked and 0 or total * effect * instant)
-						e.rate = e.rate + (not blocked and dur > 0 and recovery * (1 - instant) * durInc / dur or 0)
+						local rate = not blocked and dur > 0 and recovery * (1 - instant) * durInc / dur or 0
+						e.rate = e.rate + rate
+						e.groups = e.groups or { }
+						e.groups[resource] = (e.groups[resource] or 0) + rate
 						e.gradual = instant < 1
 						e.enduring = d[lower.."EffectNotRemoved"] or mods:Flag(nil, resource.."FlaskEffectNotRemoved")
 						e.duration = dur
@@ -4301,11 +4331,12 @@ function calcs.recoveryOverTime(env, actor)
 			attackInterval = attacking and function() return 1 / m_max(o.RecoveryAttackRate, 0.005) end or nil,
 			attack = attacking and function(state, t)
 				local cost = { }
+				local useRate = o.RecoveryUseRate or (o.Speed or o.RecoveryAttackRate) / (o.Repeats or 1)
 				for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
 					local key = resource == "EnergyShield" and "ES" or resource
-					cost[resource] = (o[key.."PerSecondCost"] or 0) / m_max(o.RecoveryAttackRate, 0.005)
+					cost[resource] = (o.RecoveryUpfrontCosts[key] or 0) + (o.RecoveryContinuousCosts[key] or 0) / m_max(useRate, 0.005)
 				end
-				if not timeCalcs.payCost(state, cost, mods:Flag(nil, "EnergyShieldProtectsMana")) then
+				if not skillUse(t, state, cost, useRate, mods:Flag(nil, "EnergyShieldProtectsMana")) then
 					record(t,state,"Attack skipped: insufficient Life, Mana or ES")
 					return state, false
 				end
@@ -4314,6 +4345,7 @@ function calcs.recoveryOverTime(env, actor)
 					if message then record(t,state,message) end
 					local projection = profileFor(currentActive,guardActive,crab(t,false),tincture)
 					o,mods,actor = projection.output,projection.mods,projection.actor
+					recoveryAllowed = recoveryPermissions(mods)
 				end
 				if roll(o.HitChance) then
 					if tincture and actor.mainSkill.skillFlags.melee then tincture:hit(t) end
@@ -4345,6 +4377,8 @@ function calcs.recoveryOverTime(env, actor)
 				end
 				if timedEffects and not guardActive and env.configInput.recoverySimulationRecastGuard and t >= guardReady - 1e-9 then
 					if timeCalcs.payCost(state, guardCosts, mods:Flag(nil, "EnergyShieldProtectsMana")) then
+						guardRefillScale = arcaneCloak and state.Mana / m_max(o.ManaUnreserved, 1) or 1
+						if arcaneCloak then state.Mana = state.Mana * (1 - arcaneCloakManaFraction) end
 						guardActive, guardExpires, guardReady = true, t + guardDuration, math.huge
 						guardRefillPending = true
 						record(t,state,"Guard recast; costs paid")
@@ -4352,34 +4386,53 @@ function calcs.recoveryOverTime(env, actor)
 				end
 				if timedEffects then
 					flaskRates = { }
+					local flaskGroups = { }
+					local ironFlaskUsed = false
 					for i,item in ipairs(flaskList) do
 						local event
 						local previousUses = flaskUses[i] or 0
 						if not flaskAvailable[item] then active[i],event = false,math.huge; flaskBanks[i]:advance(t)
 						elseif recoverySchedules[i] then
-							local recovery
-							active[i], recovery, event, flaskUses[i] = recoverySchedules[i](t, state,
+							local recovery, charges, groups
+							active[i], recovery, event, flaskUses[i], charges, groups = recoverySchedules[i](t, state,
 								{ Life=m_max(0, o.LifeUnreserved - (state.LifeReservation or 0)), Mana=o.ManaUnreserved, EnergyShield=o.EnergyShieldRecoveryCap }, caps,
 								function(p) return flaskProfile(item, p) end)
-							for resource,rate in pairs(recovery) do flaskRates[resource] = (flaskRates[resource] or 0) + rate end
+							for resource,sources in pairs(groups) do
+								flaskGroups[resource] = flaskGroups[resource] or { }
+								for source,rate in pairs(sources) do flaskGroups[resource][source] = m_max(flaskGroups[resource][source] or 0, rate) end
+							end
 						else
 							local used
 							active[i], used, event, flaskUses[i] = flaskSchedules[i](t, true)
+							ironFlaskUsed = ironFlaskUsed or used and item.baseName == "Iron Flask"
 						end
 						if (flaskUses[i] or 0) > previousUses then record(t,state,s_format("Flask %d used: %s",flaskSlot[item],item.name)) end
 						if event > t + 1e-9 then nextEvent = m_min(nextEvent, event) end
+					end
+					for resource,sources in pairs(flaskGroups) do
+						flaskRates[resource] = 0
+						for _,rate in pairs(sources) do flaskRates[resource] = flaskRates[resource] + rate end
 					end
 					local count, tick = crab(t, false)
 					if (o.CrabBarriersMax or 0) > 0 then nextEvent = m_min(nextEvent, tick) end
 					currentActive = active
 					local projection = profileFor(active, guardActive, count, tincture)
 					o, mods, actor = projection.output, projection.mods, projection.actor
+					recoveryAllowed = recoveryPermissions(mods)
+					for i,item in ipairs(flaskList) do
+						local generation, gain = chargeRates(item)
+						flaskBanks[i]:update(t, generation, gain)
+					end
+					if ironFlaskUsed and not mods:Flag(nil, "FlasksDoNotApplyToPlayer") then
+						state.Ward, state.WardActiveChance, wardRestore = o.Ward or 0, 1, math.huge
+						record(t,state,"Iron Flask restored Ward")
+					end
 					caps.Life, caps.Mana, caps.EnergyShield = o.LifeRecoverable, o.ManaUnreserved, o.EnergyShieldRecoveryCap
 					state.Life = m_min(state.Life, m_max(0, o.LifeUnreserved - (state.LifeReservation or 0)))
 					state.Mana, state.EnergyShield = m_min(state.Mana, o.ManaUnreserved), m_min(state.EnergyShield, o.EnergyShield)
 					if mods.conditions.AffectedByPetrifiedBlood then caps.Life = m_min(caps.Life, o.Life * (o.LowLifePercentage or data.misc.LowPoolThreshold) / 100) end
 					if guardRefillPending then
-						state.Guard.shared = o.sharedGuardAbsorb or 0
+						state.Guard.shared = (o.sharedGuardAbsorb or 0) * guardRefillScale
 						for _,damageType in ipairs(dmgTypeList) do state.Guard[damageType] = o[damageType.."GuardAbsorb"] or 0 end
 						guardRefillPending = false
 					end
@@ -4456,10 +4509,16 @@ function calcs.recoveryOverTime(env, actor)
 				local previousProtected = state[protectedResource]
 				-- Emperor's Vigilance changes routing on the actual blocked hit only.
 				local eventActor = actor
+				for _,ally in ipairs(allyLifePoolList) do
+					if ally.meleeOnly and state.AlliesTakenBeforeYou[ally.key] then
+						state.AlliesTakenBeforeYou[ally.key].percent = category == "Melee" and m_min(mods:Sum("BASE", nil, ally.redirect), 100) / 100 or 0
+					end
+				end
 				if blocked and mods:Flag(nil, "BlockedDamageDoesntBypassES") then
 					eventActor = setmetatable({ output = setmetatable({ }, { __index = o }) }, { __index = actor })
 					for _, damageType in ipairs(dmgTypeList) do
-						if damageType ~= "Chaos" and o[damageType.."EnergyShieldBypass"] < 100 then eventActor.output[damageType.."EnergyShieldBypass"] = 0 end
+						local independentBypass = mods:Override(nil, damageType.."EnergyShieldBypass") or mods:Sum("BASE", nil, damageType.."EnergyShieldBypass")
+						if damageType ~= "Chaos" and independentBypass < 100 then eventActor.output[damageType.."EnergyShieldBypass"] = 0 end
 					end
 				end
 				state = calcs.reducePoolsByDamage(state, damage, eventActor)
@@ -4512,13 +4571,16 @@ function calcs.recoveryOverTime(env, actor)
 					local pseudo = (o["PhysicalDamageMitigated"..resource.."PseudoRecoup"] or 0) * physicalPrevented / 100
 					if pseudo > 0 then
 						local duration = o["PhysicalDamageMitigated"..resource.."PseudoRecoupDuration"] or 4
-						if recoveryAllowed[resource] and not mods:Flag(nil, "UnaffectedBy"..resource.."Regen")  then
-							cohorts[#cohorts + 1] = { [resource] = pseudo / duration, expires = t + duration }
+						local converted = resource == "Life" and mods:Flag(nil, "ZealotsOath")
+						local target = converted and "EnergyShield" or resource
+						local recovery = converted and pseudo * o.EnergyShieldRecoveryRateMod / o.LifeRecoveryRateMod or pseudo
+						if recoveryAllowed[target] and not mods:Flag(nil, "UnaffectedBy"..target.."Regen", "No"..target.."Regen") then
+							cohorts[#cohorts + 1] = { [target] = recovery / duration, expires = t + duration }
 						end
 						-- Match native regeneration copying, e.g. Pious Path, before
 						-- discarding regeneration that the source pool is unaffected by.
 						for targetIndex, target in ipairs({ "Life", "Mana", "EnergyShield" }) do
-							if targetIndex > sourceIndex and mods:Flag(nil, resource.."RegenerationRecovers"..target) and recoveryAllowed[target] and not mods:Flag(nil, "UnaffectedBy"..target.."Regen", "No"..target.."Regen") then
+							if not converted and targetIndex > sourceIndex and mods:Flag(nil, resource.."RegenerationRecovers"..target) and recoveryAllowed[target] and not mods:Flag(nil, "UnaffectedBy"..target.."Regen", "No"..target.."Regen") then
 								local copied = pseudo * o[target.."RecoveryRateMod"] / o[resource.."RecoveryRateMod"]
 								cohorts[#cohorts + 1] = { [target] = copied / duration, expires = t + duration }
 							end

@@ -1,13 +1,22 @@
-# Recovery simulation coverage
+# Encounter simulation guide
 
-Open **Simulation setup** in Calcs, or **Simulation** at the top of Configuration,
-to filter to the **Encounter Simulation** settings. Enable **Simulate recovery
-between hits**, then choose **View results** to jump to **Recovery over Time**.
-Click **Timeline: Inspect trial 1** for the charts and event log. **Close** returns
-to Calcs; **Show samples** adds periodic resource samples to the event log.
-Enemy damage,
-category and attack/cast time define the scenario. Trials start at full configured
-recoverable pools with the configured initial protection and Ghost Shrouds.
+Explore how your build survives an encounter, then inspect its resources and defenses over time. These tools are experimental and depend on the scenario you configure.
+
+## Quick start
+
+1. Open **Calcs → Simulation setup**, or **Configuration → Simulation**.
+2. Enable **Simulate recovery between hits**.
+3. Set the enemy damage, damage category, and attack or cast time.
+4. Choose **View results** to open **Recovery over Time**.
+5. Click **Timeline: Inspect trial 1** to open the charts and event log.
+
+Use **Close** to return to Calcs. **Show samples** adds periodic resource samples to the event log.
+
+[Results](#reading-the-results) · [Attacks](#attacks-and-recovery) · [Flasks](#flasks-and-temporary-defenses) · [Damage over time](#damage-over-time) · [Comparisons](#inspecting-and-comparing-encounters) · [Coverage](#mechanic-coverage) · [Limits](#known-limits)
+
+## Reading the results
+
+Trials start at full configured recoverable pools, with the configured initial protection and Ghost Shrouds.
 
 Evasion uses entropy; dodge, block, suppression and damage avoidance use a local
 seeded random generator. Average selects each attack/spell category equally.
@@ -16,6 +25,8 @@ from 1 to 128. Calcs shows survival frequency and capped 10th/50th/90th percenti
 of time alive. Reaching the window is not proof of infinite survival. Small samples
 are approximate, especially for rare bursts. Detailed trials are omitted from
 item-preview calculations to keep ordinary comparisons fast.
+
+## Attacks and recovery
 
 Enable **Simulate main-skill attacks** to pay native configured costs on outgoing
 attempts. Unaffordable attempts are skipped; Calcs shows their affordable fraction.
@@ -32,8 +43,12 @@ attack gaps and after death until expiry or the scenario window ends. Damage is
 divided by the full window, not only the time alive. Other ailments, impales,
 secondary skills, minions and culling-equivalent DPS are excluded. Poison chance
 and additional applications use native expected amounts per landed hit rather
-than individual poison rolls. Other conditional damage, Wither and configured
+than individual poison rolls. Stack-limited poisons are admitted only while capacity remains. Other conditional damage, Wither and configured
 poison-on-enemy modifiers remain fixed. This does not replace native Full DPS.
+
+Repeated hits share one upfront skill payment. Eldritch Battery can fall back to Mana when Energy Shield cannot cover a Mana cost. Sustained attacking with skill self-damage is explicitly unsupported.
+
+## Flasks and temporary defenses
 
 **Track temporary defense uptime** is on by default. Selected utility and
 enduring recovery flasks start full and reuse at expiry. Known passive generation,
@@ -65,6 +80,10 @@ reported in [#7578](https://github.com/PathOfBuildingCommunity/PathOfBuilding/is
 Charges start full. **Include equipped recovery flasks** also
 makes unchecked life/mana flasks available, without editing their item checkboxes.
 Selected enduring flasks retain the start-at-zero/reuse-at-expiry policy.
+
+Gradual recovery from multiple flasks of the same type does not stack; the strongest eligible rate applies. Recovery copied from Life and Mana flasks to ES retains its separate source groups. Hybrid flasks receive applicable Life and Mana charge-generation bonuses. Recovery restrictions and charge-generation rates follow the current flask and tincture state. An Iron Flask restores Ward when used.
+
+## Damage over time
 
 The five **Continuous [type] damage/s** inputs add raw continuous damage before
 native damage taken as and mitigation, alongside incoming hits. Existing build
@@ -117,6 +136,8 @@ Intrinsic resource loss such as Mana Burn remains resource loss, not damage.
   inspect both arms' Wilson intervals and repeat with other seed families. This
   quantifies sampling uncertainty, not errors in configured assumptions or mechanics.
 
+## Mechanic coverage
+
 | Mechanic | Treatment |
 | --- | --- |
 | Regeneration, configured resource loss | Native rates between events with recovery caps. |
@@ -125,20 +146,20 @@ Intrinsic resource loss such as Mana Burn remains resource loss, not damage.
 | Wicked Ward | Protects recharge for four seconds from its start, not four seconds from every hit. |
 | Eternal Youth | Recharge applies to actual life. It does not clear Dissolution reservation. |
 | Ghost Dance | Three finite charges, two-second generation, eligible unblocked-hit consumption and capped ES recovery after nonlethal damage. |
-| Divine Shield / physical-prevention regeneration | Per-hit cohorts, native modifiers, recovery restrictions and copying such as Pious Path. Shifted damage is not physical prevention. |
+| Divine Shield / physical-prevention regeneration | Per-hit cohorts, native modifiers, recovery restrictions, Zealot's Oath conversion, and copying such as Pious Path. Shifted damage is not physical prevention. |
 | Petrified Blood / Progenesis | Separate delayed-loss cohorts; death can occur between hits. Non-flask life recovery obeys Petrified Blood's cap. |
 | Dissolution | Separate actual-life and reservation state. Two seconds without damage to life releases reservation; healing only restores actual life. PB/Progenesis delayed loss, recoup, life costs and Eternal Youth operate on actual life. Damage-induced clamping of actual life can interrupt recharge. |
 | Block/suppression gains, Defiance | Apply to actual corresponding outcomes, with no recovery after lethal damage. |
 | Emperor's Vigilance | Routing changes on the actual blocked hit. |
 | Ward | Ordinary timed restoration after a break. Partial chance not to break is explicitly unsupported. |
 | Aegis | Native skill recharge delays, separate pool timers; depleted pools can refill. |
-| Guard | Native duration, early depletion and cooldown. Optional **Recast guard when ready** pays native costs. This is a manual-use policy, not trigger-threshold simulation. Vaal guards are not automatically reused. |
+| Guard | Native duration, early depletion and cooldown. Optional **Recast guard when ready** pays native costs; Arcane Cloak spends current Mana and scales its protection accordingly. This is a manual-use policy, not trigger-threshold simulation. Vaal guards are not automatically reused. |
 | Crab Barriers | Start at the configured count, gain one every 0.5s with a fixed phase from combat start, lose stacks on physical hit damage. Craiceann's Tracks/Chitin/Pincers loss limits, four-second protection and gain-to-maximum chance are parsed and simulated. Native reduction and threshold block bonuses are recalculated for each state. |
 | Recovery flasks | Finite charges, activation/reaction policy, dynamic low-life instant recovery, gradual/end recovery, source/full-pool termination, enduring recovery and PB's flask exception. Mean total flask uses and Crab Barriers lost are shown in Calcs. |
 | Tincture cycles | One selected tincture starts at zero burn. Native burn interval, local/global cooldown recovery, chance not to inflict burn, first-six-stacks exemption and stack-limit mastery apply. Zero mana (1 Life for Weeping Wounds) deactivates it, clears burn and starts cooldown. Native damage/defenses change with its state. **Reuse tincture when ready** models manual reactivation after cooldown and resource recovery; off means one activation. Enduring Suffusion's effects linger separately from burn and active-tincture conditions. The Battle Within gains burn on outgoing melee hits instead of periodically. |
 | Allied protection | Configured initial pools; no resummoning schedule. |
 
-## Explicit limits
+## Known limits
 
 - Timed tincture cycles currently require one selected tincture; multiple selected
   tinctures are explicitly unsupported. With no selected tincture, manually
@@ -148,21 +169,18 @@ Intrinsic resource loss such as Mana Burn remains resource loss, not damage.
   avoiding a second application of quality/local effect to displayed modifiers.
   PoB-created and older items retain the existing base-value interpretation;
   their provenance cannot be inferred reliably. A confirmed game-value item can
-  use that raw-item header. Rounded original rolls cannot be reconstructed.
-
+  use that raw-item header. Original imported quality is retained so later quality edits scale correctly. Rounded original rolls cannot be reconstructed.
 - Dissolution with existing life reservations needs aura-cancellation ordering and
   buff changes, and is unsupported. Upstream reports [#10193](https://github.com/PathOfBuildingCommunity/PathOfBuilding/issues/10193)
   and [#10258](https://github.com/PathOfBuildingCommunity/PathOfBuilding/issues/10258)
   are not claimed fixed.
 - The additional ten-second Life recovery modifier is explicitly unsupported;
   it is distinct from Blood of the Karui's supported effect-end recovery. Kill,
-  corpse-consumption and Avenger's incoming-critical charge sources, flask queues
-  and special Ward/flask interactions are not simulated. Passive generation uses
-  native configured rates, including fixed conditional modifiers.
+  corpse-consumption and Avenger's incoming-critical charge sources and flask queues are not simulated. Passive generation uses native rates from the current projection; other configured conditions remain fixed.
 - Other conditional damage-taken modifiers remain configured, including Lethe
   Shade and conditional Ward DoT reduction. Enemy ailment application/expiry is
   not simulated; use explicit continuous inputs to test sustained damage.
-- Immortal Ambition's conditional leech redirection and enemy impale stacks are
+- Immortal Ambition's conditional leech redirection, sustained skill self-damage, and enemy impale stacks are
   explicitly unsupported.
 - Other configured conditional buffs remain fixed, including recently-hit effects,
   full-ES damage bonuses and variable enemy critical damage. No movement, multiple

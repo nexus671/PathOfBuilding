@@ -158,11 +158,14 @@ function M.recoveryFlask(config)
 				end
 			end
 		end
-		local recovery = { }
+		local recovery, groups = { }, { }
 		active = false
 		local event = pending
-		for resource, effect in pairs(effects) do recovery[resource] = effect.rate; active = true; event = min(event, effect.expires) end
-		return active, recovery, min(event,bank:next(t)), bank.uses, bank.charges
+		for resource, effect in pairs(effects) do
+			recovery[resource], groups[resource] = effect.rate, effect.groups or { Default=effect.rate }
+			active = true; event = min(event, effect.expires)
+		end
+		return active, recovery, min(event,bank:next(t)), bank.uses, bank.charges, groups
 	end
 end
 
@@ -205,6 +208,19 @@ function M.payCost(pools, cost, battery)
 	if life >= pools.Life or mana > pools.Mana + 1e-9 or es > pools.EnergyShield + 1e-9 then return false end
 	pools.Life, pools.Mana, pools.EnergyShield = pools.Life - life, max(0, pools.Mana - mana), max(0, pools.EnergyShield - es)
 	return true
+end
+
+-- Repeated hits share one upfront skill payment. A failed use cannot borrow
+-- recovery from its repeats to fund a cost it could not initially afford.
+function M.skillUses()
+	local nextUse, paid = -math.huge, false
+	return function(t, pools, cost, useRate, battery)
+		if t >= nextUse - 1e-9 then
+			nextUse = t + 1 / max(useRate, 0.005)
+			paid = M.payCost(pools, cost, battery)
+		end
+		return paid
+	end
 end
 
 -- Dissolution reserves damage without treating healing as released reservation.
@@ -317,6 +333,9 @@ function M.survival(config)
 	end
 	if config.observe then config.observe(0,pools,"Start") end
 	while t <= window do
+		-- End ordinary leech at the full-pool boundary before simultaneous costs
+		-- or incoming hits can make the resource appear non-full again.
+		if config.leech then config.leech:rates(t, pools) end
 		if t >= reservationRelease - 1e-9 then
 			if config.actualDissolution then pools.LifeReservation = 0
 			else pools.Life = config.caps.Life end
@@ -380,8 +399,11 @@ function M.survival(config)
 		end
 		local delay = type(config.rechargeDelay) == "function" and config.rechargeDelay(pools, t) or config.rechargeDelay or math.huge
 		local rechargeStart = lastRechargeDamage + delay
+		local rechargeResource = config.rechargeResource or "EnergyShield"
+		local rechargeRate = type(config.recharge) == "function" and config.recharge(pools, t) or config.recharge or 0
+		local canRecharge = pools[rechargeResource] < config.caps[rechargeResource] - 1e-9 and rechargeRate > 0
 		if continuousInterruption and config.dot and interruptsRecharge(config.dot(pools,rates,t)) then rechargeStart = math.huge end
-		if not rechargeActive and t >= rechargeStart - 1e-9 then
+		if not rechargeActive and canRecharge and t >= rechargeStart - 1e-9 then
 			rechargeActive, rechargeBegan = true, t
 			if config.observe then config.observe(t,pools,"Recharge started") end
 		end
@@ -391,7 +413,7 @@ function M.survival(config)
 			local recharge = type(config.recharge) == "function" and config.recharge(pools, t) or config.recharge or 0
 			rates[resource] = rates[resource] + recharge
 			rechargeAdded = pools[resource] > config.caps[resource] + 1e-8 and 0 or recharge
-		elseif rechargeStart < t + dt then dt = rechargeStart - t end
+		elseif canRecharge and rechargeStart > t + 1e-9 and rechargeStart < t + dt then dt = rechargeStart - t end
 		if config.wickedWard and rechargeActive and t - rechargeBegan < 4 - 1e-9 then dt = min(dt, rechargeBegan + 4 - t) end
 		local flaskRates, flaskCaps = { }, config.caps
 		if config.flaskRecovery then flaskRates, flaskCaps = config.flaskRecovery(pools, t) end

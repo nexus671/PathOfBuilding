@@ -1712,6 +1712,7 @@ function calcs.offence(env, actor, activeSkill)
 		["ESPercentPerMinute"] = { type = "ES", upfront = false, percent = true, text = "ES/s", baseCost = 0, totalCost = 0, baseCostNoMult = 0, finalBaseCost = 0 },
 	}
 	
+	output.RecoveryUpfrontCosts, output.RecoveryContinuousCosts = { }, { }
 	if not skillModList:Flag(skillCfg, "HasNoCost") then
 		--Support cost multipliers are calculated first and rounded down after 4 digits
 		local mult = floor(skillModList:More(skillCfg, "SupportManaMultiplier"), 4)
@@ -1859,6 +1860,11 @@ function calcs.offence(env, actor, activeSkill)
 				end
 				output[costName] = m_max(0, output[costName] + val.totalCost)
 				output[costNameRaw] = val.baseCostRaw and m_max(0, m_max(0, (1 + inc / 100) * (val.baseCostRaw + val.baseCostNoMult) * moreType / costEfficiency) + val.totalCost)
+			end
+			if val.type == "Life" or val.type == "Mana" or val.type == "ES" then
+				local recoveryCosts = val.upfront and output.RecoveryUpfrontCosts or output.RecoveryContinuousCosts
+				local pool = val.type == "ES" and output.EnergyShield or output[val.type]
+				recoveryCosts[val.type] = (recoveryCosts[val.type] or 0) + output[costName] * (val.percent and pool / 100 or 1)
 			end
 			if breakdown and hasCost then
 				breakdown[costName] = {
@@ -4934,6 +4940,7 @@ function calcs.offence(env, actor, activeSkill)
 					local weight = skillFlags.bothWeaponAttack and not skillData.doubleHitsWhenDualWielding and 0.5 or 1
 					if not skillModList:Flag(nil, "Condition:NonPoisonedOnly") then
 						t_insert(poisonTimeProfiles, { slope = singlePoisonDPSCapped * poisonApplicationsPerSecond * weight, ceiling = PoisonDPSUncapped * weight,
+							applications=poisonApplicationsPerSecond * weight, stackLimit=poisonStackLimit,
 							duration=globalOutput.PoisonDuration, limit=poisonStackLimit and singlePoisonDPSCapped * m_ceil(poisonStackLimit / additionalPoisonStacks) * additionalPoisonStacks * weight or math.huge })
 					end
 				end
@@ -5986,6 +5993,7 @@ function calcs.offence(env, actor, activeSkill)
 			end
 
 			output[usedResource.."PerSecondHasCost"] = true
+			output.RecoveryUseRate = useSpeed
 			output[usedResource.."PerSecondCost"] = (output[usedResource.."PerSecondCost"] or 0)+ output[resource.."Cost"] * useSpeed
 
 			if breakdown then
@@ -6308,6 +6316,7 @@ function calcs.offence(env, actor, activeSkill)
 				profile.slope = profile.slope * quantityMultiplier
 				profile.ceiling = profile.ceiling * quantityMultiplier
 				profile.limit = profile.limit * quantityMultiplier
+				profile.applications = profile.applications * quantityMultiplier
 			end
 		end
 		local window = m_min(m_max(env.configInput.poisonDamageWindow or 5, 0.01), 300)

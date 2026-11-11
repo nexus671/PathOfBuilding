@@ -430,6 +430,7 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 	self.rarity = rarity or "UNIQUE"
 	self.quality = nil
 	self.tinctureValues = nil
+	self.tinctureImportedQuality = nil
 	self.rawLines = { }
 	-- Find non-blank lines and trim whitespace
 	for line in raw:gmatch("%s*([^\n]*%S)") do
@@ -671,6 +672,8 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 					self.uniqueID = specVal
 				elseif specName == "Tincture Values" then
 					self.tinctureValues = specVal == "Final" and "Final" or nil
+				elseif specName == "Tincture Imported Quality" then
+					self.tinctureImportedQuality = specToNumber(specVal)
 				elseif specName == "Item Level" then
 					self.itemLevel = specToNumber(specVal)
 				elseif specName == "Memory Strands" then
@@ -1618,6 +1621,9 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 	if self.baseName and self.title then
 		self.name = self.title .. ", " .. self.baseName:gsub(" %(.+%)", "")
 	end
+	if self.tinctureValues == "Final" and self.tinctureImportedQuality == nil then
+		self.tinctureImportedQuality = self.quality or 0
+	end
 	if not self.quality then
 		self:NormaliseQuality()
 		if highQuality then
@@ -1815,6 +1821,7 @@ function ItemClass:BuildRaw()
 	end
 	if self.type == "Tincture" and self.tinctureValues == "Final" then
 		t_insert(rawLines, "Tincture Values: Final")
+		t_insert(rawLines, "Tincture Imported Quality: "..tostring(self.tinctureImportedQuality or self.quality or 0))
 	end
 	if self.league then
 		t_insert(rawLines, "League: " .. self.league)
