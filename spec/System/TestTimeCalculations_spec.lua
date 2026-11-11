@@ -177,6 +177,9 @@ describe("Finite combat windows", function()
 		local out = calculate("+100 to Ward")
 		assert.is_nil(out.RecoverySimulationUnsupported)
 		assert.is_true(out.RecoverySimulationTime > 0)
+		build.configTab.input.enemySpeed = 5000
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.are.equal(true, build.calcsTab.calcsOutput.RecoverySimulationSurvived)
 	end)
 
 	it("ramps leech instances, caps their combined rate and removes them at full", function()
@@ -285,7 +288,7 @@ describe("Finite combat windows", function()
 		build.skillsTab:ProcessSocketGroup(build.skillsTab.socketGroupList[1])
 		local out = calculate("Life that would be lost by taking Damage is instead Reserved")
 		assert.is_nil(out.RecoverySimulationUnsupported)
-		assert.is_true(out.RecoverySimulationTime >= 0)
+		assert.are.near(2, out.RecoverySimulationTime, 1e-8)
 	end)
 
 	it("keeps actual life independent from Dissolution reservation", function()
@@ -368,6 +371,21 @@ describe("Finite combat windows", function()
 		build.configTab:BuildModList(); runCallback("OnFrame")
 		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime > timed)
 		assert.are.near(ehp, build.calcsTab.calcsOutput.TotalEHP, 1e-8)
+	end)
+
+	it("decays Elusive avoidance instead of holding its configured effect forever", function()
+		build.configTab.input.buffElusive = true
+		build.configTab.input.overrideBuffElusive = 500
+		calculate("+3000 to maximum Life\nElusive\n900% increased Elusive Effect")
+		build.configTab.input.enemyColdDamage = "500"
+		build.configTab.input.recoverySimulationWindow = 60
+		build.configTab.input.recoverySimulationTimedEffects = false
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		local fixed = build.calcsTab.calcsOutput.RecoverySimulationTime
+		assert.are.equal(75, build.calcsTab.calcsOutput.AvoidAllDamageFromHitsChance)
+		build.configTab.input.recoverySimulationTimedEffects = true
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationTime < fixed)
 	end)
 
 	it("expires guard protection and supports a paid recast policy", function()

@@ -4019,7 +4019,7 @@ function calcs.recoveryOverTime(env, actor)
 	local trials = m_floor(m_min(m_max(env.configInput.recoverySimulationTrials or 32, 1), 128))
 	local categoryConfig = env.configInput.enemyDamageType or "Average"
 	local caps = { Life = o.LifeRecoverable, Mana = o.ManaUnreserved or 0, EnergyShield = o.EnergyShieldRecoveryCap }
-	if mods.conditions.AffectedByPetrifiedBlood then caps.Life = m_min(caps.Life, o.Life / 2) end
+	if mods.conditions.AffectedByPetrifiedBlood then caps.Life = m_min(caps.Life, o.Life * (o.LowLifePercentage or data.misc.LowPoolThreshold) / 100) end
 	local recoveryAllowed = { }
 	for _, resource in ipairs({ "Life", "Mana", "EnergyShield" }) do
 		recoveryAllowed[resource] = not mods:Flag(nil, "CannotGain"..resource) and not (resource == "Life" and mods:Flag(nil, "CannotRecoverLifeOutsideLeech"))
@@ -4040,7 +4040,7 @@ function calcs.recoveryOverTime(env, actor)
 		}
 	end
 	-- These represent available unreserved capacity, not actual Life, for Dissolution.
-	if dissolution then caps.Life = m_min(o.LifeUnreserved, env.configInput.conditionLowLife and o.Life * (o.LowLifePercentage or 50) / 100 or o.Life) end
+	if dissolution then caps.Life = m_min(caps.Life, o.LifeUnreserved, env.configInput.conditionLowLife and o.Life * (o.LowLifePercentage or data.misc.LowPoolThreshold) / 100 or o.Life) end
 	local timedEffects = env.configInput.recoverySimulationTimedEffects ~= false
 	local flaskList, profileCache = { }, { }
 	local emptyFlasks = 0
@@ -4196,7 +4196,7 @@ function calcs.recoveryOverTime(env, actor)
 					o, mods, actor = projection.output, projection.mods, projection.actor
 					caps.Life, caps.Mana, caps.EnergyShield = o.LifeRecoverable, o.ManaUnreserved, o.EnergyShieldRecoveryCap
 					state.Mana, state.EnergyShield = m_min(state.Mana, o.ManaUnreserved), m_min(state.EnergyShield, o.EnergyShield)
-					if mods.conditions.AffectedByPetrifiedBlood then caps.Life = m_min(caps.Life, o.Life / 2) end
+					if mods.conditions.AffectedByPetrifiedBlood then caps.Life = m_min(caps.Life, o.Life * (o.LowLifePercentage or data.misc.LowPoolThreshold) / 100) end
 					if guardRefillPending then
 						state.Guard.shared = o.sharedGuardAbsorb or 0
 						for _,damageType in ipairs(dmgTypeList) do state.Guard[damageType] = o[damageType.."GuardAbsorb"] or 0 end
@@ -4208,10 +4208,11 @@ function calcs.recoveryOverTime(env, actor)
 						p.duration = (o[resource.."LeechInstances"] or 0) > 0 and (o[resource.."LeechDuration"] or 0) or 0
 						p.rate = (o[resource.."LeechInstanceRate"] or 0) * (o[resource.."RecoveryRateMod"] or 1)
 						p.cap = (o["Max"..resource.."LeechRate"] or 0) * (o[resource.."RecoveryRateMod"] or 1)
+						p.full = resource == "EnergyShield" and o.EnergyShield or o[resource.."Unreserved"]
 					end
 					if dissolution then caps.Life = m_min(caps.Life, env.configInput.conditionLowLife and o.Life * (o.LowLifePercentage or 50) / 100 or o.Life) end
 				end
-				if t >= wardRestore - 1e-9 then state.Ward, wardRestore = o.Ward, math.huge end
+				if t >= wardRestore - 1e-9 then state.Ward, state.WardActiveChance, wardRestore = o.Ward, 1, math.huge end
 				for key,at in pairs(aegisRestore) do
 					if t >= at - 1e-9 then
 						state.Aegis[key] = key == "shared" and o.sharedAegis or key == "sharedElemental" and o.sharedElementalAegis or o[key.."Aegis"] or 0
