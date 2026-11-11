@@ -426,10 +426,10 @@ describe("Encounter reporting and comparisons",function()
 		control.GetMiscCalculator=function() return function(override)
 			evaluated=evaluated+1;local node=next(override.addNodes);return {Life=100+node.id}
 		end,{Life=100} end
-		local original=GetTime;local clock=0;GetTime=function() clock=clock+5;return clock end
+		local original=_G.GetTime;local clock=0;_G.GetTime=function() clock=clock+5;return clock end
 		local thread=coroutine.create(function() control:PowerBuilder() end)
 		local first,firstError=coroutine.resume(thread);local second,secondError=coroutine.resume(thread)
-		GetTime=original
+		_G.GetTime=original
 		assert(first,firstError);assert(second,secondError)
 		assert.are.equal("suspended",coroutine.status(thread))
 		assert.is_true(evaluated>0 and evaluated<50)
