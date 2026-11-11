@@ -42,7 +42,7 @@ test('rejects disconnected sessions, old context and stale revisions', t => {
   f.captured.session='old-session'; f.write('context',f.captured);
   assert.throws(() => f.call('propose_build',f.proposal),/refreshing/);
 });
-test('rejects unknown operations, arbitrary paths, prototype keys and nonfinite values', t => {
+test('rejects unknown operations, arbitrary paths, prototype keys and invalid numbers', t => {
   const f = fixture(t);
   for (const operations of [[{type:'run_lua',code:'anything'}],[{type:'set_character',level:Infinity}],[{type:'equip_item',slot:'Helmet',text:'Item',path:'elsewhere'}]]) {
     assert.throws(() => f.call('propose_build',{...f.proposal,operations}),/arguments/);
