@@ -35,6 +35,46 @@ function M.shrouds(initial)
 	end
 end
 
+-- A tincture starts with no burn. Deactivation clears burn and starts cooldown;
+-- recovering its resource cannot bypass that cooldown. Reuse is a manual policy.
+function M.tincture(config, random)
+	local state = { active = false, stacks = 0, ready = 0, tick = math.huge, uses = 0, effect = false, lingerUntil = -math.huge }
+	local function deactivate(self, t)
+		self.lingerUntil = t + min(config.lingerMax or 0, self.stacks * (config.lingerPerStack or 0))
+		self.active, self.stacks, self.tick, self.ready = false, 0, math.huge, t + config.cooldown
+	end
+	function state:hit(t)
+		if self.active and config.onHit then
+			if random() * 100 >= (config.skipChance or 0) then self.stacks = self.stacks + 1 end
+			if config.maximum and self.stacks >= config.maximum then deactivate(self,t) end
+		end
+	end
+	function state:update(t, resource)
+		local event
+		if self.active and resource <= (config.floor or 0) + 1e-8 then
+			deactivate(self,t)
+			event = "Tincture deactivated: resource exhausted; cooldown started"
+		end
+		if self.active and t >= self.tick - 1e-9 then
+			self.tick = self.tick + config.interval
+			if random() * 100 >= (config.skipChance or 0) then self.stacks = self.stacks + 1 end
+			if config.maximum and self.stacks >= config.maximum then
+				deactivate(self,t)
+				event = "Tincture deactivated: Mana Burn limit; cooldown started"
+			end
+		end
+		if not self.active and (self.uses == 0 or config.reuse) and t >= self.ready - 1e-9 and resource > (config.floor or 0) + 1e-8 then
+			self.active, self.stacks, self.tick, self.uses = true, 0, config.onHit and math.huge or t + config.interval, self.uses + 1
+			event = "Tincture activated"
+		end
+		local nextEvent = self.active and self.tick or config.reuse and self.ready > t + 1e-9 and self.ready or math.huge
+		self.effect = self.active or t < self.lingerUntil - 1e-9
+		if self.lingerUntil > t + 1e-9 then nextEvent = min(nextEvent,self.lingerUntil) end
+		return nextEvent, event
+	end
+	return state
+end
+
 -- Barrier generation has a fixed phase from combat start, independent of hits.
 function M.crab(config, random)
 	local count, tick, lost = config.initial or config.maximum, 0, -math.huge
@@ -385,6 +425,8 @@ function M.survival(config)
 		end
 		-- Split when a pool reaches full so ordinary leech ends at the actual time.
 		for _, resource in ipairs(resources) do
+			local floor = config.resourceFloor and config.resourceFloor(resource) or 0
+			if rates[resource] < 0 and pools[resource] > floor + 1e-8 then dt = min(dt, (pools[resource] - floor) / -rates[resource]) end
 			if pools[resource] >= config.caps[resource] - 1e-8 then rates[resource] = min(rates[resource], max(0, flaskRates[resource] or 0)) end
 			if rates[resource] > 0 and pools[resource] < config.caps[resource] - 1e-9 then
 				dt = min(dt, (config.caps[resource] - pools[resource]) / rates[resource])

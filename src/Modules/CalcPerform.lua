@@ -936,12 +936,13 @@ local function doActorMisc(env, actor)
 			output.InherentRageLossDelay = 2 + modDB:Sum("BASE", nil, "InherentRageLossDelay")
 			output.InherentRageLoss = (not modDB:Flag(nil, "InherentRageLossIsPrevented")) and 10 * (1 + modDB:Sum("INC", nil, "InherentRageLoss") / 100) or 0
 		end
-		if (env.configInput.multiplierManaBurnStacks or 0) > 0 then
+		local configuredManaBurn = env.recoveryManaBurnStacks or env.configInput.multiplierManaBurnStacks or 0
+		if configuredManaBurn > 0 then
 			local maxManaBurn = modDB:Sum("BASE", nil, "MaxManaBurnStacks")
 			if maxManaBurn == 0 then
 				maxManaBurn = 9999
 			end
-			local manaBurnStacks = m_min((env.configInput.multiplierManaBurnStacks or 0), maxManaBurn)
+			local manaBurnStacks = m_min(configuredManaBurn, maxManaBurn)
 			modDB:NewMod("Multiplier:ManaBurnStacks", "BASE", manaBurnStacks, "Config")
 			manaBurnStacks = manaBurnStacks + modDB:Sum("BASE", { actor = "player" }, "EffectiveManaBurnStacks")
 			if modDB:Flag(nil, "Condition:WeepingWoundsInsteadOfManaBurn") then
@@ -1895,6 +1896,10 @@ function calcs.perform(env, skipEHP)
 			-- Compute tincture effect multiplier.
 			-- Tincture effect multiplier is rounded to 2 decimal places before applying it.
 			local effectMod = math.floor((1 + (tinctureEffectInc) / 100) * (1 + (item.quality or 0) / 100) * 100) / 100 
+			if item.tinctureValues == "Final" then
+				local localEffect = math.floor((1 + item.tinctureData.effectInc / 100) * (1 + (item.quality or 0) / 100) * 100) / 100
+				effectMod = effectMod / m_max(localEffect, 0.01)
+			end
 
 			-- same deal as flasks, go look at the comment there
 			if buffModList[1] then
@@ -1939,8 +1944,8 @@ function calcs.perform(env, skipEHP)
 			end
 			tinctureLimit = tinctureLimit - 1
 			tinctureBuffsPerBase[item.baseName] = tinctureBuffsPerBase[item.baseName] or {}
-			tinctureConditions["UsingTincture"] = true
-			tinctureConditions["Using"..item.baseName:gsub("%s+", "")] = true
+			tinctureConditions["UsingTincture"] = not env.recoveryTinctureLingering
+			tinctureConditions["Using"..item.baseName:gsub("%s+", "")] = not env.recoveryTinctureLingering
 			calcTinctureMods(item, item.baseName, item.buffModList, item.modList)
 		end
 		for tinctureCond, status in pairs(tinctureConditions) do

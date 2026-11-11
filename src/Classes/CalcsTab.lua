@@ -7,6 +7,7 @@ local pairs = pairs
 local ipairs = ipairs
 local t_insert = table.insert
 local m_max = math.max
+local m_min = math.min
 local m_floor = math.floor
 
 local buffModeDropList = {
@@ -40,6 +41,7 @@ function CalcsTabClass:CalcsTab(build)
 
 	self.controls.search = new("EditControl"):EditControl({"TOPLEFT",self,"TOPLEFT"}, {4, 5, 260, 20}, "", "Search", "%c", 100, nil, nil, nil, true)
 	t_insert(self.controls, self.controls.search)
+	self.controls.simulationSetup = new("ButtonControl"):ButtonControl({"LEFT",self.controls.search,"RIGHT"},{6,0,135,20},"Simulation setup",function() self.build.configTab:ShowEncounterSimulation() end)
 
 	-- Special section for skill/mode selection
 	self:NewSection(3, "SkillSelect", 1, colorCodes.NORMAL, {{ defaultCollapsed = false, label = "View Skill Details", data = {
@@ -308,6 +310,17 @@ function CalcsTabClass:Draw(viewPort, inputEvents)
 	end
 	self.controls.scrollBar.height = viewPort.height
 	self.controls.scrollBar:SetContentDimension(maxY - (baseY - 26), viewPort.height)
+	if self.focusRecoverySimulation then
+		for _,section in ipairs(self.sectionList) do
+			for i,subSection in ipairs(section.subSection) do
+				if subSection.label == "Recovery over Time" then
+					subSection.collapsed = false
+					self.controls.scrollBar.offset = m_min(m_max(0,maxY-viewPort.y-viewPort.height),m_max(0,section.y+section.controls["toggle"..i].y-viewPort.y-40))
+				end
+			end
+		end
+		self.focusRecoverySimulation = false
+	end
 	for _, section in ipairs(self.sectionList) do
 		if not section.isOverlay then
 			-- Give sections their actual Y position and let them update
@@ -435,6 +448,13 @@ end
 function CalcsTabClass:SearchMatch(txt)
 	local searchStr = self.controls.search.buf:lower()
 	return string.len(searchStr) > 0 and txt:lower():find(searchStr)
+end
+
+function CalcsTabClass:ShowRecoverySimulation()
+	self.build.viewMode = "CALCS"
+	self.controls.search:SetText("Recovery over Time")
+	self.focusRecoverySimulation = true
+	self.input.showMinion = false
 end
 
 -- Build the calculation output tables
@@ -610,10 +630,11 @@ function CalcsTabClass:PowerBuilder()
 		end
 		for nodeId, node in pairs(nodes) do
 			if not node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId] then
-				if not cache[node.modKey] then
-					cache[node.modKey] = calcFunc({ addNodes = { [node] = true } }, useFullDPS)
+				local cacheKey = tostring(node.id)..":add"
+				if not cache[cacheKey] then
+					cache[cacheKey] = calcFunc({ addNodes = { [node] = true } }, useFullDPS)
 				end
-				local output = cache[node.modKey]
+				local output = cache[cacheKey]
 				calculateAddNodePower(node.power, distance, node, output, function()
 					local pathNodes = { }
 					for _, pathNode in pairs(node.path) do
@@ -622,10 +643,11 @@ function CalcsTabClass:PowerBuilder()
 					return pathNodes
 				end)
 			elseif node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId] then
-				if not cache[node.modKey.."_remove"] then
-					cache[node.modKey.."_remove"] = calcFunc({ removeNodes = { [node] = true } }, useFullDPS)
+				local cacheKey = tostring(node.id)..":remove"
+				if not cache[cacheKey] then
+					cache[cacheKey] = calcFunc({ removeNodes = { [node] = true } }, useFullDPS)
 				end
-				local output = cache[node.modKey.."_remove"]
+				local output = cache[cacheKey]
 				if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 					node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
 					if node.depends and not node.ascendancyName then
@@ -669,10 +691,11 @@ function CalcsTabClass:PowerBuilder()
 				if effect then
 					local effectNode = buildMasteryEffectNode(node, effect)
 					if effectNode.modKey ~= "" then
-						if not cache[effectNode.modKey] then
-							cache[effectNode.modKey] = calcFunc({ addNodes = { [effectNode] = true } }, useFullDPS)
+						local cacheKey = tostring(node.id)..":mastery:"..tostring(effect.id)
+						if not cache[cacheKey] then
+							cache[cacheKey] = calcFunc({ addNodes = { [effectNode] = true } }, useFullDPS)
 						end
-						local output = cache[effectNode.modKey]
+						local output = cache[cacheKey]
 						node.power.masteryEffects[effect.id] = { }
 						local effectPower = node.power.masteryEffects[effect.id]
 						calculateAddNodePower(effectPower, node.pathDist, node, output, function()
@@ -717,10 +740,11 @@ function CalcsTabClass:PowerBuilder()
 		end
 		wipeTable(node.power)
 		if not node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[node.id] then
-			if not cache[node.modKey] then
-				cache[node.modKey] = calcFunc({ addNodes = { [node] = true } }, useFullDPS)
+			local cacheKey = "cluster:"..nodeName
+			if not cache[cacheKey] then
+				cache[cacheKey] = calcFunc({ addNodes = { [node] = true } }, useFullDPS)
 			end
-			local output = cache[node.modKey]
+			local output = cache[cacheKey]
 			if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 				node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
 			end
@@ -754,7 +778,7 @@ function CalcsTabClass:CalculateCombinedOffDefStat(original, modified)
 					(original.EnergyShieldRegenRecovery - modified.EnergyShieldRegenRecovery) / 1000
 	local modifiedDps = modified.CombinedDPS + (modified.Minion and modified.Minion.CombinedDPS or 0)
 	local dpsIncr = original.CombinedDPS + (original.Minion and original.Minion.CombinedDPS or 0) - modifiedDps
-	return dpsIncr / modifiedDps, defence
+	return dpsIncr / m_max(modifiedDps, 1), defence
 end
 
 function CalcsTabClass:GetMiscCalculator()

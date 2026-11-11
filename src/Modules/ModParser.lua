@@ -5256,6 +5256,7 @@ local specialModList = {
 	["tinctures applied to you have (%d+)%% less mana burn rate"] = function(num) return { mod("TinctureManaBurnRate", "MORE", -num, { type = "ActorCondition", actor = "player"}) } end,
 	["the first (%d+) mana burn applied to you have no effect"] = function(num) return { mod("EffectiveManaBurnStacks", "BASE", -num, { type = "ActorCondition", actor = "player"}) } end,
 	["tinctures deactivate when you have (%d+) or more mana burn"] = function(num) return { mod("MaxManaBurnStacks", "BASE", num) } end,
+	["tincture effects linger on you for ([%d%.]+) seconds per mana burn on you when the tincture was deactivated, up to a maximum of ([%d%.]+) seconds"] = function(seconds, _, maximum) return { mod("TinctureLingerPerBurn", "BASE", tonumber(seconds)), mod("TinctureLingerMax", "BASE", tonumber(maximum)) } end,
 	["tinctures inflict weeping wounds instead of mana burn"] = { flag("Condition:WeepingWoundsInsteadOfManaBurn"), },
 	["tincture effects also apply to ranged weapons"] = { flag("TinctureRangedWeapons"), },
 	["you can have an additional tincture active"] = { mod("TinctureLimit", "BASE", 1), },

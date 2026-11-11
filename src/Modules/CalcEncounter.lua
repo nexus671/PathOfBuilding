@@ -197,6 +197,7 @@ function M.audit(input, context)
 		if level == "Review" then warnings = warnings + 1 end
 	end
 	if (input.multiplierManaBurnStacks or 0) > 0 and not context.tincture then add("Review","Mana Burn stacks are configured without an active tincture. They still drain mana; review whether those stacks describe the encounter.") end
+	if context.tincture and input.recoverySimulationTimedEffects ~= false and input.recoverySimulationTinctures ~= false then add("Dynamic","Selected tincture starts at zero burn; resource exhaustion or the stack mastery deactivates it and starts cooldown. Burn clears. Reuse is a separate manual-use policy.") end
 	if context.uncheckedRecovery and not input.recoverySimulationEquippedFlasks then add("Review","An equipped recovery flask is unchecked and unavailable to the simulation. Enable Include equipped recovery flasks to test using it.") end
 	for _,resource in ipairs({"Life","Mana","EnergyShield"}) do
 		if input["conditionFull"..resource] and input["conditionLow"..resource] then add("Review",resource.." is configured as both Full and Low. Check the intended conditions and any special mechanics.") end

@@ -3,6 +3,48 @@ describe("Encounter reporting and comparisons",function()
 	local time=require("Modules.CalcTime")
 	before_each(function() newBuild() end)
 
+	it("formats digit-bearing poison outputs as values instead of raw placeholders",function()
+		assert.are.equal("123.5",formatCalcStr("{1:output:PoisonDPSAt1}",{output={PoisonDPSAt1=123.456}}))
+		assert.are.equal("7",formatCalcStr("{output:PoisonDPSAt10}",{output={PoisonDPSAt10=7}}))
+	end)
+
+	it("resolves saved avoidance power categories and separates player/minion stats",function()
+		local output={MeleeNotHitChance=51,SpellNotHitChance=12,ProjectileNotHitChance=63,Life=100,
+			TotalPoisonDPS=1000,Minion={Life=999,MeleeNotHitChance=7,TotalPoisonDPS=200}}
+		for key,value in pairs({MeleeAvoidChance=51,SpellAvoidChance=12,ProjectileAvoidChance=63,MinionMeleeAvoidChance=7,Life=100,MinionLife=999,TotalPoisonDPS=1200}) do
+			assert.are.equal(value,data.powerStatList.GetFromOutput(output,{stat=key}))
+		end
+	end)
+
+	it("calculates distinct node identities with identical modifiers independently",function()
+		local nodes={}
+		for id=1,2 do nodes[id]={id=id,modKey="same",power={},pathDist=1} end
+		local control=setmetatable({powerStat={stat="Life"},mainEnv={grantedPassives={}},
+			build={spec={nodes=nodes,tree={clusterNodeMap={}},masterySelections={}}}}, {__index=common.classes.CalcsTab})
+		control.GetMiscCalculator=function() return function(override)
+			local node=next(override.addNodes)
+			return {Life=100+node.id}
+		end,{Life=100} end
+		control:PowerBuilder()
+		assert.are.equal(1,nodes[1].power.singleStat); assert.are.equal(2,nodes[2].power.singleStat)
+	end)
+
+	it("preserves final tincture-value provenance across raw-item saves",function()
+		local raw="Item Class: Tinctures\nRarity: Magic\nTest Tincture\nPrismatic Tincture\nQuality: +20%\nImplicits: 0\n29% increased Attack Speed"
+		local item=new("Item"):Item(raw)
+		assert.are.equal("Final",item.tinctureValues)
+		item:BuildAndParseRaw(); assert.are.equal("Final",item.tinctureValues)
+		local base=new("Item"):Item(raw:gsub("Item Class: Tinctures\n",""))
+		assert.is_nil(base.tinctureValues)
+	end)
+
+	it("parses separate tincture lingering duration and cap",function()
+		local list,extra=modLib.parseMod("Tincture Effects Linger on you for 0.5 seconds per Mana Burn on you when the Tincture was deactivated, up to a maximum of 6 seconds")
+		assert.is_nil(extra)
+		assert.are.equal("TinctureLingerPerBurn",list[1].name); assert.are.equal(0.5,list[1].value)
+		assert.are.equal("TinctureLingerMax",list[2].name); assert.are.equal(6,list[2].value)
+	end)
+
 	it("separates indexed incoming rolls while preserving reproducible trial identity",function()
 		local count,trialCounts=0,{ }
 		for trial=1,64 do
@@ -168,6 +210,50 @@ describe("Encounter reporting and comparisons",function()
 		return build.calcsTab.calcsOutput
 	end
 
+	it("does not apply quality twice to game tincture modifiers but retains external effect",function()
+		local claw=new("Item"):Item("Rarity: Normal\nImperial Claw")
+		build.itemsTab:AddItem(claw); build.itemsTab.slots["Weapon 1"].selItemId=claw.id
+		build.skillsTab:PasteSocketGroup("Viper Strike 20/0  1")
+		build.skillsTab:ProcessSocketGroup(build.skillsTab.socketGroupList[1])
+		local raw="Rarity: Magic\nPersevering Prismatic Tincture of Mastery\nPrismatic Tincture\nQuality: +20%\nImplicits: 0\n29% increased Attack Speed"
+		local function speed(text,external)
+			local item=new("Item"):Item(text)
+			build.itemsTab:AddItem(item); build.itemsTab.slots["Flask 1"].selItemId=item.id; build.itemsTab.slots["Flask 1"].active=true
+			build.configTab.input.customMods=external or ""
+			build.configTab:BuildModList(); runCallback("OnFrame")
+			assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
+			return build.calcsTab.calcsOutput.Speed
+		end
+		local created=speed(raw)
+		local final=speed("Item Class: Tinctures\n"..raw)
+		build.itemsTab:SetDisplayItem(new("Item"):Item("Item Class: Tinctures\n"..raw))
+		assert.are.equal(2,build.itemsTab.controls.displayItemTinctureValues.selIndex)
+		build.viewMode="ITEMS"; runCallback("OnFrame"); assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
+		assert.is_true(created > final)
+		assert.are.near(final,speed("Item Class: Tinctures\n"..raw:gsub("Quality: %+20%%","Quality: +0%")),1e-8)
+		assert.is_true(speed("Item Class: Tinctures\n"..raw,"Tinctures applied to you have 20% increased effect") > final)
+	end)
+
+	it("deactivates a native tincture at zero mana and removes its drain",function()
+		local tincture=new("Item"):Item("Rarity: Normal\nPrismatic Tincture")
+		build.itemsTab:AddItem(tincture); build.itemsTab.slots["Flask 1"].selItemId=tincture.id
+		build.itemsTab.slots["Flask 1"].active=true
+		calculate()
+		build.configTab.input.recoverySimulationAttacking=false
+		build.configTab.input.customMods="+3000 to maximum Life\n+60% to Cold Resistance\nCannot Regenerate Mana"
+		build.configTab.input.multiplierManaBurnStacks=99
+		build.configTab:BuildModList(); runCallback("OnFrame")
+		assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
+		local trace=build.calcsTab.calcsEnv.player.recoverySimulationTrace
+		local deactivated
+		for _,event in ipairs(trace.rows) do
+			if event.event:find("Tincture deactivated",1,true) then deactivated=event; break end
+		end
+		assert.is_truthy(deactivated)
+		assert.is_true(deactivated.time > 0.7)
+		assert.is_true(build.calcsTab.calcsOutput.RecoverySimulationSurvivalChance > 0)
+	end)
+
 	it("creates named scenarios using existing saved config sets",function()
 		calculate()
 		local original=build.configTab.activeConfigSetId
@@ -233,7 +319,15 @@ describe("Encounter reporting and comparisons",function()
 		control:SetBreakdownData({{breakdown="RecoverySimulationTimeline"},x=20,y=20,width=120},true)
 		assert.are.equal("TIMELINE",control.sectionList[2].type)
 		assert.are.equal("TABLE",control.sectionList[3].type)
+		for _,row in ipairs(control.sectionList[3].rowList) do assert.are_not.equals("Sample",row.event) end
+		assert.are.equal(true,control.isTimeline)
 		control:Draw({x=0,y=0,width=1920,height=1080})
+		build.configTab:ShowEncounterSimulation()
+		assert.are.equal("Encounter Simulation",build.configTab.controls.search.buf)
+		assert.are.equal(true,build.configTab.varControls.simulateRecovery:IsShown())
+		assert.are.equal(false,build.configTab.varControls.enemyCritChance:IsShown())
+		build.calcsTab:ShowRecoverySimulation()
+		runCallback("OnFrame"); assert(not __mainObject__.promptMsg,__mainObject__.promptMsg)
 		for _,view in ipairs({"CONFIG","CALCS"}) do build.viewMode=view; runCallback("OnFrame"); assert(not __mainObject__.promptMsg,__mainObject__.promptMsg) end
 	end)
 
