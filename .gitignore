@@ -47,3 +47,9 @@ runtime/SimpleGraphic/Screenshots
 
 .emmyrc.json
 .luarc.json
+
+# Headless UI render evidence
+/artifacts/headless-ui/
+
+# Python test bytecode
+__pycache__/

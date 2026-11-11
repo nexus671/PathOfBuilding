@@ -9,13 +9,20 @@ end
 local function button(x,y,w,label,callback)
 	return new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function() safely(callback) end)
 end
-local function rows(lines)
+local function rows(lines,width)
+	width=width or 820
 	local result={ }
 	for _,line in ipairs(lines) do
 		for part in tostring(line):gmatch("[^\r\n]+") do
 			part=StripEscapes(part)
-			while #part > 100 do result[#result+1]={height=18,part:sub(1,100)}; part=part:sub(101) end
-			result[#result+1]={height=18,part}
+			while DrawStringWidth(18,"VAR",part) > width do
+				local low,high=1,#part
+				while low < high do local middle=math.ceil((low+high)/2);if DrawStringWidth(18,"VAR",part:sub(1,middle)) <= width then low=middle else high=middle-1 end end
+				local space=part:sub(1,low):match("^.*()%s")
+				local cut=space and space > 1 and space-1 or low
+				result[#result+1]={height=18,colorCodes.NORMAL..part:sub(1,cut)};part=part:sub(cut+1):gsub("^%s+","")
+			end
+			result[#result+1]={height=18,colorCodes.NORMAL..part}
 		end
 	end
 	return result

@@ -10,13 +10,20 @@ end
 local function edit(controls,key,x,y,w,h,value,prompt,limit)
 	controls[key]=new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,h},value or "",prompt,nil,limit,nil,h > 24 and 16 or nil)
 end
-local function rows(lines)
+local function rows(lines,width)
+	width=width or 388
 	local result={ }
 	for _,line in ipairs(lines) do
 		for part in tostring(line):gmatch("[^\r\n]+") do
 			part=StripEscapes(part)
-			while #part > 50 do result[#result+1]={height=18,part:sub(1,50)}; part=part:sub(51) end
-			result[#result+1]={height=18,part}
+			while DrawStringWidth(18,"VAR",part) > width do
+				local low,high=1,#part
+				while low < high do local middle=math.ceil((low+high)/2);if DrawStringWidth(18,"VAR",part:sub(1,middle)) <= width then low=middle else high=middle-1 end end
+				local space=part:sub(1,low):match("^.*()%s")
+				local cut=space and space > 1 and space-1 or low
+				result[#result+1]={height=18,colorCodes.NORMAL..part:sub(1,cut)};part=part:sub(cut+1):gsub("^%s+","")
+			end
+			result[#result+1]={height=18,colorCodes.NORMAL..part}
 		end
 	end
 	return result
@@ -111,8 +118,23 @@ function Panel.Open(build,project)
 			popup.preview=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,70,628,300},nil,{})
 			local function showChoice()
 				local choice=result.choices[popup.choice:GetSelValueByKey("val")];local lines={"Intangibility: "..choice.state.intangibility.."%"}
-				for line in (choice.itemText or (choice.state.veil and "Pending unveil" or "Destroyed")):gmatch("[^\r\n]+") do lines[#lines+1]=line end
-				popup.preview.list=rows(lines)
+				local preview=choice.state
+				if preview.destroyed then lines[#lines+1]="Destroyed"
+				else
+					local context=simulator.context(model,preview)
+					lines[#lines+1]=context.item.baseName.." | "..preview.rarity
+					lines[#lines+1]="Quality: "..(preview.quality or 0).."%"
+					for _,entry in ipairs(preview.affixes) do
+						local mod=context.byId[entry.id];local values={}
+						for _,line in ipairs(mod) do values[#values+1]=itemLib.applyRange(line,entry.range or 0.5) end
+						lines[#lines+1]=mod.type..(entry.fractured and " (fractured)" or entry.crafted and " (crafted)" or "")..": "..table.concat(values," / ")
+					end
+					for _,entry in ipairs(preview.corruptedImplicits or preview.implicits or {}) do
+						for _,line in ipairs(context.byId[entry.id]) do lines[#lines+1]="Implicit: "..itemLib.applyRange(line,entry.range or 0.5) end
+					end
+					if preview.veil then lines[#lines+1]="Pending unveil: choose a modifier after keeping this outcome." end
+				end
+				popup.preview.list=rows(lines,604)
 			end
 			popup.choice.selFunc=showChoice;showChoice()
 			button(popup,"keep",16,390,200,"Keep ghost outcome",function() local index=popup.choice:GetSelValueByKey("val");keep(result.choices[index].state,index);main:ClosePopup() end)
@@ -219,10 +241,10 @@ function Panel.Open(build,project)
 	label(controls,"trialsLabel",16,354,"Trials / action budget per trial")
 	edit(controls,"trials",16,374,130,24,"200","Trials",5)
 	edit(controls,"budget",162,374,130,24,"20","Action budget",5)
-	label(controls,"priceLabel",16,418,"Price per selected action / currency (optional)")
+	label(controls,"priceLabel",16,418,"Action price / currency / starting item cost (optional)")
 	edit(controls,"price",16,438,130,24,"","Unit price",16)
-	edit(controls,"currency",162,438,130,24,"chaos","Currency",24)
-	edit(controls,"baseCost",308,438,124,24,"","Starting item cost",16)
+	edit(controls,"currency",162,438,130,24,"chaos","Unit",24)
+	edit(controls,"baseCost",308,438,124,24,"","Base cost",16)
 	local function showSimulation(recipe,fromInitial)
 		local budget=assert(tonumber(controls.budget.buf),"Invalid action budget")
 		local prices
@@ -245,7 +267,7 @@ function Panel.Open(build,project)
 		end,function(message) refresh({message}) end,function(progress) refresh({"Simulation running: trial "..progress.trial.." / "..progress.trials}) end)
 		refresh({"Simulation queued. You can cancel it below."})
 	end
-	button(controls,"simulate",16,486,200,"Simulate selected action",function()
+	button(controls,"simulate",16,486,200,"Simulate action",function()
 		local a=action(); a.maxAttempts=math.min(200,assert(tonumber(controls.budget.buf),"Invalid budget")); a.untilTargets=#targets > 0 and copyTable(targets) or nil;a.untilRequirements=(requirements and copyTable(requirements) or nil)
 		showSimulation({steps={a},targets=copyTable(targets),requirements=(requirements and copyTable(requirements) or nil),requiredGroups=requiredGroups},false)
 	end)
@@ -312,6 +334,7 @@ function Panel.Open(build,project)
 		for i,route in pairsSortByKey(result.routeCounts) do lines[#lines+1]={height=24,string.format("Step %d: %d visits, %d actions, %d success routes, %d failure routes",i,route.visits,route.executed,route.success,route.failure)} end
 		local popup={}
 		local resultHeight=math.max(420,math.min(650,main.screenH-60))
+		for _,line in ipairs(lines) do line[1]=colorCodes.NORMAL..line[1] end
 		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,828,resultHeight-130},nil,lines)
 		local kept={};for i,entry in ipairs(result.retainedSuccesses or {}) do kept[#kept+1]={label="Successful item "..i.." (trial "..entry.trial..")",val=i} end
 		popup.item=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,resultHeight-84,540,24},kept)
@@ -330,7 +353,7 @@ function Panel.Open(build,project)
 		end)
 	end)
 	button(controls,"reset",232,530,200,"Reset item",function() state=copyTable(initial); history={}; actions={}; updateOptions();refresh() end)
-	button(controls,"preview",16,height-48,200,"Preview outcome in build",function()
+	button(controls,"preview",16,height-48,200,"Preview in build",function()
 		assert(not state.veil and not state.destroyed,"A pending unveil or destroyed item cannot be previewed")
 		local entry=copyTable(draft); entry.targetItem=simulator.toItem(model,state).raw
 		require("Classes.CraftingProjectControl").Preview(build,entry)

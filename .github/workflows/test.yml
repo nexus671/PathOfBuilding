@@ -12,6 +12,23 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test desktop MCP bridge
         run: node --test spec/AI/*.test.cjs
+  test_headless_ui:
+    runs-on: ubuntu-latest
+    container: ghcr.io/pathofbuildingcommunity/pathofbuilding-tests:latest
+    steps:
+      - uses: actions/checkout@v4
+      # cspell:ignore py3
+      - name: Install headless frame renderer
+        run: apk add python3 py3-pillow
+      - name: Exercise controls and audit frames
+        run: python3 tools/check_headless_ui.py
+      - name: Upload headless UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: headless-ui
+          path: artifacts/headless-ui
+          if-no-files-found: error
   run_tests:
     runs-on: ubuntu-latest
     container: ghcr.io/pathofbuildingcommunity/pathofbuilding-tests:latest
