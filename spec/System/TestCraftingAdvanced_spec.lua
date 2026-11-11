@@ -4,6 +4,82 @@ describe("Advanced native crafting", function()
 	local random=function() return 0.42 end
 	local function rare() return sim.perform(raw,{method="alchemy"},12).state end
 	local function tag(model,id,wanted) for _,value in ipairs(model.byId[id].modTags or {}) do if value == wanted then return true end end end
+	it("stops inside a repeated step as soon as a partial final goal is achieved", function()
+		local model=sim.model(raw);local first=sim.perform(raw,{method="alchemy"},777).state.affixes[1].id
+		local alternative
+		for _,entry in ipairs(model.mods) do if entry.id ~= first and entry.mod.group == model.byId[first].group then alternative=entry.id;break end end
+		assert.is_truthy(alternative)
+		local targets={{anyOf={first}},{anyOf={alternative}}}
+		local result=sim.simulate(raw,{steps={{method="alchemy",maxAttempts=3,untilTargets=targets}},targets=targets,requiredGroups=1},{seed=777,trials=1,maxActions=3})
+		assert.are.equal(1,result.successes)
+		assert.are.equal(1,result.meanActions)
+	end)
+	it("applies Foulborn tier bias without changing the currency's rarity transition", function()
+		local model=sim.model(raw);local state=copyTable(model.initial);state.rarity="RARE"
+		local ordinary=sim.calculate(raw,{method="exalt"},{{anyOf={"FireResist1"}}},state)
+		local biased=sim.calculate(raw,{method="foulborn_exalt"},{{anyOf={"FireResist1"}}},state)
+		assert.is_true(ordinary.successChance > 0)
+		assert.are.equal(0,biased.successChance)
+		local magic=sim.perform(raw,{method="transmute"},1)
+		local upgraded=sim.perform(raw,{method="foulborn_regal"},2,magic.state)
+		assert.are.equal("RARE",upgraded.state.rarity)
+		assert.are.equal(#magic.state.affixes+1,#upgraded.state.affixes)
+		assert.is_nil(upgraded.state.memoryFoulborn)
+		assert.is_nil(upgraded.state.memoryActive)
+	end)
+	it("matches independently published native side weights and refactors retained memory tiers", function()
+		local model=sim.model(raw);local full=sim.pool(model,model.initial);local totals={Prefix=0,Suffix=0}
+		local oldWeight
+		for _,entry in ipairs(full) do local kind=model.byId[entry.id].type;totals[kind]=totals[kind]+entry.weight;if entry.id == "FireResist8" then oldWeight=entry.weight end end
+		assert.are.equal(39275,totals.Prefix)
+		assert.are.equal(78400,totals.Suffix)
+		local active=copyTable(model.initial);active.memoryActive=82
+		local cut=sim.pool(model,active);local found
+		for _,entry in ipairs(cut) do if entry.id == "FireResist8" then found=entry.weight end end
+		assert.are.equal(oldWeight*4,found)
+	end)
+	it("uses the measured memory tier boundary and consumes strands only on relevant currency", function()
+		local model=sim.model(raw.."\nMemory Strands: 82")
+		assert.are.equal(82,model.initial.memoryStrands)
+		local active=copyTable(model.initial);active.memoryActive=82
+		local pool=sim.pool(model,active);local fire={}
+		for _,entry in ipairs(pool) do if model.byId[entry.id].group == "FireResistance" then fire[#fire+1]=entry.id;assert.is_true(model.byId[entry.id].level >= 72) end end
+		assert.are.equal(2,#fire)
+		local rolled=sim.perform(raw.."\nMemory Strands: 82",{method="alchemy"},77)
+		assert.is_true(rolled.state.memoryStrands >= 32 and rolled.state.memoryStrands <= 82)
+		assert.is_nil(rolled.state.memoryActive)
+		local reforged=sim.perform(raw.."\nMemory Strands: 82",{method="harvest_reforge",tag="life"},78,rolled.state)
+		assert.are.equal(rolled.state.memoryStrands,reforged.state.memoryStrands)
+	end)
+	it("samples the published Remembrance observations and independently upgrades an Unravelling affix", function()
+		local result=sim.perform(raw,{method="remembrance"},123)
+		assert.is_true(result.state.memoryStrands >= 10 and result.state.memoryStrands <= 100)
+		assert.is_true(sim.matches(result.state,{},nil,sim.model(raw),{minMemoryStrands=10,maxMemoryStrands=100}))
+		local ring="Rarity: NORMAL\nAmber Amulet\nItem Level: 86"
+		local state=copyTable(sim.model(ring).initial);state.rarity="RARE";state.memoryStrands=100;state.affixes={{id="Strength1",range=0.5}}
+		local upgraded=sim.perform(ring,{method="unravelling"},124,state)
+		assert.are.equal(0,upgraded.state.memoryStrands)
+		assert.is_true(upgraded.state.affixes[1].id ~= "Strength1")
+		assert.are.equal(1,#upgraded.state.affixes)
+		sim.validateState(sim.model(ring),upgraded.state)
+	end)
+	it("models Locus destruction as a terminal paid outcome and pairs distinct corruption groups", function()
+		local model=sim.model(raw)
+		local destroyed=sim.action(model,model.initial,{method="locus"},function() return 0.99 end)
+		assert.is_true(destroyed.destroyed)
+		assert.are.equal(false,pcall(sim.toItem,model,destroyed))
+		assert.are.equal(false,pcall(sim.action,model,destroyed,{method="alchemy"},random))
+		local pair=sim.action(model,model.initial,{method="locus"},function() return 0.01 end)
+		assert.are.equal(2,#pair.corruptedImplicits)
+		assert.is_true(pair.corruptedImplicits[1].id ~= pair.corruptedImplicits[2].id)
+		sim.validateState(model,pair)
+		local id=pair.corruptedImplicits[1].id
+		local result=sim.simulate(raw,{steps={{method="locus"}},targets={{anyOf={id},scope="implicit"}}},{trials=200,maxActions=1,seed=99,prices={locus=1},currency="chaos"})
+		assert.is_true(result.destroyedTrials > 0)
+		assert.are.equal(0,result.budgetExhausted)
+		assert.are.equal(200,result.currencySpent.locus)
+		assert.are.equal(1,result.meanCost)
+	end)
 	it("preserves existing socket colours and includes corrupted bench surcharges", function()
 		local state=copyTable(sim.model(raw).initial);state.corrupted=true;state.sockets={{color="B",group=0},{color="R",group=0}}
 		local result=sim.perform(raw,{method="socket_bench",count=4,linked=true},1,state)
@@ -331,7 +407,7 @@ describe("Advanced native crafting", function()
 		local model=sim.model(raw);local id=model.mods[1].id
 		local controls=panel.Open({steps={{method="alchemy"}},targets={{anyOf={id}}}},{method="scour"},function(recipe) kept=recipe end)
 		controls.add:Click();controls.step.selIndex=1;controls.step.selFunc(1,{val=1})
-		controls.attempts:SetText("3");controls.condition:SelByValue("Until all final target groups match")
+		controls.attempts:SetText("3");controls.condition:SelByValue("Until final targets and properties match")
 		controls.failure:SelByValue(2,"val");controls.success:SelByValue(3,"val");controls.update:Click();controls.keep:Click()
 		assert.is_truthy(kept);assert.are.equal(3,kept.steps[1].maxAttempts);assert.are.equal(2,kept.steps[1].onFailure);assert.are.equal(3,kept.steps[1].onSuccess)
 		assert.is_truthy(kept.steps[1].untilTargets)

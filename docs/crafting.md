@@ -16,13 +16,17 @@ Unpredictable recombination can choose either base, and later actions continue o
 
 Use a blank base or item text whose modifier IDs PoB resolves. Unresolved explicit modifiers are rejected. Imported Eldritch implicits with ambiguous tiers need a structured state before Eldritch crafting continues.
 
+**Orb of Remembrance** samples published observations. Memory strands restrict tiers for applicable currencies; **Orb of Unravelling** consumes the remaining strands to attempt upgrades. Foulborn Augmentation, Regal and Exalted orbs add a separate tier bias. Their estimates and uncertain cases are listed under **Coverage**. Import counts with a `Memory Strands: 82` line or continue the structured state returned by MCP; native PoB item text alone does not retain this property.
+
+**Locus of Corruption** can destroy the hypothetical item. Destruction stops that trial, retains its currency spending and prevents previewing a nonexistent item. **Undo currency** still restores the prior emulated state.
+
 ## Set targets
 
 Add a modifier on **Target conditions**. Separate groups require all groups by default; **Add alternative** makes an OR choice within the last group. **Target counts, rolls and item properties** edits the last group and final conditions:
 
 - Required or excluded modifiers, matching counts and minimum roll percentages.
 - Explicit or implicit modifiers, and how many groups must match.
-- Open affix slots, affix counts, quality, sockets, links and corruption.
+- Open affix slots, affix counts, quality, sockets, links, corruption and memory strands.
 
 Roll percentage means the position within a modifier's native range. For several sampled values, every value must meet the threshold. An unfinished unveil never counts as a completed target.
 

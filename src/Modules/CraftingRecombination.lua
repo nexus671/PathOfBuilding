@@ -30,10 +30,18 @@ function R.extend(M,A,api)
 	function M.matches(state,targets,rarity,model,requirements,requiredGroups) return matches(state,targets,rarity,model and context(model,state),requirements,requiredGroups) end
 	function M.validateState(model,state) return validate(context(model,state),state) end
 	local function groups(model,id) local metadata=A.data().mods[id];return metadata and metadata.groups or {model.byId[id].group} end
+	local function signature(mod) return table.concat(mod," / "):gsub("%b()","#"):gsub("%d+%.?%d*","#"):lower() end
+	local function naturalCraft(model,entry)
+		if not entry.crafted then return nil end
+		if not model.naturalCraftMatches then
+			model.naturalCraftMatches={};for _,candidate in ipairs(model.mods) do model.naturalCraftMatches[candidate.mod.type..signature(candidate.mod)]=candidate.id end
+		end
+		return model.naturalCraftMatches[model.byId[entry.id].type..signature(model.byId[entry.id])]
+	end
 	local function exclusive(model,entry)
 		local mod=model.byId[entry.id];local meta=A.data().mods[entry.id]
 		if entry.fractured then return false end
-		return entry.crafted and mod.affix ~= "Upgraded" and mod.affix ~= "of the Craft" or meta and meta.is_essence_only or data.veiledMods[entry.id] or data.beastCraft[entry.id] or data.itemMods.Delve[entry.id] or mod.affix:find("Elevated",1,true) or mod.affix:find("Incursion",1,true) or mod.affix:find("Chosen",1,true)
+		return entry.crafted and not naturalCraft(model,entry) or meta and meta.is_essence_only or data.veiledMods[entry.id] or data.beastCraft[entry.id] or data.itemMods.Delve[entry.id] or mod.affix:find("Elevated",1,true) or mod.affix:find("Incursion",1,true) or mod.affix:find("Chosen",1,true)
 	end
 	local function drawCount(count,random)
 		local row=assert(countWeights[count+1],"Recombination pool exceeds six affixes per side")
@@ -42,6 +50,7 @@ function R.extend(M,A,api)
 		return #row-1
 	end
 	function M.action(model,input,craft,random)
+		assert(not input.destroyed,"The hypothetical item was destroyed")
 		local current=context(model,input)
 		if craft.method ~= "recombine" then return action(current,input,craft,random) end
 		assert(not input.corrupted and not input.mirrored and not input.veil,"Recombination requires an uncorrupted, non-mirrored item with no pending unveil")
@@ -61,11 +70,18 @@ function R.extend(M,A,api)
 			for _,entry in ipairs(from.state.affixes) do
 				if not entry.fractured or source == host then
 					local mod=from.model.byId[entry.id]
-					pools[mod.type][#pools[mod.type]+1]={entry=entry,source=source,exclusive=exclusive(from.model,entry)}
+					pools[mod.type][#pools[mod.type]+1]={entry=entry,source=source,exclusive=exclusive(from.model,entry),natural=naturalCraft(from.model,entry)}
 				end
 			end
 		end
-		local counts={Prefix=drawCount(#pools.Prefix,random),Suffix=drawCount(#pools.Suffix,random)}
+		local sizes,regular,exclusives={},{},{}
+		for _,kind in ipairs({"Prefix","Suffix"}) do
+			regular[kind],exclusives[kind]=0,0
+			for _,candidate in ipairs(pools[kind]) do local counts=candidate.exclusive and exclusives or regular;counts[kind]=counts[kind]+1 end
+			sizes[kind]=regular[kind]+math.min(1,exclusives[kind])
+		end
+		assert(not (regular.Prefix == 0 and exclusives.Prefix > 0 and regular.Suffix > 0 or regular.Suffix == 0 and exclusives.Suffix > 0 and regular.Prefix > 0),"Exclusive-only side ordering changed in 3.26; this combination needs a verified probability model")
+		local counts={Prefix=drawCount(sizes.Prefix,random),Suffix=drawCount(sizes.Suffix,random)}
 		if #pools.Prefix == 1 and #pools.Suffix == 1 then
 			local outcome=math.floor(random()*3);counts.Prefix=outcome == 1 and 0 or 1;counts.Suffix=outcome == 0 and 0 or 1
 		end
@@ -79,7 +95,8 @@ function R.extend(M,A,api)
 					local legal=mod and (not candidate.exclusive or not hasExclusive)
 					if legal then for _,group in ipairs(groups(base,entry.id)) do if used[group] then legal=false end end end
 					-- Native spawn tags enforce defence, attribute-base and influence restrictions.
-					if legal and not candidate.exclusive and not entry.fractured and base.item:GetModSpawnWeight(mod,base.extraTags) <= 0 then legal=false end
+					local natural=candidate.natural and base.byId[candidate.natural] or mod
+					if legal and not candidate.exclusive and not entry.fractured and base.item:GetModSpawnWeight(natural,base.extraTags) <= 0 then legal=false end
 					if legal then eligible[#eligible+1]=candidate end
 				end
 				if #eligible == 0 then break end
@@ -95,6 +112,6 @@ function R.extend(M,A,api)
 		for _,kind in ipairs({"Armour","Evasion","EnergyShield","Ward"}) do if base.item.base.armour and base.item.base.armour[kind.."BaseMin"] then state.percentiles[kind]=random() end end
 		return state
 	end
-	M.limits[#M.limits+1]="Unpredictable recombination is experimental: measured count tables are normalized, eligible entries are chosen uniformly, and only one exclusive modifier is retained. Hidden selection weights and newer league interactions remain uncertain. Predictable recombination is not modeled."
+	M.limits[#M.limits+1]="Unpredictable recombination is experimental: rounded count tables are normalized and eligible entries are chosen uniformly. Exclusive modifiers contribute at most one count per side under 3.26 observations. Exclusive-only side ordering is unresolved and rejected. Hidden weights remain uncertain; predictable recombination is not modeled."
 end
 return R

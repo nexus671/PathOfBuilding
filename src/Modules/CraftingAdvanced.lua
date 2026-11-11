@@ -192,6 +192,7 @@ function A.extend(M,api)
 				if weight > 0 then result[#result+1]={id=id,weight=weight} end
 			end
 		end
+		if M.adjustPool then result=M.adjustPool(model,state,result,options,source,item,counts.tags) end
 		return result
 	end
 	function M.pool(model,state)
@@ -640,13 +641,16 @@ function A.extend(M,api)
 	function M.calculate(raw,action,targets,initialState)
 		local model=M.model(raw);local state=initialState and M.validateState(model,initialState) or copyTable(model.initial)
 		if M.context then model=M.context(model,state) end
-		assert(action.method == "exalt" or action.method == "augmentation" or action.method == "regal" or action.method == "influence_exalt","Exact next-mod odds support augmentation, regal, exalt and influence slams")
+		local method=M.baseCurrency and M.baseCurrency(action) or action.method
+		assert(method == "exalt" or method == "augmentation" or method == "regal" or method == "influence_exalt","Exact next-mod odds support augmentation, regal, exalt and influence slams")
 		M.validateRecipe({steps={action},targets=targets})
 		for _,group in ipairs(targets) do assert(not group.minRoll,"Use simulation for roll-value thresholds") end
 		-- Validate the transition independently, then enumerate every legal next modifier.
 		M.action(model,state,action,function() return 0.5 end)
-		if action.method == "regal" then state.rarity="RARE" end
+		if method == "regal" then state.rarity="RARE" end
 		local options={}
+		if M.consumesStrands and M.consumesStrands(action) and (state.memoryStrands or 0) > 0 then state.memoryActive=state.memoryStrands end
+		if M.isFoulbornCurrency and M.isFoulbornCurrency(action) then state.memoryFoulborn=true end
 		if action.method == "influence_exalt" then state.influences={action.influence};options.influence=action.influence end
 		local entries=pool(model,state,options);local total,success=0,0;local outcomes={}
 		for _,entry in ipairs(entries) do
@@ -666,6 +670,7 @@ function A.extend(M,api)
 	require("Modules.CraftingProperties").extend(M,A,api)
 	require("Modules.CraftingCorruption").extend(M,A,api)
 	require("Modules.CraftingSockets").extend(M,A,api)
+	require("Modules.CraftingMemory").extend(M,A,api)
 	require("Modules.CraftingRecombination").extend(M,A,api)
 end
 return A

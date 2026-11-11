@@ -19,11 +19,11 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep)
 	controls.scope=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,108,376,24},{"Explicit modifiers","Implicit modifiers"})
 	controls.scope:SelByValue(group and group.scope == "implicit" and "Implicit modifiers" or "Explicit modifiers")
 	edit("groups",408,108,requiredGroups,"Required groups (blank=all)")
-	local properties={{"openPrefixes","Open prefixes"},{"openSuffixes","Open suffixes"},{"minAffixes","Minimum affixes"},{"maxAffixes","Maximum affixes"},{"minQuality","Minimum quality"},{"sockets","Minimum sockets"},{"links","Minimum linked sockets"}}
+	local properties={{"openPrefixes","Open prefixes"},{"openSuffixes","Open suffixes"},{"minAffixes","Minimum affixes"},{"maxAffixes","Maximum affixes"},{"minQuality","Minimum quality"},{"sockets","Minimum sockets"},{"links","Minimum linked sockets"},{"minMemoryStrands","Minimum memory strands"},{"maxMemoryStrands","Maximum memory strands"}}
 	for i,entry in ipairs(properties) do edit(entry[1],16+(i-1)%3*196,170+math.floor((i-1)/3)*48,conditions[entry[1]],entry[2]) end
-	controls.corrupted=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{212,266,376,24},{"Any corruption state","Must be corrupted","Must be uncorrupted"})
+	controls.corrupted=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,314,572,24},{"Any corruption state","Must be corrupted","Must be uncorrupted"})
 	controls.corrupted:SelByValue(conditions.corrupted == true and "Must be corrupted" or conditions.corrupted == false and "Must be uncorrupted" or "Any corruption state")
-	button("keep",16,332,220,"Keep target conditions",function()
+	button("keep",16,364,220,"Keep target conditions",function()
 		if group then
 			group.atLeast=assert(tonumber(controls.count.buf),"Enter a matching-mod count")
 			group.minRoll=controls.roll.buf ~= "" and assert(tonumber(controls.roll.buf),"Enter a minimum roll percent")/100 or nil
@@ -36,8 +36,8 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep)
 		sim.validateRecipe({steps={{method="chaos"}},targets=groups,requirements=result,requiredGroups=required})
 		onKeep(groups,result,required);main:ClosePopup()
 	end)
-	button("close",492,332,116,"Close",function() main:ClosePopup() end)
-	main:OpenPopup(624,380,"Crafting target conditions",controls,nil,nil,"close")
+	button("close",492,364,116,"Close",function() main:ClosePopup() end)
+	main:OpenPopup(624,412,"Crafting target conditions",controls,nil,nil,"close")
 	return controls
 end
 return Panel

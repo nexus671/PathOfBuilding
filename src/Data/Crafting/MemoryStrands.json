@@ -1,0 +1,365 @@
+{
+  "source": "https://www.reddit.com/r/pathofexile/comments/1wr9445/329_everything_you_need_to_know_about_memory/",
+  "spreadsheet": "https://docs.google.com/spreadsheets/d/1UKTS29e1XghGTQQJBiu7TR3vrancnZxiyN3tBzj30WI/edit",
+  "sheet": "remembrance data",
+  "sheetXmlSha256": "217aff532e2c60c8c2b148b477285f88c187fd2502685f7ebcc1549cbabb481f",
+  "trials": 2255,
+  "distribution": [
+    {
+      "strands": 10,
+      "observations": 20
+    },
+    {
+      "strands": 11,
+      "observations": 32
+    },
+    {
+      "strands": 12,
+      "observations": 31
+    },
+    {
+      "strands": 13,
+      "observations": 21
+    },
+    {
+      "strands": 14,
+      "observations": 31
+    },
+    {
+      "strands": 15,
+      "observations": 36
+    },
+    {
+      "strands": 16,
+      "observations": 25
+    },
+    {
+      "strands": 17,
+      "observations": 37
+    },
+    {
+      "strands": 18,
+      "observations": 32
+    },
+    {
+      "strands": 19,
+      "observations": 40
+    },
+    {
+      "strands": 20,
+      "observations": 43
+    },
+    {
+      "strands": 21,
+      "observations": 45
+    },
+    {
+      "strands": 22,
+      "observations": 39
+    },
+    {
+      "strands": 23,
+      "observations": 37
+    },
+    {
+      "strands": 24,
+      "observations": 32
+    },
+    {
+      "strands": 25,
+      "observations": 38
+    },
+    {
+      "strands": 26,
+      "observations": 37
+    },
+    {
+      "strands": 27,
+      "observations": 43
+    },
+    {
+      "strands": 28,
+      "observations": 35
+    },
+    {
+      "strands": 29,
+      "observations": 50
+    },
+    {
+      "strands": 30,
+      "observations": 43
+    },
+    {
+      "strands": 31,
+      "observations": 42
+    },
+    {
+      "strands": 32,
+      "observations": 48
+    },
+    {
+      "strands": 33,
+      "observations": 30
+    },
+    {
+      "strands": 34,
+      "observations": 55
+    },
+    {
+      "strands": 35,
+      "observations": 35
+    },
+    {
+      "strands": 36,
+      "observations": 46
+    },
+    {
+      "strands": 37,
+      "observations": 32
+    },
+    {
+      "strands": 38,
+      "observations": 44
+    },
+    {
+      "strands": 39,
+      "observations": 51
+    },
+    {
+      "strands": 40,
+      "observations": 43
+    },
+    {
+      "strands": 41,
+      "observations": 46
+    },
+    {
+      "strands": 42,
+      "observations": 48
+    },
+    {
+      "strands": 43,
+      "observations": 31
+    },
+    {
+      "strands": 44,
+      "observations": 34
+    },
+    {
+      "strands": 45,
+      "observations": 41
+    },
+    {
+      "strands": 46,
+      "observations": 34
+    },
+    {
+      "strands": 47,
+      "observations": 37
+    },
+    {
+      "strands": 48,
+      "observations": 32
+    },
+    {
+      "strands": 49,
+      "observations": 33
+    },
+    {
+      "strands": 50,
+      "observations": 39
+    },
+    {
+      "strands": 51,
+      "observations": 40
+    },
+    {
+      "strands": 52,
+      "observations": 36
+    },
+    {
+      "strands": 53,
+      "observations": 34
+    },
+    {
+      "strands": 54,
+      "observations": 27
+    },
+    {
+      "strands": 55,
+      "observations": 31
+    },
+    {
+      "strands": 56,
+      "observations": 31
+    },
+    {
+      "strands": 57,
+      "observations": 24
+    },
+    {
+      "strands": 58,
+      "observations": 21
+    },
+    {
+      "strands": 59,
+      "observations": 34
+    },
+    {
+      "strands": 60,
+      "observations": 23
+    },
+    {
+      "strands": 61,
+      "observations": 22
+    },
+    {
+      "strands": 62,
+      "observations": 20
+    },
+    {
+      "strands": 63,
+      "observations": 28
+    },
+    {
+      "strands": 64,
+      "observations": 23
+    },
+    {
+      "strands": 65,
+      "observations": 22
+    },
+    {
+      "strands": 66,
+      "observations": 21
+    },
+    {
+      "strands": 67,
+      "observations": 21
+    },
+    {
+      "strands": 68,
+      "observations": 17
+    },
+    {
+      "strands": 69,
+      "observations": 19
+    },
+    {
+      "strands": 70,
+      "observations": 18
+    },
+    {
+      "strands": 71,
+      "observations": 14
+    },
+    {
+      "strands": 72,
+      "observations": 15
+    },
+    {
+      "strands": 73,
+      "observations": 17
+    },
+    {
+      "strands": 74,
+      "observations": 14
+    },
+    {
+      "strands": 75,
+      "observations": 11
+    },
+    {
+      "strands": 76,
+      "observations": 8
+    },
+    {
+      "strands": 77,
+      "observations": 9
+    },
+    {
+      "strands": 78,
+      "observations": 9
+    },
+    {
+      "strands": 79,
+      "observations": 6
+    },
+    {
+      "strands": 80,
+      "observations": 14
+    },
+    {
+      "strands": 81,
+      "observations": 7
+    },
+    {
+      "strands": 82,
+      "observations": 6
+    },
+    {
+      "strands": 83,
+      "observations": 5
+    },
+    {
+      "strands": 84,
+      "observations": 8
+    },
+    {
+      "strands": 85,
+      "observations": 5
+    },
+    {
+      "strands": 86,
+      "observations": 2
+    },
+    {
+      "strands": 87,
+      "observations": 8
+    },
+    {
+      "strands": 88,
+      "observations": 5
+    },
+    {
+      "strands": 89,
+      "observations": 5
+    },
+    {
+      "strands": 90,
+      "observations": 5
+    },
+    {
+      "strands": 91,
+      "observations": 3
+    },
+    {
+      "strands": 92,
+      "observations": 3
+    },
+    {
+      "strands": 93,
+      "observations": 3
+    },
+    {
+      "strands": 94,
+      "observations": 5
+    },
+    {
+      "strands": 95,
+      "observations": 1
+    },
+    {
+      "strands": 97,
+      "observations": 2
+    },
+    {
+      "strands": 98,
+      "observations": 2
+    },
+    {
+      "strands": 100,
+      "observations": 3
+    }
+  ]
+}

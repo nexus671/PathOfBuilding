@@ -249,7 +249,7 @@ function M.action(model,input,action,random)
 end
 
 function M.matches(state,targets,rarity,model,requirements,requiredGroups)
- if state.veil then return false end
+ if state.veil or state.destroyed then return false end
  if rarity and state.rarity ~= rarity then return false end
  local matched=0
  for _,group in ipairs(targets) do
@@ -272,6 +272,8 @@ function M.matches(state,targets,rarity,model,requirements,requiredGroups)
   if requirements.openSuffixes and caps.Suffix-suffix < requirements.openSuffixes then return false end
   if requirements.minAffixes and c.total < requirements.minAffixes or requirements.maxAffixes and c.total > requirements.maxAffixes then return false end
   if requirements.minQuality and (state.quality or model.item.quality or 0) < requirements.minQuality then return false end
+  if requirements.minMemoryStrands and (state.memoryStrands or 0) < requirements.minMemoryStrands then return false end
+  if requirements.maxMemoryStrands and (state.memoryStrands or 0) > requirements.maxMemoryStrands then return false end
   if requirements.corrupted ~= nil and (state.corrupted or false) ~= requirements.corrupted then return false end
   if requirements.sockets and #(state.sockets or model.item.sockets or {}) < requirements.sockets then return false end
   if requirements.links then
@@ -292,7 +294,7 @@ function M.validateRecipe(recipe)
 	local function validateRequirements(requirements)
 		if not requirements then return end
 		assert(type(requirements) == "table" and next(requirements),"Choose at least one property condition")
-		local limits={openPrefixes=3,openSuffixes=3,minAffixes=6,maxAffixes=6,minQuality=30,sockets=6,links=6}
+		local limits={openPrefixes=3,openSuffixes=3,minAffixes=6,maxAffixes=6,minQuality=30,sockets=6,links=6,minMemoryStrands=100,maxMemoryStrands=100}
 		for key,value in pairs(requirements) do if key == "corrupted" then assert(type(value) == "boolean","Invalid corruption condition") else integer(value,0,assert(limits[key],"Unknown property condition"),key) end end
 	end
 	validateRequirements(recipe.requirements)
@@ -376,14 +378,14 @@ function M.simulate(raw,recipe,options)
 	local successes,totalCost,totalActions,totalExecuted=0,0,0,0
 	local spent,missing,errors,times={},{},{},{}
 	local actionHistogram,costSamples,successfulCosts,routes={},{},{},{}
-	local budgetExhausted=0
+	local budgetExhausted,destroyedTrials=0,0
 	local sample,sampleSuccess
 	for trial=1,trials do
 		if options.checkpoint then options.checkpoint({trial=trial,trials=trials,successes=successes}) end
 		local state=copyState(model.initial)
 		local random=rng(encounter.seed(seed,trial,31))
 		local at,actions,cost=1,0,0
-		while at <= #recipe.steps and actions < maxActions and not M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups) do
+		while at <= #recipe.steps and actions < maxActions and not state.destroyed and not M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups) do
 			local step=recipe.steps[at]
 			local route=routes[at] or {visits=0,success=0,failure=0,executed=0};routes[at]=route;route.visits=route.visits+1
 			local success=false
@@ -403,6 +405,8 @@ function M.simulate(raw,recipe,options)
 					local price=options.prices and options.prices[key]
 					if price then cost=cost+price*amount else missing[key]=true end
 				end
+				if state.destroyed then break end
+				if M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups) then success=true;break end
 				if not (step.untilTargets or step.untilRequirements) or M.matches(state,step.untilTargets or {},nil,model,step.untilRequirements) then success=true; break end
 			end
 			route[success and "success" or "failure"]=route[success and "success" or "failure"]+1
@@ -410,7 +414,8 @@ function M.simulate(raw,recipe,options)
 		end
 		local hit=M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups)
 		if hit then successes=successes+1; times[#times+1]=actions end
-		if not hit and actions >= maxActions then budgetExhausted=budgetExhausted+1 end
+		if state.destroyed then destroyedTrials=destroyedTrials+1 end
+		if not hit and not state.destroyed and at <= #recipe.steps and actions >= maxActions then budgetExhausted=budgetExhausted+1 end
 		local bucket=actionHistogram[actions] or {actions=actions,trials=0,successes=0};actionHistogram[actions]=bucket;bucket.trials=bucket.trials+1;if hit then bucket.successes=bucket.successes+1 end
 		costSamples[#costSamples+1]=cost;if hit then successfulCosts[#successfulCosts+1]=cost end
 		if not sample or hit and not sampleSuccess then sample,sampleSuccess=state,hit end
@@ -426,9 +431,9 @@ function M.simulate(raw,recipe,options)
 	local distribution={};for _,bucket in pairs(actionHistogram) do distribution[#distribution+1]=bucket end;table.sort(distribution,function(a,b) return a.actions < b.actions end)
 	assert(totalExecuted > 0 or successes > 0,"Recipe could not execute a supported action; inspect its starting rarity and open affixes")
 	local result={trials=trials,successes=successes,successChance=successes/trials*100,confidenceLow=low,confidenceHigh=high,seed=seed,maxActions=maxActions,
-		meanActions=totalActions/trials,currencySpent=spent,unpriced=missing,transitionErrors=errors,limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=M.toItem(model,sample).raw,sampleState=sample,
+		meanActions=totalActions/trials,currencySpent=spent,unpriced=missing,transitionErrors=errors,limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
 		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units",
-		actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted}
+		actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
 	if not next(missing) then result.meanCost=totalCost/trials; result.costPerSuccess=successes > 0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts) end
 	return result
 end
@@ -437,7 +442,7 @@ function M.perform(raw,action,seed,initialState)
 	local model=M.model(raw)
 	if initialState then model.initial=M.validateState(model,initialState) end
 	local state=M.action(model,model.initial,action,rng(encounter.seed(integer(seed or 104729,1,2147483646,"seed"),1,31)))
-	return {itemText=not state.veil and M.toItem(model,state).raw or nil,state=state,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
+	return {itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
 end
 
 function M.catalog(raw,query,limit)

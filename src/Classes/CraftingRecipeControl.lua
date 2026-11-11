@@ -16,14 +16,14 @@ function Panel.Open(recipe,currentAction,onKeep)
 	controls.graph=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,62,828,264},nil,{})
 	controls.step=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,350,828,24},{})
 	controls.attempts=edit(16,400,180,"1","Attempts per visit",3)
-	controls.condition=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{212,400,632,24},{"After a successful action","Until all final target groups match","Keep custom conditions"})
+	controls.condition=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{212,400,632,24},{"After a successful action","Until final targets and properties match","Keep custom conditions"})
 	controls.success=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,456,404,24},{})
 	controls.failure=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{440,456,404,24},{})
 	controls.routeLabel=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,436,0,14},"Success route                                                   Failure / exhausted attempts route")
 	local function loadStep()
 		local step=draft.steps[selected];if not step then return end
 		controls.attempts:SetText(tostring(step.maxAttempts or 1))
-		controls.condition:SelByValue(step.untilTargets and "Keep custom conditions" or "After a successful action")
+		controls.condition:SelByValue((step.untilTargets or step.untilRequirements) and "Keep custom conditions" or "After a successful action")
 		controls.success:SelByValue(step.onSuccess or 0,"val");controls.failure:SelByValue(step.onFailure or 0,"val")
 	end
 	local function refresh()
@@ -33,7 +33,7 @@ function Panel.Open(recipe,currentAction,onKeep)
 			routes[#routes+1]={label="Step "..i,val=i}
 			lines[#lines+1]={height=24,string.format("[%d] %s | up to %d attempt(s)",i,sim.labels[step.method] or step.method,step.maxAttempts or 1)}
 			lines[#lines+1]={height=22,string.format("      Success -> %s    Failure -> %s",step.onSuccess or i+1,step.onFailure or i+1)}
-			if step.untilTargets then lines[#lines+1]={height=20,"      Stop repeating when the selected target conditions match."} end
+			if step.untilTargets or step.untilRequirements then lines[#lines+1]={height=20,"      Stop repeating when the selected target conditions match."} end
 		end
 		routes[#routes+1]={label="End recipe",val=#draft.steps+1}
 		controls.graph.list=lines;controls.step:SetList(list);controls.step:SelByValue(selected,"val")
@@ -54,7 +54,7 @@ function Panel.Open(recipe,currentAction,onKeep)
 		local step=assert(draft.steps[selected],"Select a step")
 		step.maxAttempts=assert(tonumber(controls.attempts.buf),"Enter an attempt count")
 		local condition=controls.condition:GetSelValue()
-		if condition == "Until all final target groups match" then assert(#draft.targets > 0,"Choose target groups in the emulator first");step.untilTargets=copyTable(draft.targets);step.untilRequirements=nil
+		if condition == "Until final targets and properties match" then assert(#draft.targets > 0 or draft.requirements,"Choose targets or properties in the emulator first");step.untilTargets=#draft.targets > 0 and copyTable(draft.targets) or nil;step.untilRequirements=draft.requirements and copyTable(draft.requirements) or nil
 		elseif condition == "After a successful action" then step.untilTargets=nil;step.untilRequirements=nil end
 		local success,failure=controls.success:GetSelValueByKey("val"),controls.failure:GetSelValueByKey("val")
 		step.onSuccess=success ~= 0 and success or nil;step.onFailure=failure ~= 0 and failure or nil

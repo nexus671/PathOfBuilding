@@ -14,8 +14,9 @@ The independent engine targets current PoE 1 using PoB modifiers and an immutabl
 | Eldritch | Ember/Ichor, Conflict through tier 6, dominant-side currencies | Ambiguous imported tiers require structured input. |
 | Properties | Blessed, Sacred, quality, catalysts, tainted quality/catalysts | Some multi-stat precision remains approximate. |
 | Sockets | Bench count/links, Binding, Chromatics, non-white bench, tainted socket currencies | Ordinary random Jeweller/Fusing and Abyssal socket interactions are incomplete. |
-| Corruption | Equipment Vaal branches, tainted Exalted/Chaos | Brick socket/link rerolls, jewels/flasks, Locus and unique transformations are incomplete. |
-| Recombination | Either base, item level, count tables, conflicts, exclusivity, fracture host, base eligibility, continued crafting | Experimental unpredictable model; hidden weights, some exclusive families and predictable mode are unresolved. |
+| Corruption | Equipment Vaal and Locus branches, paired implicits, terminal destruction, tainted Exalted/Chaos | Brick socket/link rerolls, jewels/flasks and unique transformations are incomplete. Locus excludes special transformation bases, fractures, synthesis and meta modifiers. |
+| Memory | Remembrance observations, tier filtering, consumption, Unravelling, Foulborn Augmentation/Regal/Exalted | Empirical models. Some consumption ceilings and behavior without strands are inferred. Counts are retained in structured state. |
+| Recombination | Either base, item level, count tables, conflicts, exclusivity, fracture host, base eligibility, continued crafting | Experimental unpredictable model. Exclusive-only side ordering is rejected; hidden weights, some exclusive families and predictable mode are unresolved. |
 | Ducats | Cyaxan, Genteel, Brinehook, Merrick | Individual actions only. Allflame selection, ghost forms, Intangibility and remaining Ducats are incomplete. |
 | Planning | Rich targets, bounded routes/loops, background jobs, cancellation, prices, percentiles, distributions, next-affix enumeration, fossil comparison | No globally cheapest policy guarantee. |
 
@@ -26,6 +27,8 @@ The independent engine targets current PoE 1 using PoB modifiers and an immutabl
 - [Craft of Exile's metamod reference](https://www.craftofexile.com/metamods) informs action-specific protection. Undocumented game changes can lag detection.
 - Conflict uses the [empirical tier-difference model](https://www.reddit.com/r/pathofexile/comments/13y05ag/orb_of_conflict_rates_50_11n_to_upgrade_per_n/).
 - Recombination uses [community count measurements](https://github.com/Maliffic/Resimbulator/blob/master/docs/guide.txt), normalizing rounded rows. Eligible entries are chosen uniformly; hidden weights remain uncertain.
+- [3.26 follow-up measurements](https://www.reddit.com/r/pathofexile/comments/1ldc3lz/326_recomb_psas_a_few_useful_tipsconfirmations/) supersede the old exclusive-mod filler behavior. Exclusive entries contribute at most one count per side; unresolved exclusive-only ordering is rejected.
+- Memory mechanics use the [3.29 measurements and published data](https://www.reddit.com/r/pathofexile/comments/1wr9445/329_everything_you_need_to_know_about_memory/) and [subsequent statistical analysis](https://github.com/Rasslabsya4el/crafting-system/blob/main/docs/research/2026-11-01-strand-sheet-fit.md). Retained tiers are weighted by total/retained tier count. Remembrance samples the 2,255 recorded outcomes rather than assuming a uniform distribution. The shifted Exalted consumption table and Foulborn behavior without strands remain estimates.
 - Socket colours use [Siveran CC0 formulas](https://github.com/Siveran/siveran.github.io/blob/master/src/Main.ts). Tainted branches assume equal positive/negative chances. Added sockets follow the white-socket rule in [3.29 notes](https://www.pathofexile.com/forum/view-thread/3985332).
 - Wilson intervals measure sampling uncertainty, not uncertainty in rules or data.
 

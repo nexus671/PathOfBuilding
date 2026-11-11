@@ -43,9 +43,11 @@ function Panel.Open(build,project)
 	local function refresh(extra)
 		local lines={ }
 		if extra then for _,line in ipairs(extra) do lines[#lines+1]=line end end
+		if state.destroyed then lines[#lines+1]="The hypothetical item was destroyed. Undo or reset to continue.";controls.output.list=rows(lines);return end
 		local item=simulator.toItem(model,state)
 		lines[#lines+1]=""
 		lines[#lines+1]=item.baseName.." | "..state.rarity.." | item level "..item.itemLevel
+		lines[#lines+1]="Memory strands: "..(state.memoryStrands or 0)
 		for _,entry in ipairs(state.affixes) do
 			local mod=model.byId[entry.id]
 			local values={ }
@@ -207,6 +209,7 @@ function Panel.Open(build,project)
 			lines[#lines+1]={height=20,string.format("%4d | %s %d trials, %d successes",bucket.actions,string.rep("|",math.max(1,math.floor(bucket.trials/result.trials*50))),bucket.trials,bucket.successes)}
 		end
 		lines[#lines+1]={height=26,"Trials stopped at the action budget: "..result.budgetExhausted}
+		lines[#lines+1]={height=24,"Hypothetical items destroyed: "..result.destroyedTrials}
 		local function show(title,values)
 			if not values then return end
 			lines[#lines+1]={height=26,title}
@@ -224,7 +227,7 @@ function Panel.Open(build,project)
 	end)
 	button(controls,"reset",232,530,200,"Reset item",function() state=copyTable(initial); history={}; actions={}; updateOptions();refresh() end)
 	button(controls,"preview",16,height-48,200,"Preview outcome in build",function()
-		assert(not state.veil,"Choose the pending unveil before previewing this item")
+		assert(not state.veil and not state.destroyed,"A pending unveil or destroyed item cannot be previewed")
 		local entry=copyTable(draft); entry.targetItem=simulator.toItem(model,state).raw
 		require("Classes.CraftingProjectControl").Preview(build,entry)
 	end)
