@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-nexus.124fb82b" />
+	<Version number="2.67.2-nexus.ea8566d6" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/" />
 	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/runtime/" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding/{branch}/src/" />
@@ -123,7 +123,7 @@
 	<File name="Assets/warlordicon.png" part="program" sha1="cca050c84884f5c0bb1380ece51d3c4b32be4900" />
 	<File name="Classes/BuildListControl.lua" part="program" sha1="f60f0d7f6aecbe851db896913cd1aa707c7fb304" />
 	<File name="Classes/ButtonControl.lua" part="program" sha1="dd46384fc87d495e7ef5a11803cfc70360ac8bf1" />
-	<File name="Classes/CalcBreakdownControl.lua" part="program" sha1="ca25b7c961fb3e5547cb44d271ed83612d628703" />
+	<File name="Classes/CalcBreakdownControl.lua" part="program" sha1="c390ae01f4f9bd08e9539a270910aeba72954aaa" />
 	<File name="Classes/CalcSectionControl.lua" part="program" sha1="ace88981a36381c6ccecbdb76ee1b9b04d1afeaf" />
 	<File name="Classes/CalcsTab.lua" part="program" sha1="7e9ab0ffb8776f17f49dcf804680d4f6e58fb128" />
 	<File name="Classes/CheckBoxControl.lua" part="program" sha1="021e4ea29d62a600ab14e69e6ed0ad33832d78ab" />
