@@ -4645,6 +4645,7 @@ function calcs.recoveryCompare(env, actor)
 	local a,b=actor.recoverySimulationResults,projected.recoverySimulationResults
 	actor.recoveryComparisonResults=b
 	local rows={ }
+	o.RecoveryComparisonReady = true
 	local values={
 		{"Survival (percentage points)","RecoveryComparisonSurvivalDelta",function(r) return r.survived and 100 or 0 end},
 		{"Time alive (s, capped)","RecoveryComparisonTimeDelta",function(r) return r.time end},
