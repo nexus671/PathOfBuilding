@@ -1,11 +1,12 @@
 describe("Desktop build proposals", function()
 	local bridge = require("Modules.DesktopBuildBridge")
 	local json = require("dkjson")
+	-- Busted isolates spec globals; the bridge swaps the real process cache.
 	local original, originalCache, files, open, remove
-	before_each(function() newBuild(); original=build; originalCache=GlobalCache end)
+	before_each(function() newBuild(); original=build; originalCache=_G.GlobalCache end)
 	after_each(function()
 		main.modes.BUILD=original; bridge.enabled=false; bridge.prepared=nil; bridge.previous=nil; bridge.build=nil
-		GlobalCache=originalCache; bridge.previousCache=nil
+		_G.GlobalCache=originalCache; bridge.previousCache=nil
 		if open then io.open,os.remove=open,remove; open,remove=nil,nil end
 	end)
 	local function fakeFiles()
@@ -28,13 +29,13 @@ describe("Desktop build proposals", function()
 	end
 
 	it("calculates edits without touching the desktop build, cache, or notes editor", function()
-		local revision, cache = bridge.revision(build),GlobalCache
+		local revision, cache = bridge.revision(build),_G.GlobalCache
 		local prepared = bridge.prepare(build,proposal({{type="set_character",level=90},{type="equip_item",slot="Helmet",text="Rarity: RARE\nAI Hat\nIron Hat\n+100 to maximum Life"}}))
 		assert.are.equal(90,prepared.candidate.characterLevel)
 		assert.is_true(prepared.after.LifeUnreserved > prepared.before.LifeUnreserved)
 		assert.are.equal(revision,bridge.revision(build))
 		assert.are.equal(build,main.modes.BUILD)
-		assert.are.equal(cache,GlobalCache)
+		assert.are.equal(cache,_G.GlobalCache)
 	end)
 
 	it("creates a new character with native gem setup and a calculated main skill", function()
@@ -57,10 +58,10 @@ describe("Desktop build proposals", function()
 	end)
 
 	it("restores global state and leaves the original intact when an operation fails", function()
-		local revision, cache = bridge.revision(build),GlobalCache
+		local revision, cache = bridge.revision(build),_G.GlobalCache
 		assert.are.equal(false,pcall(bridge.prepare,build,proposal({{type="set_character",level=90},{type="equip_item",slot="Helmet",text="not an item"}})))
 		assert.are.equal(revision,bridge.revision(build))
-		assert.are.equal(cache,GlobalCache)
+		assert.are.equal(cache,_G.GlobalCache)
 		assert.are.equal(build,main.modes.BUILD)
 	end)
 
@@ -69,7 +70,7 @@ describe("Desktop build proposals", function()
 		local candidate = bridge.apply(prepared)
 		assert.are.equal(candidate,main.modes.BUILD)
 		assert.are.equal(original,bridge.previous)
-		assert.are.equal(prepared.cache,GlobalCache)
+		assert.are.equal(prepared.cache,_G.GlobalCache)
 		assert.is_true(candidate.unsaved)
 		assert.is_true(candidate.modFlag)
 	end)
@@ -119,7 +120,7 @@ describe("Desktop build proposals", function()
 		candidate.characterLevel=90
 		assert.are.equal(original,bridge.restore())
 		assert.are.equal(original,main.modes.BUILD)
-		assert.are.equal(originalCache,GlobalCache)
+		assert.are.equal(originalCache,_G.GlobalCache)
 	end)
 
 	it("keeps review navigation out of build revisions and renders the native review", function()
