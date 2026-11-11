@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.952e450b" />
+	<Version number="2.67.2-ai.120ad66b" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" platform="win32" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
-	<File name="changelog.txt" part="default" sha1="bdb9c4019be35162c7a2f1f89e80093a10b3c028" />
+	<File name="changelog.txt" part="default" sha1="e0c1012e3e69682d8e7c8b64f7ab7c4551f7425b" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
 	<File name="Assets/ascendancypassiveheaderleft.png" part="program" sha1="6a65683dcc3b14382dc083198fe9361454e91b15" />
@@ -123,9 +123,9 @@
 	<File name="Assets/warlordicon.png" part="program" sha1="cca050c84884f5c0bb1380ece51d3c4b32be4900" />
 	<File name="Classes/BuildListControl.lua" part="program" sha1="f60f0d7f6aecbe851db896913cd1aa707c7fb304" />
 	<File name="Classes/ButtonControl.lua" part="program" sha1="dd46384fc87d495e7ef5a11803cfc70360ac8bf1" />
-	<File name="Classes/CalcBreakdownControl.lua" part="program" sha1="c390ae01f4f9bd08e9539a270910aeba72954aaa" />
+	<File name="Classes/CalcBreakdownControl.lua" part="program" sha1="99ad24dae20ffe797804ca4238e7936735d5cc94" />
 	<File name="Classes/CalcSectionControl.lua" part="program" sha1="ace88981a36381c6ccecbdb76ee1b9b04d1afeaf" />
-	<File name="Classes/CalcsTab.lua" part="program" sha1="7e9ab0ffb8776f17f49dcf804680d4f6e58fb128" />
+	<File name="Classes/CalcsTab.lua" part="program" sha1="e9b460a84a53400af0b642a0d247d3c5648681ef" />
 	<File name="Classes/CheckBoxControl.lua" part="program" sha1="021e4ea29d62a600ab14e69e6ed0ad33832d78ab" />
 	<File name="Classes/CompareBuySimilar.lua" part="program" sha1="0efebcea57d90cc9169819cd0e344899f369b618" />
 	<File name="Classes/CompareCalcsHelpers.lua" part="program" sha1="61d00298ee05ed78238cf16b575fff0526b2342b" />
@@ -133,7 +133,7 @@
 	<File name="Classes/ComparePowerReportListControl.lua" part="program" sha1="28db4674a4d86807e8d0e1ad67eb62df08e972cf" />
 	<File name="Classes/CompareTab.lua" part="program" sha1="b0899632feb0d2561e56f5ecfe7f4dc76ca84375" />
 	<File name="Classes/ConfigSetListControl.lua" part="program" sha1="add5a6cef4f0da5c215a95b1539820d82ff2ddaa" />
-	<File name="Classes/ConfigTab.lua" part="program" sha1="14e1bd8dad8ca5d351238cc3480970a0f0fcb3e6" />
+	<File name="Classes/ConfigTab.lua" part="program" sha1="b0811ad43e82552386d19d2553b3b3be2bf9d9e1" />
 	<File name="Classes/Control.lua" part="program" sha1="00217659e9d711d7c3d8e97d42a19ae9c78c6f8f" />
 	<File name="Classes/ControlHost.lua" part="program" sha1="e2bbba0d34995d363dd11ab0e989c8e84fd1717c" />
 	<File name="Classes/DraggerControl.lua" part="program" sha1="99b86b751df018a33714b000c9eed240a7101b8e" />
@@ -387,7 +387,7 @@
 	<File name="Modules/CalcActiveSkill.lua" part="program" sha1="de0804a64cb7a0d98b6265611f37b5fd4dde7068" />
 	<File name="Modules/CalcBase.lua" part="program" sha1="d4b5f492c68c8600aedfdcb5efdc44e6ac885c6e" />
 	<File name="Modules/CalcBreakdown.lua" part="program" sha1="33c7c12a0b079034d9534335143eda0e4dba70a1" />
-	<File name="Modules/CalcDefence.lua" part="program" sha1="b3d401ad4a35aa1515700f1a09e8a999603adf8b" />
+	<File name="Modules/CalcDefence.lua" part="program" sha1="0e55c4a24d3eb1974246453f52c1e222f78265dd" />
 	<File name="Modules/CalcFormat.lua" part="program" sha1="485c83d2b3b9caf7a739a944219ab6c30f3d2635" />
 	<File name="Modules/CalcMirages.lua" part="program" sha1="bac0e5323fabbda5536a896b965b99006830cb3a" />
 	<File name="Modules/CalcOffence.lua" part="program" sha1="70379d4de9e014691c4d2e4b43c119c93d51f76f" />
@@ -1405,4 +1405,7 @@
 	<File name="TreeData/VioletOil.png" part="tree" sha1="1e9e4f0683a5156c27cb7ddafada8bed877e1c25" />
 	<File name="Modules/CalcTime.lua" part="program" sha1="b6a569cc6b3199be190f4f04acf6ad51886f7fab" />
 	<File name="Modules/CalcEncounter.lua" part="program" sha1="51e5db31fa6d953ee6f5bdec0387db87bc1eabfa" />
+	<File name="AI/McpServer.cjs" part="program" sha1="83d1627c5f129452c15ce438ad560313279269fa" />
+	<File name="Classes/EncounterWorkspaceControl.lua" part="program" sha1="c25c5984e8d213f6e42cfcc4a3529277c3810f78" />
+	<File name="Modules/EncounterReport.lua" part="program" sha1="e7ce56fc160712aa2e6357600953c0820426dfb3" />
 </PoBVersion>

@@ -1,6 +1,13 @@
 VERSION[ai][2026/11/11]
 
 --- AI Edition ---
+* Bring encounter setup, results and charts into one workspace.
+* Show resource pools before and after lethal hits.
+* Add AI briefs and a local read-only MCP report connection.
+
+VERSION[ai][2026/11/11]
+
+--- AI Edition ---
 * Fix recovery, flasks and temporary defenses in encounter simulations.
 * Improve tincture quality calculations and poison stack limits.
 * Clean up the project page and simulation guide.

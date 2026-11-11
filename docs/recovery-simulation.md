@@ -4,13 +4,23 @@ Explore how your build survives an encounter, then inspect its resources and def
 
 ## Quick start
 
-1. Open **Calcs → Simulation setup**, or **Configuration → Simulation**.
-2. Enable **Simulate recovery between hits**.
-3. Set the enemy damage, damage category, and attack or cast time.
-4. Choose **View results** to open **Recovery over Time**.
-5. Click **Timeline: Inspect trial 1** to open the charts and event log.
+1. Open **Calcs → Simulation**, or **Configuration → Simulation**.
+2. Use **Encounter settings** to set enemy damage, damage category, and attack or cast time.
+3. Return to **Simulation**, choose the window, trial count and chart trial, then **Run encounter**.
+4. Read the survival summary, selected-trial explanation and resource charts together.
+5. Choose **Full event log** for exact events, or **AI tools / MCP** for AI briefs and the desktop connection.
 
 Use **Close** to return to Calcs. **Show samples** adds periodic resource samples to the event log.
+
+## AI tools and MCP
+
+**AI tools / MCP** can copy a brief to explain the selected death, check assumptions, or plan paired upgrade tests. These briefs contain the current encounter's facts; your AI chat supplies the reasoning.
+
+For a local MCP client, install Node.js, choose **Refresh MCP context**, then **Copy MCP configuration** and add that configuration to your client's local stdio servers. The server is included with AI Edition and has no additional package dependencies. The copied `mcpServers` format may need adapting to your client's settings format.
+
+The connection is read-only and reads `AI-encounter.json` in PoB's user folder. It exposes the encounter report, selected death details, assumptions, and three prompts. It includes the build/configuration name and selected-trial history, but does not export your full build XML. Refresh after changing the build or configuration: the report includes its capture time and is not a live connection to the desktop. The server cannot detect subsequent unsaved changes. No API key or model subscription is configured in PoB; your MCP client supplies the model.
+
+Death details show the actual pools before and after a lethal hit. Recovery after that hit cannot rescue an already lethal outcome. An explanation identifies observed events; proposed improvements still need a comparison experiment.
 
 [Results](#reading-the-results) · [Attacks](#attacks-and-recovery) · [Flasks](#flasks-and-temporary-defenses) · [Damage over time](#damage-over-time) · [Comparisons](#inspecting-and-comparing-encounters) · [Coverage](#mechanic-coverage) · [Limits](#known-limits)
 

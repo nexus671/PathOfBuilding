@@ -195,7 +195,7 @@ function ConfigTabClass:ConfigTab(build)
 	self.controls.search = new("EditControl"):EditControl({ "TOPLEFT", self.controls.sectionAnchor, "TOPLEFT" }, { 8, 15, 360, 20 }, "", "Search", "%c", 100, function()
 		self:UpdateControls()
 	end, nil, nil, true)
-	self.controls.simulationSetup = new("ButtonControl"):ButtonControl({"LEFT",self.controls.encounterPresets,"RIGHT"},{4,0,100,20},"Simulation",function() self:ShowEncounterSimulation() end)
+	self.controls.simulationSetup = new("ButtonControl"):ButtonControl({"LEFT",self.controls.encounterPresets,"RIGHT"},{4,0,100,20},"Simulation",function() self.build.calcsTab:OpenEncounterWorkspace() end)
 	self.controls.simulationResults = new("ButtonControl"):ButtonControl({"LEFT",self.controls.simulationSetup,"RIGHT"},{4,0,100,20},"View results",function() self.build.calcsTab:ShowRecoverySimulation() end)
 	self.controls.simulationResults.enabled = function() return self.input.simulateRecovery end
 	self.controls.toggleConfigs = new("ButtonControl"):ButtonControl({ "LEFT", self.controls.search, "RIGHT" }, { 10, 0, 200, 20 }, function()

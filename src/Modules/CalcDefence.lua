@@ -4206,6 +4206,7 @@ function calcs.recoveryOverTime(env, actor)
 		end
 		local trace = trial == traceTrial and not env.recoveryComparison and encounter.trace(window) or nil
 		local deathCause, enemyAttempt = "Unspecified resource loss", 0
+		local deathDetails
 		local function record(t,state,event)
 			if not trace then return end
 			local charges,total = { },0
@@ -4521,13 +4522,20 @@ function calcs.recoveryOverTime(env, actor)
 						if damageType ~= "Chaos" and independentBypass < 100 then eventActor.output[damageType.."EnergyShieldBypass"] = 0 end
 					end
 				end
+				local beforeHit = { Life=state.Life, Mana=state.Mana, EnergyShield=state.EnergyShield, Ward=state.Ward, Guard=previousGuard }
 				state = calcs.reducePoolsByDamage(state, damage, eventActor)
 				local hitDescription = category.." hit"..(blocked and " (blocked)" or "")..(suppressed and " (suppressed)" or "")
 				local amounts = { }
 				for _,kind in ipairs(dmgTypeList) do if (state.damageTakenThatCanBeRecouped[kind] or 0) > 0 then amounts[#amounts + 1] = s_format("%.0f %s",state.damageTakenThatCanBeRecouped[kind],kind) end end
 				if #amounts > 0 then hitDescription = hitDescription..": "..table.concat(amounts,", ") end
 				record(t,state,hitDescription)
-				if state.Life <= 0 then deathCause = hitDescription end
+				if state.Life <= 0 then
+					deathCause = hitDescription
+					deathDetails = { time=t, event=hitDescription, category=category, blocked=blocked or false, suppressed=suppressed or false,
+						before=beforeHit, after={ Life=state.Life, Mana=state.Mana, EnergyShield=state.EnergyShield, Ward=state.Ward },
+						damage=copyTable(state.damageTakenThatCanBeRecouped), overkill=state.OverkillDamage,
+						recoveryAfterHitSkipped=true }
+				end
 				if timedEffects then
 					local count = crab(t, false)
 					local remaining = crab(t, (state.damageTakenThatCanBeRecouped.Physical or 0) > 0)
@@ -4593,6 +4601,7 @@ function calcs.recoveryOverTime(env, actor)
 			end,
 		})
 		result.deathCause = not result.survived and deathCause or nil
+		result.deathDetails = not result.survived and deathDetails or nil
 		if result.deathCause then
 			local cause = deathCauses[result.deathCause] or { count=0,first=trial }; deathCauses[result.deathCause] = cause
 			cause.count = cause.count + 1
@@ -4600,7 +4609,7 @@ function calcs.recoveryOverTime(env, actor)
 		local _, poisonDamage, directDamage = poison:advance(window)
 		result.poisonDamage, result.directDamage = poisonDamage, directDamage
 		result.damageDPS = (poisonDamage + directDamage) / window
-		if trace then trace.cause, trace.trial, trace.time = result.deathCause,trial,result.time; selectedTrace = trace end
+		if trace then trace.cause, trace.trial, trace.time, trace.deathDetails = result.deathCause,trial,result.time,result.deathDetails; selectedTrace = trace end
 		result.attackUptime = result.attempts > 0 and result.attacks / result.attempts * 100 or 0
 		result.incoming = dotOnly and 0 or result.hits * o.totalEnemyDamageIn
 		results[#results + 1] = result
