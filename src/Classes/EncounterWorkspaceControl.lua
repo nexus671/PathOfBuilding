@@ -119,7 +119,8 @@ function Workspace.OpenAI(tab)
 		status = "MCP configuration copied. Requires Node.js and a client that supports local stdio servers."
 	end)
 	controls.status = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,134,0,14},function() return status end)
-	controls.info = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,166,0,14},"Read-only snapshot. No automatic build changes. Your AI client supplies the model.")
+	controls.info = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,166,0,14},"Encounter reports are snapshots. Build proposals connect separately and need desktop review.")
+	controls.builds = new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{16,208,212,24},"Build proposals",function() require("Classes.BuildProposalControl").Open(tab.build) end)
 	controls.close = new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{576,208,100,24},"Back",function() main:ClosePopup() end)
 	main:OpenPopup(704,252,"AI tools",controls,nil,nil,"close")
 end
