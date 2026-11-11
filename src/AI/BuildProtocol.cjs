@@ -17,8 +17,13 @@ const operations = [
   object({type:{const:'set_config'},values:{type:'object',maxProperties:100,additionalProperties:{type:['string','number','boolean']}}},['type','values']),
   object({type:{const:'set_notes'},text:string(64000)},['type','text']),
 ];
+const number = (minimum,maximum) => ({type:'number',minimum,maximum});
+const quoteSchema = object({amount:number(0,1e12),currency:{type:'string',pattern:'^[A-Za-z][A-Za-z0-9 _-]{0,23}$'},quotedAt:integer(0,4102444800),source:string(240)},['amount','currency','quotedAt','source']);
+const metricNames = ['LifeUnreserved','EnergyShield','ManaUnreserved','CombinedDPS','FullDPS','TotalEHP','PhysicalMaximumHitTaken','ChaosMaximumHitTaken','RecoverySimulationSurvivalChance','RecoverySimulationDamageDPS','RecoverySimulationAttackUptime','ManaRegen','Speed','EffectiveMovementSpeedMod','FireResist','ColdResist','LightningResist','ChaosResist','Str','Dex','Int'];
+const planSchema = object({goal:{enum:['balanced','boss_damage','mapping','survival','comfort']},budget:number(0,1e12),currency:quoteSchema.properties.currency,
+  minimums:object(Object.fromEntries(metricNames.map(key => [key,number(-1e12,1e12)]))),notes:string(2000)},['goal']);
 const proposalSchema = object({mode:{enum:['edit','new']},title:string(120),baseRevision:{type:'string',pattern:'^[a-f0-9]{40}$'},
-  operations:{type:'array',minItems:1,maxItems:100,items:{oneOf:operations}}},['mode','title','baseRevision','operations']);
+  quote:quoteSchema,operations:{type:'array',minItems:1,maxItems:100,items:{oneOf:operations}}},['mode','title','baseRevision','operations']);
 
 // Validate the same closed JSON schema advertised to clients, without an extra runtime dependency.
 function validate(value,schema) {
@@ -50,14 +55,31 @@ const tools = [
   {name:'propose_build',description:'Calculate a new build or edits in PoB for desktop review. Use the latest baseRevision from get_build_context. set_skills replaces all active socket groups; allocate_passives adds native connecting paths and removes dependent nodes. No changes are applied or saved by this tool. Read get_proposal_status for calculated results and resolved gear/gems/tree. Only the desktop Apply button commits changes.',
     inputSchema:proposalSchema,annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
   {name:'get_proposal_status',description:'Read proposal status, calculated before/after stats, native warnings and review instructions. It cannot apply a proposal.',inputSchema:object({}),annotations:readOnly},
+  {name:'get_build_analysis',description:'Read native assumption checks, equipment/gem dependencies and encounter death evidence from the connected build. Diagnosis separates observations from suggested paired tests.',inputSchema:object({}),annotations:readOnly},
+  {name:'get_build_history',description:'Read up to eight calculated candidates retained in this desktop session, current goals and undo depth. Choosing or restoring one requires the desktop UI.',inputSchema:object({}),annotations:readOnly},
+  {name:'get_build_connection',description:'Diagnose the desktop connection even when disabled or stale: heartbeat age, context refresh, last request/error and troubleshooting steps. This does not prove a particular AI client is connected.',inputSchema:object({}),annotations:readOnly},
+  {name:'set_build_goals',description:'Set the desktop planning goal, optional budget/currency and minimum native stats. Goals rank calculated candidates using weighted percentage changes. Supplied dated total-price quotes are estimates, not live trade prices.',inputSchema:planSchema,annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
+  {name:'compare_build_candidates',description:'Calculate 1-5 alternative proposals against the same base, with stat deltas, dependency checks, goal ranking and optional supplied total-cost quotes. Candidates remain unapplied. Review/select in desktop Candidates. Keep encounter assumptions fixed for meaningful comparisons.',
+    inputSchema:object({baseRevision:proposalSchema.properties.baseRevision,candidates:{type:'array',minItems:1,maxItems:5,items:proposalSchema}},['baseRevision','candidates']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
+  {name:'plan_leveling_build',description:'Calculate 1-8 increasing level milestones from the current build. Stage operations accumulate; set_skills must include the complete links at that stage. Supply level-appropriate gems/gear/passives; native checks expose unmet requirements. Each stage is a reviewable candidate, never automatically applied. For a fresh character first create/apply a starting build.',
+    inputSchema:object({baseRevision:proposalSchema.properties.baseRevision,stages:{type:'array',minItems:1,maxItems:8,items:object({title:string(120),level:integer(1,100),operations:array({oneOf:operations.filter(op => op.properties.type.const !== 'set_character')},50),quote:quoteSchema},['title','level','operations'])}},['baseRevision','stages']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
 ];
 
 function createBridge(reportPath) {
   const filename = name => path.join(path.dirname(reportPath || '.'),`AI-build-${name}.json`);
+  const retryDelay = new Int32Array(new SharedArrayBuffer(4));
   function read(name) {
     const file = filename(name);
-    if (fs.statSync(file).size > 16 * 1024 * 1024) throw new Error('Desktop build data exceeds the supported size.');
-    return JSON.parse(fs.readFileSync(file,'utf8'));
+    // The native desktop may be refreshing this file. Retry brief incomplete reads.
+    for (let attempt=0; ; attempt++) {
+      try {
+        if (fs.statSync(file).size > 16 * 1024 * 1024) throw new Error('Desktop build data exceeds the supported size.');
+        return JSON.parse(fs.readFileSync(file,'utf8'));
+      } catch (err) {
+        if (attempt >= 4 || !(err instanceof SyntaxError || ['ENOENT','EBUSY'].includes(err.code))) throw err;
+        Atomics.wait(retryDelay,0,0,5);
+      }
+    }
   }
   function state() {
     let result;
@@ -70,10 +92,21 @@ function createBridge(reportPath) {
   return function call(name,args) {
     const tool = tools.find(t => t.name === name);
     if (!tool || !validate(args ?? {},tool.inputSchema)) throw new Error('Invalid build tool arguments. Follow the advertised schema.');
+    if (name === 'get_build_connection') {
+      let current;
+      try { current = read('state'); } catch (_) { return {status:'unavailable',steps:['Open a build in PoB > AI builds.','Enable build proposals.','Copy MCP configuration into your AI client and reconnect.']}; }
+      const heartbeatAgeSeconds = Number.isFinite(current.heartbeat) ? Math.max(0,Date.now()/1000-current.heartbeat) : null;
+      const calculating = current.proposal?.status === 'calculating';
+      return {status:current.schemaVersion !== 1 ? 'incompatible' : !current.enabled ? 'disabled' : heartbeatAgeSeconds === null || heartbeatAgeSeconds > (calculating ? 120 : 15) ? 'stale' : calculating ? 'calculating' : 'ready',heartbeatAgeSeconds,
+        session:current.session,revision:current.revision,proposalStatus:current.proposal?.status,diagnostics:current.diagnostics,
+        steps:['Keep PoB open and wait for calculations to finish.','Enable build proposals, then reconnect your AI client if tools are missing.','A ready desktop heartbeat does not verify that your AI client is connected.']};
+    }
     const current = state();
+    if (name === 'get_build_history') return {history:current.history ?? [],plan:current.plan,undoDepth:current.diagnostics?.undoDepth ?? 0};
     if (name === 'get_proposal_status') return {session:current.session,revision:current.revision,proposal:current.proposal ?? null};
     const captured = read('context');
     if (captured.schemaVersion !== 1 || captured.session !== current.session || captured.context?.revision !== current.revision) throw new Error('Desktop context is refreshing. Try again after calculations finish.');
+    if (name === 'get_build_analysis') return {revision:current.revision,capturedAt:captured.capturedAt,audit:captured.context.audit,encounter:captured.context.encounter,plan:current.plan};
     if (name === 'get_build_context') {
       const {xml,...context} = captured.context;
       return {session:current.session,capturedAt:captured.capturedAt,context};
@@ -86,12 +119,26 @@ function createBridge(reportPath) {
       return {revision:current.revision,kind:args.kind,total:matches.length,matches:matches.slice(0,args.limit ?? 20)};
     }
     if (current.proposal?.status === 'review' || current.proposal?.status === 'calculating') throw new Error('Review or reject the pending proposal in PoB first.');
-    if (args.baseRevision !== current.revision) throw new Error('Build revision changed. Read get_build_context and submit a fresh proposal.');
-    if (!args.title.trim() || /[\x00-\x1f\x7f]/.test(args.title)) throw new Error('Proposal title must be a nonempty single line.');
-    const nodes = args.operations.reduce((n,op) => n+(op.add?.length ?? 0)+(op.remove?.length ?? 0)+(op.masteries?.length ?? 0),0);
-    if (nodes > 400) throw new Error('Use at most 400 passive changes per proposal.');
+    if (name !== 'set_build_goals' && args.baseRevision !== current.revision) throw new Error('Build revision changed. Read get_build_context and submit a fresh proposal.');
+    const proposals = name === 'compare_build_candidates' ? args.candidates : name === 'plan_leveling_build' ? args.stages : name === 'propose_build' ? [args] : [];
+    let nodeCount=0,operationCount=0,priorLevel=0;
+    for (const proposal of proposals) {
+      if (!proposal.title.trim() || /[\x00-\x1f\x7f]/.test(proposal.title)) throw new Error('Proposal title must be a nonempty single line.');
+      if (name === 'compare_build_candidates' && proposal.baseRevision !== current.revision) throw new Error('Every candidate must use the current base revision.');
+      if (name === 'plan_leveling_build') {
+        if (proposal.level <= priorLevel) throw new Error('Milestone levels must increase.');
+        priorLevel=proposal.level;
+        operationCount+=proposal.operations.length;
+        if (operationCount > 99) throw new Error('Use at most 99 cumulative milestone operations.');
+      }
+      if (proposal.quote && (proposal.quote.quotedAt > Date.now()/1000+300 || !proposal.quote.source.trim())) throw new Error('Price quotes need a source and a valid capture time.');
+      nodeCount+=proposal.operations.reduce((n,op) => n+(op.add?.length ?? 0)+(op.remove?.length ?? 0)+(op.masteries?.length ?? 0),0);
+    }
+    if (nodeCount > 400) throw new Error('Use at most 400 passive changes per request.');
+    if (name === 'set_build_goals' && args.budget !== undefined && !args.currency) throw new Error('Budget needs a currency.');
     const id = randomUUID();
-    const request = JSON.stringify({id,session:current.session,proposal:args});
+    const payload = name === 'set_build_goals' ? {kind:'plan',plan:args} : name === 'compare_build_candidates' ? {kind:'compare',...args} : name === 'plan_leveling_build' ? {kind:'leveling',...args} : {proposal:args};
+    const request = JSON.stringify({id,session:current.session,...payload});
     if (Buffer.byteLength(request) > 262144) throw new Error('Proposal exceeds 256 KiB.');
     const temporary = filename(`request-${id}`);
     try {
@@ -102,7 +149,7 @@ function createBridge(reportPath) {
       if (err.code === 'EEXIST') throw new Error('A proposal is already queued. Wait for PoB to process it.');
       throw err;
     } finally { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); }
-    return {id,status:'queued',instructions:'PoB will calculate this candidate separately. Poll get_proposal_status, then review it in PoB > AI tools > Build proposals. Nothing has been applied or saved.'};
+    return {id,status:'queued',instructions:'PoB will process this planning request separately. Poll get_proposal_status, then review it in PoB > AI tools > Build proposals. Nothing has been applied or saved.'};
   };
 }
 module.exports = {tools,createBridge,validate};

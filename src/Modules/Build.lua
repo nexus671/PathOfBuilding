@@ -952,7 +952,7 @@ function buildMode:CanExit(mode)
 end
 
 function buildMode:Shutdown()
-	require("Modules.DesktopBuildBridge").disable(self)
+	require("Modules.DesktopBuildBridge").close(self)
 	if launch.devMode and (not main.disableDevAutoSave) and self.targetVersion and not self.abortSave then
 		if self.dbFileName then
 			self:SaveDBFile()

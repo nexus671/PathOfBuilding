@@ -15,6 +15,7 @@ A Path of Exile build planner with encounter timelines and improved survival cal
 - Inspect encounter timelines and compare scenarios.
 - Explain encounter results with AI briefs and a local MCP connection.
 - Create and edit builds through AI proposals, with native calculations and desktop review.
+- Plan upgrades and leveling around goals, budgets, dependency checks and candidate comparisons.
 
 The encounter tools are experimental. See the [guide](docs/recovery-simulation.md) to get started.
 
