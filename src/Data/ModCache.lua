@@ -3593,7 +3593,7 @@ c["10% chance that if you would gain Endurance Charges, you instead gain up to m
 c["10% chance that if you would gain Frenzy Charges, you instead gain up to your maximum number of Frenzy Charges"]={{}," that if you would gainCharges, you instead gain up to your maximum number of Frenzy Charges "}
 c["10% chance that if you would gain Power Charges, you instead gain up to your maximum number of Power Charges"]={{}," that if you would gain Power Charges, you instead gain up to your maximum number of Power Charges "}
 c["10% chance that if you would gain a Crab Barrier, you instead gain up to"]={{}," that if you would gain a Crab Barrier, you instead gain up to "}
-c["10% chance that if you would gain a Crab Barrier, you instead gain up to your maximum number of Crab Barriers"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersMax",type="BASE",value=10}}," that if you would gain a Crab Barrier, you instead gain up to your  "}
+c["10% chance that if you would gain a Crab Barrier, you instead gain up to your maximum number of Crab Barriers"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersGainMaximumChance",type="BASE",value=10}},nil}
 c["10% chance to Aggravate Bleeding on targets you Hit with Attacks"]={{}," to Aggravate Bleeding on targets you Hit  "}
 c["10% chance to Avoid Bleeding"]={{[1]={flags=0,keywordFlags=0,name="AvoidBleed",type="BASE",value=10}},nil}
 c["10% chance to Avoid Cold Damage from Hits"]={{[1]={flags=0,keywordFlags=0,name="AvoidColdDamageChance",type="BASE",value=10}},nil}
@@ -14644,7 +14644,7 @@ c["Cannot inflict Elemental Ailments"]={{[1]={flags=0,keywordFlags=0,name="Canno
 c["Cannot inflict Freeze or Chill"]={{[1]={flags=0,keywordFlags=0,name="CannotFreeze",type="FLAG",value=true},[2]={flags=0,keywordFlags=0,name="CannotChill",type="FLAG",value=true}},nil}
 c["Cannot inflict Ignite"]={{[1]={flags=0,keywordFlags=0,name="CannotIgnite",type="FLAG",value=true}},nil}
 c["Cannot inflict Shock"]={{[1]={flags=0,keywordFlags=0,name="CannotShock",type="FLAG",value=true}},nil}
-c["Cannot lose Crab Barriers if you have lost Crab Barriers Recently"]={nil,"Cannot lose Crab Barriers if you have lost Crab Barriers Recently "}
+c["Cannot lose Crab Barriers if you have lost Crab Barriers Recently"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersProtectedRecently",type="FLAG",value=true}},nil}
 c["Cannot lose Crab Barriers if you have lost Crab Barriers Recently +3% Chance to Block Attack Damage while you have at least 5 Crab Barriers"]={nil,"Cannot lose Crab Barriers if you have lost Crab Barriers Recently +3% Chance to Block Attack Damage while you have at least 5 Crab Barriers "}
 c["Cannot recover Mana"]={nil,"Cannot recover Mana "}
 c["Cannot roll Caster Modifiers"]={{},nil}
@@ -15638,7 +15638,7 @@ c["Gain +10 Life when you Taunt an Enemy 20% increased Endurance Charge Duration
 c["Gain +2% to Critical Strike Chance for 2 seconds after Spending a total of 800 Mana"]={{[1]={[1]={threshold=800,type="MultiplierThreshold",var="ManaSpentRecently"},flags=0,keywordFlags=0,name="CritChance",type="BASE",value=2}},nil}
 c["Gain +50 Life when you Taunt an Enemy"]={nil,"+50 Life when you Taunt an Enemy "}
 c["Gain +50 Life when you Taunt an Enemy You gain Onslaught for 1 seconds on Killing Taunted Enemies"]={{[1]={[1]={type="Condition",var="KilledTauntedEnemyRecently"},flags=0,keywordFlags=0,name="Condition:Onslaught",type="FLAG",value=true}},"+50  when you Taunt an Enemy You gain    "}
-c["Gain 1 Charge when you are Hit by an Enemy"]={{}," Charge when you are Hit by an Enemy "}
+c["Gain 1 Charge when you are Hit by an Enemy"]={{[1]={flags=0,keywordFlags=0,name="FlaskData",type="LIST",value={key="chargesWhenHit",value=1}}},nil}
 c["Gain 1 Endurance Charge every second if you've been Hit Recently"]={{}," Endurance Charge every second  "}
 c["Gain 1 Endurance Charge every second if you've been Hit Recently +1 to Maximum Endurance Charges"]={{[1]={[1]={type="Condition",var="BeenHitRecently"},flags=0,keywordFlags=0,name="EnduranceChargesMax",type="BASE",value=1}}," Endurance Charge every second  +1 to  "}
 c["Gain 1 Endurance Charge every second if you've been Hit Recently and"]={{}," Endurance Charge every second  and "}
@@ -15797,7 +15797,7 @@ c["Gain 18% of Physical Damage as Extra Lightning Damage"]={{[1]={flags=0,keywor
 c["Gain 19% of Physical Damage as Extra Cold Damage"]={{[1]={flags=0,keywordFlags=0,name="PhysicalDamageGainAsCold",type="BASE",value=19}},nil}
 c["Gain 19% of Physical Damage as Extra Fire Damage"]={{[1]={flags=0,keywordFlags=0,name="PhysicalDamageGainAsFire",type="BASE",value=19}},nil}
 c["Gain 19% of Physical Damage as Extra Lightning Damage"]={{[1]={flags=0,keywordFlags=0,name="PhysicalDamageGainAsLightning",type="BASE",value=19}},nil}
-c["Gain 2 Charges when you are Hit by an Enemy"]={{}," Charges when you are Hit by an Enemy "}
+c["Gain 2 Charges when you are Hit by an Enemy"]={{[1]={flags=0,keywordFlags=0,name="FlaskData",type="LIST",value={key="chargesWhenHit",value=2}}},nil}
 c["Gain 2 Endurance Charge on use"]={{}," Endurance Charge on use "}
 c["Gain 2 Endurance, Frenzy or Power Charges every 6 seconds"]={{}," Endurance,or Power Charges every 6 seconds "}
 c["Gain 2 Endurance, Frenzy or Power Charges every 6 seconds 172% increased Physical Damage"]={{[1]={[1]={includeTransfigured=true,skillName="Frenzy",type="SkillName"},flags=0,keywordFlags=0,name="PhysicalDamage",type="BASE",value=2}}," Endurance,or Power Charges every 6 seconds 172% increased  "}
@@ -15891,7 +15891,7 @@ c["Gain 28% of Physical Damage as Extra Cold Damage"]={{[1]={flags=0,keywordFlag
 c["Gain 29% of Physical Damage as Extra Cold Damage"]={{[1]={flags=0,keywordFlags=0,name="PhysicalDamageGainAsCold",type="BASE",value=29}},nil}
 c["Gain 29% of Physical Damage as Extra Fire Damage"]={{[1]={flags=0,keywordFlags=0,name="PhysicalDamageGainAsFire",type="BASE",value=29}},nil}
 c["Gain 29% of Physical Damage as Extra Lightning Damage"]={{[1]={flags=0,keywordFlags=0,name="PhysicalDamageGainAsLightning",type="BASE",value=29}},nil}
-c["Gain 3 Charges when you are Hit by an Enemy"]={{}," Charges when you are Hit by an Enemy "}
+c["Gain 3 Charges when you are Hit by an Enemy"]={{[1]={flags=0,keywordFlags=0,name="FlaskData",type="LIST",value={key="chargesWhenHit",value=3}}},nil}
 c["Gain 3 Endurance Charge on use"]={{}," Endurance Charge on use "}
 c["Gain 3 Endurance Charge on use Gain 1 Frenzy Charge on use"]={{}," Endurance Charge on use Gain 1Charge on use "}
 c["Gain 3 Endurance Charges when you consume maximum Valour to place a Banner"]={{[1]={flags=0,keywordFlags=0,name="MaximumValour",type="BASE",value=3}}," Endurance Charges when you consume  to place a Banner "}
@@ -18892,7 +18892,7 @@ c["Rate to you and Allies"]={nil,"Rate to you and Allies "}
 c["Rate to you and Allies Limited to 1 Runegraft of Consecration"]={nil,"Rate to you and Allies Limited to 1 Runegraft of Consecration "}
 c["Recharges 1 Charge when you Consume an Ignited corpse"]={nil,"Recharges 1 Charge when you Consume an Ignited corpse "}
 c["Recharges 1 Charge when you Consume an Ignited corpse Recharges 5 Charges when you Consume an Ignited corpse"]={nil,"Recharges 1 Charge when you Consume an Ignited corpse Recharges 5 Charges when you Consume an Ignited corpse "}
-c["Recharges 1 Charge when you deal a Critical Strike"]={nil,"Recharges 1 Charge when you deal a Critical Strike "}
+c["Recharges 1 Charge when you deal a Critical Strike"]={{[1]={flags=0,keywordFlags=0,name="FlaskData",type="LIST",value={key="legacyCritCharges",value=1}}},nil}
 c["Recharges 5 Charges when you Consume an Ignited corpse"]={nil,"Recharges 5 Charges when you Consume an Ignited corpse "}
 c["Recharges 5 Charges when you Consume an Ignited corpse 200% increased Charges per use"]={nil,"Recharges 5 Charges when you Consume an Ignited corpse 200% increased Charges per use "}
 c["Recharges 5 Charges when you take a Critical Strike"]={nil,"Recharges 5 Charges when you take a Critical Strike "}
@@ -19007,7 +19007,7 @@ c["Recover Energy Shield equal to 1% of Armour when you Block"]={{[1]={[1]={perc
 c["Recover Energy Shield equal to 1% of Evasion Rating when you Block"]={{[1]={[1]={percent=1,stat="Evasion",type="PercentStat"},flags=0,keywordFlags=0,name="EnergyShieldOnBlock",type="BASE",value=1}},nil}
 c["Recover Energy Shield equal to 2% of Armour when you Block"]={{[1]={[1]={percent=2,stat="Armour",type="PercentStat"},flags=0,keywordFlags=0,name="EnergyShieldOnBlock",type="BASE",value=1}},nil}
 c["Recover Energy Shield equal to 4% of Armour when you Block"]={{[1]={[1]={percent=4,stat="Armour",type="PercentStat"},flags=0,keywordFlags=0,name="EnergyShieldOnBlock",type="BASE",value=1}},nil}
-c["Recover Full Life at the end of the Effect"]={nil,"Recover Full Life at the end of the Effect "}
+c["Recover Full Life at the end of the Effect"]={{[1]={flags=0,keywordFlags=0,name="FlaskData",type="LIST",value={key="finishLife",value=true}}},nil}
 c["Recover Full Life at the end of the Effect Cannot gain Life during effect"]={nil,"Recover Full Life at the end of the Effect Cannot gain Life during effect "}
 c["Recover an additional 14% of Flask's Life Recovery Amount over 10 seconds if used while not on Full Life"]={{[1]={flags=0,keywordFlags=0,name="FlaskAdditionalLifeRecovery",type="BASE",value=14}},nil}
 c["Recover an additional 20% of Flask's Life Recovery Amount over 10 seconds if used while not on Full Life"]={{[1]={flags=0,keywordFlags=0,name="FlaskAdditionalLifeRecovery",type="BASE",value=20}},nil}
@@ -22097,8 +22097,7 @@ c["This Jewel's Socket has 25% increased effect per Allocated Passive Skill betw
 c["This Weapon's Critical Strike Chance is 100%"]={{[1]={flags=0,keywordFlags=0,name="WeaponData",type="LIST",value={key="CritChance",value=100}}},nil}
 c["This item can be anointed by Cassia"]={{},nil}
 c["Throw an additional Mine"]={{[1]={flags=0,keywordFlags=0,name="MineThrowCount",type="BASE",value=1}},nil}
-c["Tincture Effects Linger on you for 0.5 seconds per Mana Burn on you when the Tincture was deactivated, up to a maximum of 6 seconds"]={nil,"Tincture Effects Linger on you for 0.5 seconds per Mana Burn on you when the Tincture was deactivated, up to a maximum of 6 seconds "}
-c["Tincture Effects Linger on you for 0.5 seconds per Mana Burn on you when the Tincture was deactivated, up to a maximum of 6 seconds Tinctures applied to you have 30% less Mana Burn rate"]={nil,"Tincture Effects Linger on you for 0.5 seconds per Mana Burn on you when the Tincture was deactivated, up to a maximum of 6 seconds Tinctures applied to you have 30% less Mana Burn rate "}
+c["Tincture Effects Linger on you for 0.5 seconds per Mana Burn on you when the Tincture was deactivated, up to a maximum of 6 seconds"]={{[1]={flags=0,keywordFlags=0,name="TinctureLingerPerBurn",type="BASE",value=0.5},[2]={flags=0,keywordFlags=0,name="TinctureLingerMax",type="BASE",value=6}},nil}
 c["Tincture Effects also apply to Ranged Weapons"]={{[1]={flags=0,keywordFlags=0,name="TinctureRangedWeapons",type="FLAG",value=true}},nil}
 c["Tinctures applied to you have 10% increased Effect"]={{[1]={[1]={actor="player",type="ActorCondition"},flags=0,keywordFlags=0,name="TinctureEffect",type="INC",value=10}},nil}
 c["Tinctures applied to you have 10% reduced Mana Burn rate"]={{[1]={[1]={actor="player",type="ActorCondition"},flags=0,keywordFlags=0,name="TinctureManaBurnRate",type="INC",value=-10}},nil}
@@ -22943,9 +22942,9 @@ c["You lose all Endurance Charges when Hit"]={nil,"You lose all Endurance Charge
 c["You lose all Endurance Charges when Hit You gain an Endurance Charge on Kill"]={nil,"You lose all Endurance Charges when Hit You gain an Endurance Charge on Kill "}
 c["You lose all Spirit Charges when taking a Savage Hit"]={nil,"You lose all Spirit Charges when taking a Savage Hit "}
 c["You lose all Spirit Charges when taking a Savage Hit Recover 3% of Life when you lose a Spirit Charge"]={nil,"You lose all Spirit Charges when taking a Savage Hit Recover 3% of Life when you lose a Spirit Charge "}
-c["You only lose 5 Crab Barriers when you take Physical Damage from a Hit"]={nil,"You only lose 5 Crab Barriers when you take Physical Damage from a Hit "}
-c["You only lose 6 Crab Barriers when you take Physical Damage from a Hit"]={nil,"You only lose 6 Crab Barriers when you take Physical Damage from a Hit "}
-c["You only lose 7 Crab Barriers when you take Physical Damage from a Hit"]={nil,"You only lose 7 Crab Barriers when you take Physical Damage from a Hit "}
+c["You only lose 5 Crab Barriers when you take Physical Damage from a Hit"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersLost",type="OVERRIDE",value=5}},nil}
+c["You only lose 6 Crab Barriers when you take Physical Damage from a Hit"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersLost",type="OVERRIDE",value=6}},nil}
+c["You only lose 7 Crab Barriers when you take Physical Damage from a Hit"]={{[1]={flags=0,keywordFlags=0,name="CrabBarriersLost",type="OVERRIDE",value=7}},nil}
 c["You take 0 Chaos Damage per second for 3 seconds on Kill"]={{[1]={[1]={type="Condition",var="KilledLast3Seconds"},flags=0,keywordFlags=0,name="ChaosDegen",type="BASE",value=0}},nil}
 c["You take 10% of Damage from Blocked Hits"]={{[1]={flags=0,keywordFlags=0,name="BlockEffect",type="BASE",value=10}},nil}
 c["You take 10% of your maximum Life as Chaos Damage on use"]={nil,"You take 10% of your maximum Life as Chaos Damage on use "}

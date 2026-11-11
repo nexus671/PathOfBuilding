@@ -138,7 +138,8 @@ data.powerStatList = {
 	{ stat="TotalDot", label="DoT DPS" },
 	{ stat="BleedDPS", label="Bleed DPS" },
 	{ stat="IgniteDPS", label="Ignite DPS" },
-	{ stat="PoisonDPS", label="Poison DPS" },
+	{ stat="PoisonDPS", label="DPS per Poison" },
+	{ stat="TotalPoisonDPS", label="Total Poison DPS" },
 	{ stat="Life", label="Life" },
 	{ stat="LifeRegen", label="Life regen" },
 	{ stat="LifeLeechRate", label="Life leech" },
@@ -156,9 +157,9 @@ data.powerStatList = {
 	{ stat="Dex", label="Dexterity" },
 	{ stat="Int", label="Intelligence" },
 	{ stat="TotalAttr", label="Total Attributes" },
-	{ stat="MeleeAvoidChance", label="Melee avoid chance" },
-	{ stat="SpellAvoidChance", label="Spell avoid chance" },
-	{ stat="ProjectileAvoidChance", label="Projectile avoid chance" },
+	{ stat="MeleeAvoidChance", label="Melee evade/dodge chance" },
+	{ stat="SpellAvoidChance", label="Spell dodge chance" },
+	{ stat="ProjectileAvoidChance", label="Projectile evade/dodge/avoid chance" },
 	{ stat="TotalEHP", label="Effective Hit Pool" },
 	{ stat="SecondMinimalMaximumHitTaken", label="Eff. Maximum Hit Taken" },
 	{ stat="PhysicalTakenHit", label="Taken Phys dmg", transform=function(value) return -value end },
@@ -184,6 +185,8 @@ data.powerStatList = {
 ---@param skipTransform? boolean Whether the stat transform should be skipped. This is useful if you want to e.g. divide two less is better stats
 ---@return number
 function data.powerStatList.GetFromOutput(output, statTable, skipTransform)
+	-- Preserve the saved selection keys; native outputs were renamed long ago.
+	local aliases = { MeleeAvoidChance="MeleeNotHitChance", SpellAvoidChance="SpellNotHitChance", ProjectileAvoidChance="ProjectileNotHitChance" }
 	local function getEntry()
 		if statTable.stat == "FullDPS" then
 			if output[statTable.stat] ~= nil then
@@ -195,7 +198,7 @@ function data.powerStatList.GetFromOutput(output, statTable, skipTransform)
 		-- minion-only stats
 		local minionStat = statTable.stat:match("^Minion(.+)")
 		if minionStat then
-			return output.Minion and output.Minion[minionStat] or 0
+			return output.Minion and output.Minion[aliases[minionStat] or minionStat] or 0
 		end
 		-- damage stats use a combination of player and minion dps
 		local isDamageStat = statTable.stat == "AverageDamage" or statTable.stat == "TotalDot" or
@@ -203,7 +206,7 @@ function data.powerStatList.GetFromOutput(output, statTable, skipTransform)
 		if isDamageStat then
 			return (output[statTable.stat] or 0) + (output.Minion and output.Minion[statTable.stat] or 0)
 		end
-		return output[statTable.stat] or 0
+		return output[aliases[statTable.stat] or statTable.stat] or 0
 	end
 	if statTable.transform and not skipTransform then
 		return statTable.transform(getEntry())

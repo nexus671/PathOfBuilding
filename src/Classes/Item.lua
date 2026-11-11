@@ -429,6 +429,7 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 	self.base = nil
 	self.rarity = rarity or "UNIQUE"
 	self.quality = nil
+	self.tinctureValues = nil
 	self.rawLines = { }
 	-- Find non-blank lines and trim whitespace
 	for line in raw:gmatch("%s*([^\n]*%S)") do
@@ -440,7 +441,8 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 	local itemClass
 	if self.rawLines[l] then
 		if self.rawLines[l]:match("^Item Class:") then
-			itemClass = self.rawLines[l]:gsub("^Item Class: %s+", "%1")
+			itemClass = self.rawLines[l]:match("^Item Class:%s*(.-)%s*$")
+			if itemClass == "Tinctures" then self.tinctureValues = "Final" end
 			l = l + 1 -- Item class is already determined by the base type
 		end
 		local rarity = self.rawLines[l]:match("^Rarity: (%a+)")
@@ -667,6 +669,8 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 			if specName then
 				if specName == "Unique ID" then
 					self.uniqueID = specVal
+				elseif specName == "Tincture Values" then
+					self.tinctureValues = specVal == "Final" and "Final" or nil
 				elseif specName == "Item Level" then
 					self.itemLevel = specToNumber(specVal)
 				elseif specName == "Memory Strands" then
@@ -1809,6 +1813,9 @@ function ItemClass:BuildRaw()
 	if self.uniqueID then
 		t_insert(rawLines, "Unique ID: " .. self.uniqueID)
 	end
+	if self.type == "Tincture" and self.tinctureValues == "Final" then
+		t_insert(rawLines, "Tincture Values: Final")
+	end
 	if self.league then
 		t_insert(rawLines, "League: " .. self.league)
 	end
@@ -2462,7 +2469,9 @@ function ItemClass:BuildModListForSlotNum(baseList, slotNum)
 			flaskData.duration = round(self.base.flask.duration * (1 + durationInc / 100) * (1 + self.quality / 100) * durationMore, 1)
 		end
 		flaskData.chargesMax = self.base.flask.chargesMax + calcLocal(modList, "FlaskCharges", "BASE", 0)
-		flaskData.chargesUsed = m_floor(self.base.flask.chargesUsed * (1 + calcLocal(modList, "FlaskChargesUsed", "INC", 0) / 100))
+		flaskData.chargesUsedInc = calcLocal(modList, "FlaskChargesUsed", "INC", 0)
+		flaskData.chargesUsed = m_floor(self.base.flask.chargesUsed * (1 + flaskData.chargesUsedInc / 100))
+		flaskData.critChance = calcLocal(modList, "FlaskChargeOnCritChance", "BASE", 0)
 		flaskData.gainMod = 1 + calcLocal(modList, "FlaskChargeRecovery", "INC", 0) / 100
 		flaskData.effectInc = calcLocal(modList, "FlaskEffect", "INC", 0) + calcLocal(modList, "LocalEffect", "INC", 0)
 		for _, value in ipairs(modList:List(nil, "FlaskData")) do

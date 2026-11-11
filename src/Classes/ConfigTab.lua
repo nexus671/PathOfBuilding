@@ -175,10 +175,29 @@ function ConfigTabClass:ConfigTab(build)
 	self.controls.setManage = new("ButtonControl"):ButtonControl({ "LEFT", self.controls.setSelect, "RIGHT" }, { 4, 0, 90, 20 }, "Manage...", function()
 		self:OpenConfigSetManagePopup()
 	end)
+	self.controls.encounterPresets = new("ButtonControl"):ButtonControl({ "LEFT", self.controls.setManage, "RIGHT" }, { 4, 0, 100, 20 }, "Scenarios...", function()
+		local presets = require("Modules.CalcEncounter").presets
+		local list = { }
+		for index,preset in ipairs(presets) do list[index] = {label=preset.name,val=index} end
+		local controls = { }
+		controls.label = new("LabelControl"):LabelControl(nil,{0,15,0,16},"Create a named config set from the current build:")
+		controls.preset = new("DropDownControl"):DropDownControl(nil,{0,40,370,20},list)
+		controls.note = new("LabelControl"):LabelControl(nil,{0,72,0,14},"Keeps your buffs and gear; copies current raw damage inputs.")
+		controls.note2 = new("LabelControl"):LabelControl(nil,{0,90,0,14},"Heavy hit: twice the damage, once. Presets are not boss ratings.")
+		controls.create = new("ButtonControl"):ButtonControl(nil,{-50,125,90,20},"Create",function()
+			self:CreateEncounterConfigSet(controls.preset.selIndex or 1)
+			main:ClosePopup()
+		end)
+		controls.close = new("ButtonControl"):ButtonControl(nil,{50,125,90,20},"Cancel",function() main:ClosePopup() end)
+		main:OpenPopup(430,165,"Encounter scenarios",controls)
+	end)
 
 	self.controls.search = new("EditControl"):EditControl({ "TOPLEFT", self.controls.sectionAnchor, "TOPLEFT" }, { 8, 15, 360, 20 }, "", "Search", "%c", 100, function()
 		self:UpdateControls()
 	end, nil, nil, true)
+	self.controls.simulationSetup = new("ButtonControl"):ButtonControl({"LEFT",self.controls.encounterPresets,"RIGHT"},{4,0,100,20},"Simulation",function() self:ShowEncounterSimulation() end)
+	self.controls.simulationResults = new("ButtonControl"):ButtonControl({"LEFT",self.controls.simulationSetup,"RIGHT"},{4,0,100,20},"View results",function() self.build.calcsTab:ShowRecoverySimulation() end)
+	self.controls.simulationResults.enabled = function() return self.input.simulateRecovery end
 	self.controls.toggleConfigs = new("ButtonControl"):ButtonControl({ "LEFT", self.controls.search, "RIGHT" }, { 10, 0, 200, 20 }, function()
 		-- dynamic text
 		return self.toggleConfigs and "Hide Ineligible Configurations" or "Show All Configurations"
@@ -193,7 +212,7 @@ function ConfigTabClass:ConfigTab(build)
 	local function searchMatch(varData)
 		local searchStr = self.controls.search.buf:lower():gsub("[%-%.%+%[%]%$%^%%%?%*]", "%%%0")
 		if searchStr and searchStr:match("%S") then
-			local label = StripEscapes(varData.label or ""):lower()
+			local label = StripEscapes((varData.label or "").." "..(varData.sectionName or "")):lower()
 			local err, match = PCall(string.matchOrPattern, label, searchStr)
 			if not err and match then
 				return true
@@ -293,6 +312,7 @@ function ConfigTabClass:ConfigTab(build)
 				self.customSection = lastSection
 			end
 		else
+			varData.sectionName = lastSection.label
 			local control
 			if varData.type == "check" then
 				control = new("CheckBoxControl"):CheckBoxControl({"TOPLEFT",lastSection,"TOPLEFT"}, {234, 0, 18}, varData.label, function(state)
@@ -313,12 +333,13 @@ function ConfigTabClass:ConfigTab(build)
 					self.build.buildFlag = true
 				end)
 			elseif varData.type == "list" then
-				control = new("DropDownControl"):DropDownControl({"TOPLEFT",lastSection,"TOPLEFT"}, {234, 0, 118, 16}, varData.list, function(index, value)
+				control = new("DropDownControl"):DropDownControl({"TOPLEFT",lastSection,"TOPLEFT"}, {234, 0, 118, 16}, varData.configSets and copyTable(varData.list) or varData.list, function(index, value)
 					self.configSets[self.activeConfigSetId].input[varData.var] = value.val
 					self:AddUndoState()
 					self:BuildModList()
 					self.build.buildFlag = true
 				end)
+				if varData.configSets then control.enableDroppedWidth = true end
 			elseif varData.type == "text" and not varData.resizable then
 				control = new("EditControl"):EditControl({"TOPLEFT",lastSection,"TOPLEFT"}, {8, 0, 344, 118}, "", nil, "^%C\t\n", nil, function(buf, placeholder)
 					if placeholder then
@@ -1006,6 +1027,7 @@ function ConfigTabClass:Save(xml)
 end
 
 function ConfigTabClass:UpdateControls()
+	self:UpdateEncounterComparisonList()
 	for var, control in pairs(self.varControls) do
 		if control._className == "EditControl" or control._className == "ResizableEditControl" then
 			control:SetText(tostring(self.configSets[self.activeConfigSetId].input[var] or ""))
@@ -1021,7 +1043,49 @@ function ConfigTabClass:UpdateControls()
 	self:UpdateCustomModsControls()
 end
 
+function ConfigTabClass:ShowEncounterSimulation()
+	self.build.viewMode = "CONFIG"
+	self.controls.search:SetText("Encounter Simulation")
+	self.controls.scrollBar.offset = 0
+	for _,section in ipairs(self.sectionList) do if section.label == "Encounter Simulation" then section.collapsed = false end end
+	self:UpdateControls()
+end
+
+function ConfigTabClass:UpdateEncounterComparisonList()
+	local control = self.varControls.recoverySimulationCompareSet
+	if not control then return end
+	local list = { {val=0,label="None"} }
+	local signature = tostring(self.activeConfigSetId)..":"..tostring(self.input.recoverySimulationCompareSet)
+	for _,id in ipairs(self.configSetOrderList) do
+		if id ~= self.activeConfigSetId and self.configSets[id] then
+			local label = self.configSets[id].title or tostring(id)
+			list[#list + 1] = {val=id,label=label}; signature = signature..":"..id..":"..label
+		end
+	end
+	if signature == self.encounterComparisonSignature then return end
+	self.encounterComparisonSignature = signature
+	control:SetList(list)
+	control.enableDroppedWidth = true
+	control:SelByValue(self.input.recoverySimulationCompareSet or 0,"val")
+end
+
+function ConfigTabClass:CreateEncounterConfigSet(index)
+	local encounters = require("Modules.CalcEncounter")
+	local preset = assert(encounters.presets[index],"Unknown encounter preset")
+	local original = self.configSets[self.activeConfigSetId]
+	local config = self:NewConfigSet(nil,preset.name)
+	local placeholders = self.build.calcsTab.calcsEnv and self.build.calcsTab.calcsEnv.configPlaceholder or original.placeholder
+	config.input = encounters.preset(original.input,placeholders,preset)
+	config.placeholder, config.customModsList = copyTable(original.placeholder),copyTable(original.customModsList)
+	t_insert(self.configSetOrderList,config.id)
+	self.modFlag = true
+	self:SetActiveConfigSet(config.id)
+	self:AddUndoState()
+	return config
+end
+
 function ConfigTabClass:Draw(viewPort, inputEvents)
+	self:UpdateEncounterComparisonList()
 	self.x = viewPort.x
 	self.y = viewPort.y
 	self.width = viewPort.width

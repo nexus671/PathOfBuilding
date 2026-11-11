@@ -832,6 +832,10 @@ local function doActorMisc(env, actor)
 				output.ElusiveEffectMod = (elusiveEffectMod + elusiveEffectMinThreshold) / 2
 			end
 			-- if we want the max skill to not be noted as its own breakdown table entry, comment out below
+			output.ElusiveEffectMax = elusiveEffectMod
+			output.ElusiveEffectLossRate = 20 / (1 + modDB:Sum("INC", nil, "ElusiveEffectLossSlower") / 100)
+			output.ElusiveEffectIncreaseDuration = elusiveEffectIncreaseDuration
+			output.ElusiveEffectMinThreshold = elusiveEffectMinThreshold
 			modDB:NewMod("ElusiveEffect", "INC", maxSkillInc, "Max Skill Effect")
 			-- Override elusive effect if set.
 			if modDB:Override(nil, "ElusiveEffect") then
@@ -932,12 +936,13 @@ local function doActorMisc(env, actor)
 			output.InherentRageLossDelay = 2 + modDB:Sum("BASE", nil, "InherentRageLossDelay")
 			output.InherentRageLoss = (not modDB:Flag(nil, "InherentRageLossIsPrevented")) and 10 * (1 + modDB:Sum("INC", nil, "InherentRageLoss") / 100) or 0
 		end
-		if (env.configInput.multiplierManaBurnStacks or 0) > 0 then
+		local configuredManaBurn = env.recoveryManaBurnStacks or env.configInput.multiplierManaBurnStacks or 0
+		if configuredManaBurn > 0 then
 			local maxManaBurn = modDB:Sum("BASE", nil, "MaxManaBurnStacks")
 			if maxManaBurn == 0 then
 				maxManaBurn = 9999
 			end
-			local manaBurnStacks = m_min((env.configInput.multiplierManaBurnStacks or 0), maxManaBurn)
+			local manaBurnStacks = m_min(configuredManaBurn, maxManaBurn)
 			modDB:NewMod("Multiplier:ManaBurnStacks", "BASE", manaBurnStacks, "Config")
 			manaBurnStacks = manaBurnStacks + modDB:Sum("BASE", { actor = "player" }, "EffectiveManaBurnStacks")
 			if modDB:Flag(nil, "Condition:WeepingWoundsInsteadOfManaBurn") then
@@ -1102,7 +1107,7 @@ local function doActorCharges(env, actor)
 	output.SpiritInfusions = m_min(modDB:Override(nil, "SpiritInfusion") or 0, output.SpiritInfusionsMax)
 
 
-	output.CrabBarriers = m_min(modDB:Override(nil, "CrabBarriers") or output.CrabBarriersMax, output.CrabBarriersMax)
+	output.CrabBarriers = m_min(env.recoveryCrabBarriers or modDB:Override(nil, "CrabBarriers") or output.CrabBarriersMax, output.CrabBarriersMax)
 	if modDB:Flag(nil, "HaveMaximumPowerCharges") then
 		output.PowerCharges = output.PowerChargesMax
 	end
@@ -1651,6 +1656,7 @@ function calcs.perform(env, skipEHP)
 
 	local function calcFlaskRecovery(type, item)
 		local out = {}
+		if env.recoveryManualFlasks then return out end
 		local lType = type:lower()
 
 		if not item.flaskData[lType.."EffectNotRemoved"] and not modDB:Flag(nil, type.."FlaskEffectNotRemoved") then
@@ -1890,6 +1896,10 @@ function calcs.perform(env, skipEHP)
 			-- Compute tincture effect multiplier.
 			-- Tincture effect multiplier is rounded to 2 decimal places before applying it.
 			local effectMod = math.floor((1 + (tinctureEffectInc) / 100) * (1 + (item.quality or 0) / 100) * 100) / 100 
+			if item.tinctureValues == "Final" then
+				local localEffect = math.floor((1 + item.tinctureData.effectInc / 100) * (1 + (item.quality or 0) / 100) * 100) / 100
+				effectMod = effectMod / m_max(localEffect, 0.01)
+			end
 
 			-- same deal as flasks, go look at the comment there
 			if buffModList[1] then
@@ -1934,8 +1944,8 @@ function calcs.perform(env, skipEHP)
 			end
 			tinctureLimit = tinctureLimit - 1
 			tinctureBuffsPerBase[item.baseName] = tinctureBuffsPerBase[item.baseName] or {}
-			tinctureConditions["UsingTincture"] = true
-			tinctureConditions["Using"..item.baseName:gsub("%s+", "")] = true
+			tinctureConditions["UsingTincture"] = not env.recoveryTinctureLingering
+			tinctureConditions["Using"..item.baseName:gsub("%s+", "")] = not env.recoveryTinctureLingering
 			calcTinctureMods(item, item.baseName, item.buffModList, item.modList)
 		end
 		for tinctureCond, status in pairs(tinctureConditions) do
@@ -3341,6 +3351,7 @@ function calcs.perform(env, skipEHP)
 	end
 
 	-- Process guard buffs
+	if env.recoveryGuardSuppressed then guards = { } end
 	local guardSlots = { }
 	local nonVaal = false
 	for name, modList in pairs(guards) do
@@ -3824,6 +3835,8 @@ function calcs.perform(env, skipEHP)
 	if not calcs.mirages(env) and calcs.offence(env, env.player, env.player.mainSkill) == false then
 		return false -- Rejected trigger-source probes are never cached
 	end
+
+	if not skipEHP then calcs.recoveryOverTime(env, env.player) end
 
 	if env.minion then
 		calcs.defence(env, env.minion)

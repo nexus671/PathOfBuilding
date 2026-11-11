@@ -4,6 +4,7 @@
 -- Calculation breakdown control used in the Calcs tab
 --
 local t_insert = table.insert
+local s_format = string.format
 local m_max = math.max
 local m_min = math.min
 local m_ceil = math.ceil
@@ -36,6 +37,18 @@ function CalcBreakdownClass:CalcBreakdownControl(calcsTab)
 	end
 	self.pinnedColour = { 0.25, 1, 0.25 }
 	self.borderColour = { 0.33, 0.66, 0.33 }
+	self.controls.timelineClose = new("ButtonControl"):ButtonControl({"TOPRIGHT",self,"TOPRIGHT"},{-24,4,62,20},"Close",function()
+		self.calcsTab:ClearDisplayStat()
+		self.shown = false
+	end)
+	self.controls.timelineClose.shown = function() return self.isTimeline end
+	self.controls.timelineSamples = new("CheckBoxControl"):CheckBoxControl({"TOPRIGHT",self,"TOPRIGHT"},{-240,5,18},"Show samples",function(state)
+		self.showTimelineSamples = state
+		local source,pinned,force = self.sourceData,self.pinned,self.forceActor
+		self.sourceData = nil
+		self:SetBreakdownData(source,pinned,force)
+	end)
+	self.controls.timelineSamples.shown = function() return self.isTimeline end
 	return self
 end
 
@@ -91,10 +104,21 @@ function CalcBreakdownClass:SetBreakdownData(displayData, pinned, forceActor)
 	end
 
 	self.shown = true
+	self.isTimeline = false
+	for _,section in ipairs(self.sectionList) do if section.type == "TIMELINE" then self.isTimeline = true end end
+	if self.isTimeline and not self.showTimelineSamples then
+		for _,section in ipairs(self.sectionList) do
+			if section.type == "TABLE" then
+				local events = { }
+				for _,row in ipairs(section.rowList) do if row.event ~= "Sample" then events[#events+1] = row end end
+				section.rowList = events
+			end
+		end
+	end
 
 	-- Determine the size of each section, and the combined content size of the breakdown
 	self.contentWidth = 0
-	local offset = 2
+	local offset = self.isTimeline and 28 or 2
 	for i, section in ipairs(self.sectionList) do
 		if section.type == "TEXT" then
 			section.width = 0
@@ -115,9 +139,9 @@ function CalcBreakdownClass:SetBreakdownData(displayData, pinned, forceActor)
 					if row[col.key] then
 						local _, num = string.gsub(row[col.key], "%d%d%d%d", "") -- count how many commas will be added
 						if main.showThousandsSeparators and num > 0 then
-							col.width = m_max(col.width or 0, DrawStringWidth(16, "VAR", col.label) + 6, DrawStringWidth(12, "VAR", row[col.key]) + 6 + (4 * num))
+							col.width = m_max(col.width or 0, DrawStringWidth(16, "VAR", col.label) + 6, DrawStringWidth(self.isTimeline and 14 or 12, "VAR", row[col.key]) + 6 + (4 * num))
 						else 
-							col.width = m_max(col.width or 0, DrawStringWidth(16, "VAR", col.label) + 6, DrawStringWidth(12, "VAR", row[col.key]) + 6)
+							col.width = m_max(col.width or 0, DrawStringWidth(16, "VAR", col.label) + 6, DrawStringWidth(self.isTimeline and 14 or 12, "VAR", row[col.key]) + 6)
 						end
 					end
 				end
@@ -125,7 +149,7 @@ function CalcBreakdownClass:SetBreakdownData(displayData, pinned, forceActor)
 					section.width = section.width + col.width
 				end
 			end
-			section.height = #section.rowList * 14 + 20
+			section.height = #section.rowList * (self.isTimeline and 18 or 14) + 20
 			if section.label then
 				self.contentWidth = m_max(self.contentWidth, 6 + DrawStringWidth(16, "VAR", section.label..":"))
 				section.height = section.height + 16
@@ -159,9 +183,22 @@ function CalcBreakdownClass:AddBreakdownSection(sectionData)
 
 	if #breakdown > 0 then
 		-- Text lines
+		local lines = breakdown
+		if breakdown.wrap then
+			lines = { }
+			for _,text in ipairs(breakdown) do
+				local line = ""
+				for word in text:gmatch("%S+") do
+					local candidate = line == "" and word or line.." "..word
+					if line ~= "" and DrawStringWidth(16,"VAR",candidate) > breakdown.wrap then lines[#lines + 1] = line; line = word
+					else line = candidate end
+				end
+				lines[#lines + 1] = line
+			end
+		end
 		t_insert(self.sectionList, {
 			type = "TEXT",
-			lines = breakdown,
+			lines = lines,
 			textSize = 16
 		})
 	end
@@ -174,6 +211,9 @@ function CalcBreakdownClass:AddBreakdownSection(sectionData)
 			width = 8 + 1920/4,
 			height = 4 + 1080/4,
 		})
+	end
+	if breakdown.timeline then
+		t_insert(self.sectionList,{type="TIMELINE",timeline=breakdown.timeline,width=730,height=340})
 	end
 
 	if breakdown.rowList and #breakdown.rowList > 0 then
@@ -578,6 +618,7 @@ end
 
 function CalcBreakdownClass:DrawBreakdownTable(viewPort, x, y, section)
 	local cursorX, cursorY = GetCursorPos()
+	local rowHeight, textSize = self.isTimeline and 18 or 14, self.isTimeline and 14 or 12
 	if section.label then
 		-- Draw table label if able
 		DrawString(x + 2, y, "LEFT", 16, "VAR", "^7"..section.label..":")
@@ -610,11 +651,11 @@ function CalcBreakdownClass:DrawBreakdownTable(viewPort, x, y, section)
 				local _, notes = string.gsub(row[col.key], " to ", " ") -- counts " to " in the string
 				local _, paren = string.gsub(row[col.key], "%b()", " ") -- counts parenthesis in the string
 				if (alpha == 0 or notes > 0 or paren > 0) and col.right then
-					DrawString(col.x + col.width - 4, rowY + 1, "RIGHT_X", 12, "VAR", "^7"..formatNumSep(tostring(row[col.key])))
+					DrawString(col.x + col.width - 4, rowY + 1, "RIGHT_X", textSize, "VAR", "^7"..formatNumSep(tostring(row[col.key])))
 				elseif (alpha == 0 or notes > 0 or paren > 0) then
-					DrawString(col.x, rowY + 1, "LEFT", 12, "VAR", "^7"..formatNumSep(tostring(row[col.key])))
+					DrawString(col.x, rowY + 1, "LEFT", textSize, "VAR", "^7"..formatNumSep(tostring(row[col.key])))
 				else
-					DrawString(col.x, rowY + 1, "LEFT", 12, "VAR", "^7"..tostring(row[col.key]))
+					DrawString(col.x, rowY + 1, "LEFT", textSize, "VAR", "^7"..tostring(row[col.key]))
 				end
 				local ttFunc = row[col.key.."Tooltip"]
 				local ttNode = row[col.key.."Node"]
@@ -652,7 +693,7 @@ function CalcBreakdownClass:DrawBreakdownTable(viewPort, x, y, section)
 				end
 			end
 		end
-		rowY = rowY + 14
+		rowY = rowY + rowHeight
 	end
 	if section.footer then
 		-- Draw table footer if able
@@ -695,6 +736,69 @@ function CalcBreakdownClass:DrawRadiusVisual(x, y, width, height, radius)
 	DrawImage(self.uiOverlay, x, y, width, height)
 end
 
+function CalcBreakdownClass:DrawEncounterTimeline(x,y,section)
+	local trace=section.timeline
+	local width,plotX,plotWidth=section.width,x+48,section.width-65
+	local stop=m_max(0.001,trace.time or trace.window)
+	local function line(x1,y1,x2,y2)
+		local dx,dy=x2-x1,y2-y1
+		local length=math.sqrt(dx*dx+dy*dy)
+		if length < 1e-8 then return end
+		local ox,oy=-dy/length*0.75,dx/length*0.75
+		DrawImageQuad(nil,x1+ox,y1+oy,x2+ox,y2+oy,x2-ox,y2-oy,x1-ox,y1-oy)
+	end
+	local plots={
+		{label="Resources",series={{"Life",{0.3,1,0.4}},{"EnergyShield",{0.3,0.9,1}},{"Mana",{0.5,0.6,1}}}},
+		{label="Defenses",series={{"crab",{1,0.75,0.25}},{"shrouds",{0.8,0.5,1}},{"chargesTotal",{0.9,0.9,0.9}}}},
+		{label="Poison DPS",series={{"poison",{1,0.4,0.6}}}},
+	}
+	local labels={Life="Life",EnergyShield="ES",Mana="Mana",crab="Crab",shrouds="Shrouds",chargesTotal="Charges",poison="Poison DPS"}
+	local cursorX,cursorY=GetCursorPos()
+	local hovered=cursorX >= plotX and cursorX <= plotX+plotWidth and cursorY >= y and cursorY <= y+300
+	local hoverTime=(cursorX-plotX)/plotWidth*stop
+	local nearest
+	for _,point in ipairs(trace.points) do if not nearest or math.abs(point.time-hoverTime) < math.abs(nearest.time-hoverTime) then nearest=point end end
+	for index,plot in ipairs(plots) do
+		local top=y+(index-1)*100+22
+		SetDrawColor(0.12,0.12,0.15); DrawImage(nil,plotX,top,plotWidth,62)
+		SetDrawColor(0.45,0.45,0.5); line(plotX,top+62,plotX+plotWidth,top+62)
+		DrawString(x+2,top,"LEFT",12,"VAR","100%")
+		DrawString(x+20,top+48,"LEFT",12,"VAR","0")
+		SetDrawColor(1,1,1); DrawString(x+4,top-20,"LEFT",14,"VAR",plot.label.." (normalized)")
+		if plot.label == "Poison DPS" and (trace.caps.poison or 0) == 0 then DrawString(x+240,top-20,"LEFT",12,"VAR","No poison applied in this trial") end
+		local legendX=x+240
+		for _,series in ipairs(plot.series) do
+			local key,color=series[1],series[2]
+			local cap=trace.caps[key] or 0
+			for _,p in ipairs(trace.points) do cap=m_max(cap,p[key] or 0) end
+			if cap > 0 then
+				SetDrawColor(unpack(color))
+				local text=labels[key]..": "..s_format("%.0f",cap)
+				DrawString(legendX,top-20,"LEFT",12,"VAR",text)
+				legendX=legendX+DrawStringWidth(12,"VAR",text)+14
+				local previous
+				for _,p in ipairs(trace.points) do
+					local px,py=plotX+p.time/stop*plotWidth,top+62-m_min(1,m_max(0,(p[key] or 0)/cap))*62
+					if previous then line(previous[1],previous[2],px,py) end
+					previous={px,py}
+				end
+			end
+		end
+		if hovered and nearest then SetDrawColor(0.7,0.7,0.7); local px=plotX+nearest.time/stop*plotWidth; line(px,top,px,top+62) end
+	end
+	SetDrawColor(1,1,1)
+	DrawString(plotX,y+286,"LEFT",12,"VAR","0s")
+	for fraction=1,3 do
+		local label=s_format("%.1fs",stop*fraction/4)
+		DrawString(plotX+plotWidth*fraction/4-DrawStringWidth(12,"VAR",label)/2,y+286,"LEFT",12,"VAR",label)
+	end
+	DrawString(plotX+plotWidth,y+286,"RIGHT_X",12,"VAR",s_format("%.2fs",stop))
+	if hovered and nearest then
+		DrawString(x+4,y+304,"LEFT",12,"VAR",s_format("%.3fs: Life %.0f | ES %.0f | Mana %.0f | Crab %d | Shrouds %d",nearest.time,nearest.Life,nearest.EnergyShield,nearest.Mana,nearest.crab,nearest.shrouds))
+		DrawString(x+4,y+320,"LEFT",12,"VAR",s_format("Flask charges: %s | Poison DPS: %.0f",nearest.charges,nearest.poison))
+	else DrawString(x+4,y+308,"LEFT",12,"VAR","Hover to inspect samples. Legend values are each series' reference maximum; exact events follow below.") end
+end
+
 function CalcBreakdownClass:Draw(viewPort)
 	local sourceData = self.sourceData
 	local scrollBar = self.controls.scrollBar
@@ -722,7 +826,7 @@ function CalcBreakdownClass:Draw(viewPort)
 	self.y = y
 	-- Draw background
 	SetDrawLayer(nil, 10)
-	SetDrawColor(0, 0, 0, 0.9)
+	SetDrawColor(0, 0, 0, self.isTimeline and 1 or 0.9)
 	DrawImage(nil, x + borderThickness, y + borderThickness, width - borderThickness * 2, height - borderThickness * 2)
 	-- Draw border (this is put in sub layer 11 so it draws over the contents, in case they don't fit the screen)
 	SetDrawLayer(nil, 11)
@@ -737,6 +841,9 @@ function CalcBreakdownClass:Draw(viewPort)
 	DrawImage(nil, x + width - borderThickness, y, borderThickness, height)
 	SetDrawLayer(nil, 10)
 	self:DrawControls(viewPort)
+	-- Hovered controls can reset the draw layer while drawing their tooltip.
+	-- Restore it so the opaque panel never covers its own charts and event log.
+	SetDrawLayer(nil,10)
 	-- Draw the sections
 	y = y - scrollBar.offset
 	for i, section in ipairs(self.sectionList) do
@@ -755,7 +862,17 @@ function CalcBreakdownClass:Draw(viewPort)
 			SetDrawColor(1, 1, 1)
 			DrawImage(nil, x + 2, sectionY, section.width - 4, section.height)
 			self:DrawRadiusVisual(x + 4, sectionY + 2, section.width - 8, section.height - 4, section.radius)
+		elseif section.type == "TIMELINE" then
+			self:DrawEncounterTimeline(x+2,sectionY,section)
 		end
+	end
+	if self.isTimeline then
+		SetDrawLayer(nil,11)
+		SetDrawColor(0.08,0.08,0.1); DrawImage(nil,self.x+2,self.y+2,width-4,24)
+		SetDrawColor(1,1,1); DrawString(self.x+8,self.y+5,"LEFT",16,"VAR","Encounter timeline")
+		self.controls.timelineClose:Draw(viewPort)
+		SetDrawLayer(nil,11)
+		self.controls.timelineSamples:Draw(viewPort)
 	end
 	SetDrawLayer(nil, 0)
 end

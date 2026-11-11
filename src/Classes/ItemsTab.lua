@@ -645,6 +645,13 @@ holding Shift will put it in the second.]])
 	self.controls.displayItemQualityEdit.shown = function()
 		return self.displayItem and self.displayItem.quality and (self.displayItem.base.type ~= "Amulet" or self.displayItem.base.type ~= "Belt" or self.displayItem.base.type ~= "Jewel" or self.displayItem.base.type ~= "Quiver" or self.displayItem.base.type ~= "Ring" or self.displayItem.type ~= "Graft")
 	end
+	self.controls.displayItemTinctureValues = new("DropDownControl"):DropDownControl({"LEFT",self.controls.displayItemQualityEdit,"RIGHT"}, {8,0,185,20}, {"PoB base values", "Game displayed values"}, function(index)
+		self.displayItem.tinctureValues = index == 2 and "Final" or nil
+		self.displayItem:BuildAndParseRaw()
+		self:UpdateDisplayItemTooltip()
+	end)
+	self.controls.displayItemTinctureValues.shown = function() return self.displayItem and self.displayItem.type == "Tincture" end
+	self.controls.displayItemTinctureValues.tooltipText = "Game displayed values already include quality and local tincture effect. Select this for modifiers copied from the game; imported items select it automatically. Older items cannot be identified automatically."
 
 	local sortingOptions = {
 		{ stat = nil, label = "Default" }
@@ -2154,6 +2161,7 @@ function ItemsTabClass:SetDisplayItem(item)
 		self.controls.displayItemInfluence:SetSel(influence1, true)
 		self.controls.displayItemInfluence2:SetSel(influence2, true)
 		self.controls.displayItemQualityEdit:SetText(item.quality)
+		self.controls.displayItemTinctureValues:SetSel(item.tinctureValues == "Final" and 2 or 1, true)
 		self.controls.displayItemCatalyst:SetSel((item.catalyst or 0) + 1, true)
 		if item.catalystQuality then
 			self.controls.displayItemCatalystQualityEdit:SetText(m_max(item.catalystQuality, 0))
@@ -4838,7 +4846,7 @@ function ItemsTabClass:AddItemStatDifferences(tooltip, item, base, slot)
 		end
 		local usedInc = modDB:Sum("INC", nil, "FlaskChargesUsed")
 		if usedInc ~= 0 then
-			local used = m_floor(flaskData.chargesUsed * (1 + usedInc / 100))
+			local used = require("Modules.CalcEncounter").chargesUsed(item.base.flask.chargesUsed, flaskData.chargesUsedInc or 0, usedInc)
 			t_insert(stats, s_format("^8Charges used: ^7%d ^8of ^7%d ^8(^7%d ^8uses)", used, flaskData.chargesMax, m_floor(flaskData.chargesMax / used)))
 		end
 		local gainMod = flaskData.gainMod * (1 + modDB:Sum("INC", nil, "FlaskChargesGained") / 100)
@@ -4900,7 +4908,7 @@ function ItemsTabClass:AddItemStatDifferences(tooltip, item, base, slot)
 		end
 
 		if hasUptime then
-			local flaskChargesUsed = flaskData.chargesUsed * (1 + usedInc / 100)
+			local flaskChargesUsed = require("Modules.CalcEncounter").chargesUsed(item.base.flask.chargesUsed, flaskData.chargesUsedInc or 0, usedInc)
 			if flaskChargesUsed > 0 and flaskDuration > 0 then
 				local per3Duration = flaskDuration - (flaskDuration % 3)
 				local per5Duration = flaskDuration - (flaskDuration % 5)
