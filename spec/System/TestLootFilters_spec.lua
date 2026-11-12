@@ -30,10 +30,12 @@ describe("Build-owned loot filters",function()
 			launch.DownloadPage=function(_,url,callback,options)
 				called=true;assert.equal("https://api.pathofexile.com/item-filter?validate=true",url)
 				assert.is_truthy(options.header:find("Content-Type: application/json",1,true));assert.is_false(require("dkjson").decode(options.body).public)
-				callback({header="HTTP/1.1 202 Accepted",body='{"filter":{"id":"test"}}'})
+				callback({header="HTTP/1.1 202 Accepted",body='{"filter":{"id":"test"}}'},"Response code: 202")
 			end
 			account.nextRequest=0;account.request(api,"POST",nil,payload,function(_,err) assert.is_truthy(err:find("processing",1,true)) end)
 			assert.is_true(called);assert.is_false(account.busy)
+			launch.DownloadPage=function(_,_,callback) callback({header="HTTP/1.1 200 Connection established\r\n\r\nHTTP/2 201 Created",body='{"filter":{"id":"test","validation":{"valid":true}}}'},"Response code: 201") end
+			account.nextRequest=0;account.request(api,"POST",nil,payload,function(value,err) assert.is_nil(err);assert.equal("test",value.filter.id) end)
 			launch.DownloadPage=function(_,_,callback) callback({header="HTTP/1.1 403 Forbidden",body="{}"}) end
 			account.nextRequest=0;account.request(api,"GET",nil,nil,function(_,err) assert.is_truthy(err:find("account:item_filter",1,true)) end)
 			assert.has_error(function() account.request(api,"POST","../other",payload,function() end) end)

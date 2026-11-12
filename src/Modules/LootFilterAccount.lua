@@ -19,11 +19,13 @@ function M.request(api,method,id,payload,callback)
 		local options={header="Authorization: Bearer "..api.authToken.."\r\nContent-Type: application/json"}
 		if method=="POST" then options.body=json.encode(payload) end
 		launch:DownloadPage("https://api.pathofexile.com/item-filter"..(id and "/"..id or "")..(method=="POST" and "?validate=true" or ""),function(response,errorMessage)
-			local status=tonumber(response and response.header and response.header:match("HTTP/[%d%.]+ (%d+)"))
+			local status;for code in (response and response.header or ""):gmatch("HTTP/[%d%.]+ (%d+)") do status=tonumber(code) end
 			if status==403 then finish(nil,"Item-filter access was not granted. The registered OAuth client must support account:item_filter; local export remains available.");return end
 			if status==429 then local wait=math.max(60,tonumber((response.header or ""):lower():match("retry%-after:%s*(%d+)")) or 60);finish(nil,"Rate limited. Wait at least "..wait.." seconds before retrying.",wait);return end
 			if status and status>=400 then finish(nil,"The account server rejected this request (HTTP "..status.."). Check validation and access before retrying.");return end
-			if errorMessage then finish(nil,"Account request failed. For a write, check your account before retrying; its outcome may be unknown.");return end
+			-- Launch marks every non-200 code as an error, including valid 201/202.
+			local httpSuccess=status and status>=200 and status<300
+			if not httpSuccess or errorMessage and errorMessage~="Response code: "..status then finish(nil,"Account request failed. For a write, check your account before retrying; its outcome may be unknown.");return end
 			local decoded=response and type(response.body)=="string" and json.decode(response.body)
 			if type(decoded)~="table" then finish(nil,"Invalid account response; check your account before retrying a write.");return end
 			if status==202 or decoded.error then finish(decoded,"The server accepted the request but processing/validation is incomplete. Check the account before retrying.");return end
