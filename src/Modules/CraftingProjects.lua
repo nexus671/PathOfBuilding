@@ -1,4 +1,4 @@
--- cspell:ignore eimport
+-- cspell:ignore eimport jsontype
 -- Build-owned crafting plans. External simulator exports are data, never code.
 local json = require("dkjson")
 local M = { }
@@ -54,8 +54,11 @@ function M.new(build)
 		if raw:match("^%s*$") then return end
 		local ok,projects = pcall(function()
 			assert(#raw <= 2*1024*1024,"Crafting projects exceed size limit")
-			local decoded = assert(json.decode(raw),"Invalid crafting project data")
-			assert(decoded.schemaVersion == 1 and type(decoded.projects) == "table" and #decoded.projects <= 8,"Unsupported crafting project data")
+			local decoded = assert(json.decode(raw,1,json.null),"Invalid crafting project data")
+			assert(decoded.schemaVersion == 1 and type(decoded.projects) == "table" and decoded.projects ~= json.null,"Unsupported crafting project data")
+			local meta=getmetatable(decoded.projects)
+			assert(not meta or meta.__jsontype ~= "object","Crafting projects must be an array")
+			for key in pairs(decoded.projects) do assert(type(key)=="number" and key==math.floor(key) and key>=1 and key<=#decoded.projects,"Crafting projects must be an array") end
 			local result,ids = {},{}
 			for _,project in ipairs(decoded.projects) do local entry=M.validate(project); assert(not ids[entry.id],"Duplicate crafting project ID"); ids[entry.id]=true; result[#result+1]=entry end
 			return result
@@ -79,7 +82,7 @@ function M.new(build)
 		local replacement=copyTable(self.projects)
 		local found=false
 		for index,existing in ipairs(replacement) do if existing.id == entry.id then replacement[index]=entry; found=true; break end end
-		if not found then assert(#replacement < 8,"Keep up to eight crafting projects per build"); replacement[#replacement+1]=entry end
+		if not found then replacement[#replacement+1]=entry end
 		assert(#json.encode({schemaVersion=1,projects=replacement}) <= 2*1024*1024,"Crafting projects exceed the supported size")
 		self.projects=replacement; build.modFlag=true
 		return entry

@@ -43,15 +43,29 @@ describe("Crafting projects", function()
 		assert.are.equal(false,pcall(store.Upsert,store,project()))
 	end)
 
-	it("rejects invalid equipment targets and bounds saved projects", function()
+	it("rejects invalid equipment targets without imposing a project count limit", function()
 		local store=build.savers.CraftingProjects
 		local entry=project(); entry.targetItem="Rarity: NORMAL\nGold Ring"
 		assert.are.equal(false,pcall(store.Upsert,store,entry))
 		assert.are.equal(0,#store.projects)
-		for i=1,8 do entry=project(); entry.id="project-"..i; store:Upsert(entry) end
-		entry=project(); entry.id="project-9"
-		assert.are.equal(false,pcall(store.Upsert,store,entry))
-		assert.are.equal(8,#store.projects)
+		for i=1,64 do entry=project();entry.id="project-"..i;store:Upsert(entry) end
+		assert.are.equal(64,#store.projects)
+		entry=project();entry.id="project-32";entry.notes="Alternative route updated";store:Upsert(entry)
+		assert.are.equal(64,#store.projects);assert.are.equal(entry.notes,store.projects[32].notes)
+		local prepared=bridge.prepare(build,{mode="edit",title="Keep all gear plans",baseRevision=bridge.revision(build),operations={{type="set_character",level=80}}})
+		local loaded=prepared.candidate.savers.CraftingProjects
+		assert.are.equal(64,#loaded.projects);assert.are.equal("project-64",loaded.projects[64].id);assert.are.equal(entry.notes,loaded.projects[32].notes)
+	end)
+	it("keeps size limits and preserves malformed project collections",function()
+		local store=build.savers.CraftingProjects
+		for _,raw in ipairs({'{"schemaVersion":1,"projects":{}}','{"schemaVersion":1,"projects":{"one":{}}}','{"schemaVersion":1,"projects":[null]}','{"schemaVersion":1,"projects":null}',string.rep(" ",2*1024*1024).."{}"}) do
+			local loaded=projects.new(build);loaded:Load({raw});assert.is_truthy(loaded.warning)
+			local xml={};loaded:Save(xml);assert.are.equal(raw,xml[1])
+		end
+		local entry=project();entry.notes=string.rep("x",8000)
+		entry.simulatorExport=string.rep("x",128000)
+		for i=1,15 do entry.id="large-"..i;store:Upsert(entry) end
+		entry.id="too-large";assert.is_false(pcall(store.Upsert,store,entry));assert.are.equal(15,#store.projects)
 	end)
 	it("keeps a different equipment base after recombination without changing its slot", function()
 		local entry=project();entry.targetItem="Rarity: NORMAL\nLeather Cap"
