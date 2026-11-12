@@ -1,3 +1,4 @@
+# cspell:ignore pathofbuildingcommunity pathofbuilding modcache
 name: Run Tests
 on:
   push:
@@ -6,6 +7,15 @@ on:
     branches: [ dev ]
   workflow_dispatch:
 jobs:
+  test_planning_workflow:
+    runs-on: ubuntu-latest
+    container: ghcr.io/pathofbuildingcommunity/pathofbuilding-tests:latest
+    steps:
+      - name: Install MCP client runtime
+        run: apk add nodejs
+      - uses: actions/checkout@v4
+      - name: Exercise MCP planning through native review and save
+        run: node tools/test_planning_workflow.cjs
   test_ai_bridge:
     runs-on: ubuntu-latest
     steps:

@@ -6,8 +6,8 @@ local function button(c,key,x,y,w,label,run)
 	c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,w,28},label,run);return c[key]
 end
 local fields={
-	milestones={{"title","Milestone"},{"kind","Type",{"task","passives","gems","gear","craft","atlas","quest","ascendancy"}},{"level","Required level"},{"priority","Priority (1 first)"},{"dependencies","Prerequisites (IDs, comma separated)"},{"wishlistId","Gear goal ID"},{"stageId","Guide stage ID"},{"projectId","Craft ID"},{"atlasId","Atlas plan ID"},{"notes","Notes"}},
-	wishlist={{"title","Gear goal"},{"slot","Equipment slot"},{"route","Acquire by",{"buy","craft","farm","owned"}},{"stage","Upgrade stage",{"next","final","alternative"}},{"status","Status",{"planned","owned","skipped"}},{"priority","Priority (1 first)"},{"projectId","Craft ID"},{"resourceId","Cost resource ID"},{"estimate","Estimated quantity"},{"reserve","Reserve budget",{"no","yes"}},{"notes","Notes"}},
+	milestones={{"title","Milestone"},{"kind","Type",{"task","passives","gems","gear","craft","atlas","quest","ascendancy"}},{"level","Required level"},{"priority","Priority (1 first)"},{"dependencies","Prerequisites"},{"wishlistId","Gear goal ID"},{"stageId","Guide stage ID"},{"projectId","Craft ID"},{"atlasId","Atlas plan ID"},{"notes","Notes"}},
+	wishlist={{"title","Gear goal"},{"slot","Equipment slot"},{"route","Acquire by",{"buy","craft","farm","owned"}},{"stage","Upgrade stage",{"next","final","alternative"}},{"status","Status",{"planned","owned","skipped"}},{"priority","Priority (1 first)"},{"projectId","Craft ID"},{"resourceId","Cost resource ID"},{"estimate","Estimated quantity"},{"reserve","Reserve budget",{"no","yes"}},{"notes","Notes"},{"targetItem","Exact target item text"}},
 	resources={{"title","Currency, material or owned base"},{"unit","Unit (optional)"},{"notes","Notes"}},
 	ledger={{"resourceId","Resource ID"},{"kind","Record",{"add","spend"}},{"amount","Quantity"},{"projectId","Craft ID (optional)"},{"note","Source / spending note"}},
 	stages={{"title","Stage"},{"level","Level"},{"gems","Gems and links"},{"passives","Passives"},{"gear","Gear and acquisition"},{"ascendancy","Ascendancy"},{"quests","Quests and rewards"},{"transition","Switch when"},{"notes","Notes"}},
@@ -30,20 +30,23 @@ function Panel.Edit(build,key,entry,refresh)
 		ui.label(c,name.."Label",x,y,label,14)
 		local value=entry[name]
 		if name=="dependencies" then value=table.concat(value or {},", ") elseif name=="reserve" then value=value and "yes" or "no" end
-		if choices then c[name]=new("DropDownControl"):DropDownControl(ui.anchor,{x,y+20,column,26},choices);c[name]:SelByValue(value or (linked[name] and "" or choices[1]),linked[name] and "val" or nil)
-		else c[name]=new("EditControl"):EditControl(ui.anchor,{x,y+20,column,26},value and tostring(value) or "","",nil,12000) end
-		if name=="notes" or key=="stages" and name~="title" and name~="level" then
+		if name=="dependencies" then
+			button(c,name,x,y+20,column,"Choose prerequisites",function() require("Classes.JourneyPrerequisiteControl").Open(saver.data,entry.id,c[name].selectedIds,function(ids) c[name].selectedIds=ids end) end)
+			c[name].selectedIds=copyTable(entry.dependencies or {});c[name].label=function() return #c[name].selectedIds.." selected | Choose milestones" end
+		elseif choices then c[name]=new("DropDownControl"):DropDownControl(ui.anchor,{x,y+20,column,26},choices);c[name]:SelByValue(value or (linked[name] and "" or choices[1]),linked[name] and "val" or nil)
+		else c[name]=new("EditControl"):EditControl(ui.anchor,{x,y+20,column,26},value and tostring(value) or "",nil,nil,name=="targetItem" and 24000 or 12000) end
+		if name=="notes" or name=="targetItem" or key=="stages" and name~="title" and name~="level" then
 			c[name].width=column-48
 			button(c,name.."Expand",x+column-40,y+20,40,"...",function()
 				local editor={};local ew,eh=math.min(800,main.screenW-40),math.min(500,main.screenH-80)
-				editor.text=new("EditControl"):EditControl(ui.anchor,{16,28,ew-32,eh-100},c[name].buf,nil,"^%C\t\n",12000,nil,16,true)
+				editor.text=new("EditControl"):EditControl(ui.anchor,{16,28,ew-32,eh-100},c[name].buf,nil,"^%C\t\n",name=="targetItem" and 24000 or 12000,nil,16,true)
 				button(editor,"keep",16,eh-48,140,"Keep text",function() c[name]:SetText(editor.text.buf);main:ClosePopup() end)
 				button(editor,"cancel",ew-156,eh-48,140,"Cancel",function() main:ClosePopup() end)
 				ui.style(editor,{keep=true});main:OpenPopup(ew,eh,label,editor,nil,"text","cancel")
 			end)
 		end
 	end
-	ui.description(c,"hint",16,height-96,width-32,38,{"IDs are shown in each detail panel. Keep to update this build; use the normal build Save to persist."},14)
+	ui.description(c,"hint",16,height-96,width-32,38,{"Choose linked plans by name. Keep updates this build; use the normal build Save to persist."},14)
 	button(c,"keep",16,height-48,140,"Keep",function()
 		local e=copyTable(entry);e.id=e.id or (key.."-"..os.time().."-"..tostring(GetTime())):gsub("[^%w_-]","")
 		if not entry.id then
@@ -51,7 +54,7 @@ function Panel.Edit(build,key,entry,refresh)
 			local base=e.id;local suffix=1;while used[e.id] do suffix=suffix+1;e.id=base.."-"..suffix end
 		end
 		for _,field in ipairs(list) do local name=field[1];local v=linked[name] and c[name]:GetSelValueByKey("val") or (field[3] or name=="slot") and c[name]:GetSelValue() or c[name].buf
-			if name=="dependencies" then local deps={};for dep in v:gmatch("[^,%s]+") do deps[#deps+1]=dep end;v=deps
+			if name=="dependencies" then v=copyTable(c[name].selectedIds)
 			elseif name=="reserve" then v=v=="yes"
 			elseif name=="level" or name=="priority" or name=="estimate" or name=="amount" then v=v~="" and assert(tonumber(v),"Enter a number for "..name) or nil
 			elseif v=="" then v=nil end
@@ -67,9 +70,10 @@ end
 function Panel.Open(build,source,layout)
 	local saver=build.savers.BuildJourney;local c={};local w,h=layout.width,layout.height
 	local page=source and source.page or "Overview";local selected=source and source.selected
+	local sortMetric=source and source.sortMetric or "priority";local perCost=source and source.perCost or false
 	local pages={"Overview","Roadmap","Gear","Budget","Leveling"};local keys={Roadmap="milestones",Gear="wishlist",Budget="resources",Leveling="stages"}
 	local left=math.floor(math.max(300,math.min(390,w*0.36)));local right=w-left-48
-	local function reopen(id) layout.navigate("journey",{page=page,selected=id or selected}) end
+	local function reopen(id) layout.navigate("journey",{page=page,selected=id or selected,sortMetric=sortMetric,perCost=perCost}) end
 	ui.label(c,"heading",16,18,"Your build journey",24)
 	ui.description(c,"intro",16,50,w-32,24,{saver.warning or "A roadmap from your current character to the gear and content you want to play."},14)
 	for i,name in ipairs(pages) do button(c,"page"..i,16+(i-1)*150,82,140,name,function() page=name;selected=nil;reopen() end);c["page"..i].locked=page==name end
@@ -90,16 +94,53 @@ function Panel.Open(build,source,layout)
 		detail={"What should I do next?","Tasks with met prerequisites come first, then your chosen priority (1 first). This is a planning order, not a measured upgrade score.","Select a task for its reasons, links and next step.","", "Character checks"}
 		for _,e in ipairs(require("Modules.BuildInsights").audit(build).dependencies) do detail[#detail+1]=e.text end
 	else
-		local key=keys[page];local list=copyTable(data[key])
+		local key=keys[page];local list=page=="Gear" and require("Modules.JourneyUpgrades").sorted(build,sortMetric,perCost) or copyTable(data[key])
 		if page=="Leveling" then table.sort(list,function(a,b) if (a.level or 1)==(b.level or 1) then return a.id<b.id end;return (a.level or 1)<(b.level or 1) end) end
-		for _,e in ipairs(list) do add(e,(e.done and "[DONE] " or "")..(e.level and "Lv "..e.level.." | " or "")..e.title) end
+		local measurements=page=="Gear" and require("Modules.JourneyUpgrades").current(build)
+		local fresh=measurements and require("Modules.JourneyUpgrades").fresh(build)
+		for _,e in ipairs(list) do
+			local label=(e.done and "[DONE] " or "")..(e.level and "Lv "..e.level.." | " or "")..e.title
+			if page=="Gear" then
+				local row=fresh and measurements.entries[e.id];local metric=sortMetric=="priority" and "LifeUnreserved" or sortMetric
+				local value
+				if row and row.status=="calculated" then if perCost then value=row.perCost[metric] else value=row.delta[metric] end end
+				local cost=e.resourceId and string.format("%.2f %s",e.estimate,budget[e.resourceId].title) or "Cost unknown"
+				label=label.."\n"..e.slot.." | "..e.route.." | "..cost
+				if value then label=label..string.format("\n%+.2f %s%s",value,metric=="LifeUnreserved" and "Life" or metric=="CombinedDPS" and "DPS" or "gain",perCost and " / resource" or "") end
+				if row and row.eligible==false then label=label.." | Needs review" end
+			end
+			add(e,label)
+		end
 		if #rows==0 then detail={"Start your "..page:lower(),"Add an entry below. Your plans travel with the build when you save or export it.","",page=="Gear" and "Equipped gear is shown below; wishlist entries record the next and final pieces you want." or page=="Budget" and "Add each currency, material or base, then record holdings and spending. Estimates and reservations never convert currencies or spend money automatically." or page=="Leveling" and "Write gems, links, gear, passives, ascendancy and quest steps. Calculated AI leveling stages can also be kept from AI builds > Candidates." or "Connect milestones to gear goals, crafts, guide stages and Atlas plans using the IDs in their detail panels."} end
 		if page=="Gear" then
 			detail[#detail+1]="Current equipment"
 			for name,slot in pairsSortByKey(build.itemsTab.slots) do local item=build.itemsTab.items[slot.selItemId];if item then detail[#detail+1]=name..": "..(item.name or item.baseName) end end
 		end
 	end
-	local listY=page=="Overview" and 242 or 128;local selectedEntry
+	local listY=page=="Overview" and 242 or 168;local selectedEntry
+	local currentPreview,targetPreview
+	if page=="Gear" then
+		local cardW=math.floor((right-12)/2)
+		currentPreview=require("Classes.JourneyItemControl").new(c,"equippedItem",left+32,listY,cardW,196,"EQUIPPED NOW")
+		targetPreview=require("Classes.JourneyItemControl").new(c,"targetItem",left+44+cardW,listY,cardW,196,"PLANNED UPGRADE")
+		c.sort=new("DropDownControl"):DropDownControl(ui.anchor,{16,128,left,26},require("Modules.JourneyUpgrades").metrics);c.sort:SelByValue(sortMetric,"val")
+		local sortDirty=false
+		c.sort.selFunc=function() sortMetric=c.sort:GetSelValueByKey("val");sortDirty=true end
+		layout.tick=function() if sortDirty and not c.sort.dropped then sortDirty=false;reopen() end end
+		button(c,"perCost",left+32,128,188,perCost and "Per resource: on" or "Per resource: off",function() perCost=not perCost;reopen() end)
+		ui.description(c,"rankingHint",left+236,128,right-204,32,{"Per-resource ranking groups currencies separately."},13)
+	else
+		local complete,total=0,0
+		local collection=page=="Roadmap" and data.milestones or page=="Leveling" and data.stages or page=="Budget" and data.resources
+		if collection then total=#collection;for _,e in ipairs(collection) do if e.done then complete=complete+1 end end end
+		if page~="Overview" then
+			local progress=new("Control"):Control(ui.anchor,{16,128,w-32,26});c.progress=progress
+			function progress:Draw() local x,y=self:GetPos();SetDrawColor("^x233142");DrawImage(nil,x,y,w-32,26)
+				if page=="Roadmap" and total>0 and complete>0 then SetDrawColor("^x465A3E");DrawImage(nil,x,y,math.max(1,(w-32)*complete/total),26) end
+				SetDrawColor("^xD5DEE8");DrawString(x+10,y+5,"LEFT",14,"VAR",page=="Roadmap" and complete.." of "..total.." milestones completed" or total..(page=="Leveling" and " saved leveling stages" or " tracked resources"))
+			end
+		end
+	end
 	local function linkedTitle(key,value)
 		local list=key=="projectId" and build.savers.CraftingProjects.projects or key=="atlasId" and build.savers.AtlasPlans.plans or key=="stageId" and data.stages or key=="wishlistId" and data.wishlist
 		if list then for _,entry in ipairs(list) do if entry.id==value then return entry.title end end;return "Missing: "..value end
@@ -107,14 +148,24 @@ function Panel.Open(build,source,layout)
 	end
 	local labels={kind="Type",slot="Slot",route="Acquire by",stage="Upgrade stage",status="Status",level="Level",priority="Priority",projectId="Craft",atlasId="Atlas plan",stageId="Guide stage",wishlistId="Gear goal",gems="Gems and links",passives="Passives",gear="Gear",ascendancy="Ascendancy",quests="Quests",transition="Switch when",notes="Notes"}
 	local function show(e)
-		selectedEntry=e;selected=e.id;local lines={e.title,"ID: "..e.id}
+		selectedEntry=e;selected=e.id;local lines={e.title}
 		if page=="Overview" then
 			lines[#lines+1]=e.blocked and "Waiting on the following" or "Ready: prerequisites met; no recorded funding gap."
 			for _,reason in ipairs(e.reasons) do lines[#lines+1]=reason end;e=e.entry
 		end
+		if page=="Gear" then
+			local measurements=require("Modules.JourneyUpgrades").current(build);local row=measurements and measurements.entries[e.id]
+			local metric=sortMetric=="priority" and "LifeUnreserved" or sortMetric
+			if row and row.status=="calculated" and require("Modules.JourneyUpgrades").fresh(build) then
+				local delta=row.delta[metric];local label=require("Modules.BuildInsights").labels[metric] or metric
+				if delta then lines[#lines+1]=string.format("%s: %.2f -> %.2f (%+.2f)",label,row.before[metric],row.after[metric],delta) end
+				if row.perCost[metric] then lines[#lines+1]=string.format("%+.3f gain per %s",row.perCost[metric],budget[row.resourceId].title) end
+				if not row.eligible then lines[#lines+1]="Needs review: outside constraints or new requirements." end
+			elseif measurements and not require("Modules.JourneyUpgrades").fresh(build) then lines[#lines+1]="Build or goals changed: recalculate measurements." end
+		end
 		if e.slot then local slot=build.itemsTab.slots[e.slot];local item=slot and build.itemsTab.items[slot.selItemId];lines[#lines+1]="Equipped now: "..(item and (item.name or item.baseName) or "Empty slot") end
 		for _,field in ipairs({"kind","slot","route","stage","status","level","priority","projectId","atlasId","stageId","wishlistId","gems","passives","gear","ascendancy","quests","transition","notes"}) do if e[field] then lines[#lines+1]=labels[field]..": "..linkedTitle(field,e[field]) end end
-		if e.dependencies and #e.dependencies>0 then lines[#lines+1]="Prerequisites: "..table.concat(e.dependencies,", ") end
+		if e.dependencies and #e.dependencies>0 then local names={};for _,id in ipairs(e.dependencies) do for _,milestone in ipairs(data.milestones) do if milestone.id==id then names[#names+1]=milestone.title;break end end end;lines[#lines+1]="Prerequisites: "..table.concat(names,", ") end
 		if e.resourceId then lines[#lines+1]=string.format("Estimate: %.2f %s%s",e.estimate,budget[e.resourceId].title,e.reserve and " (reserved)" or "") end
 		if page=="Overview" then
 			lines[#lines+1]="";lines[#lines+1]="Current character checks"
@@ -124,13 +175,29 @@ function Panel.Open(build,source,layout)
 		end
 		if page=="Budget" then
 			local r=budget[e.id];lines[#lines+1]=string.format("Owned %.2f | Spent %.2f | Reserved %.2f",r.owned,r.spent,r.reserved);lines[#lines+1]=string.format("Available %.2f | Funding gap %.2f",r.available,r.gap)
-			for _,record in ipairs(data.ledger) do if record.resourceId==e.id then lines[#lines+1]=record.kind.." "..record.amount.." | "..(record.projectId or "").." | "..(record.note or "") end end
+			for _,record in ipairs(data.ledger) do if record.resourceId==e.id then lines[#lines+1]=record.kind.." "..record.amount.." | "..(record.projectId and linkedTitle("projectId",record.projectId) or "").." | "..(record.note or "") end end
+		end
+		if page=="Gear" then
+			local slot=build.itemsTab.slots[e.slot];currentPreview(slot and build.itemsTab.items[slot.selItemId])
+			local raw=require("Modules.JourneyUpgrades").target(build,e);local ok,target=pcall(require("Modules.CraftingProjects").item,raw);targetPreview(ok and target or nil)
+			local measured=require("Modules.JourneyUpgrades").current(build)
+			if measured then
+				if not require("Modules.JourneyUpgrades").fresh(build) then lines[#lines+1]="Measurements are stale. Recalculate after build or plan changes."
+				else local row=measured.entries[e.id];if row then
+					lines[#lines+1]="";lines[#lines+1]="Native upgrade measurements"
+					if row.status=="calculated" then
+						for _,metric in ipairs(require("Modules.JourneyUpgrades").metrics) do local delta=row.delta[metric.val];if delta then lines[#lines+1]=string.format("%s: %+.2f%s",metric.label,delta,row.perCost[metric.val] and string.format(" | %+.3f per %s",row.perCost[metric.val],budget[row.resourceId].title) or "") end end
+						for _,issue in ipairs(row.issues) do lines[#lines+1]=issue end
+					else lines[#lines+1]=row.reason end
+				end end
+			end
 		end
 		c.details.list=ui.rows(lines,right-24,15)
 	end
 	c.entries=new("TextListControl"):TextListControl(ui.anchor,{16,listY,left,h-listY-72},nil,rows)
-	c.entries.onClick=function(row) if row and row.line then show(entries[row.line]) end end
-	c.details=new("TextListControl"):TextListControl(ui.anchor,{left+32,listY,right,h-listY-72},nil,ui.rows(detail,right-24,15))
+	c.entries.onClick=function(row) if row and row.line and row.line.line then show(entries[row.line.line]) end end
+	local detailY=listY+(page=="Gear" and 208 or 0)
+	c.details=new("TextListControl"):TextListControl(ui.anchor,{left+32,detailY,right,h-detailY-72},nil,ui.rows(detail,right-24,15))
 	for _,e in ipairs(entries) do if e.id==selected then show(e);break end end
 	if not selectedEntry and entries[1] then show(entries[1]) end
 	if page~="Overview" then
@@ -139,6 +206,12 @@ function Panel.Open(build,source,layout)
 		c.edit.enabled=function() return selectedEntry~=nil end
 	end
 	if page=="Roadmap" then button(c,"complete",300,h-48,156,"Toggle complete",function() assert(selectedEntry,"Select a milestone");saver:Complete(selectedEntry.id);reopen() end)
+	elseif page=="Gear" then
+		button(c,"measure",300,h-48,176,"Measure upgrades",function()
+			local upgrades=require("Modules.JourneyUpgrades");if upgrades.job then upgrades.cancel();reopen();return end
+			upgrades.start(build,function() reopen() end)
+		end)
+		c.measure.label=function() local upgrades=require("Modules.JourneyUpgrades");local r=upgrades.current(build);return upgrades.job and r and string.format("Cancel (%d/%d)",r.completed,r.total) or "Measure upgrades" end
 	elseif page=="Budget" then button(c,"record",300,h-48,176,"Record transaction",function() Panel.Edit(build,"ledger",{resourceId=selectedEntry and selectedEntry.id,kind="add"},function() reopen() end) end) end
 	if page~="Overview" then
 		button(c,"remove",492,h-48,100,"Remove",function()
@@ -161,7 +234,7 @@ function Panel.Open(build,source,layout)
 		error("This entry has no linked plan")
 	end)
 	c.openLink.enabled=function() local e=selectedEntry and (selectedEntry.entry or selectedEntry);return e and (e.projectId or e.atlasId or e.stageId or e.wishlistId)~=nil end
-	layout.snapshot=function() return {page=page,selected=selected} end
+	layout.snapshot=function() return {page=page,selected=selected,sortMetric=sortMetric,perCost=perCost} end
 	for _,control in pairs(c) do control.layoutAudit="journey-workspace" end
 	ui.style(c,{add=true});layout.mount(w,h,"Journey",c)
 end

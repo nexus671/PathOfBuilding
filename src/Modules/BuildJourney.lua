@@ -21,6 +21,15 @@ local function choice(v,values)
 	for _,valid in ipairs(values) do if v==valid then return v end end;error("Invalid choice")
 end
 function M.empty() return {schemaVersion=1,milestones={},wishlist={},resources={},ledger={},stages={}} end
+function M.dependents(data,id)
+	local children={}
+	for _,entry in ipairs(data.milestones) do for _,dep in ipairs(entry.dependencies or {}) do children[dep]=children[dep] or {};children[dep][#children[dep]+1]=entry.id end end
+	local seen,queue={[id or ""]=true},{id or ""};local cursor=1
+	while cursor<=#queue do local parent=queue[cursor];cursor=cursor+1
+		for _,child in ipairs(children[parent] or {}) do if not seen[child] then seen[child]=true;queue[#queue+1]=child end end
+	end
+	return seen
+end
 function M.validate(input,build)
 	assert(type(input)=="table" and input.schemaVersion==1,"Unsupported journey data")
 	local out=M.empty();local ids={}
@@ -104,8 +113,8 @@ function M.captureStage(candidate,title,key,revision)
 		notes="Captured from a native calculated candidate at "..os.date("!%Y-%m-%d %H:%M UTC")..". Base revision "..revision..". Recalculate after changes; this guide does not apply the candidate."}
 end
 function M.next(data,build)
-	local result,done,projects,atlas={},{},{},{}
-	for _,e in ipairs(data.milestones) do done[e.id]=e.done end
+	local result,done,projects,atlas,titles={},{},{},{},{}
+	for _,e in ipairs(data.milestones) do done[e.id]=e.done;titles[e.id]=e.title end
 	for _,e in ipairs(build.savers.CraftingProjects.projects) do projects[e.id]=true end
 	for _,e in ipairs(build.savers.AtlasPlans.plans) do atlas[e.id]=true end
 	local budget=M.budget(data);local gear={};for _,e in ipairs(data.wishlist) do gear[e.id]=e end
@@ -117,7 +126,7 @@ function M.next(data,build)
 		if e.projectId and not projects[e.projectId] then reasons[#reasons+1]="Linked craft is missing" end
 	end
 	for _,e in ipairs(data.milestones) do if not e.done then
-		local reasons={};for _,dep in ipairs(e.dependencies) do if not done[dep] then reasons[#reasons+1]="Finish prerequisite: "..dep end end
+		local reasons={};for _,dep in ipairs(e.dependencies) do if not done[dep] then reasons[#reasons+1]="Finish prerequisite: "..(titles[dep] or dep) end end
 		if e.level and e.level>(build.characterLevel or 1) then reasons[#reasons+1]="Requires level "..e.level end
 		if e.projectId and not projects[e.projectId] then reasons[#reasons+1]="Linked craft is missing" end
 		if e.atlasId and not atlas[e.atlasId] then reasons[#reasons+1]="Linked Atlas plan is missing" end
@@ -156,8 +165,8 @@ function M.new(build)
 		for _,e in ipairs(data.milestones) do if e.id==key then e.done=not e.done;found=e;break end end
 		assert(found,"Unknown milestone")
 		if not found.done then
-			local unfinished={[key]=true};local changed=true
-			while changed do changed=false;for _,e in ipairs(data.milestones) do if e.done then for _,dep in ipairs(e.dependencies) do if unfinished[dep] then e.done=false;unfinished[e.id]=true;changed=true;break end end end end end
+			local unfinished=M.dependents(data,key)
+			for _,entry in ipairs(data.milestones) do if unfinished[entry.id] then entry.done=false end end
 		end
 		return self:Replace(data)
 	end

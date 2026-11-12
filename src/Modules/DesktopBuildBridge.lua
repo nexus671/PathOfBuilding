@@ -420,6 +420,7 @@ end
 
 function M.poll(build, force)
 	require("Modules.CraftingTasks").tick(build)
+	require("Modules.JourneyUpgrades").tick(build)
 	if not M.enabled then return end
 	if M.build ~= build then M.close(M.build); return end
 	if not force and GetTime() < (M.nextPoll or 0) then return end
@@ -445,6 +446,16 @@ function M.poll(build, force)
 			M.status={id=request.id,status="cancelled",cancelledId=request.requestId};M.publishState();return
 		end
 		assert(not require("Modules.CraftingTasks").job,"Finish or cancel the active crafting job first")
+		assert(not require("Modules.JourneyUpgrades").job,"Finish or cancel upgrade measurements first")
+		if request.kind=="journeyUpgrades" then
+			assert(request.baseRevision==M.revision(build),"Build changed. Refresh Journey context.")
+			local session=M.session
+			require("Modules.JourneyUpgrades").start(build,function(result)
+				if not M.enabled or M.session~=session then return end
+				M.status={id=request.id,status=result.cancelled and "cancelled" or "measured",upgrades=result};M.publishState()
+			end)
+			M.status={id=request.id,status="calculating"};M.publishState();return
+		end
 		if request.kind == "atlasSearch" or request.kind == "atlasConnect" then
 			assert(request.baseRevision == M.revision(build),"Build changed. Refresh Atlas context.")
 			local planner=require("Modules.AtlasPlanner")

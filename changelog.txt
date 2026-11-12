@@ -1,6 +1,9 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Compare equipped and wishlist item cards, choose prerequisites by name and track milestone progress.
+* Measure wishlist upgrades with native calculations and compare benefit per recorded resource.
+* Test the complete MCP planning, native review and save/reopen workflow without opening a window.
 * Added Journey: linked milestones, gear wishlist, resource budget, leveling guide and explained next tasks.
 * Keep and resume working crafts, including item state, action history, targets and settings.
 * AI tools can read and propose Journey plans through native desktop review.

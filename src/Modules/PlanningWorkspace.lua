@@ -92,6 +92,7 @@ function M:Draw(viewport,events)
 		self.cache={};self.body=nil
 		self:Show(self.page)
 	elseif not self.body then self:Show(self.page) end
+	local active=self.cache[self.page];if active and active.layout.tick then active.layout.tick() end
 	self:ProcessControlsInput(events or {},viewport)
 	SetDrawColor(0.065,0.075,0.09);DrawImage(nil,viewport.x,viewport.y,viewport.width,viewport.height)
 	SetDrawColor(0.15,0.17,0.2);DrawImage(nil,viewport.x,viewport.y+48,viewport.width,2)

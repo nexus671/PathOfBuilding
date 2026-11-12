@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.journey1" />
+	<Version number="2.67.2-ai.journey2" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="e19a901ea46ebf9155472504a6bfcbb16b4a32e2" />
+	<File name="changelog.txt" part="default" sha1="a585612da17a65b34a8a87150285f13ed27c9d0d" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -165,7 +165,7 @@
 	<File name="z.dll" part="runtime" sha1="08517c87f5b9e8791ee5d471429be7fbfa5ddd0b" platform="win32" />
 	<File name="zlib1.dll" part="runtime" sha1="49f1ccf17328fca0a831555a35b8eacb1e845ae0" platform="win32" />
 	<File name="zstd.dll" part="runtime" sha1="2a20ae088f2398af5dfd5db2ccc2155eeac8e94d" platform="win32" />
-	<File name="AI/BuildProtocol.cjs" part="program" sha1="085c43bd181e12f722302eaf970f2e46fd3d6862" />
+	<File name="AI/BuildProtocol.cjs" part="program" sha1="f8f6d6db87389e6a95374cb5759c8c097ba58a21" />
 	<File name="AI/McpServer.cjs" part="program" sha1="3cb30471f1de974de308ff489e85445b21100a80" />
 	<File name="Assets/Atlas/3.27.0/atlas-background-3.jpg" part="program" sha1="4db9c28ea7c03108f89785c65bc3b17ef7b64d5e" />
 	<File name="Assets/Atlas/3.27.0/atlas-frame-3.png" part="program" sha1="479b9fa4e1e821905313d42fbc6c1cbd4a672d3b" />
@@ -865,7 +865,7 @@
 	<File name="Assets/vestigialicon.png" part="program" sha1="ecb5dd4b9aed1cac0c1a677b18838ae9c62744d7" />
 	<File name="Assets/warlordicon.png" part="program" sha1="cca050c84884f5c0bb1380ece51d3c4b32be4900" />
 	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="d5e9aebfe36cf2b24e921279419c3604edbc0961" />
-	<File name="Classes/BuildJourneyControl.lua" part="program" sha1="6818fb91637e24a3cfeb849e63f8591e00848507" />
+	<File name="Classes/BuildJourneyControl.lua" part="program" sha1="61d170438e94328761c936e1d226c89490c32aa1" />
 	<File name="Classes/BuildListControl.lua" part="program" sha1="f60f0d7f6aecbe851db896913cd1aa707c7fb304" />
 	<File name="Classes/BuildProposalControl.lua" part="program" sha1="c9af257aafebd296e627db347319a06095cfab55" />
 	<File name="Classes/ButtonControl.lua" part="program" sha1="dd46384fc87d495e7ef5a11803cfc70360ac8bf1" />
@@ -905,6 +905,8 @@
 	<File name="Classes/ItemSetListControl.lua" part="program" sha1="5ff494b708b1b633f0cf4157e30ad295c1044ed4" />
 	<File name="Classes/ItemSlotControl.lua" part="program" sha1="994edcab55ba363f6c82c497f7d5353927172020" />
 	<File name="Classes/ItemsTab.lua" part="program" sha1="d813e517da4dabd01ca2d50a5e5bd8f60b3f9ed0" />
+	<File name="Classes/JourneyItemControl.lua" part="program" sha1="a53a97e26ca052d9f08155de0836b4844a727ec1" />
+	<File name="Classes/JourneyPrerequisiteControl.lua" part="program" sha1="989f833e95b17dd85909c09f78a3a4569ff67946" />
 	<File name="Classes/LabelControl.lua" part="program" sha1="7a8f38d225087ba6941537444b0ea0ec0ac150cd" />
 	<File name="Classes/ListControl.lua" part="program" sha1="9223f7e90e7fa3f67ad0cf8224e1266e59b9681f" />
 	<File name="Classes/MinionListControl.lua" part="program" sha1="655a6ddb06ba75011e51d5a6130db8cf7a9f3895" />
@@ -1146,8 +1148,8 @@
 	<File name="Modules/AtlasStrategy.lua" part="program" sha1="0ea84cbb57364b1a4c047443c6309a325b5d913a" />
 	<File name="Modules/Build.lua" part="program" sha1="fa9669e72c232d8c955e08b8ac302786af118685" />
 	<File name="Modules/BuildDisplayStats.lua" part="program" sha1="ffc4da3b13c3d50f3580b452622429f0bd7e70ab" />
-	<File name="Modules/BuildInsights.lua" part="program" sha1="24d31e51366d53ca309c82ba9d777ac04bff15a3" />
-	<File name="Modules/BuildJourney.lua" part="program" sha1="d861d573b85484b339386f60e03b945f6f5be5da" />
+	<File name="Modules/BuildInsights.lua" part="program" sha1="eba79b12af7f5c970e70636b8e3172fc62eab5b6" />
+	<File name="Modules/BuildJourney.lua" part="program" sha1="5533dc9b2bc5408f73d2a2a49269c3e951905735" />
 	<File name="Modules/BuildList.lua" part="program" sha1="daa0c88f606ade9687f037b6e99c9cec2904200e" />
 	<File name="Modules/BuildListHelpers.lua" part="program" sha1="a95770f18b54c05ed1d68f870f3693cac53a0fab" />
 	<File name="Modules/BuildSiteTools.lua" part="program" sha1="1338f63cefd36a330f49b1725f771156d4ba1c93" />
@@ -1192,18 +1194,19 @@
 	<File name="Modules/DataAbyssJewelLookUpTableHelper.lua" part="program" sha1="c95c4e8af0e9ab9c2abec801e5a279952754cf05" />
 	<File name="Modules/DataJewelFileLoader.lua" part="program" sha1="7f437192153f03eb1fecb4ea00283ead108fbde8" />
 	<File name="Modules/DataLegionLookUpTableHelper.lua" part="program" sha1="ece92c4b6062f627f98ba2454531366b4628abfc" />
-	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="f88839f2b35a8e3e0fc660382ee1b593fff74483" />
+	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="ff1f764feab2fd1e448f7aaaa4366c470f19a080" />
 	<File name="Modules/EncounterReport.lua" part="program" sha1="710dc78939bfbc8282f295cf626bcde9c9b7d8e5" />
 	<File name="Modules/HeadlessCompression.lua" part="program" sha1="16a42bf407eb777602f9b03b5c8466188a04ee58" />
 	<File name="Modules/HeadlessUI.lua" part="program" sha1="ae1b1761e1a46af49b03239b298f634801ac95fd" />
 	<File name="Modules/ItemSlotHelper.lua" part="program" sha1="4b7d441f9ade5d57c413aa1f8f8067b654cfb927" />
 	<File name="Modules/ItemTools.lua" part="program" sha1="17a804109e872fa03c0450cdd10927fd23b5aa1d" />
+	<File name="Modules/JourneyUpgrades.lua" part="program" sha1="dd2dc1285646ebc18375dff557136071f23c4870" />
 	<File name="Modules/Main.lua" part="program" sha1="0d9dca827608a232ba31e787dd3e0904c0f02017" />
 	<File name="Modules/ModParser.lua" part="program" sha1="6dbab8301e3d4216ce28a93b275739f4848ffa3f" />
 	<File name="Modules/ModTools.lua" part="program" sha1="c987491da4021b5bdc4744b5eec84fb5995284cf" />
 	<File name="Modules/PantheonTools.lua" part="program" sha1="ebe91a7d8f8444a6061acf4758da0e775cc8c314" />
 	<File name="Modules/PlanningUI.lua" part="program" sha1="8bd24e41cc03fbee38aa9c65c87aeeefb514a8bd" />
-	<File name="Modules/PlanningWorkspace.lua" part="program" sha1="f93b79c6c4f89bde9879f074b318cbd15e3b22aa" />
+	<File name="Modules/PlanningWorkspace.lua" part="program" sha1="897760d2762ae6a9e0e2d0e30797463170a21280" />
 	<File name="Modules/RecoveryTasks.lua" part="program" sha1="28726a43b87d3aaa72dd17f1aecd2f4a618d37ea" />
 	<File name="Modules/StatDescriber.lua" part="program" sha1="db58472a9bf736f2a1fe5fbe2dec9cf224f36a0f" />
 	<File name="Modules/ToastNotification.lua" part="program" sha1="87abe18f2c81a8df77e7e79248730e81ca5e03c5" />

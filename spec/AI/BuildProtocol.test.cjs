@@ -27,6 +27,13 @@ test('reads journey resources and queues a reviewed replacement without applying
   assert.deepEqual(request.proposal.operations[0].journey,journey);
 });
 
+test('queues native wishlist measurements against the current revision without applying gear', t => {
+  const f=fixture(t);
+  f.call('measure_journey_upgrades',{baseRevision:f.state.revision});
+  const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(request.kind,'journeyUpgrades');assert.equal(request.baseRevision,f.state.revision);assert.equal(request.proposal,undefined);
+});
+
 test('rejects malformed journey data and accepts more than eight entries', t => {
   const f=fixture(t);
   const journey={schemaVersion:1,milestones:[],wishlist:[],resources:[],ledger:[],stages:Array.from({length:20},(_,i)=>({id:`stage-${i}`,title:`Level ${i+1}`,level:i+1}))};
