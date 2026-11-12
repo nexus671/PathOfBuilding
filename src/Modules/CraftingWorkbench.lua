@@ -51,14 +51,21 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 	controls[key]=card
 	local mods=new("TextListControl"):TextListControl(anchor,{x,y+header,w,h-header},nil,{})
 	controls[key.."Mods"]=mods
+	if options.compact then mods.columns={{x=68,align="LEFT"},{x=8,align="LEFT"}} end
 	function card:Draw()
 		local cx,cy=self:GetPos();local state=getState();local item=self.preview or model.item
 		local rarity=state.rarity or "NORMAL"
 		local color=state.destroyed and "^xE07070" or rarity == "RARE" and "^xFFFF77" or rarity == "MAGIC" and "^x8888FF" or "^xC8C8C8"
-		box(cx,cy,w,header,color);box(cx+1,cy+1,w-2,header-2,"^x101016")
+		box(cx,cy,w,header,options.compact and "^x756647" or color);box(cx+1,cy+1,w-2,header-2,"^x101016")
 		box(cx+2,cy+2,w-4,53,rarity == "RARE" and "^x302B18" or rarity == "MAGIC" and "^x1B1B30" or "^x232326")
-		text(cx+16,cy+9,20,state.destroyed and "Item destroyed" or rarity == "RARE" and (item.title or "Crafted item") or item.baseName,color,w-32)
-		text(cx+16,cy+33,16,rarity == "RARE" and item.baseName or rarity:sub(1,1)..rarity:sub(2):lower().." item",color,w-32)
+		local title=state.destroyed and "Item destroyed" or rarity == "RARE" and (item.title or "Crafted item") or item.baseName
+		local subtitle=rarity == "RARE" and item.baseName or rarity:sub(1,1)..rarity:sub(2):lower().." item"
+		if options.compact then
+			while #title>1 and DrawStringWidth(20,"VAR",title)>w-32 do title=title:sub(1,-2) end
+			while #subtitle>1 and DrawStringWidth(16,"VAR",subtitle)>w-32 do subtitle=subtitle:sub(1,-2) end
+			SetDrawColor(color);DrawString(cx+w/2,cy+8,"CENTER_X",20,"VAR",title);DrawString(cx+w/2,cy+33,"CENTER_X",16,"VAR",subtitle)
+			box(cx+12,cy+56,w-24,1,"^x756647")
+		else text(cx+16,cy+9,20,title,color,w-32);text(cx+16,cy+33,16,subtitle,color,w-32) end
 		SetDrawColor(1,1,1,state.destroyed and 0.2 or 1);DrawImage(art,cx+12+(artSize-artWidth)/2,cy+66+(artSize-artHeight)/2,artWidth,artHeight)
 		text(cx+propertyX,cy+67,16,"Item level "..item.itemLevel)
 		text(cx+propertyX,cy+89,16,"Quality: +"..(state.quality or item.quality or 0).."%")
@@ -70,9 +77,22 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 			box(sx,cy+133,14,14,"^xA68B59")
 			box(sx+2,cy+135,10,10,({R="^xE07070",G="^x70BB70",B="^x7070EE",W="^xEEEEEE"})[socket.color] or "^xC8C8C8")
 		end
-		if header>=212 and self.slotSummary then text(cx+propertyX,cy+158,14,self.slotSummary,"^xA6B3C6",w-propertyX-16) end
-		if header>=212 and self.influenceSummary then text(cx+propertyX,cy+176,12,self.influenceSummary,"^xD3B987",w-propertyX-16) end
-		text(cx+16,cy+header-21,14,state.destroyed and "Undo or reset to continue" or onClick and self:IsEnabled() and "Click the item to apply the selected currency" or "Item preview","^xD3B987")
+		if (header>=212 or options.compact) and self.slotSummary then text(cx+propertyX,cy+158,14,self.slotSummary,"^xA6B3C6",w-propertyX-16) end
+		if (header>=212 or options.compact) and self.influenceSummary then text(cx+propertyX,cy+176,12,self.influenceSummary,"^xD3B987",w-propertyX-16) end
+		if not options.compact then text(cx+16,cy+header-21,14,state.destroyed and "Undo or reset to continue" or onClick and self:IsEnabled() and "Click the item to apply the selected currency" or "Item preview","^xD3B987") end
+	end
+	if options.compact then
+		local draw=mods.Draw
+		function mods:Draw(viewport)
+			draw(self,viewport)
+			local selected=options.selectedAffix and options.selectedAffix()
+			if selected then
+				local mx,my=self:GetPos();local mw,mh=self:GetSize();SetViewport(mx+2,my+2,mw-20,mh-4)
+				local top=-self.controls.scrollBar.offset
+				for _,row in ipairs(self.list) do if row.affixId==selected and top+row.height>=0 and top<mh-4 then box(0,top,3,row.height,"^xD3B987") end;top=top+row.height end
+				SetViewport()
+			end
+		end
 	end
 	local function refresh()
 		local state=getState();local lines={}
@@ -94,15 +114,25 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 			local influences={};for _,info in ipairs(itemLib.influenceInfo.all) do if item[info.key] then influences[#influences+1]=info.display end end
 			card.influenceSummary=#influences>0 and table.concat(influences," / ") or nil
 			if #lines>0 then lines[#lines+1]={height=12,""} end
-			for _,entry in ipairs(state.affixes) do
+			local entries=state.affixes
+			if options.compact then
+				entries={};for _,kind in ipairs({"Prefix","Suffix"}) do for _,entry in ipairs(state.affixes) do if context.byId[entry.id].type==kind then entries[#entries+1]=entry end end end
+			end
+			local group,groupIndex
+			for _,entry in ipairs(entries) do
 				local mod=context.byId[entry.id]
 				local marker=(entry.fractured and "Fractured " or entry.crafted and "Crafted " or "")..(mod.type or "Explicit")
-				wrap(lines,marker,entry.fractured and "^xD6B677" or "^xA6B3C6",w-30)
+				if options.compact then
+					if group~=mod.type then group=mod.type;groupIndex=0;lines[#lines+1]={height=29,textSize=13,x=10,"^xA6B3C6"..(group=="Prefix" and "PREFIXES" or "SUFFIXES")} end
+					groupIndex=groupIndex+1
+				else wrap(lines,marker,entry.fractured and "^xD6B677" or "^xA6B3C6",w-30) end
+				local firstMod=#lines+1
 				for _,line in ipairs(context.byId[entry.id] or {}) do
 					local first=#lines+1
-					wrap(lines,itemLib.applyRange(line,entry.range or 0.5),entry.fractured and "^xD6B677" or entry.crafted and "^xB4B4FF" or "^x8888FF",w-30)
+					wrap(lines,itemLib.applyRange(line,entry.range or 0.5),entry.fractured and "^xD6B677" or entry.crafted and "^xB4B4FF" or "^x8888FF",w-(options.compact and 98 or 30))
 					for i=first,#lines do lines[i].affixId=entry.id end
 				end
+				if options.compact and lines[firstMod] then lines[firstMod][2]=(entry.fractured and "^xD6B677F " or entry.crafted and "^xB4B4FFC " or "^x8D9DB0")..mod.type:sub(1,1)..groupIndex end
 			end
 			if #state.affixes == 0 then wrap(lines,"No explicit modifiers","^xAAAAAA",w-30) end
 			if state.veil then wrap(lines,"Veiled modifier - select Unveil to reveal choices","^xD3B987",w-30) end
@@ -111,6 +141,10 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 			if (state.memoryStrands or 0)>0 then wrap(lines,"Memory strands: "..state.memoryStrands,"^xD3B987",w-30) end
 		end
 		mods.list=lines;mods.controls.scrollBar.offset=0
+		if options.compact then
+			for _,line in ipairs(lines) do if not line.affixId then line.x=line.x or 10 end end
+			mods.borderColor="^x756647";mods.backgroundColor="^x101016"
+		end
 		card.slotSummary=not state.destroyed and require("Modules.CraftingInspection").slots(model,state) or nil
 	end
 	return refresh

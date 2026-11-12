@@ -110,7 +110,7 @@ describe("Native Atlas planner", function()
 		main.popups[1]:ProcessControlsInput({{type="KeyUp",key="WHEELUP"}},{x=-10000,y=-10000,width=20000,height=20000})
 		controls.canvas.IsMouseOver=mouseOver
 		assert.is_true(controls.canvas.scale > scale)
-		controls.search:SetText("Unwavering Vision"); controls.find:Click()
+		controls.search:SetText("Unwavering Vision");controls.search.changeFunc();controls.find:Click()
 		assert.are.equal(65225,controls.canvas.focus)
 		controls.allocate:Click(); assert.is_true(controls.status.label:find("20 granted",1,true) ~= nil)
 		controls.undo:Click(); assert.is_truthy(controls.status.label:find("0 /",1,true))

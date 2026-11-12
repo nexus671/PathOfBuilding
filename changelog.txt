@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Refined crafting item cards with grouped affixes and inline currency search and modifier details.
+* Added direct Atlas mechanic filters and preserved unfinished edits when resizing.
 * Full-width Atlas planning with search, mechanic filters, routes, minimap and saved strategy comparisons.
 * Item crafting workbench with currency artwork, modifier inspection, history, targets and recipe comparisons.
 * Integrated AI planning, encounter charts, keyboard navigation and resizable panels.

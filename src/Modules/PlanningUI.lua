@@ -34,6 +34,16 @@ function M.label(controls,key,x,y,label,size)
 	controls[key]=new("LabelControl"):LabelControl(M.anchor,{x,y,0,size or 16},"^7"..label)
 	return controls[key]
 end
+function M.description(controls,key,x,y,width,height,lines,size)
+	local control=new("Control"):Control(M.anchor,{x,y,width,height});controls[key]=control
+	control.list=M.rows(lines or {},width,size or 14)
+	function control:Draw()
+		local cx,cy=self:GetPos();local w,h=self:GetSize();SetViewport(cx,cy,w,h)
+		local top=0;for _,row in ipairs(self.list) do if top+(row.textSize or 14)<=h then DrawString(0,top,"LEFT",row.textSize or 14,"VAR",row[1]) end;top=top+row.height end
+		SetViewport()
+	end
+	return control
+end
 function M.card(controls,key,x,y,w,title,value,detail)
 	local control=new("Control"):Control(M.anchor,{x,y,w,94});controls[key]=control
 	function control:Draw()
@@ -89,6 +99,7 @@ end
 function M.keyboard(host,events)
 	local enabled=false;for _,control in pairs(host.controls) do if control.planningFocusable then enabled=true;break end end
 	if not enabled then return end
+	if host.selControl and not host.selControl:IsShown() then host:SelectControl(nil) end
 	for i,event in pairs(events) do if event.type=="KeyDown" then
 		if event.key=="TAB" then
 			if host.selControl and host.selControl.dropped then host.selControl.dropped=false end
@@ -101,7 +112,10 @@ function M.keyboard(host,events)
 			host.selControl:Click();event.type="PlanningHandled"
 		elseif event.key=="RETURN" and host.selControl and host.selControl.planningFocusable and host.selControl.selIndex then
 			host.selControl.dropped=not host.selControl.dropped;event.type="PlanningHandled"
-		elseif event.key=="ESCAPE" and host.selControl then host.selControl.dropped=false;host:SelectControl(nil);event.type="PlanningHandled" end
+		elseif event.key=="ESCAPE" then
+			if host.selControl then host.selControl.dropped=false;host:SelectControl(nil);event.type="PlanningHandled"
+			else for _,key in ipairs({"paletteBack","affixBack"}) do local back=host.controls[key];if back and back:IsShown() then back:Click();event.type="PlanningHandled";break end end end
+		end
 	elseif event.type=="KeyUp" and (event.key=="TAB" or event.key=="RETURN") then event.type="PlanningHandled" end end
 end
 function M.splitter(controls,key,x,y,height,resize)

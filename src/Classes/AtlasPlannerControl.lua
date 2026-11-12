@@ -188,8 +188,13 @@ function Panel.Open(build,source,layout)
 				else controls.allocate.label="No route";lines[#lines+1]="";lines[#lines+1]="No route within the point budget and avoided nodes." end
 			else controls.allocate.label="Allocated" end
 		else controls.allocate.label="Connect path" end
-		controls.details.list=rows(lines,230)
+		local detailRows=rows({lines[1]},inspector-30,18)
+		for _,row in ipairs(rows({lines[2]},inspector-30,13)) do row[1]="^xA6B3C6"..StripEscapes(row[1]);detailRows[#detailRows+1]=row end
+		for i=3,#lines do for _,row in ipairs(rows({lines[i]},inspector-30)) do detailRows[#detailRows+1]=row end end
+		controls.details.list=detailRows
 		controls.avoid.label=#avoided>0 and "Avoid ("..#avoided..")" or "Avoid selected"
+		local costs=strategy.costs(draft,avoided)
+		for _,entry in ipairs(controls.results.list) do local resultNode=controls.canvas.tree.nodes[entry.val];if resultNode then entry.label=resultNode.name..(costs[entry.val] and " | +"..costs[entry.val] or " | blocked") end end
 	end
 	controls.title=edit(16,30,graphWidth-130,24,draft.title,nil,120)
 	ui.label(controls,"planLabel",16,10,"Plan name",13)
@@ -209,14 +214,25 @@ function Panel.Open(build,source,layout)
 	controls.search=edit(side,96,180,24,"",nil,160)
 	controls.search.placeholder="Search nodes"
 	local function findNodes(recenter)
-		local result=atlas.search(draft.version,controls.search.buf,100);local list={};controls.canvas.matches={}
-		for _,node in ipairs(result.matches) do list[#list+1]={label=node.name,val=node.id};if controls.search.buf~="" then controls.canvas.matches[node.id]=true end end
+		local mechanic=controls.mechanic:GetSelValue();local filtered=mechanic~="All mechanics" and mechanic or nil
+		local matches=strategy.results(draft,controls.search.buf,filtered,avoided);local list={};controls.canvas.matches={}
+		for i,entry in ipairs(matches) do
+			if i<=100 then list[#list+1]={label=entry.node.name..(entry.cost and " | +"..entry.cost or " | blocked"),val=entry.id} end
+			if controls.search.buf~="" or filtered then controls.canvas.matches[entry.id]=true end
+		end
 		controls.results:SetList(list);controls.results.selIndex=1
-		if not recenter and controls.search.buf~="" and not controls.canvas.matches[controls.canvas.focus] then controls.canvas.focus=nil;refresh() end
+		if not recenter then
+			if controls.search.buf~="" or filtered then
+				if not controls.canvas.matches[controls.canvas.focus] then controls.canvas.focus=list[1] and list[1].val end
+				for i,entry in ipairs(list) do if entry.val==controls.canvas.focus then controls.results.selIndex=i end end
+				refresh()
+			else controls.results:SetList({});controls.canvas.focus=nil;refresh() end
+		end
 		if recenter and list[1] then controls.results.selFunc(1,list[1]) end
-		controls.matchCount.label="^7"..result.total..(result.total==1 and " match" or " matches")
+		controls.matchCount.label="^7"..#matches..(#matches==1 and " match" or " matches").." | costs show new points"
 	end
 	controls.find=button(side+188,96,72,"Go",function() findNodes(true) end)
+	controls.find.enabled=function() return #controls.results.list>0 end
 	controls.search.changeFunc=function() findNodes(false) end
 	controls.search.enterFunc=function() findNodes(true) end
 	controls.search.disableCol="^x8797A8"
@@ -225,8 +241,10 @@ function Panel.Open(build,source,layout)
 		controls.canvas.centerX,controls.canvas.centerY=node.x,node.y
 		controls.canvas.scale=math.max(controls.canvas.scale,0.12); refresh(value.val)
 	end)
-	controls.matchCount=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{side,164,0,14},"Search names and modifiers")
-	controls.details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{side,190,260,height-390},nil,{})
+	local mechanics={"All mechanics"};for _,name in ipairs(strategy.mechanics) do mechanics[#mechanics+1]=name end
+	controls.mechanic=new("DropDownControl"):DropDownControl(ui.anchor,{side,164,260,24},mechanics,function() findNodes(false) end)
+	controls.matchCount=new("LabelControl"):LabelControl(ui.anchor,{side,196,0,14},"Filter a mechanic or search nodes")
+	controls.details=new("TextListControl"):TextListControl(ui.anchor,{side,220,260,height-420},nil,{})
 	local function syncEditors()
 		controls.title:SetText(draft.title); controls.budget:SetText(tostring(draft.budget)); controls.notes:SetText(draft.notes)
 	end
@@ -269,6 +287,7 @@ function Panel.Open(build,source,layout)
 		browser.Open("Find Atlas nodes",entries,{action="Show on tree",choose=function(entry)
 			controls.canvas.matches={};for _,match in ipairs(strategy.results(current(),"",entry.category,avoided)) do controls.canvas.matches[match.id]=true end
 			controls.search:SetText("");controls.results:SetList({{label=entry.node and entry.node.name or controls.canvas.tree.nodes[entry.id].name,val=entry.id}});controls.matchCount.label="^7"..entry.category.." nodes highlighted"
+			controls.mechanic:SelByValue(entry.category)
 			controls.canvas.focus=entry.id;local node=controls.canvas.tree.nodes[entry.id];controls.canvas.centerX,controls.canvas.centerY=node.x,node.y;controls.canvas.scale=math.max(0.12,controls.canvas.scale);refresh()
 		end})
 	end)
@@ -315,7 +334,7 @@ function Panel.Open(build,source,layout)
 	controls.close=button(width-132,height-42,116,"Close",function() main:ClosePopup() end)
 	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{side,64,260,24},{"Tree","Notes & sharing"})
 	ui.label(controls,"notesLabel",16,88,"Farming goals, maps, scarabs and strategy notes")
-	for _,key in ipairs({"canvas","search","find","results","matchCount","details","allocate","remove","undo","redo","fit","help","avoid","clearAvoid","stats","browse","routes","tools"}) do
+	for _,key in ipairs({"canvas","search","find","results","mechanic","matchCount","details","allocate","remove","undo","redo","fit","help","avoid","clearAvoid","stats","browse","routes","tools"}) do
 		controls[key].shown=function() return controls.page:GetSelValue()=="Tree" end
 	end
 	for _,key in ipairs({"notes","notesLabel","copy","import","url"}) do controls[key].shown=function() return controls.page:GetSelValue()=="Notes & sharing" end end
@@ -334,13 +353,18 @@ function Panel.Open(build,source,layout)
 	if layout then
 		controls.close.shown=false
 		layout.inspectorWidth=inspector
-		layout.viewState=function() return {centerX=controls.canvas.centerX,centerY=controls.canvas.centerY,scale=controls.canvas.scale,focus=controls.canvas.focus,page=controls.page:GetSelValue(),avoided=copyTable(avoided),undo=copyTable(undo),redo=copyTable(redo),preferred=preferred,inspectorWidth=inspector} end
-		layout.snapshot=function() local result=copyTable(draft);result.title=controls.title.buf;result.notes=controls.notes.buf;result.budget=tonumber(controls.budget.buf) or draft.budget;return result end
+		layout.viewState=function() return {centerX=controls.canvas.centerX,centerY=controls.canvas.centerY,scale=controls.canvas.scale,focus=controls.canvas.focus,page=controls.page:GetSelValue(),avoided=copyTable(avoided),undo=copyTable(undo),redo=copyTable(redo),preferred=preferred,inspectorWidth=inspector,search=controls.search.buf,mechanic=controls.mechanic:GetSelValue(),title=controls.title.buf,budgetText=controls.budget.buf,notes=controls.notes.buf} end
+		-- Keep unfinished editor text separate from the validated graph draft.
+		layout.snapshot=function() return copyTable(draft) end
 	end
 	if layout and layout.restore then
 		local view=layout.restore;layout.restore=nil
 		controls.canvas.centerX,controls.canvas.centerY,controls.canvas.scale,controls.canvas.focus=view.centerX,view.centerY,view.scale,view.focus
 		controls.page:SelByValue(view.page);avoided=view.avoided;undo=view.undo;redo=view.redo or {};preferred=view.preferred
+		if view.title~=nil then controls.title:SetText(view.title) end
+		if view.notes~=nil then controls.notes:SetText(view.notes) end
+		if view.budgetText~=nil then controls.budget:SetText(view.budgetText) end
+		controls.search:SetText(view.search or "");controls.mechanic:SelByValue(view.mechanic or "All mechanics");findNodes(false)
 	end
 	controls.pointBar=new("Control"):Control(ui.anchor,{16,85,graphWidth,3})
 	function controls.pointBar:Draw()

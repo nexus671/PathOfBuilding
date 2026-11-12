@@ -8,9 +8,11 @@ Plain item copies can be imported when their complete modifier identities and ro
 
 ## Emulate an item
 
-**Find currencies** searches crafting actions by name or category. Favorite actions for quick access during the session. Hover a currency for its purpose and current prerequisites. **Settings** retains the complete method selector and advanced configuration.
+**Find currencies** opens search beside the working item. Filter by category, favorite actions, and select one to return to the tray. Search takes keyboard focus; arrow keys browse results and Enter selects an available action. Escape clears focus first, then returns to the tray. Hover a currency for its purpose and current prerequisites.
 
-The item shows prefix/suffix usage and labels fractured, crafted and natural modifiers. Click a modifier to inspect its ranges, tags and required level, choose a relevant action, or use it as a target. Tier ranks are derived from required levels within the eligible modifier group; special modifier variants keep their data names.
+The item card groups prefixes and suffixes, shows slot usage, and marks fractured (**F**) and crafted (**C**) modifiers. Click a modifier to inspect its ranges, tags and required level beside the item, select a relevant action, or use it as a target. Group tiers compare required levels within the eligible modifier group; special modifiers keep their data names.
+
+**Settings** contains advanced method configuration, **Allflame settings**, and **Edit hypothetical item**. The Craft tab keeps the currency tray, selected action, apply/undo and history controls together.
 
 **Item history** previews earlier items and the changes between them; restoring one undoes all subsequent actions. **Before / after** in Settings compares the working item with its recipe starting state. Drag the divider to give more space to the controls or item. Working state, favorites and history survive tool switches and resizing during the session.
 

@@ -9,7 +9,7 @@ function M.modDetails(model,id,entry)
 	if group and not id:find(":",1,true) then
 		for _,other in pairs(model.byId) do if other.group==group and other.type==mod.type and other.level and other.weightKey and model.item:GetModSpawnWeight(other,{})>0 then levels[other.level]=true end end
 		local rank=1;for level in pairs(levels) do if level>(mod.level or 0) then rank=rank+1 end end
-		lines[#lines+1]="Tier by required level in this eligible modifier group: "..rank
+		lines[#lines+1]="Group tier: "..rank
 	end
 	for _,line in ipairs(mod) do lines[#lines+1]="Range: "..line end
 	if mod.tags and #mod.tags>0 then lines[#lines+1]="Tags: "..table.concat(mod.tags,", ") end

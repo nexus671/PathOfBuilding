@@ -5,16 +5,16 @@ The planning workspace now groups Atlas, crafting and AI tools behind the same n
 | # | Improvement | Where to use it |
 | --- | --- | --- |
 | 1 | Item-centered crafting | Click the item to apply a currency; click an affix for relevant actions. |
-| 2 | Searchable currency palette | Craft → Find currencies; filter categories and favorite actions. |
+| 2 | Searchable currency palette | Craft → Find currencies; search, filter and favorite beside the working item. |
 | 3 | Currency explanations | Hover a currency; inspect prerequisites and the selected action hint. |
-| 4 | Affix details | Click an affix or use Settings → Inspect affixes and slots. |
+| 4 | Affix details | Click an affix for inline details and relevant actions; the item stays visible. |
 | 5 | Modifier distinctions | Item labels distinguish implicit, enchanted, natural, crafted and fractured modifiers; influences appear on the card. |
 | 6 | Visual crafting history | Craft → Item history; preview and restore an earlier item. |
 | 7 | Item differences | History shows each transition; Settings → Before / after compares with the starting item. |
 | 8 | Target modifier picker | Targets → Find target modifiers; search text and tags and inspect ranges. |
 | 9 | Crafting comparisons | Simulate → Compare recipes; compare bounded trials and supplied prices. |
 | 10 | Crafting coverage | Coverage; search implemented actions and model assumptions. |
-| 11 | Atlas mechanic filters | Find nodes → category; selecting a result highlights its mechanic. |
+| 11 | Atlas mechanic filters | Use the inspector's mechanic dropdown; matching nodes highlight and a route previews without moving the camera. |
 | 12 | Atlas search list | Find nodes; results show added point costs. |
 | 13 | Route alternatives | Routes; Plan tools can set a preferred waypoint. |
 | 14 | Atlas minimap | Click the overview in the canvas corner to move the camera. |
@@ -33,7 +33,7 @@ The planning workspace now groups Atlas, crafting and AI tools behind the same n
 | 27 | AI comparison | Review → Summary; changes appear beside current and proposed metrics. |
 | 28 | Calculation explanations | Review → Explain; measured pool, mitigation, avoidance and recovery changes with attribution limits. |
 | 29 | Survival charts | AI builds → Survival charts; scenario presets, legends, hover values and event ticks. |
-| 30 | UI regression coverage | Native input tests and rendered audits cover 225 states at three sizes, long titles, scrolling, resizing and restoration. |
+| 30 | UI regression coverage | Native input tests and rendered audits cover 234 states at three sizes, long titles, scrolling, resizing and inline-view restoration. |
 
 Crafting remains a bounded model, and Atlas bonus text is not a farming-income simulator. Recipe costs need supplied prices. Calculation explanations report measured changes for the whole proposal; they do not prove which individual change caused an improvement.
 

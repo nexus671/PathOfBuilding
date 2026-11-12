@@ -5,10 +5,11 @@ local ui=require("Modules.PlanningUI")
 local inspect=require("Modules.CraftingInspection")
 local browser=require("Classes.PlanningBrowserControl")
 local Panel={ }
+local pageHints={["Target conditions"]="Choose the modifiers and item properties you want.",["Simulate recipe"]="Compare modeled chances and costs before keeping a recipe.",["Craft settings"]="Advanced methods, item edits and recipe settings."}
 local function button(controls,key,x,y,w,label,callback)
 	controls[key]=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function()
 		local ok,err=pcall(callback)
-		if not ok then main:OpenMessagePopup("Native crafting",tostring(err):match("^[^\n]+")) end
+		if not ok then main:OpenMessagePopup("Native crafting",tostring(err):match("^[^\n]+")) else return err end
 	end)
 	ui.styleButton(controls[key])
 end
@@ -58,15 +59,20 @@ function Panel.Open(build,project,layout)
 		state=restored.state;initial=restored.initial;targets=restored.targets;requirements=restored.requirements;requiredGroups=restored.requiredGroups
 		history=restored.history;actions=restored.actions;configured=restored.configured;sequence=restored.sequence;lastSimulation=restored.lastSimulation
 	end
+	local paletteOpen=restored and restored.paletteOpen or false
+	local inspectedId=restored and restored.inspectedId
+	local paletteView
+	local populateAffix
 	local width=layout and layout.width or math.min(1120,main.screenW-40)
 	local height=layout and layout.height or math.max(520,math.min(740,main.screenH-60))
 	local leftWidth=math.max(416,math.min(width-400,layout and layout.craftWidth or restored and restored.craftWidth or 416))
 	local itemWidth=math.min(540,width-leftWidth-64)
 	local itemX=leftWidth+32+math.floor((width-leftWidth-48-itemWidth)/2)
 	label(controls,"intro",16,64,"Select a currency, then click your item to craft.")
-	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=212,artSize=112})
+	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=196,artSize=96,compact=true,selectedAffix=function() return inspectedId end})
 	controls.targetSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,244,416,height-312},nil,{})
 	local function refresh(extra)
+		if inspectedId then local exists;for _,entry in ipairs(state.affixes) do if entry.id==inspectedId then exists=true end end;if not exists then inspectedId=nil end end
 		refreshItem()
 		local lines={inspect.slots(model,state),"Target groups: "..#targets.." ("..(requiredGroups or "all").." required)"}
 		for index,group in ipairs(targets) do
@@ -80,7 +86,9 @@ function Panel.Open(build,project,layout)
 		for key,value in pairsSortByKey(requirements or {}) do lines[#lines+1]=key:gsub("(%l)(%u)","%1 %2")..": "..tostring(value) end
 		controls.targetSummary.list=rows(lines)
 		if extra and controls.resultSummary then controls.resultSummary.list=rows(extra) end
-		controls.intro.label=extra and extra[1] or "Select a currency, then click your item to craft."
+		local craftingPage=not controls.page or controls.page:GetSelValue()=="Emulate item"
+		controls.intro.label="^7"..(craftingPage and inspectedId and "Modifier details. Your working item stays in view." or craftingPage and paletteOpen and "Find an action without leaving your working item." or extra and extra[1] or controls.page and pageHints[controls.page:GetSelValue()] or "Select a currency, then click your item to craft.")
+		if controls.actionHint and controls.actionHint.list then controls.actionHint.list=ui.rows({workbench.hint(controls.method:GetSelValueByKey("val"),state,model)},leftWidth-30,14) end
 	end
 	label(controls,"methodLabel",16,64,"Crafting action")
 	local methods={ }
@@ -109,32 +117,30 @@ function Panel.Open(build,project,layout)
 		return copyTable(configured[method] or option and option.action or {method=method})
 	end
 	local function chooseMethod(method)
-		controls.method:SelByValue(method,"val");updateOptions();refresh()
+		paletteOpen=false;inspectedId=nil;controls.method:SelByValue(method,"val");updateOptions();refresh()
 	end
 	local function palette()
-		local entries={}
-		for _,method in ipairs(simulator.methods) do
-			entries[#entries+1]={id=method,label=simulator.labels[method] or method,icon=workbench.icon(method),category=inspect.category(method),details=function()
-				return {simulator.labels[method] or method,workbench.hint(method,state,model),"Current item: "..state.rarity,inspect.slots(model,state),"Options and special prerequisites are checked when applying.","Use Calculate action odds to inspect modeled target probability."}
-			end}
-		end
-		browser.Open("Find a crafting action",entries,{favorites=favorites,action="Select action",choose=function(entry) chooseMethod(entry.id);controls.page:SelByValue("Emulate item") end})
+		paletteOpen=true;inspectedId=nil;paletteView.refresh();refresh()
+		return controls.paletteSearch
 	end
 	local function pickTarget(id)
 		assert(#targets<6,"Use up to six target groups")
 		local kind=model.byId[id].type;targets[#targets+1]={anyOf={id},scope=(kind=="Exarch" or kind=="Eater" or kind=="Corrupted") and "implicit" or "explicit"};refresh()
 	end
+	populateAffix=function(id)
+		local found;for _,entry in ipairs(state.affixes) do if entry.id==id then found=entry end end
+		if not found then return end
+		controls.affixFacts.list=ui.rows(inspect.modDetails(model,id,found),leftWidth-30)
+		controls.affixFacts.controls.scrollBar.offset=0
+		local entries={}
+		for _,method in ipairs(found.crafted and {"remove_crafted","divine"} or found.fractured and {"divine","bench"} or {"divine","annul","bench"}) do
+			entries[#entries+1]={val=method,label=simulator.labels[method]}
+		end
+		controls.affixAction:SetList(entries)
+	end
 	controls.itemMods.onClick=function(row)
 		local id=row and row.line.affixId;if not id then return end
-		local found;for _,entry in ipairs(state.affixes) do if entry.id==id then found=entry end end
-		local facts=inspect.modDetails(model,id,found);local entries={{id="target",label="Use this modifier as a target",details=facts}}
-		for _,method in ipairs(found.crafted and {"remove_crafted","divine"} or found.fractured and {"divine","bench"} or {"divine","annul","bench"}) do
-			local details=copyTable(facts);details[#details+1]="";details[#details+1]=workbench.hint(method,state,model)
-			entries[#entries+1]={id=method,label=simulator.labels[method],details=details}
-		end
-		browser.Open("Inspect item modifier",entries,{action="Choose",choose=function(entry)
-			if entry.id=="target" then pickTarget(id);controls.page:SelByValue("Target conditions") else chooseMethod(entry.id);controls.page:SelByValue("Emulate item") end
-		end})
+		inspectedId=id;paletteOpen=false;controls.page:SelByValue("Emulate item");populateAffix(id);refresh()
 	end
 
 	button(controls,"apply",162,204,130,"Apply currency",function()
@@ -421,27 +427,34 @@ function Panel.Open(build,project,layout)
 	controls.preview.enabled=function() return not state.destroyed and not state.veil end
 	controls.configure.enabled=function() local method=controls.method:GetSelValueByKey("val");return method=="fossil" or method=="awakener" or method=="recombine" or method=="recombine_predictable" end
 	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,18,416,28},{"Emulate item","Target conditions","Simulate recipe","Craft settings"})
+	controls.page.selFunc=function() refresh() end
 	button(controls,"settings",16,380,200,"Find currencies",palette)
-	controls.item.enabled=function() return controls.page:GetSelValue() == "Emulate item" and controls.apply:IsEnabled() end
+	local function crafting() return controls.page:GetSelValue()=="Emulate item" and not paletteOpen and not inspectedId end
+	controls.item.enabled=function() return crafting() and controls.apply:IsEnabled() end
 	controls.apply.x=16;controls.apply.width=200;controls.undo.x=232;controls.undo.width=200
 	ui.label(controls,"selectedAction",16,230,"",20)
-	controls.selectedAction.label=function() return "^xE2C28C"..simulator.labels[controls.method:GetSelValueByKey("val")] end
-	ui.label(controls,"actionHint",16,264,"",14)
-	controls.actionHint.label=function() return "^7"..workbench.hint(controls.method:GetSelValueByKey("val"),state,model) end
+	controls.selectedAction.label=function()
+		local name=simulator.labels[controls.method:GetSelValueByKey("val")];local suffix=""
+		while #name>0 and DrawStringWidth(20,"VAR",name..suffix)>leftWidth do name=name:sub(1,-2);suffix="..." end
+		return "^xE2C28C"..name..suffix
+	end
+	controls.actionHint=ui.description(controls,"actionHint",16,264,416,40,{})
 	local pages={
-		["Craft settings"]={methodLabel=96,method=116,configure=160,keepRecipe=198,reset=198,exact=238,compareItem=238,seedLabel=278,seed=298,inspectItem=338},
-		["Emulate item"]={selectedAction=230,actionHint=264,optionLabel=280,option=298,apply=346,undo=346,settings=390,history=390,allflame=424,manual=458},
+		["Craft settings"]={methodLabel=96,method=116,configure=160,keepRecipe=198,reset=198,exact=238,compareItem=238,seedLabel=278,seed=298,inspectItem=338,allflame=378,manual=418},
+		["Emulate item"]={selectedAction=230,actionHint=264,optionLabel=310,option=330,apply=370,undo=370,settings=414,history=414},
 		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetPicker=188,targetConditions=226,targetSummary=270},
 		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354,compareRecipes=354,resultSummary=398},
 	}
 	for page,layout in pairs(pages) do for key,y in pairs(layout) do
-		local control=controls[key];control.y=y;control.shown=function() return controls.page:GetSelValue() == page end
+		local control=controls[key];control.y=y;control.shown=page=="Emulate item" and crafting or function() return controls.page:GetSelValue()==page end
 	end end
 	controls.distribution.x=232;controls.distribution.width=200
-	controls.option.shown=function() return controls.page:GetSelValue()=="Emulate item" and #controls.option.list>0 end
+	controls.option.shown=function() return crafting() and #controls.option.list>0 end
 	controls.optionLabel.shown=controls.option.shown
 	controls.apply.enabled=function() return workbench.available(controls.method:GetSelValueByKey("val"),state,model) end
 	controls.apply.height=32;controls.undo.height=32
+	controls.apply.y=function() return #controls.option.list>0 and 370 or 320 end;controls.undo.y=controls.apply.y
+	controls.settings.y=function() return controls.apply:GetProperty("y")+44 end;controls.history.y=controls.settings.y
 	controls.targetSummary.height=height-338
 	controls.history.enabled=function() return #history>0 end
 	controls.settings.label="Find currencies"
@@ -449,8 +462,8 @@ function Panel.Open(build,project,layout)
 	ui.style(controls,{apply=true,preview=true},{item=true})
 	ui.tabs(controls,controls.page,{{"tab_craft","Emulate item","Craft"},{"tab_targets","Target conditions","Targets"},{"tab_simulate","Simulate recipe","Simulate"},{"tab_settings","Craft settings","Settings"}},16,18,416)
 	workbench.currencies(controls,function(method)
-		controls.method:SelByValue(method,"val");updateOptions();refresh()
-	end,function() return controls.method:GetSelValueByKey("val") end,function() return controls.page:GetSelValue() == "Emulate item" end,function(method)
+		chooseMethod(method)
+	end,function() return controls.method:GetSelValueByKey("val") end,crafting,function(method)
 		local count=0;for _,entry in ipairs(actions) do if entry.method == method then count=count+1 end end;return count
 	end,function() return state end,model,leftWidth)
 	controls.methodLabel.label="More currencies and crafting methods"
@@ -466,7 +479,7 @@ function Panel.Open(build,project,layout)
 	function controls.stage:Draw()
 		local x,y=self:GetPos();local w,h=self:GetSize()
 		SetDrawLayer(nil,1);SetDrawColor("^x0A1018");DrawImage(nil,x,y,w,h);SetDrawColor("^x8D9DB0")
-		DrawString(x+w/2,y+8,"CENTER_X",12,"VAR","ITEM PREVIEW");SetDrawLayer(nil,0)
+		DrawString(x+w/2,y+8,"CENTER_X",12,"VAR","WORKING ITEM");DrawString(x+w/2,y+h-2,"CENTER_X",12,"VAR","Click a modifier to inspect it | F: fractured | C: crafted");SetDrawLayer(nil,0)
 	end
 	for _,key in ipairs({"item","itemMods"}) do
 		local control=controls[key];local draw=control.Draw
@@ -477,11 +490,25 @@ function Panel.Open(build,project,layout)
 		for key,value in pairs(restored.settings or {}) do controls[key]:SetText(value) end
 	end
 	if layout then
-		layout.snapshot=function() return copyTable({kind="workbench",project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,craftWidth=leftWidth,favorites=favorites,
+		layout.snapshot=function() return copyTable({kind="workbench",project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,craftWidth=leftWidth,favorites=favorites,paletteOpen=paletteOpen,palette=paletteView and paletteView.snapshot(),inspectedId=inspectedId,
 			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
 	end
+	paletteView=require("Modules.CraftingPalette").new(controls,leftWidth,height,{current=function() return controls.method:GetSelValueByKey("val") end,favorites=favorites,restore=restored and restored.palette,
+		shown=function() return controls.page:GetSelValue()=="Emulate item" and paletteOpen end,available=function(method) return workbench.available(method,state,model) end,hint=function(method) return workbench.hint(method,state,model) end,
+		choose=chooseMethod,close=function() paletteOpen=false;refresh() end})
+	ui.label(controls,"affixHeading",16,96,"Modifier details",20)
+	controls.affixFacts=new("TextListControl"):TextListControl(ui.anchor,{16,128,leftWidth,height-290},nil,{})
+	controls.affixAction=new("DropDownControl"):DropDownControl(ui.anchor,{16,height-146,leftWidth-136,26},{})
+	button(controls,"affixUseAction",leftWidth-108,height-146,124,"Select action",function() chooseMethod(controls.affixAction:GetSelValueByKey("val")) end)
+	button(controls,"affixBack",16,height-98,math.floor((leftWidth-12)/2),"< Currency tray",function() inspectedId=nil;refresh() end)
+	button(controls,"affixTarget",28+math.floor((leftWidth-12)/2),height-98,math.floor((leftWidth-12)/2),"Use as target",function() pickTarget(inspectedId);inspectedId=nil;controls.page:SelByValue("Target conditions");refresh() end)
+	local affixControls={}
+	for _,key in ipairs({"affixHeading","affixFacts","affixAction","affixUseAction","affixBack","affixTarget"}) do controls[key].shown=function() return controls.page:GetSelValue()=="Emulate item" and inspectedId~=nil end;affixControls[key]=controls[key] end
+	controls.affixUseAction.enabled=function() local method=controls.affixAction:GetSelValueByKey("val");return method and workbench.available(method,state,model) end
+	controls.affixBack.height=28;controls.affixTarget.height=28
+	ui.style(affixControls,{affixTarget=true})
 	for key,control in pairs(controls) do
-		if key~="item" and key~="itemMods" and key~="stage" and key~="projectName" and not key:match("^currency_") and type(control.x)=="number" and control.x<448 and type(control.width)=="number" then
+		if key~="item" and key~="itemMods" and key~="stage" and key~="projectName" and not key:match("^currency_") and not key:match("^palette") and not key:match("^affix") and type(control.x)=="number" and control.x<448 and type(control.width)=="number" then
 			control.x=16+math.floor((control.x-16)*leftWidth/416);if control.width>0 then control.width=math.floor(control.width*leftWidth/416) end
 		end
 	end
@@ -490,6 +517,7 @@ function Panel.Open(build,project,layout)
 	end) end
 	updateOptions();refresh()
 	if restored then controls.method:SelByValue(restored.method or "alchemy","val");updateOptions();controls.resultSummary.list=restored.resultRows or controls.resultSummary.list end
+	if inspectedId then populateAffix(inspectedId) end
 	for key,control in pairs(controls) do if key~="stage" then control.layoutAudit="crafting-workbench" end end
 	if layout then layout.mount(width,height,"Crafting workbench",controls) else main:OpenPopup(width,height,"Crafting workbench",controls,nil,nil,"close") end
 	return controls

@@ -129,11 +129,11 @@ describe("Crafting projects", function()
 	it("lets the user inspect and keep an Allflame ghost without equipping it", function()
 		local entry=project();build.savers.CraftingProjects:Upsert(entry)
 		require("Classes.CraftingSimulatorControl").Open(build,entry)
-		local panel=main.popups[1];panel.controls.allflame:Click()
+		local panel=main.popups[1];panel.controls.page:SelByValue("Craft settings");panel.controls.allflame:Click()
 		local settings=main.popups[1]
 		settings.controls.mode:SelByValue("Observed override")
 		settings.controls.outcomes:SetText("4");settings.controls.gainMin:SetText("0");settings.controls.gainMax:SetText("0");settings.controls.sulphur:SetText("100")
-		settings.controls.use:Click();panel.controls.apply:Click()
+		settings.controls.use:Click();panel.controls.page:SelByValue("Emulate item");panel.controls.apply:Click()
 		local choices=main.popups[1]
 		assert.are.equal("Allflame outcomes",choices.title)
 		assert.are.equal(4,#choices.controls.choice.list)

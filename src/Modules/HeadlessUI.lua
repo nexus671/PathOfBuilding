@@ -184,6 +184,7 @@ function M.install(options)
 	end
 	function ui:text(key,text)
 		self:click(key);self.keys.CTRL=true;self:key("a");self.keys.CTRL=nil
+		if text=="" then self:key("BACK") end
 		local host=self:activeHost()
 		for char in text:gmatch("[\1-\127\194-\244][\128-\191]*") do self:dispatch(host,{{type="Char",key=char}},main.viewPort) end
 		return self
