@@ -2,6 +2,8 @@
 
 Calculations, build edits and UI control checks can run without opening PoB or sending desktop input. Use an isolated build loaded through `src/HeadlessWrapper.lua`; saved player builds do not need to be changed.
 
+The wrapper uses real zlib compression for imports and compressed jewel data. Windows uses the bundled `runtime/zlib1.dll`; Linux needs the system zlib library. Headless jewel loading leaves binary caches untouched unless caching is explicitly requested.
+
 Run the calculation suite with `busted --lua=luajit`, and the MCP protocol suite with `node --test spec/AI/*.test.cjs`.
 
 ## Render and exercise controls

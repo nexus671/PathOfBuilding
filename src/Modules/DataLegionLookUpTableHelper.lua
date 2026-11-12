@@ -43,7 +43,8 @@ local function loadTimelessJewel(jewelType, nodeID)
 
 	ConPrintf("LOADING")
 
-	local jewelData = loadJewelFile(data.timelessJewelTypes[jewelType]:gsub("%s+", ""))
+	-- Only pass the name: gsub's second return value is not a cache preference.
+	local jewelData = loadJewelFile((data.timelessJewelTypes[jewelType]:gsub("%s+", "")))
 
 	if jewelData then
 		if jewelType == 1 then -- "Glorious Vanity"
@@ -150,7 +151,7 @@ local function repairLUTs()
 			end
 		end
 	end
-	jewelData = loadJewelFile(data.timelessJewelTypes[1]:gsub("%s+", ""))
+	jewelData = loadJewelFile((data.timelessJewelTypes[1]:gsub("%s+", "")))
 	if not jewelData then
 		ConPrintf("missing GV file to rebuild NodeIndexMapping")
 	else

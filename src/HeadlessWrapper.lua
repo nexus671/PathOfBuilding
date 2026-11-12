@@ -6,6 +6,8 @@
 -- define global SimpleGraphic API functions. some of these have dummy function
 -- bodies intended for headless use.
 dofile("_SimpleGraphic.def.lua")
+Inflate=require("Modules.HeadlessCompression").inflate
+Deflate=require("Modules.HeadlessCompression").deflate
 
 function GetVirtualScreenSize()
 	return 1920, 1080

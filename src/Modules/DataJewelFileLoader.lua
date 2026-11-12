@@ -20,7 +20,7 @@ local function loadJewelFile(jewelTypeName, cacheUncompressed)
 			scriptPath = "./src"
 		end
 	end
-	cacheUncompressed = cacheUncompressed ~= false
+	if cacheUncompressed == nil then cacheUncompressed = not (launch and launch.headless) end
 
 	local uncompressedFileAttr = { }
 	if cacheUncompressed then
