@@ -126,7 +126,7 @@ function Panel.Open(build,source,layout)
 		c.sort=new("DropDownControl"):DropDownControl(ui.anchor,{16,128,left,26},require("Modules.JourneyUpgrades").metrics);c.sort:SelByValue(sortMetric,"val")
 		local sortDirty=false
 		c.sort.selFunc=function() sortMetric=c.sort:GetSelValueByKey("val");sortDirty=true end
-		layout.tick=function() if sortDirty and not c.sort.dropped then sortDirty=false;reopen() end end
+		layout.tick=function() if (sortDirty or layout.resultsDirty) and not c.sort.dropped then sortDirty=false;layout.resultsDirty=nil;reopen() end end
 		button(c,"perCost",left+32,128,188,perCost and "Per resource: on" or "Per resource: off",function() perCost=not perCost;reopen() end)
 		ui.description(c,"rankingHint",left+236,128,right-204,32,{"Per-resource ranking groups currencies separately."},13)
 	else
@@ -209,7 +209,12 @@ function Panel.Open(build,source,layout)
 	elseif page=="Gear" then
 		button(c,"measure",300,h-48,176,"Measure upgrades",function()
 			local upgrades=require("Modules.JourneyUpgrades");if upgrades.job then upgrades.cancel();reopen();return end
-			upgrades.start(build,function() reopen() end)
+			upgrades.start(build,function()
+				local workspace=build.planningWorkspace
+				local active=workspace and workspace.cache.journey
+				local view=active and active.layout.snapshot and active.layout.snapshot()
+				if workspace and build.viewMode=="PLANNER" and workspace.page=="journey" and view and view.page=="Gear" then active.layout.resultsDirty=true end
+			end)
 		end)
 		c.measure.label=function() local upgrades=require("Modules.JourneyUpgrades");local r=upgrades.current(build);return upgrades.job and r and string.format("Cancel (%d/%d)",r.completed,r.total) or "Measure upgrades" end
 	elseif page=="Budget" then button(c,"record",300,h-48,176,"Record transaction",function() Panel.Edit(build,"ledger",{resourceId=selectedEntry and selectedEntry.id,kind="add"},function() reopen() end) end) end

@@ -30,7 +30,7 @@ def main():
     (directory / "controls.log").write_text(result.stdout)
     assert result.returncode == 0, result.stdout
     paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 297, f"Expected 297 UI frames, found {len(paths)}"
+    assert len(paths) == 300, f"Expected 300 UI frames, found {len(paths)}"
     failures = []
     for path in paths:
         image, audit = render(json.loads(path.read_text()))

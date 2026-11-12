@@ -865,7 +865,7 @@
 	<File name="Assets/vestigialicon.png" part="program" sha1="ecb5dd4b9aed1cac0c1a677b18838ae9c62744d7" />
 	<File name="Assets/warlordicon.png" part="program" sha1="cca050c84884f5c0bb1380ece51d3c4b32be4900" />
 	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="d5e9aebfe36cf2b24e921279419c3604edbc0961" />
-	<File name="Classes/BuildJourneyControl.lua" part="program" sha1="61d170438e94328761c936e1d226c89490c32aa1" />
+	<File name="Classes/BuildJourneyControl.lua" part="program" sha1="679a68f8d6eb8d86c566e33876ec04515a2a0d5b" />
 	<File name="Classes/BuildListControl.lua" part="program" sha1="f60f0d7f6aecbe851db896913cd1aa707c7fb304" />
 	<File name="Classes/BuildProposalControl.lua" part="program" sha1="c9af257aafebd296e627db347319a06095cfab55" />
 	<File name="Classes/ButtonControl.lua" part="program" sha1="dd46384fc87d495e7ef5a11803cfc70360ac8bf1" />

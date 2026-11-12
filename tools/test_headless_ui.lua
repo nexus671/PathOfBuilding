@@ -221,6 +221,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(require("Modules.JourneyUpgrades").current(build).entries[gearId].status=="calculated","Native upgrade measurement did not finish")
 	ui:choose("sort","LifeUnreserved","val");ui:click("perCost");frame("journey-upgrade-ranking")
 	ui:click("edit");ui:click("notesExpand");ui:text("text","Record exact target and price source");ui:click("keep");ui:click("keep");frame("journey-stale-ranking")
+	local background=copyTable(build.savers.BuildJourney.data)
+	for index=2,4 do local extra=copyTable(background.wishlist[1]);extra.id="background-"..index;extra.title="Background candidate "..index;background.wishlist[#background.wishlist+1]=extra end
+	build.savers.BuildJourney:Replace(background);workspace:Show("journey",{page="Gear"});ui:click("measure");ui:click("nav_atlas")
+	for i=1,12 do ui:frame();if not require("Modules.JourneyUpgrades").job then break end end
+	assert(workspace.page=="atlas","Finishing background upgrade measurements stole navigation")
+	frame("journey-background-navigation")
+	background.wishlist={background.wishlist[1]};build.savers.BuildJourney:Replace(background);ui:click("nav_journey");ui:click("page3")
 	ui:click("page5");ui:click("add");ui:text("title","Campaign links");ui:text("level","12");ui:text("gems","Fireball + Combustion")
 	ui:text("passives","Take nearby life");ui:text("quests","Finish Act 1");ui:text("transition","After finding a linked item");frame("journey-stage-editor")
 	ui:click("gemsExpand");ui:text("text","Fireball + Combustion\nKeep an extra gem leveling");frame("journey-guide-text");ui:click("keep");ui:click("keep");frame("journey-leveling")
