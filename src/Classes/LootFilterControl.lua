@@ -10,7 +10,6 @@ local function notify(title,message)
 	button(c,"close",w-156,h-48,140,"Close",function() main:ClosePopup() end);ui.style(c);main:OpenPopup(w,h,title,c,"close",nil,"close")
 end
 local function attempt(callback) local ok,why=pcall(callback);if not ok then notify("Loot filter",why) end end
-local function id(prefix) return prefix.."-"..os.time().."-"..tostring(GetTime()):gsub("%W","") end
 local function modal(title,raw,save)
 	local c={};local w,h=math.min(860,main.screenW-40),math.min(570,main.screenH-60)
 	ui.description(c,"help",16,28,w-32,44,{save and "Paste an exported .filter. Original text is preserved; personal rules stay separate." or "Ready to save as a UTF-8 .filter in your Path of Exile filter folder. Copy does not change any game files."},14)
@@ -20,20 +19,7 @@ local function modal(title,raw,save)
 	button(c,"close",w-140,h-48,124,"Close",function() main:ClosePopup() end)
 	ui.style(c);main:OpenPopup(w,h,title,c,nil,"text","close")
 end
-local function sample(rule)
-	local item={BaseType="Chaos Orb",Class="Stackable Currency",Rarity="Normal",ItemLevel=86,AreaLevel=83,DropLevel=1,Quality=0,StackSize=1,Sockets=0,SocketGroup="",LinkedSockets=0,Width=1,Height=1,UnidentifiedItemTier=0,HasInfluence={"None"}}
-	for key in pairs(parser.booleans) do item[key]=false end
-	if rule then
-		local parsed=parser.parse(rule.text);for _,c in ipairs(parsed.rules[1].conditions) do
-			if parser.numeric[c.keyword] then item[c.keyword]=tonumber(c.values[1]) or c.values[1]
-			elseif parser.booleans[c.keyword] then item[c.keyword]=c.values[1]=="True"
-			elseif c.keyword=="HasInfluence" then item[c.keyword]=copyTable(c.values)
-			else item[c.keyword]=c.values[tonumber(c.values[1]) and 2 or 1] end
-		end
-	end
-	return item
-end
-function M.EditRule(rule,save)
+function M.Conditions(rule,save)
 	local c={};local w,h=math.min(880,main.screenW-40),math.min(600,main.screenH-60);local parsed=parser.parse(rule.text);local block=parsed.rules[1]
 	local conditions=copyTable(block.conditions);local keywords={"BaseType","Class","Rarity","ItemLevel","AreaLevel","Quality","LinkedSockets","Sockets","SocketGroup","GemLevel","MapTier","StackSize","UnidentifiedItemTier","Fated","Identified","Corrupted","FracturedItem","HasInfluence"}
 	for _,condition in ipairs(conditions) do local known=false;for _,k in ipairs(keywords) do if k==condition.keyword then known=true end end;if not known then keywords[#keywords+1]=condition.keyword end end
@@ -70,7 +56,7 @@ function M.EditRule(rule,save)
 		end
 		local styles=copyTable(block.styles)
 		if c.theme.selIndex>1 then local generated=filters.rule("style","Style",{},nil,c.theme.selIndex==3 and "contrast" or "default");local style=parser.parse(generated.text).rules[1].styles;for key,value in pairs(style) do styles[key]=value end end
-		if c.sound.selIndex>1 then styles.PlayAlertSound=c.sound.selIndex==2 and nil or {c.sound.selIndex==3 and "2" or "6","200"};styles.CustomAlertSound=nil;styles.CustomAlertSoundOptional=nil;styles.PlayAlertSoundPositional=nil end
+		if c.sound.selIndex>1 then if c.sound.selIndex==2 then styles.PlayAlertSound=nil else styles.PlayAlertSound={c.sound.selIndex==3 and "2" or "6","200"} end;styles.CustomAlertSound=nil;styles.CustomAlertSoundOptional=nil;styles.PlayAlertSoundPositional=nil end
 		local keys={};for key in pairs(styles) do keys[#keys+1]=key end;table.sort(keys)
 		for _,key in ipairs(keys) do local values=styles[key];local quoted=key:match("^CustomAlertSound") and (filters.quote(values[1])..(#values>1 and " "..table.concat(values," ",2) or "")) or table.concat(values," ");lines[#lines+1]="    "..key.." "..quoted end
 		if block.continue then lines[#lines+1]="    Continue" end
@@ -81,100 +67,21 @@ function M.EditRule(rule,save)
 	button(c,"cancel",w-156,h-48,140,"Cancel",function() main:ClosePopup() end)
 	drawConditions();ui.style(c,{keepRule=true});main:OpenPopup(w,h,"Loot filter rule",c,nil,"title","cancel");dialog=main.popups[1]
 end
+function M.EditRule(rule,save)
+ require("Classes.LootFilterAppearance").Open(rule,function(nextRule)
+  local profile=filters.profile("validate","Validate");profile.rules={nextRule};filters.validate({schemaVersion=1,activeId=profile.id,profiles={profile}})
+  save(nextRule)
+ end,M.Conditions)
+end
+function M.Import(save)
+ modal("Import loot filter","",function(raw)
+  local parsed=parser.parse(raw);assert(#parsed.rules>0,"No filter rules found")
+  for _,d in ipairs(parsed.diagnostics) do assert(not d.error,d.error) end
+  save(raw)
+ end)
+end
 function M.Open(build,source,layout)
-	local saver=build.savers.LootFilters;local c={};local w,h=layout.width,layout.height
-	local data=source and source.data or copyTable(saver.data);local profile=filters.find(data,source and source.selected) or data.profiles[1]
-	local selected=source and source.rule;local sampleItem=source and source.sample or sample();local compiled,report,result;local dirty=source and source.dirty or false
-	local left=math.floor(w*0.38);local right=w-left-48
-	local function draft() dirty=true;ui.draft(build,"filters") end
-	local function reopen() layout.navigate("filters",{data=data,selected=profile and profile.id,rule=selected,sample=sampleItem,dirty=dirty}) end
-	local function refresh()
-		if profile then local ok,a,b=pcall(filters.compile,profile);if ok then compiled,report=a,b;result=parser.simulate(parser.parse(a),sampleItem);for _,d in ipairs(report.diagnostics) do if d.error then compiled=nil;result={status="invalid",action="Unknown",reasons={d.error},styles={}};break end end else compiled=nil;report={error=a};result={action="Unknown",reasons={a},styles={}} end end
-		local list={};if profile then for _,r in ipairs(profile.rules) do list[#list+1]={height=30,textSize=15,"^7"..(r.enabled and "" or "[off] ")..ui.fit(r.title,left-80,15),rule=r} end end
-		if #list==0 then list=ui.rows({"No personal rules yet.","Use build targets or add a rule."},left-32,14) end
-		c.rules.list=list
-		if c.sample then local found=false;for i,value in ipairs(c.sample.list) do if value==sampleItem.BaseType then c.sample.selIndex=i;found=true;break end end;if not found then c.sample.selIndex=#c.sample.list end end
-		local lines={};if profile then
-			lines[#lines+1]=(result and result.action or "Unknown").." | "..(result and result.status or "invalid")..(result and result.line and " | deciding line "..result.line or "")
-			if result and result.ruleTitle then lines[#lines+1]=result.ruleTitle end
-			for _,reason in ipairs(result and result.reasons or {}) do lines[#lines+1]=reason end
-			if report and not report.error then local n=0;for _ in pairs(report.changes) do n=n+1 end
-				lines[#lines+1]=report.rules.." compiled rules | "..n.." 3.30 migrations"
-				lines[#lines+1]=(profile.template and "Imported base preserved" or "NeverSink "..filters.strictness[profile.strictness+1]).." | personal rules take priority"
-				if profile.baseCommit~=filters.source().commit then lines[#lines+1]="A newer bundled base is available. Review Update base." end
-				if #report.diagnostics>0 then lines[#lines+1]=#report.diagnostics.." parser diagnostics; use Audit to inspect." end
-			end
-		else lines={"Create a profile to start. Campaign, early mapping and endgame profiles can travel with this build."} end
-		if saver.warning then lines[#lines+1]=saver.warning end
-		c.explanation.list=ui.rows(lines,right-28,14)
-	end
-	ui.label(c,"heading",16,16,"Loot filter",24)
-	button(c,"sound",w-332,16,152,"Sound preview",function() local _,message=require("Modules.LootFilterAudio").play(result and result.styles or {});notify("Sound preview",message) end)
-	button(c,"account",w-168,16,152,"Account filters",function() if profile then M.Account(profile,function(raw) profile.template=raw;draft();refresh() end) end end)
-	ui.description(c,"intro",16,48,w-32,24,{"Pick up what your build needs. Preview every rule before exporting."},14)
-	local choices={};for _,p in ipairs(data.profiles) do choices[#choices+1]={label=p.title,val=p.id} end;if #choices==0 then choices={{label="Create your first profile",val=""}} end
-	c.profile=new("DropDownControl"):DropDownControl(ui.anchor,{16,84,left,28},choices,function(_,value) profile=filters.find(data,value.val);selected=nil;reopen() end);c.profile:SelByValue(profile and profile.id or "","val")
-	c.title=new("EditControl"):EditControl(ui.anchor,{left+32,84,right-164,28},profile and profile.title or "",nil,nil,120,function(value) if profile then profile.title=value;for _,entry in ipairs(c.profile.list) do if entry.val==profile.id then entry.label=value end end;draft() end end)
-	c.mode=new("DropDownControl"):DropDownControl(ui.anchor,{w-168,84,152,28},{"Normal","Ruthless"},function(_,value) if profile then profile.mode=value;draft();refresh() end end);c.mode:SelByValue(profile and profile.mode or "Normal")
-	c.preset=new("DropDownControl"):DropDownControl(ui.anchor,{16,124,150,26},{{label="Campaign",val="campaign"},{label="Early maps",val="early_maps"},{label="Endgame",val="endgame"}},function(_,value) if profile then profile.preset=value.val;profile.strictness=value.val=="campaign" and 1 or value.val=="endgame" and 4 or 2;draft();reopen() end end);c.preset:SelByValue(profile and profile.preset or "early_maps","val")
-	c.strictness=new("DropDownControl"):DropDownControl(ui.anchor,{178,124,left-162,26},filters.strictness,function(index) if profile then profile.strictness=index-1;draft();refresh() end end);c.strictness.selIndex=profile and profile.strictness+1 or 3
-	c.theme=new("DropDownControl"):DropDownControl(ui.anchor,{left+32,124,164,26},{{label="Gold / cyan",val="default"},{label="High contrast",val="contrast"}},function(_,value) if profile then profile.theme=value.val;draft();refresh() end end);c.theme:SelByValue(profile and profile.theme or "default","val")
-	button(c,"generate",left+208,124,right-176,"Use build targets",function() if profile then profile.rules=filters.generate(build,profile);selected=nil;draft();refresh() end end)
-	ui.label(c,"rulesHeading",16,170,"Personal rules | first match wins",16)
-	local function move(delta)
-		if not profile then return end
-		for i,r in ipairs(profile.rules) do if r.id==selected then local target=i+delta;if target>=1 and target<=#profile.rules then profile.rules[i],profile.rules[target]=profile.rules[target],profile.rules[i];draft();refresh() end;return end end
-	end
-	button(c,"up",left-48,162,28,"^",function() move(-1) end)
-	button(c,"down",left-12,162,28,"v",function() move(1) end)
-	c.rules=new("TextListControl"):TextListControl(ui.anchor,{16,198,left,h-302},nil,{})
-	ui.selectable(c.rules,function(row) return row.rule and row.rule.id end,function(row) selected=row.rule.id;sampleItem=sample(row.rule);refresh() end)
-	local function current() if profile then for _,r in ipairs(profile.rules) do if r.id==selected then return r end end end end
-	local function put(rule) for i,r in ipairs(profile.rules) do if r.id==rule.id then profile.rules[i]=rule;draft();refresh();return end end;profile.rules[#profile.rules+1]=rule;selected=rule.id;draft();refresh() end
-	local bw=math.floor((left-24)/4)
-	button(c,"add",16,h-94,bw,"+ Rule",function() if profile then M.EditRule(filters.rule(id("rule"),"New pickup rule",{'BaseType == "Iron Hat"'}),put) end end)
-	button(c,"edit",24+bw,h-94,bw,"Edit",function() if current() then M.EditRule(current(),put) end end)
-	button(c,"toggle",32+bw*2,h-94,bw,"On / off",function() if current() then current().enabled=not current().enabled;draft();refresh() end end)
-	button(c,"remove",40+bw*3,h-94,bw,"Delete",function() if current() then for i,r in ipairs(profile.rules) do if r.id==selected then table.remove(profile.rules,i);break end end;selected=nil;draft();refresh() end end)
-	c.preview=new("Control"):Control(ui.anchor,{left+32,170,right,148})
-	function c.preview:Draw()
-		local x,y=self:GetPos();local width,height=self:GetSize();SetDrawColor(0.10,0.12,0.10);DrawImage(nil,x,y,width,height)
-		local styles=result and result.styles or {};local function color(key,default) local v=styles[key] or default;SetDrawColor((tonumber(v[1]) or 255)/255,(tonumber(v[2]) or 255)/255,(tonumber(v[3]) or 255)/255,(tonumber(v[4]) or 255)/255) end
-		local size=math.min(32,tonumber(styles.SetFontSize and styles.SetFontSize[1]) or 24);local label=ui.fit(sampleItem.BaseType or "Sample item",width-64,size);local labelWidth=DrawStringWidth(size,"VAR",label)+28
-		local palette={Cyan={0.2,0.8,0.95},Red={0.95,0.25,0.2},Green={0.35,0.9,0.4},Blue={0.3,0.5,1},White={1,1,1},Yellow={1,0.9,0.2},Orange={1,0.55,0.2},Pink={1,0.4,0.75},Purple={0.7,0.4,1},Brown={0.6,0.4,0.2},Grey={0.6,0.6,0.6}}
-		if styles.PlayEffect and styles.PlayEffect[1]~="None" then local color=palette[styles.PlayEffect[1]] or palette.Cyan
-			for i=1,4 do SetDrawColor(color[1],color[2],color[3],0.10+i*0.08);DrawImage(nil,x+width/2-12+i*2,y+10,24-i*4,52) end
-		end
-		local icon=styles.MinimapIcon
-		if icon and tonumber(icon[1]) and tonumber(icon[1])>=0 then
-			local color=palette[icon[2]] or palette.White;local cx,cy=x+width-30,y+30
-			SetDrawColor(0.08,0.1,0.12);DrawImage(nil,cx-22,cy-22,44,44);SetDrawColor(color[1],color[2],color[3])
-			if icon[3]=="Diamond" then DrawImageQuad(nil,cx,cy-12,cx+12,cy,cx,cy+12,cx-12,cy)
-			elseif icon[3]=="Triangle" then DrawImageQuad(nil,cx,cy-12,cx+12,cy+12,cx-12,cy+12,cx-12,cy+12)
-			else DrawImage(nil,cx-9,cy-9,18,18) end
-		end
-		color("SetBorderColor",{140,155,140});DrawImage(nil,x+(width-labelWidth)/2-2,y+62,labelWidth+4,44)
-		color("SetBackgroundColor",{10,15,10});DrawImage(nil,x+(width-labelWidth)/2,y+64,labelWidth,40)
-		color("SetTextColor",{220,225,215});DrawString(x+width/2,y+68,"CENTER_X",size,"VAR",label)
-		SetDrawColor(0.85,0.88,0.9);DrawString(x+12,y+height-26,"LEFT",14,"VAR",result and result.action=="Hide" and "Hidden in game | shown here for inspection" or "Drop preview")
-	end
-	c.sample=new("DropDownControl"):DropDownControl(ui.anchor,{left+32,330,right-164,26},{"Chaos Orb","Iron Hat","Frayed Thread","Enshrouded Quiver","Coven Queen's Crown","Custom drop"},function(_,value) if value=="Custom drop" then M.EditSample(sampleItem,function(item) sampleItem=item;refresh() end);return end;sampleItem=sample();sampleItem.BaseType=value;if value=="Iron Hat" then sampleItem.Class="Helmets" end;for class,items in pairs(filters.patch().added) do for _,name in ipairs(items) do if name==value then sampleItem.Class=class end end end;refresh() end)
-	button(c,"sampleEdit",w-168,330,152,"Sample properties",function()
-		M.EditSample(sampleItem,function(item) sampleItem=item;refresh() end)
-	end)
-	c.explanation=new("TextListControl"):TextListControl(ui.anchor,{left+32,368,right,math.max(44,h-426)},nil,{})
-	local width=math.floor((w-80)/7)
-	local function footer(key,i,label,run) button(c,key,16+(width+8)*i,h-48,width,label,run) end
-	footer("new",0,"New profile",function() profile=filters.profile(id("filter"),"New loot filter","early_maps");data.profiles[#data.profiles+1]=profile;data.activeId=profile.id;selected=nil;draft();reopen() end)
-	footer("duplicate",1,"Duplicate",function() if profile then profile=copyTable(profile);profile.id=id("filter");profile.title=profile.title.." copy";data.profiles[#data.profiles+1]=profile;draft();reopen() end end)
-	footer("import",2,"Import",function() modal("Import loot filter","",function(raw) local parsed=parser.parse(raw);assert(#parsed.rules>0,"No filter rules found");for _,d in ipairs(parsed.diagnostics) do assert(not d.error,d.error) end;if not profile then profile=filters.profile(id("filter"),"Imported filter");data.profiles[#data.profiles+1]=profile end;profile.template=raw;draft();reopen() end) end)
-	footer("export",3,"Export",function() if compiled then M.Export(profile,compiled) end end)
-	footer("audit",4,"Audit / update",function() if profile then M.Audit(profile,report,function(nextProfile) for i,p in ipairs(data.profiles) do if p.id==nextProfile.id then data.profiles[i]=nextProfile end end;profile=nextProfile;draft();refresh() end) end end)
-	footer("keep",5,"Keep in build",function() attempt(function() if profile then data.activeId=profile.id end;saver:Replace(data);dirty=false;refresh() end) end)
-	footer("deleteProfile",6,"Delete profile",function() if profile then for i,p in ipairs(data.profiles) do if p==profile then table.remove(data.profiles,i);break end end;profile=data.profiles[1];data.activeId=profile and profile.id or "";draft();reopen() end end)
-	for _,key in ipairs({"title","mode","preset","strictness","theme","generate","add","edit","toggle","remove","duplicate","export","audit","deleteProfile"}) do c[key].enabled=function() return profile~=nil and not saver.unreadable end end
-	layout.snapshot=function() return {data=data,selected=profile and profile.id,rule=selected,sample=sampleItem,dirty=dirty} end
-	refresh();for _,control in pairs(c) do control.layoutAudit="loot-filter-workspace" end;ui.style(c,{keep=true});layout.mount(w,h,"Loot filter",c)
+ return require("Classes.LootFilterWorkspace").Open(build,source,layout,M)
 end
 function M.Account(profile,import)
 	local account=require("Modules.LootFilterAccount");local c={};local w,h=math.min(900,main.screenW-40),math.min(560,main.screenH-60);local entries={};local selected;local status="No account request made."

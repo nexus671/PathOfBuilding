@@ -1,6 +1,9 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Redesigned loot filters with setup cards, a searchable base catalogue, clickable loot scenes and live appearance controls.
+* Added colour swatches, label size, all numbered sound choices, map icons and personal-rule theme updates.
+* Base preset edits now create personal overrides while preserving the imported or pinned source.
 * Added visual loot-filter profiles with build, crafting and Atlas pickup rules, drop previews and file export.
 * Added pinned NeverSink presets, 3.30 item migrations, Normal/Ruthless modes and reviewed account publication.
 * AI tools can generate, test, compile and propose saved loot-filter profiles through native review.

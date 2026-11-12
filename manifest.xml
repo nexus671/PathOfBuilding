@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.filters1" />
+	<Version number="2.67.2-ai.filters2" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="2fd911603e02785992147cd35b164d4c37ccbbe8" />
+	<File name="changelog.txt" part="default" sha1="77e67db3b2a554ba72c2e6f9b07996d04a02c21a" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -943,7 +943,9 @@
 	<File name="Classes/JourneyViews.lua" part="program" sha1="b89da0fb5e79ca13c8b4c8111f46b4fbe348c6a8" />
 	<File name="Classes/LabelControl.lua" part="program" sha1="7a8f38d225087ba6941537444b0ea0ec0ac150cd" />
 	<File name="Classes/ListControl.lua" part="program" sha1="9223f7e90e7fa3f67ad0cf8224e1266e59b9681f" />
-	<File name="Classes/LootFilterControl.lua" part="program" sha1="e7f000c83b8b6a9f6a4c8b5b9b641233cc8bb95b" />
+	<File name="Classes/LootFilterAppearance.lua" part="program" sha1="1a885868d43009f618c29d901f5df02affcafdd6" />
+	<File name="Classes/LootFilterControl.lua" part="program" sha1="4152d7bb9e8176d3cbe7782c39268186d111d87d" />
+	<File name="Classes/LootFilterWorkspace.lua" part="program" sha1="39b64e5e4482d17db57408603892b91a152cf5f9" />
 	<File name="Classes/MinionListControl.lua" part="program" sha1="655a6ddb06ba75011e51d5a6130db8cf7a9f3895" />
 	<File name="Classes/MinionSearchListControl.lua" part="program" sha1="cfff5d76e380c7bdcbdac229325cefb1599af36c" />
 	<File name="Classes/ModDB.lua" part="program" sha1="1327beebeba14dc8320d137a3dede673b74942af" />
@@ -1253,7 +1255,9 @@
 	<File name="Modules/JourneyUpgrades.lua" part="program" sha1="bb121d8115f693518ae9431fefff305fdb46878f" />
 	<File name="Modules/LootFilterAccount.lua" part="program" sha1="8d3b431416c28b60eebf246a105e980a2913b05f" />
 	<File name="Modules/LootFilterAudio.lua" part="program" sha1="492d64c2ec148944b3d548c3c84ada8021497387" />
+	<File name="Modules/LootFilterLibrary.lua" part="program" sha1="27ed5ba6247643b8c845a3088fc2e9adf0ad3b3e" />
 	<File name="Modules/LootFilterParser.lua" part="program" sha1="731abf087de0ab6c7f326b39e793ca1cd89d177b" />
+	<File name="Modules/LootFilterVisuals.lua" part="program" sha1="7b50b45e2aa9df7a69d4e79782fa63196c3d4601" />
 	<File name="Modules/LootFilters.lua" part="program" sha1="9f9b17b576d55cdb91c7efd9c011447b657365f3" />
 	<File name="Modules/Main.lua" part="program" sha1="6a77993392e839506b9594e8e0802b13d6bed530" />
 	<File name="Modules/ModParser.lua" part="program" sha1="460cd22503a0a7a79a4d11dba165725a61dd918a" />
