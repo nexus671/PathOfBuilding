@@ -29,7 +29,7 @@ function Panel.Review()
 	ui.card(controls,"defenceCard",304,24,cardWidth,"EFFECTIVE HIT POOL",metric("TotalEHP"),previous("TotalEHP"))
 	ui.card(controls,"lifeCard",592,24,cardWidth,"UNRESERVED LIFE",metric("LifeUnreserved"),previous("LifeUnreserved"))
 	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{16,136,260,26},{"Summary","Changes","Checks"})
-	ui.label(controls,"candidateTitle",304,142,prepared.title:sub(1,60),14)
+	ui.label(controls,"candidateTitle",464,142,prepared.title:sub(1,42),14)
 	ui.label(controls,"goal",16,170,"Goal: "..goalName(evaluation.goal).." | "..(evaluation.eligible and "Within constraints" or "Constraints need attention"),14)
 	local metricRows={{height=26,textSize=16,"^7Metric","^7Current","^7Proposed","^7Change"}}
 	for key in pairsSortByKey(prepared.after) do
@@ -70,6 +70,7 @@ function Panel.Review()
 	end) end)
 	controls.reject = button(192,height-52,120,"Reject",function() bridge.reject(); main:ClosePopup() end)
 	controls.close = button(748,height-52,116,"Back",function() main:ClosePopup() end)
+	ui.style(controls,{apply=true});ui.tabs(controls,controls.page,{{"tab_summary","Summary","Summary"},{"tab_changes","Changes","Changes"},{"tab_checks","Checks","Checks"}},16,136,420)
 	main:OpenPopup(880,height,"Review AI build proposal",controls,nil,nil,"close")
 end
 
@@ -78,7 +79,7 @@ local function textPopup(title,lines)
 	local controls = { }
 	controls.details = new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,24,848,height-84},nil,wrapRows(lines))
 	controls.close = button(748,height-48,116,"Close",function() main:ClosePopup() end)
-	main:OpenPopup(880,height,title,controls,nil,nil,"close")
+	ui.style(controls);main:OpenPopup(880,height,title,controls,nil,nil,"close")
 end
 
 function Panel.Goals(build)
@@ -104,7 +105,7 @@ function Panel.Goals(build)
 		main:ClosePopup()
 	end) end)
 	controls.close = button(538,246,116,"Cancel",function() main:ClosePopup() end)
-	main:OpenPopup(670,292,"Build goals and budget",controls,nil,nil,"close")
+	ui.style(controls,{save=true});main:OpenPopup(670,292,"Build goals and budget",controls,nil,nil,"close")
 end
 
 function Panel.Analysis(build)
@@ -158,7 +159,7 @@ function Panel.Candidates()
 	end
 	controls.details = new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,68,848,height-132},nil,wrapRows(lines))
 	controls.close = button(748,height-48,116,"Close",function() main:ClosePopup() end)
-	main:OpenPopup(880,height,"Build candidates and leveling",controls,nil,nil,"close")
+	ui.style(controls,{review=true});main:OpenPopup(880,height,"Build candidates and leveling",controls,nil,nil,"close")
 end
 
 function Panel.Diagnostics()
@@ -213,6 +214,8 @@ function Panel.Open(build,layout)
 		controls[key.."Hint"].shown=controls[key].shown
 	end
 	controls.close=button(width-132,height-48,116,"Close",function() main:ClosePopup() end)
+	ui.style(controls,{review=true})
+	ui.tabs(controls,controls.page,{{"tab_plan","Plan & review","Plan & review"},{"tab_connection","Connection","Connection"}},16,202,360)
 	if layout then controls.close.shown=false;layout.mount(width,height,"AI build planner",controls)
 	else main:OpenPopup(width,height,"AI build planner",controls,nil,nil,"close") end
 	return controls

@@ -1,6 +1,7 @@
 -- Crafting plans stay in the build; external simulation stays in Craft of Exile.
 local projects = require("Modules.CraftingProjects")
 local json = require("dkjson")
+local ui=require("Modules.PlanningUI")
 local Panel = { }
 local function safely(callback)
 	local ok,err=pcall(callback)
@@ -105,19 +106,21 @@ function Panel.Edit(build,source,initialItem,initialSlot,layout)
 		else draft.estimate=nil end
 		return projects.validate(draft)
 	end
-	controls.save=button(16,596,180,"Keep project in build",function() build.savers.CraftingProjects:Upsert(readDraft()); main.popups={}; Panel.Open(build,nil,nil,layout) end)
+	controls.save=button(16,596,180,"Keep project in build",function() build.savers.CraftingProjects:Upsert(readDraft());if layout then layout.selectedProject=draft.id end; main.popups={}; Panel.Open(build,nil,nil,layout) end)
 	controls.preview=button(212,596,180,"Preview target stats",function() Panel.Preview(build,readDraft()) end)
 	controls.close=button(748,596,116,"Cancel",function() main:ClosePopup() end)
+	ui.style(controls,{save=true})
 	main:OpenPopup(880,644,"Edit crafting project",controls,nil,"title","close")
 end
 
 function Panel.Open(build,displayItem,displaySlot,layout)
+	if layout then layout.snapshot=nil;layout.viewState=nil;layout.workbench=nil end
 	local controls,list={},{ }
 	local store=build.savers.CraftingProjects
 	for index,project in ipairs(store.projects) do list[#list+1]={label=project.title,val=index} end
 	local height=layout and layout.height or math.min(720,main.screenH-60)
 	local width=layout and layout.width or 880
-	local function selected() return assert(store.projects[controls.projects:GetSelValueByKey("val")],"Create or select a project first") end
+	local function selected() return (assert(store.projects[controls.projects:GetSelValueByKey("val")],"Create or select a project first")) end
 	local function refresh()
 		local lines={"Crafting plans, targets and estimates are kept with this build. Save the build explicitly.","Native crafting runs locally. External Craft of Exile results remain separate supplied evidence."}
 		if store.warning then lines[#lines+1]=store.warning end
@@ -127,7 +130,8 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 		else lines[#lines+1]="Create a project from the selected item, or paste starting-item text and write a plan. AI can propose one through MCP." end
 		controls.details.list=rows(lines,width-60)
 	end
-	controls.projects=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,650,24},list,function() refresh() end)
+	controls.projects=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,650,24},list,function() if layout then layout.selectedProject=selected().id;Panel.Open(build,nil,nil,layout) else refresh() end end)
+	if layout and layout.selectedProject then for index,entry in ipairs(store.projects) do if entry.id==layout.selectedProject then controls.projects:SelByValue(index,"val") end end end
 	controls.edit=button(682,28,182,"Edit selected project",function() Panel.Edit(build,selected(),nil,nil,layout) end)
 	controls.edit.enabled=#list > 0
 	controls.details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,68,848,height-224},nil,{})
@@ -138,7 +142,7 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 		local project=assert(json.decode(Paste()),"Clipboard needs a crafting project JSON object")
 		store:Upsert(project); main.popups={}; Panel.Open(build,nil,nil,layout)
 	end)
-	controls.native=button(544,height-138,160,"Native crafting",function() require("Classes.CraftingSimulatorControl").Open(build,selected()) end)
+	controls.native=button(544,height-138,160,"Native crafting",function() if layout then layout.openWorkbench(selected()) else require("Classes.CraftingSimulatorControl").Open(build,selected()) end end)
 	controls.coe=button(16,height-48,220,"Craft of Exile (optional)",function() OpenURL(projects.handoff(selected().startingItem).url) end)
 	controls.preview=button(720,height-138,144,"Preview target",function() Panel.Preview(build,selected()) end)
 	controls.inspect=button(16,height-94,160,"Find modifiers",function()
@@ -167,17 +171,47 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 	for _,name in ipairs({"copy","coe","native","preview","inspect","attach","copyExport","done","undoStep"}) do controls[name].enabled=#list > 0 end
 	controls.close=button(748,height-48,116,"Close",function() main:ClosePopup() end)
 	if layout then
-		controls.projects.width=width-214;controls.edit.x=width-198
-		controls.details.width=width-32;controls.details.height=height-258
-		local keys={"new","native","preview","copy","import","inspect","done","undoStep","attach","copyExport","coe"}
-		local columns=3;local gap=12;local buttonWidth=math.floor((width-32-gap*(columns-1))/columns)
-		for index,key in ipairs(keys) do
-			local control=controls[key];control.x=16+(index-1)%columns*(buttonWidth+gap);control.y=height-174+math.floor((index-1)/columns)*36;control.width=buttonWidth
+		ui.label(controls,"heading",16,18,"Crafting projects",24)
+		controls.projects.x=16;controls.projects.y=60;controls.projects.width=width-336
+		controls.new.x=width-304;controls.new.y=60;controls.new.width=136
+		controls.edit.x=width-156;controls.edit.y=60;controls.edit.width=140;controls.edit.label="Edit project"
+		controls.libraryPage=new("DropDownControl"):DropDownControl(ui.anchor,{16,102,360,28},{"Item","Plan","Sharing"})
+		ui.tabs(controls,controls.libraryPage,{{"tab_item","Item","Item"},{"tab_plan","Plan","Plan"},{"tab_sharing","Sharing","Sharing & tools"}},16,102,440)
+		controls.details.x=16;controls.details.y=148;controls.details.width=width-32;controls.details.height=height-224
+		controls.details.shown=function() return controls.libraryPage:GetSelValue()=="Plan" end
+		controls.native.x=16;controls.native.y=404;controls.native.width=260;controls.native.height=32;controls.native.label="Open workbench"
+		controls.preview.x=16;controls.preview.y=448;controls.preview.width=260;controls.preview.height=32;controls.preview.label="Compare target with build"
+		for _,key in ipairs({"native","preview"}) do controls[key].shown=function() return controls.libraryPage:GetSelValue()=="Item" end end
+		controls.preview.enabled=function() return #list>0 and selected().targetItem and selected().targetItem:match("%S")~=nil end
+		for index,key in ipairs({"done","undoStep"}) do
+			controls[key].x=16+(index-1)*224;controls[key].y=height-56;controls[key].width=212
+			controls[key].shown=function() return controls.libraryPage:GetSelValue()=="Plan" end
 		end
-		controls.native.label="Open workbench";controls.coe.label="Craft of Exile";controls.edit.label="Edit project"
+		for index,key in ipairs({"copy","import","inspect","attach","copyExport","coe"}) do
+			controls[key].x=16+(index-1)%3*math.floor((width-32)/3);controls[key].y=164+math.floor((index-1)/3)*62;controls[key].width=math.floor((width-64)/3);controls[key].height=32
+			controls[key].shown=function() return controls.libraryPage:GetSelValue()=="Sharing" end
+		end
+		controls.coe.label="Craft of Exile"
+		local summary={"Create a project to start crafting.","Paste an item, set your targets, then open the workbench."}
+		if #list>0 then
+			local project=selected();summary={project.slot,"", "Targets"}
+			for _,goal in ipairs(project.goals or {}) do summary[#summary+1]=goal end
+			summary[#summary+1]="";summary[#summary+1]=#project.steps.." planned steps"
+			local ok,model=pcall(require("Modules.CraftingSimulator").model,project.targetItem and project.targetItem:match("%S") and project.targetItem or project.startingItem)
+			if ok then
+				local refreshItem=require("Modules.CraftingWorkbench").item(controls,"projectItem",304+math.floor((width-320-math.min(540,width-336))/2),148,math.min(540,width-336),height-188,model,function() return model.initial end,nil,{header=212,artSize=112})
+				refreshItem()
+				controls.projectItem.shown=function() return controls.libraryPage:GetSelValue()=="Item" end
+				controls.projectItemMods.shown=controls.projectItem.shown
+			else summary[#summary+1]="Edit the starting item to open a native preview." end
+		end
+		controls.summary=new("TextListControl"):TextListControl(ui.anchor,{16,148,260,math.min(240,height-276)},nil,ui.rows(summary,230))
+		controls.summary.shown=function() return controls.libraryPage:GetSelValue()=="Item" end
 		controls.close.shown=false
+		ui.style(controls,{native=true},{projectItem=true})
+		if #list>0 then layout.selectedProject=selected().id end
 		layout.mount(width,height,"Crafting projects",controls)
-	else main:OpenPopup(880,height,"Crafting projects",controls,nil,nil,"close") end
+	else ui.style(controls,{native=true});main:OpenPopup(880,height,"Crafting projects",controls,nil,nil,"close") end
 	return controls
 end
 return Panel

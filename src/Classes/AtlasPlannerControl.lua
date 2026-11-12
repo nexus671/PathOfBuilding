@@ -64,11 +64,12 @@ function Canvas:Draw()
 	local allocated={[self.tree.start]=true}
 	local avoided={}; for _,id in ipairs(self.avoided and self.avoided() or {}) do avoided[id]=true end
 	for _,id in ipairs(self.selected().nodes) do allocated[id]=true end
+	local planned=copyTable(allocated);for id in pairs(self.preview or {}) do planned[id]=true end
 	for id,node in pairs(self.tree.nodes) do
 		local a,b=self:Position(node)
 		for _,other in ipairs(node.links) do if id < other then
 			local c,d=self:Position(self.tree.nodes[other])
-			if allocated[id] and allocated[other] then SetDrawColor(0.75,0.61,0.25) else SetDrawColor(0.18,0.22,0.29) end
+			if allocated[id] and allocated[other] then SetDrawColor(0.75,0.61,0.25) elseif planned[id] and planned[other] then SetDrawColor(0.25,0.8,0.75) else SetDrawColor(0.18,0.22,0.29) end
 			local dx,dy=c-a,d-b; local length=math.max(1,math.sqrt(dx*dx+dy*dy)); local ox,oy=-dy/length,dx/length
 			if math.max(a,c)>=0 and math.min(a,c)<=self.width and math.max(b,d)>=0 and math.min(b,d)<=self.height then
 				DrawImageQuad(nil,a+ox,b+oy,c+ox,d+oy,c-ox,d-oy,a-ox,b-oy)
@@ -90,7 +91,7 @@ function Canvas:Draw()
 			if node.kind == "small" then frame=active and "PSSkillFrameActive" or "PSSkillFrame" else frame=frame..(active and "Allocated" or "Unallocated") end
 			SetDrawColor(avoided[id] and 1 or 0.9,avoided[id] and 0.25 or 0.9,avoided[id] and 0.25 or 0.9)
 			local highlight=node.kind=="keystone" and "KeystoneFrameCanAllocate" or node.kind=="notable" and "NotableFrameCanAllocate" or node.kind=="gateway" and "WormholeFrameHighlight" or "PSSkillFrameHighlighted"
-			self.art:draw("frame",self.focus == id and highlight or frame,a,b,self.scale*2)
+			self.art:draw("frame",(self.focus == id or self.preview and self.preview[id] or self.matches and self.matches[id]) and highlight or frame,a,b,self.scale*2)
 			if id==self.tree.start then self.art:draw("startNode","AtlasPassiveSkillScreenStart",a,b,self.scale*2) end
 		end
 		local dist=(cursorX-x-a)^2+(cursorY-y-b)^2
@@ -130,6 +131,7 @@ function Panel.Open(build,source,layout)
 	local width=layout and layout.width or math.min(1180,main.screenW-40); local height=layout and layout.height or math.min(820,main.screenH-50)
 	local graphWidth=width-308; local graphHeight=height-206; local side=graphWidth+32
 	local controls,undo,avoided={},{},{}
+	local pointUsage,routeAvailable
 	local function current()
 		local result=copyTable(draft); result.title=controls.title.buf; result.budget=assert(tonumber(controls.budget.buf),"Enter a point budget"); result.notes=controls.notes.buf
 		return atlas.validate(result)
@@ -143,10 +145,26 @@ function Panel.Open(build,source,layout)
 		if not controls.canvas.tree.nodes[controls.canvas.focus] then controls.canvas.focus=nil end
 		controls.version:SelByValue(draft.version)
 		local report=atlas.report(draft)
-		controls.status.label=string.format("^7%d / %d points%s | %d left",report.used,report.budget,report.bonus > 0 and " + "..report.bonus.." granted" or "",report.remaining)
+		local budget=tonumber(controls.budget.buf)
+		if budget and budget==math.floor(budget) and budget>=0 and budget<=controls.canvas.tree.maxPoints then
+			report.budget=budget;report.remaining=budget+report.bonus-report.used;pointUsage=report
+			controls.status.label=string.format("%s%d / %d points%s | %s",report.remaining<0 and "^xE58F8F" or "^7",report.used,report.budget,report.bonus>0 and " + "..report.bonus.." granted" or "",report.remaining<0 and (-report.remaining).." over budget" or report.remaining.." left")
+		else pointUsage=nil;controls.status.label="^xE58F8FEnter a budget from 0 to "..controls.canvas.tree.maxPoints end
 		local node=atlas.tree(draft.version).nodes[id or controls.canvas.focus]
 		local lines={node and node.name or "Select a node on the tree or search.",node and node.kind:gsub("^%l",string.upper) or "Search a mechanic, or select a node."}
-		if node then for _,stat in ipairs(node.stats) do lines[#lines+1]=stat end end
+		controls.canvas.preview={};routeAvailable=false
+		if node then
+			for _,stat in ipairs(node.stats) do lines[#lines+1]=stat end
+			local allocated={[controls.canvas.tree.start]=true};for _,other in ipairs(draft.nodes) do allocated[other]=true end
+			if not allocated[node.id] then
+				local ok,plan=pcall(function() return atlas.connect(current(),{node.id},avoided) end)
+				if ok then
+					local cost=0;for _,other in ipairs(plan.nodes) do if not allocated[other] then controls.canvas.preview[other]=true;cost=cost+1 end end
+					routeAvailable=true;controls.allocate.label="Connect +"..cost
+					lines[#lines+1]="";lines[#lines+1]=cost.." new points to connect this node."
+				else controls.allocate.label="No route";lines[#lines+1]="";lines[#lines+1]="No route within the point budget and avoided nodes." end
+			else controls.allocate.label="Allocated" end
+		else controls.allocate.label="Connect path" end
 		controls.details.list=rows(lines,230)
 	end
 	controls.title=edit(16,30,graphWidth-130,24,draft.title,nil,120)
@@ -166,13 +184,18 @@ function Panel.Open(build,source,layout)
 	controls.status=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,70,0,14},"")
 	controls.search=edit(side,96,180,24,"",nil,160)
 	controls.search.placeholder="Search nodes"
-	controls.find=button(side+188,96,72,"Find",function()
-		local result=atlas.search(draft.version,controls.search.buf,100); local list={}
-		for _,node in ipairs(result.matches) do list[#list+1]={label=node.name,val=node.id} end
-		controls.results:SetList(list); controls.results.selIndex=1
-		if list[1] then controls.results.selFunc(1,list[1]) end
-		controls.matchCount.label="^7"..tostring(result.total).." matches"
-	end)
+	local function findNodes(recenter)
+		local result=atlas.search(draft.version,controls.search.buf,100);local list={};controls.canvas.matches={}
+		for _,node in ipairs(result.matches) do list[#list+1]={label=node.name,val=node.id};if controls.search.buf~="" then controls.canvas.matches[node.id]=true end end
+		controls.results:SetList(list);controls.results.selIndex=1
+		if not recenter and controls.search.buf~="" and not controls.canvas.matches[controls.canvas.focus] then controls.canvas.focus=nil;refresh() end
+		if recenter and list[1] then controls.results.selFunc(1,list[1]) end
+		controls.matchCount.label="^7"..result.total..(result.total==1 and " match" or " matches")
+	end
+	controls.find=button(side+188,96,72,"Go",function() findNodes(true) end)
+	controls.search.changeFunc=function() findNodes(false) end
+	controls.search.enterFunc=function() findNodes(true) end
+	controls.search.disableCol="^x8797A8"
 	controls.results=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{side,130,260,24},{},function(_,value)
 		controls.canvas.focus=value.val; local node=atlas.tree(draft.version).nodes[value.val]
 		controls.canvas.centerX,controls.canvas.centerY=node.x,node.y
@@ -194,9 +217,9 @@ function Panel.Open(build,source,layout)
 		assert(id ~= tree.start,"Cannot avoid the start")
 		for _,allocated in ipairs(draft.nodes) do assert(id ~= allocated,"Remove this node before avoiding it") end
 		for _,other in ipairs(avoided) do if id == other then return end end
-		avoided[#avoided+1]=id; controls.avoid.label="Avoid ("..#avoided..")"
+		avoided[#avoided+1]=id; controls.avoid.label="Avoid ("..#avoided..")";refresh()
 	end)
-	controls.clearAvoid=button(side+136,height-156,124,"Clear avoided",function() avoided={}; controls.avoid.label="Avoid selected" end)
+	controls.clearAvoid=button(side+136,height-156,124,"Clear avoided",function() avoided={}; controls.avoid.label="Avoid selected";refresh() end)
 	controls.notes=edit(16,110,width-32,height-250,draft.notes,nil,8000)
 	controls.stats=button(side,height-124,260,"Allocated stats",function()
 		local report=atlas.report(current()); local lines={string.format("%d allocated | %d small | %d notables | %d keystones | %d gateways",report.used,report.counts.small,report.counts.notable,report.counts.keystone,report.counts.gateway),"Repeated lines are counts, not effective combined values."}
@@ -226,9 +249,9 @@ function Panel.Open(build,source,layout)
 		for _,id in ipairs(draft.nodes) do if id==controls.canvas.focus then return true end end
 		return false
 	end
-	controls.allocate.enabled=function() return controls.canvas.focus~=nil and controls.canvas.focus~=controls.canvas.tree.start and not allocatedFocus() end
+	controls.allocate.enabled=function() return routeAvailable end
 	controls.remove.enabled=allocatedFocus
-	controls.avoid.enabled=controls.allocate.enabled
+	controls.avoid.enabled=function() return controls.canvas.focus~=nil and controls.canvas.focus~=controls.canvas.tree.start and not allocatedFocus() end
 	controls.clearAvoid.enabled=function() return #avoided>0 end
 	if layout then
 		controls.close.shown=false
@@ -240,6 +263,14 @@ function Panel.Open(build,source,layout)
 		controls.canvas.centerX,controls.canvas.centerY,controls.canvas.scale,controls.canvas.focus=view.centerX,view.centerY,view.scale,view.focus
 		controls.page:SelByValue(view.page);avoided=view.avoided;undo=view.undo
 	end
+	controls.pointBar=new("Control"):Control(ui.anchor,{16,85,graphWidth,3})
+	function controls.pointBar:Draw()
+		local x,y=self:GetPos();SetDrawColor("^x263343");DrawImage(nil,x,y,graphWidth,3)
+		if pointUsage and pointUsage.used>0 then SetDrawColor("^xC8A569");DrawImage(nil,x,y,graphWidth*math.min(1,pointUsage.used/math.max(1,pointUsage.budget+pointUsage.bonus)),3) end
+	end
+	ui.tabs(controls,controls.page,{{"tab_tree","Tree","Tree"},{"tab_notes","Notes & sharing","Plan & notes"}},side,64,260)
+	controls.budget.changeFunc=function() refresh() end
+	ui.style(controls,{allocate=true,keep=true})
 	for _,control in pairs(controls) do control.layoutAudit="atlas" end
 	refresh()
 	if layout then layout.mount(width,height,"Atlas planner",controls) else main:OpenPopup(width,height,"Atlas planner",controls,nil,nil,"close") end

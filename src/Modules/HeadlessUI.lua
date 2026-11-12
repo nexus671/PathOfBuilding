@@ -116,7 +116,7 @@ function M.install(options)
 	end
 	local function controlsFor(host)
 		local controls={}
-		for key,control in pairs(host.controls or {}) do controls[key]=control end
+		for key,control in pairs(host.controls or {}) do if host.viewMode~="PLANNER" or select(2,control:GetPos())<32 then controls[key]=control end end
 		if host.viewMode=="PLANNER" and host.planningWorkspace then
 			for key,control in pairs(host.planningWorkspace.controls) do controls[key]=control end
 		end
@@ -173,7 +173,7 @@ function M.install(options)
 	function ui:choose(key,value,member)
 		local host=self:activeHost();local control=assert(controlsFor(host)[key]);local target
 		for i,entry in ipairs(control.list) do if (member and entry[member] or entry)==value then target=i;break end end
-		assert(target,"Dropdown choice not found: "..tostring(value));self:click(key)
+		assert(target,"Dropdown choice not found: "..tostring(value));if control.tabKeys then return self:click(assert(control.tabKeys[value],"Missing navigation tab")) end;self:click(key)
 		local attempts=0
 		while control.selIndex~=target do
 			attempts=attempts+1;assert(attempts<=#control.list+1,"Dropdown selection did not advance")

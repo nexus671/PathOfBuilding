@@ -1,10 +1,10 @@
 # Atlas planner
 
-Open **Atlas** beside **AI builds**, or switch to **Atlas** in the planning workspace.
+Open **Atlas** beside **AI builds**, or switch to **Atlas** in the full-width planning workspace. **< Build** returns to your previous build tab.
 
 1. Choose the exact tree version. We bundle the official **Standard 3.27.0 and 3.29.1** graphs. League variants and Ruthless are not included.
 2. Enter a name and the number of Atlas points you have earned. The initial budget is the tree's maximum; it does not read account progression.
-3. Search names or stat text. Select a result, or click a node on the graph, then **Connect path**. The planner adds a shortest connecting path.
+3. Search names or stat text. Matching nodes highlight as you type. Choose a result or press **Go** to focus it. Select a node to preview its connecting path and point cost, then **Connect +N**. The planner adds a shortest connecting path.
 4. Use the mouse wheel to zoom and drag empty space to pan. **Fit tree** resets the view. The canvas uses the official background, node icons, frames and mechanic emblems. Allocated paths are gold; avoided nodes have red frames. Hover for modifier descriptions. Double click a node to connect it, or remove it if allocated.
 5. **Avoid selected** excludes a node from future paths. Avoided nodes are session preferences, cleared by importing or opening another plan. **Remove branch** also removes nodes that lose their connection to the start. **Undo** restores the previous allocation draft.
 6. Open **Notes & sharing** for farming notes and import/export. Choose **Keep plan** to keep the draft in this build. This changes unsaved metadata. Use the normal build **Save** to persist it. Up to eight named plans can be kept with each build; **Saved plans** opens or deletes them.

@@ -1,12 +1,14 @@
 -- Native item emulator and bounded recipe trials, isolated from equipped items.
 local simulator=require("Modules.CraftingSimulator")
 local workbench=require("Modules.CraftingWorkbench")
+local ui=require("Modules.PlanningUI")
 local Panel={ }
 local function button(controls,key,x,y,w,label,callback)
 	controls[key]=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function()
 		local ok,err=pcall(callback)
 		if not ok then main:OpenMessagePopup("Native crafting",tostring(err):match("^[^\n]+")) end
 	end)
+	ui.styleButton(controls[key])
 end
 local function edit(controls,key,x,y,w,h,value,prompt,limit)
 	controls[key]=new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,h},value or "",prompt,h>24 and "^%C\t\n" or nil,limit,nil,h > 24 and 16 or nil)
@@ -33,7 +35,7 @@ local function label(controls,key,x,y,text)
 	controls[key]=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,0,14},colorCodes.NORMAL..text)
 end
 
-function Panel.Open(build,project)
+function Panel.Open(build,project,layout)
 	local draft=copyTable(project)
 	local model=simulator.model(draft.startingItem)
 	local state=draft.nativeRecipe and draft.nativeRecipe.initialState and simulator.validateState(model,draft.nativeRecipe.initialState) or copyTable(model.initial)
@@ -45,9 +47,19 @@ function Panel.Open(build,project)
 	local configured={}
 	local sequence=0
 	local lastSimulation
-	local height=math.max(520,math.min(700,main.screenH-60))
-	label(controls,"intro",16,24,"Select a currency, then click your item to craft.")
-	local refreshItem=workbench.item(controls,"item",448,92,416,height-160,model,function() return state end,function() controls.apply:Click() end)
+	if layout then layout.selectedProject=draft.id end
+	local restored=layout and layout.workbench
+	if layout then layout.workbench=nil end
+	if restored then
+		state=restored.state;initial=restored.initial;targets=restored.targets;requirements=restored.requirements;requiredGroups=restored.requiredGroups
+		history=restored.history;actions=restored.actions;configured=restored.configured;sequence=restored.sequence;lastSimulation=restored.lastSimulation
+	end
+	local width=layout and layout.width or math.min(1120,main.screenW-40)
+	local height=layout and layout.height or math.max(520,math.min(740,main.screenH-60))
+	local itemWidth=math.min(540,width-480)
+	local itemX=448+math.floor((width-464-itemWidth)/2)
+	label(controls,"intro",16,64,"Select a currency, then click your item to craft.")
+	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=212,artSize=112})
 	controls.targetSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,244,416,height-312},nil,{})
 	local function refresh(extra)
 		refreshItem()
@@ -332,13 +344,13 @@ function Panel.Open(build,project)
 		require("Classes.CraftingProjectControl").Preview(build,entry)
 	end)
 	button(controls,"cancelJob",232,height-48,200,"Cancel crafting job",function() require("Modules.CraftingTasks").cancel() end)
-	button(controls,"coverage",600,height-48,132,"Coverage",function()
+	button(controls,"coverage",width-312,height-48,132,"Coverage",function()
 		local popup={};local coverageHeight=math.max(420,math.min(650,main.screenH-60))
 		popup.details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,828,coverageHeight-90},nil,rows(simulator.limits))
 		button(popup,"close",728,coverageHeight-42,116,"Close",function() main:ClosePopup() end)
 		main:OpenPopup(860,coverageHeight,"Crafting coverage and assumptions",popup,nil,nil,"close")
 	end)
-	button(controls,"close",748,height-48,116,"Close",function() main:ClosePopup() end)
+	button(controls,"close",width-164,height-48,148,layout and "Back to projects" or "Close",function() if layout then layout.openProjects() else main:ClosePopup() end end)
 	controls.resultSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,398,416,height-464},nil,rows({"Run an action or a recipe to inspect its results."}))
 	controls.undo.enabled=function() return #history>0 end
 	controls.simulate.enabled=function() return #targets>0 or requirements and next(requirements)~=nil end
@@ -352,13 +364,17 @@ function Panel.Open(build,project)
 	controls.apply.enabled=function() return not state.destroyed end
 	controls.preview.enabled=function() return not state.destroyed and not state.veil end
 	controls.configure.enabled=function() local method=controls.method:GetSelValueByKey("val");return method=="fossil" or method=="awakener" or method=="recombine" or method=="recombine_predictable" end
-	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,52,416,24},{"Emulate item","Target conditions","Simulate recipe","Craft settings"})
+	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,18,416,28},{"Emulate item","Target conditions","Simulate recipe","Craft settings"})
 	button(controls,"settings",16,380,416,"More crafting options",function() controls.page:SelByValue("Craft settings") end)
-	controls.item.enabled=function() return controls.page:GetSelValue() == "Emulate item" and not state.destroyed end
+	controls.item.enabled=function() return controls.page:GetSelValue() == "Emulate item" and controls.apply:IsEnabled() end
 	controls.apply.x=16;controls.apply.width=200;controls.undo.x=232;controls.undo.width=200
+	ui.label(controls,"selectedAction",16,230,"",20)
+	controls.selectedAction.label=function() return "^xE2C28C"..simulator.labels[controls.method:GetSelValueByKey("val")] end
+	ui.label(controls,"actionHint",16,264,"",14)
+	controls.actionHint.label=function() return "^7"..workbench.hint(controls.method:GetSelValueByKey("val"),state,model) end
 	local pages={
-		["Craft settings"]={configure=116,keepRecipe=154,reset=154,exact=194,seedLabel=234,seed=254},
-		["Emulate item"]={methodLabel=230,method=248,optionLabel=280,option=298,apply=346,undo=346,settings=380,allflame=414,manual=448},
+		["Craft settings"]={methodLabel=96,method=116,configure=160,keepRecipe=198,reset=198,exact=238,seedLabel=278,seed=298},
+		["Emulate item"]={selectedAction=230,actionHint=264,optionLabel=280,option=298,apply=346,undo=346,settings=390,allflame=424,manual=458},
 		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetConditions=202,targetSummary=244},
 		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354,resultSummary=398},
 	}
@@ -366,15 +382,49 @@ function Panel.Open(build,project)
 		local control=controls[key];control.y=y;control.shown=function() return controls.page:GetSelValue() == page end
 	end end
 	controls.distribution.x=16;controls.distribution.width=416
+	controls.option.shown=function() return controls.page:GetSelValue()=="Emulate item" and #controls.option.list>0 end
+	controls.optionLabel.shown=controls.option.shown
+	controls.apply.enabled=function() return workbench.available(controls.method:GetSelValueByKey("val"),state,model) end
+	controls.apply.height=32;controls.undo.height=32
+	controls.settings.label="All currencies & craft settings"
+	controls.cancelJob.shown=function() return require("Modules.CraftingTasks").job~=nil end
+	ui.style(controls,{apply=true,preview=true},{item=true})
+	ui.tabs(controls,controls.page,{{"tab_craft","Emulate item","Craft"},{"tab_targets","Target conditions","Targets"},{"tab_simulate","Simulate recipe","Simulate"},{"tab_settings","Craft settings","Settings"}},16,18,416)
 	workbench.currencies(controls,function(method)
 		controls.method:SelByValue(method,"val");updateOptions();refresh()
 	end,function() return controls.method:GetSelValueByKey("val") end,function() return controls.page:GetSelValue() == "Emulate item" end,function(method)
 		local count=0;for _,entry in ipairs(actions) do if entry.method == method then count=count+1 end end;return count
-	end)
+	end,function() return state end,model)
 	controls.methodLabel.label="More currencies and crafting methods"
 	controls.optionLabel.label="Options for selected currency"
 	controls.apply.label="Apply to item"
-	updateOptions(); refresh()
-	main:OpenPopup(880,height,"Crafting workbench",controls,nil,nil,"close")
+	ui.label(controls,"projectName",448,24,"",18)
+	controls.projectName.label=function()
+		local title=draft.title
+		while #title>0 and DrawStringWidth(18,"VAR",title)>width-480 do title=title:sub(1,-2) end
+		return "^7"..title
+	end
+	controls.stage=new("Control"):Control(ui.anchor,{448,84,width-464,height-148})
+	function controls.stage:Draw()
+		local x,y=self:GetPos();local w,h=self:GetSize()
+		SetDrawLayer(nil,1);SetDrawColor("^x0A1018");DrawImage(nil,x,y,w,h);SetDrawColor("^x8D9DB0")
+		DrawString(x+w/2,y+8,"CENTER_X",12,"VAR","ITEM PREVIEW");SetDrawLayer(nil,0)
+	end
+	for _,key in ipairs({"item","itemMods"}) do
+		local control=controls[key];local draw=control.Draw
+		function control:Draw(...) SetDrawLayer(nil,2);draw(self,...);SetDrawLayer(nil,0) end
+	end
+	if restored then
+		controls.page:SelByValue(restored.page);controls.seed:SetText(restored.seed)
+		for key,value in pairs(restored.settings or {}) do controls[key]:SetText(value) end
+	end
+	if layout then
+		layout.snapshot=function() return copyTable({kind="workbench",project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,
+			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
+	end
+	updateOptions();refresh()
+	if restored then controls.method:SelByValue(restored.method or "alchemy","val");updateOptions();controls.resultSummary.list=restored.resultRows or controls.resultSummary.list end
+	if layout then layout.mount(width,height,"Crafting workbench",controls) else main:OpenPopup(width,height,"Crafting workbench",controls,nil,nil,"close") end
+	return controls
 end
 return Panel

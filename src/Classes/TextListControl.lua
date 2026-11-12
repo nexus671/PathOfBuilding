@@ -36,9 +36,9 @@ function TextListClass:Draw(viewPort)
 		contentHeight = contentHeight + lineInfo.height
 	end
 	scrollBar:SetContentDimension(contentHeight, height - 4)
-	SetDrawColor(0.66, 0.66, 0.66)
+	if self.borderColor then SetDrawColor(self.borderColor) else SetDrawColor(0.66, 0.66, 0.66) end
 	DrawImage(nil, x, y, width, height)
-	SetDrawColor(0.05, 0.05, 0.05)
+	if self.backgroundColor then SetDrawColor(self.backgroundColor) else SetDrawColor(0.05, 0.05, 0.05) end
 	DrawImage(nil, x + 1, y + 1, width - 2, height - 2)
 	self:DrawControls(viewPort)
 	SetViewport(x + 2, y + 2, width - 20, height - 4)

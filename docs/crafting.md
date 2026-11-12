@@ -2,13 +2,13 @@
 
 Open **AI builds → Crafting**, or choose **Items -> Crafting plan**. Create a project with a starting item and explicit item level, then choose **Open workbench**.
 
-The pages separate **Emulate item**, **Target conditions**, **Simulate recipe**, and **Craft settings**. Crafting runs locally. AI builds, Atlas and crafting projects share a persistent planning workspace; switching pages preserves an Atlas draft. Equipped gear changes only through the desktop preview and review flow.
+The workbench tabs separate **Craft**, **Targets**, **Simulate**, and **Settings**. Crafting runs locally. AI builds, Atlas and crafting projects share a persistent planning workspace; switching pages preserves an Atlas draft. Equipped gear changes only through the desktop preview and review flow.
 
 Plain item copies can be imported when their complete modifier identities and rolls resolve uniquely. Advanced copy text helps preserve identities. Missing item levels, overlapping modifier tiers and values the engine cannot reconstruct require an explicit choice; the importer does not guess. For a structured starting state through MCP, use the corresponding blank base as the starting text.
 
 ## Emulate an item
 
-Select an icon in the currency tray, then click the item card or **Apply to item**. The card shows the base artwork, rarity, sockets, defences and modifiers; applied currency counts appear on the tray. Other methods remain in the dropdown, with their choices below it. **More crafting options** opens recipe controls, donor/fossil configuration and the reproducible random seed. **Configure fossil combination / donor item** accepts up to four fossils or a second item for Awakener and recombination. A Tangled Fossil requires the effect already revealed by the socketed resonator.
+Select an icon in the currency tray, then click the item card or **Apply to item**. The card shows the base artwork, rarity, sockets, defences and modifiers; applied currency counts appear on the tray. Other methods remain in the dropdown, with their choices below it. **Settings** opens recipe controls, donor/fossil configuration and the reproducible random seed. **Configure fossil combination / donor item** accepts up to four fossils or a second item for Awakener and recombination. A Tangled Fossil requires the effect already revealed by the socketed resonator.
 
 **Undo currency** reverses an action; **Reset item** restores the starting state. Veiled Orbs leave an unfinished choice: select **Choose an unveil** and pick an offered modifier before previewing. An imprint belongs to this starting item and can be restored once.
 
@@ -32,7 +32,7 @@ For recipes, Allflame prefers the outcome matching the most captured target grou
 
 ## Set targets
 
-Add a modifier on **Target conditions**. Separate groups require all groups by default; **Add alternative** makes an OR choice within the last group. **Target counts, rolls and item properties** edits the last group and final conditions:
+Add a modifier on **Targets**. Separate groups require all groups by default; **Add alternative** makes an OR choice within the last group. **Target counts, rolls and item properties** edits the last group and final conditions:
 
 - Required or excluded modifiers, matching counts and minimum roll percentages.
 - Explicit or implicit modifiers, and how many groups must match.
@@ -76,5 +76,7 @@ Poll `get_proposal_status` for results. Requests allow at most 2,000 trials, 2,0
 ## External cross-check
 
 Craft of Exile remains an optional independent check. Its [documented import links](https://beta.craftofexile.com/developers?game=poe1) accept advanced game-copy text; it provides no public crafting API. Other handoffs are labeled **base-only**. Verify the imported item and patch. External exports remain opaque data; supplied external results stay separately labeled from native calculations.
+
+The project library separates **Item**, **Plan**, and **Sharing & tools**. The workbench stays in the planning workspace; **Back to projects** preserves the current item and undo history for this session. Currency icons dim when incompatible with the item, and the action hint explains why.
 
 Base artwork is bundled from the same pinned game-data export as crafting. Missing artwork uses PoB's equipment silhouette. The workbench works offline; `python tools/update_crafting_art.py` refreshes the asset manifest when the crafting data is updated.

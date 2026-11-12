@@ -2,15 +2,26 @@
 local M={}
 local pages={ai="AI builds",atlas="Atlas",crafting="Crafting"}
 function M.new(build)
-	local self=setmetatable({build=build,page="ai",cache={},drafts={},controls={},viewport={x=312,y=32,width=968,height=688}},{__index=M})
+	local self=setmetatable({build=build,page="ai",cache={},drafts={},selections={},craftDrafts={},controls={},viewport={x=0,y=32,width=main.screenW,height=main.screenH-32}},{__index=M})
 	self.nav=new("ControlHost"):ControlHost()
 	local anchor=new("Control"):Control(nil,{0,0,0,0})
 	anchor.x=function() return self.viewport.x end;anchor.y=function() return self.viewport.y end
 	for index,page in ipairs({"ai","atlas","crafting"}) do
-		local control=new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{16+(index-1)*142,10,134,28},pages[page],function() self:Show(page) end)
+		local control=new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{112+(index-1)*142,10,134,28},pages[page],function() self:Show(page) end)
 		control.locked=function() return self.page==page end
-		self.nav.controls["nav_"..page]=control
+		self.nav.controls["nav_"..page]=require("Modules.PlanningUI").styleButton(control)
 	end
+	self.nav.controls.nav_build=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{16,10,80,28},"< Build",function()
+		build:SelectControl(nil);build.viewMode=build.plannerPreviousMode or "TREE"
+	end))
+	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{560,10,function() return math.max(0,self.viewport.width-576) end,28})
+	function context:Draw()
+		local x,y=self:GetPos();local w=self:GetSize();local title=build.buildName or "Untitled build"
+		local suffix=build.unsaved and " | Unsaved" or ""
+		while #title>0 and DrawStringWidth(13,"VAR",title..suffix)>w do title=title:sub(1,-2) end
+		SetDrawColor("^x9BA9BA");DrawString(x+w,y+7,"RIGHT_X",13,"VAR",title..suffix)
+	end
+	self.nav.controls.nav_context=context
 	return self
 end
 function M:Show(page,source)
@@ -20,15 +31,30 @@ function M:Show(page,source)
 	local saved=self.drafts[page]
 	source=source or saved and saved.plan
 	if not cached then
-		local layout={restore=saved and saved.view,width=self.viewport.width,height=self.viewport.height-52,navigate=function(target) self:Show(target) end}
+		local layout={selectedProject=self.selections[page],restore=saved and saved.view,width=self.viewport.width,height=self.viewport.height-52,navigate=function(target) self:Show(target) end}
+		layout.openProjects=function()
+			local current=self.cache.crafting
+			if current and current.layout.snapshot then
+				local draft=current.layout.snapshot();if draft.kind=="workbench" then self.craftDrafts[draft.project.id]=draft end
+			end
+			self.cache.crafting=nil;self.drafts.crafting=nil;self:Show("crafting")
+		end
+		layout.openWorkbench=function(project)
+			local draft=self.craftDrafts[project.id]
+			if draft and draft.project.startingItem==project.startingItem then layout.workbench=draft end
+			require("Classes.CraftingSimulatorControl").Open(self.build,project,layout)
+		end
 		layout.mount=function(width,height,title,controls)
 			local body=new("PopupDialog"):PopupDialog(width,height,title,controls)
 			body.x=function() return self.viewport.x end;body.y=function() return self.viewport.y+52 end
 			self.cache[page]={body=body,layout=layout};self.body=body
+			self.selections[page]=layout.selectedProject
 			self:UpdateControls()
 		end
 		if page=="atlas" then require("Classes.AtlasPlannerControl").Open(self.build,source,layout)
-		elseif page=="crafting" then require("Classes.CraftingProjectControl").Open(self.build,nil,nil,layout)
+		elseif page=="crafting" then
+			if source and source.kind=="workbench" then layout.workbench=source;require("Classes.CraftingSimulatorControl").Open(self.build,source.project,layout)
+			else require("Classes.CraftingProjectControl").Open(self.build,nil,nil,layout) end
 		else require("Classes.BuildProposalControl").Open(self.build,layout) end
 	else self.body=cached.body end
 	self:UpdateControls()

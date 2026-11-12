@@ -480,12 +480,14 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	self.controls.aiBuild = new("ButtonControl"):ButtonControl({"LEFT",self.controls.modeCompare,"RIGHT"},{4,0,72,20},function()
 		return require("Modules.DesktopBuildBridge").prepared and "AI: Review" or "AI builds"
 	end,function()
+		self.plannerPreviousMode=self.viewMode~="PLANNER" and self.viewMode or self.plannerPreviousMode
 		self:SelectControl(nil);self.viewMode="PLANNER"
 		self.planningWorkspace=self.planningWorkspace or require("Modules.PlanningWorkspace").new(self)
 		self.planningWorkspace:Show("ai")
 	end)
 	self.controls.aiBuild.locked=function() return self.viewMode=="PLANNER" and self.planningWorkspace and self.planningWorkspace.page=="ai" end
 	self.controls.atlas = new("ButtonControl"):ButtonControl({"LEFT",self.controls.aiBuild,"RIGHT"},{4,0,72,20},"Atlas",function()
+		self.plannerPreviousMode=self.viewMode~="PLANNER" and self.viewMode or self.plannerPreviousMode
 		self:SelectControl(nil);self.viewMode="PLANNER"
 		self.planningWorkspace=self.planningWorkspace or require("Modules.PlanningWorkspace").new(self)
 		self.planningWorkspace:Show("atlas")
@@ -714,6 +716,13 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	self.buildFlag = false
 
 	self.spec:SetWindowTitleWithBuildClass()
+	for _,control in pairs(self.controls) do
+		local shown=control.shown
+		control.shown=function(widget)
+			local visible=shown;if type(shown)=="function" then visible=shown(widget) end
+			return visible and (self.viewMode~="PLANNER" or select(2,widget:GetPos())<32)
+		end
+	end
 
 	--[[
 	local testTooltip = new("Tooltip"):Tooltip()
@@ -1269,7 +1278,15 @@ function buildMode:OnFrame(inputEvents)
 
 	end
 
-	if self.viewMode~="PLANNER" or cursorX<312 or cursorY<32 then self:ProcessControlsInput(inputEvents, main.viewPort) end
+	local headerFocus=self.viewMode=="PLANNER" and self.selControl and select(2,self.selControl:GetPos())<32
+	if self.viewMode=="PLANNER" then
+		for _,event in pairs(inputEvents) do if event.type=="KeyDown" and event.key:match("BUTTON") then
+			if cursorY<32 and self.planningWorkspace and self.planningWorkspace.body then
+				self.planningWorkspace.body:SelectControl(nil);self.planningWorkspace.nav:SelectControl(nil)
+			elseif headerFocus and not self.selControl.dropped then self:SelectControl(nil);headerFocus=false end
+		end end
+	end
+	if self.viewMode~="PLANNER" or cursorY<32 or headerFocus then self:ProcessControlsInput(inputEvents, main.viewPort) end
 
 	self.controls.classDrop:SelByValue(self.spec.curClassId, "classId")
 	self.controls.ascendDrop.list = self.controls.classDrop:GetSelValueByKey("ascendancies")
@@ -1349,7 +1366,7 @@ function buildMode:OnFrame(inputEvents)
 		self.compareTab:Draw(tabViewPort, inputEvents)
 	elseif self.viewMode == "PLANNER" then
 		self.planningWorkspace=self.planningWorkspace or require("Modules.PlanningWorkspace").new(self)
-		self.planningWorkspace:Draw(tabViewPort,inputEvents)
+		self.planningWorkspace:Draw({x=0,y=32,width=main.screenW,height=main.screenH-32},inputEvents)
 	end
 
 	-- Draw overlay panes on top of all tab content (last = topmost)
@@ -1370,18 +1387,24 @@ function buildMode:OnFrame(inputEvents)
 	DrawImage(nil, 0, 28, main.screenW, 4)
 	DrawImage(nil, main.screenW/2 - 2, 0, 4, 28)
 
-	-- Draw side bar background
-	SetDrawColor(0.1, 0.1, 0.1)
-	DrawImage(nil, 0, 32, sideBarWidth - 4, main.screenH - 32)
-	SetDrawColor(0.85, 0.85, 0.85)
-	DrawImage(nil, sideBarWidth - 4, 32, 4, main.screenH - 32)
+	if self.viewMode=="PLANNER" then
+		for _,control in pairs(self.controls) do
+			if control:IsShown() and control.Draw and select(2,control:GetPos())<32 then control:Draw(main.viewPort) end
+		end
+	else
+		-- Draw side bar background
+		SetDrawColor(0.1, 0.1, 0.1)
+		DrawImage(nil, 0, 32, sideBarWidth - 4, main.screenH - 32)
+		SetDrawColor(0.85, 0.85, 0.85)
+		DrawImage(nil, sideBarWidth - 4, 32, 4, main.screenH - 32)
 
 
-	local hovered = self.controls.statBox and self.controls.statBox.hoveredLine
-	self:SetDisplayStat(hovered, false)
-	self:DrawControls(main.viewPort)
-	if self.controls.breakdown.pinned and self.breakdownInputs and not self.selControl then
-		self:SelectControl(self.controls.breakdown)
+		local hovered = self.controls.statBox and self.controls.statBox.hoveredLine
+		self:SetDisplayStat(hovered, false)
+		self:DrawControls(main.viewPort)
+		if self.controls.breakdown.pinned and self.breakdownInputs and not self.selControl then
+			self:SelectControl(self.controls.breakdown)
+		end
 	end
 end
 
