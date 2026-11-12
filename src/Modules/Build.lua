@@ -619,15 +619,20 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	end
 
 	-- Initialise build components
+	if self.planningCheckpoint then self.planningCheckpoint("Initialize build components") end
 	self.latestTree = main.tree[latestTreeVersion]
 	data.setJewelRadiiGlobally(latestTreeVersion)
 	self.data = data
 	self.importTab = new("ImportTab"):ImportTab(self)
 	self.notesTab = new("NotesTab"):NotesTab(self)
 	self.partyTab = new("PartyTab"):PartyTab(self)
+	if self.planningCheckpoint then self.planningCheckpoint("Initialize configuration") end
 	self.configTab = new("ConfigTab"):ConfigTab(self)
+	if self.planningCheckpoint then self.planningCheckpoint("Initialize items") end
 	self.itemsTab = new("ItemsTab"):ItemsTab(self)
+	if self.planningCheckpoint then self.planningCheckpoint("Initialize passive tree") end
 	self.treeTab = new("TreeTab"):TreeTab(self)
+	if self.planningCheckpoint then self.planningCheckpoint("Initialize skills") end
 	self.skillsTab = new("SkillsTab"):SkillsTab(self)
 	self.calcsTab = new("CalcsTab"):CalcsTab(self)
 	self.controls.breakdown = new("CalcBreakdownControl"):CalcBreakdownControl(self.calcsTab)
@@ -675,6 +680,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	-- the simplest solution seems to be making sure passive trees (which contain jewel sockets) are loaded last.
 	local deferredPassiveTrees = { }
 	for _, node in ipairs(self.xmlSectionList) do
+		if self.planningCheckpoint then self.planningCheckpoint("Load "..node.elem) end
 		-- Check if there is a saver that can load this section
 		local saver = self.savers[node.elem] or self.legacyLoaders[node.elem]
 		if saver then
@@ -690,6 +696,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		end
 	end
 	for _, node in ipairs(deferredPassiveTrees) do
+		if self.planningCheckpoint then self.planningCheckpoint("Load passive allocations") end
 		-- Check if there is a saver that can load this section
 		if self.treeTab:Load(node, self.dbFileName) then
 			self:CloseBuild()
@@ -697,6 +704,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		end
 	end
 	for _, saver in pairs(self.savers) do
+		if self.planningCheckpoint then self.planningCheckpoint() end
 		if saver.PostLoad then
 			saver:PostLoad()
 		end
@@ -1296,6 +1304,7 @@ function buildMode:OnFrame(inputEvents)
 	self:UpdateSecondaryAscendancyDropdown()
 
 	if self.buildFlag then
+		local calculationStart=os.clock()
 		-- Wipe Global Cache
 		wipeGlobalCache()
 
@@ -1310,6 +1319,7 @@ function buildMode:OnFrame(inputEvents)
 		end
 		self:RefreshStatList()
 		self.configTab.calcFunc, self.configTab.calcBase = self.calcsTab:GetMiscCalculator()
+		require("Modules.PlanningPerformance").record(self,"Build recalculation",os.clock()-calculationStart)
 	end
 	if require("Modules.RecoveryTasks").tick(self.calcsTab) then
 		self.outputRevision = self.outputRevision + 1

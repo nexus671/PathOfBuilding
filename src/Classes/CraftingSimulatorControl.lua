@@ -369,6 +369,7 @@ function Panel.Open(build,project,layout)
 		end
 		lines[#lines+1]={height=26,"Trials stopped at the action budget: "..result.budgetExhausted}
 		lines[#lines+1]={height=24,"Hypothetical items destroyed: "..result.destroyedTrials}
+		lines[#lines+1]={height=24,"Spending percentiles include capped failures. They are not the cost of guaranteed success."}
 		local function show(title,values)
 			if not values then return end
 			lines[#lines+1]={height=26,title}
@@ -377,6 +378,7 @@ function Panel.Open(build,project,layout)
 		show("Actions among successful trials only",result.successfulActionQuantiles)
 		show("Spending across all trials ("..result.costCurrency..")",result.spendingQuantiles)
 		show("Spending among successful trials only",result.successfulSpendingQuantiles)
+		if result.recovery then lines[#lines+1]={height=24,string.format("Recovery: %d restarted bases | %d stopped | %d set aside; no salvage proceeds assumed",result.recovery.restarts,result.recovery.stopped,result.recovery.salvaged)} end
 		lines[#lines+1]={height=26,"Final modifier frequencies (all trials / successful trials)"}
 		for id,bucket in pairsSortByKey(result.affixDistribution or {}) do
 			lines[#lines+1]={height=22,string.format("%d / %d | %s",bucket.trials,bucket.successes,model.byId[id] and table.concat(model.byId[id]," / ") or id)}
@@ -391,7 +393,11 @@ function Panel.Open(build,project,layout)
 		ui.card(popup,"costCard",438,28,cardWidth,"MEAN SPENDING",result.meanCost and string.format("%.2f",result.meanCost) or "Not priced",result.meanCost and result.costCurrency or "Unpriced actions")
 		ui.card(popup,"intervalCard",649,28,195,"95% INTERVAL",string.format("%.1f-%.1f%%",result.confidenceLow,result.confidenceHigh),"Sampling uncertainty")
 		ui.description(popup,"precision",16,132,828,32,{(result.trials<100 or result.confidenceHigh-result.confidenceLow>10) and "Imprecise estimate: run more trials before choosing a crafting route." or "Results describe the captured starting item, targets and supplied prices."},15)
-		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,174,828,resultHeight-288},nil,lines)
+		for index,entry in ipairs({{"medianSpend","MEDIAN SPEND","p50"},{"unluckySpend","90TH PERCENTILE","p90"},{"veryUnluckySpend","99TH PERCENTILE","p99"}}) do
+			local values=result.spendingQuantiles;local value=values and string.format("%.2f",values[entry[3]]) or "Not priced"
+			ui.card(popup,entry[1],16+(index-1)*282,174,264,entry[2],value,values and result.costCurrency or "Supply every action price")
+		end
+		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,284,828,resultHeight-398},nil,lines)
 		local kept={};for i,entry in ipairs(result.retainedSuccesses or {}) do kept[#kept+1]={label="Successful item "..i.." (trial "..entry.trial..")",val=i} end
 		popup.item=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,resultHeight-84,540,24},kept)
 		button(popup,"preview",572,resultHeight-84,272,"Preview retained item",function()
@@ -402,6 +408,13 @@ function Panel.Open(build,project,layout)
 		popup.item.enabled=#kept>0;popup.preview.enabled=#kept>0
 		if #kept==0 then popup.item:SetList({{label="No successful items retained",val=0}}) end
 		button(popup,"close",728,resultHeight-42,116,"Close",function() main:ClosePopup() end)
+		button(popup,"sample",252,resultHeight-42,220,"Inspect sampled outcome",function()
+			local c={};local w,h=math.min(660,main.screenW-40),math.min(560,main.screenH-48)
+			ui.description(c,"hint",16,28,w-32,48,{result.sampleSuccess and "One successful sampled outcome. Other trials can differ." or "One unsuccessful sampled outcome. Inspect it before deciding whether to salvage or restart."},16)
+			local render=require("Classes.JourneyItemControl").new(c,"sampleItem",16,92,w-32,h-166,"SAMPLED OUTCOME");render(require("Modules.CraftingProjects").item(result.sampleItem))
+			button(c,"close",w-156,h-48,140,"Back to results",function() main:ClosePopup() end);ui.style(c);main:OpenPopup(w,h,"Sampled crafting outcome",c,nil,nil,"close")
+		end)
+		popup.sample.enabled=result.sampleItem~=nil
 		button(popup,"moreTrials",16,resultHeight-42,220,"Run more trials",function()
 			local budget=math.max(1,tonumber(controls.budget.buf) or 1);controls.trials:SetText(tostring(math.min(2000,math.floor(20000/budget),math.max(32,result.trials*4))));main:ClosePopup();controls.simulate:Click()
 		end)

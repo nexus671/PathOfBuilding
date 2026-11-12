@@ -16,6 +16,19 @@ function fixture(t) {
   return {dir,state,captured,write,call:createBridge(path.join(dir,'AI-encounter.json')),proposal:{mode:'new',title:'Fireball candidate',baseRevision:state.revision,
     operations:[{type:'set_character',level:80,className:'Witch',ascendancy:'Elementalist'},{type:'set_skills',groups:[{gems:[{name:'Fireball'}]}]}]}};
 }
+
+test('accepts typed Atlas stages, strategy inputs and explicit failure recovery branches', t => {
+  const f=fixture(t);
+  const plan={id:'final',title:'Final maps',version:'3.29.1',budget:138,nodes:[],progression:{stage:'final',previousId:'starter'},strategy:{maps:'T16 maps',scarabs:'Supplied scarabs',requirements:'Unlocks complete',avoid:'Reflect',setupCost:{amount:25,currency:'chaos',source:'Manual quote',quotedAt:1700000000}}};
+  f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan});
+  let request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.proposal.operations[0].plan,plan);
+  assert.throws(()=>f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan:{...plan,progression:{stage:'invented'}}}),/arguments/);
+  fs.rmSync(path.join(f.dir,'AI-build-request.json'));
+  const recipe={steps:[{method:'alchemy',onFailureAction:'restart',recoveryNotes:'Restart within the action budget'}],targets:[]};
+  f.call('simulate_crafting',{baseRevision:f.state.revision,itemText:'Rarity: NORMAL\nIron Hat',recipe});
+  request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.recipe,recipe);
+  assert.throws(()=>f.call('simulate_crafting',{baseRevision:f.state.revision,itemText:'Iron Hat',recipe:{...recipe,steps:[{method:'alchemy',onFailureAction:'sell-for-profit'}]}}),/arguments/);
+});
 test('reads journey resources and queues a reviewed replacement without applying', t => {
   const f=fixture(t);
   const journey={schemaVersion:1,milestones:[{id:'links',title:'Get links',kind:'gems',dependencies:[]}],wishlist:[],resources:[],ledger:[],stages:[]};

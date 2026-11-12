@@ -320,6 +320,8 @@ function M.validateRecipe(recipe)
 	if #recipe.targets > 0 then validateTargets(recipe.targets) end
 	for _,step in ipairs(recipe.steps) do
 		assert(methods[step.method],"Unsupported crafting action: "..tostring(step.method))
+		assert(step.onFailureAction==nil or ({route=true,stop=true,restart=true,salvage=true})[step.onFailureAction],"Unknown failure recovery action")
+		assert(step.recoveryNotes==nil or type(step.recoveryNotes)=="string" and #step.recoveryNotes<=1000,"Recovery notes are too long")
 		integer(step.maxAttempts or 1,1,200,"step attempt limit")
 		if (step.maxAttempts or 1) > 1 then assert(step.untilTargets or step.untilRequirements,"Repeated steps need target or property conditions") end
 		if step.untilTargets then validateTargets(step.untilTargets) end
@@ -394,6 +396,7 @@ function M.simulate(raw,recipe,options)
 	local spent,missing,errors,times={},{},{},{}
 	local actionHistogram,costSamples,successfulCosts,routes={},{},{},{}
 	local budgetExhausted,destroyedTrials=0,0
+	local recovery={restarts=0,stopped=0,salvaged=0}
 	local sample,sampleSuccess
 	local retained,affixDistribution,propertyDistribution={},{},{affixes={},fractured={},intangibility={},memoryStrands={}}
 	for trial=1,trials do
@@ -426,7 +429,11 @@ function M.simulate(raw,recipe,options)
 				if not (step.untilTargets or step.untilRequirements) or M.matches(state,step.untilTargets or {},nil,model,step.untilRequirements) then success=true; break end
 			end
 			route[success and "success" or "failure"]=route[success and "success" or "failure"]+1
-			at=success and (step.onSuccess or at+1) or (step.onFailure or at+1)
+			if not success and step.onFailureAction=="restart" then
+				if actions<maxActions then recovery.restarts=recovery.restarts+1;state=copyState(model.initial);cost=cost+baseCost end;at=1
+			elseif not success and (step.onFailureAction=="stop" or step.onFailureAction=="salvage") then
+				local key=step.onFailureAction=="stop" and "stopped" or "salvaged";recovery[key]=recovery[key]+1;at=#recipe.steps+1
+			else at=success and (step.onSuccess or at+1) or (step.onFailure or at+1) end
 		end
 		local hit=M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups)
 		if hit then successes=successes+1; times[#times+1]=actions end
@@ -464,6 +471,7 @@ function M.simulate(raw,recipe,options)
 		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units",
 		baseCost=baseCost,retainedSuccesses=retained,retentionLimit=retain,affixDistribution=affixDistribution,propertyDistribution=propertyDistribution,actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
 	if not next(missing) then result.meanCost=totalCost/trials; result.costPerSuccess=successes > 0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts) end
+	result.recovery=recovery
 	return result
 end
 

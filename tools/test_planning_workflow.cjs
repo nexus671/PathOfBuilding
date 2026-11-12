@@ -36,7 +36,7 @@ async function main(){
   children[1].stdin.write(JSON.stringify({jsonrpc:'2.0',method:'notifications/initialized'})+'\n');
   async function call(name,args={}){const response=await rpc('tools/call',{name,arguments:args});assert.ok(!response.error,JSON.stringify(response));assert.ok(!response.result.isError,JSON.stringify(response));return response.result.structuredContent;}
   async function host(kind,frames){const response=await native.send({kind,frames});assert.ok(response.ok,response.error);return response.result;}
-  async function queued(name,args,status){const request=await call(name,args);await host('tick',24);const result=await call('get_proposal_status');assert.equal(result.proposal.id,request.id);assert.equal(result.proposal.status,status,JSON.stringify(result.proposal));return result.proposal;}
+  async function queued(name,args,status){const request=await call(name,args);let result;for(let i=0;i<100;i++){await host('tick',24);result=await call('get_proposal_status');assert.equal(result.proposal.id,request.id);if(result.proposal.status===status) return result.proposal;assert.notEqual(result.proposal.status,'failed',JSON.stringify(result.proposal));}assert.fail(JSON.stringify(result.proposal));}
   let context=(await call('get_build_context')).context;const baseLife=context.stats.LifeUnreserved;
   await host('request-test');await call('get_build_connection');await host('tick',1);
   const proof=await host('connection-proof');assert.equal(proof.client,'planning-workflow-test');assert.equal(proof.tested,true);assert.equal(proof.synced,true);
@@ -47,7 +47,11 @@ async function main(){
   await host('apply');context=(await call('get_build_context')).context;assert.ok(context.stats.LifeUnreserved>baseLife);
   const inspected=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:raw,query:'maximum Life',limit:20},'inspected');assert.ok(inspected.crafting.nativeEngine.modifiers.length);
   const modifier=inspected.crafting.nativeEngine.modifiers[0].id;
-  const recipe={steps:[{method:'alchemy'}],targets:[{anyOf:[modifier]}]};
+  const starterAtlas={id:'starter-atlas',title:'Starter Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'starter'}};
+  await queued('propose_atlas_plan',{baseRevision:context.revision,plan:starterAtlas},'review');await host('apply');context=(await call('get_build_context')).context;
+  const finalAtlas={id:'final-atlas',title:'Final Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'final',previousId:'starter-atlas'},strategy:{maps:'Chosen maps',scarabs:'Supplied consumables',requirements:'Unlocks complete',avoid:'Reflect',setupCost:{amount:25,currency:'chaos',source:'Workflow quote',quotedAt:1700000000}}};
+  await queued('propose_atlas_plan',{baseRevision:context.revision,plan:finalAtlas},'review');await host('apply');context=(await call('get_build_context')).context;
+  const recipe={steps:[{method:'alchemy',onFailureAction:'stop',recoveryNotes:'Stop at the recorded budget'}],targets:[{anyOf:[modifier]}]};
   const simulated=await queued('simulate_crafting',{baseRevision:context.revision,itemText:raw,recipe,options:{trials:4,maxActions:1,seed:104729}},'crafted');assert.ok(simulated.nativeCrafting);
   const project={id:'helmet',title:'Life helmet',slot:'Helmet',startingItem:raw,targetItem:item(200),goals:['More maximum Life'],steps:[{action:'Apply an Orb of Alchemy',stopWhen:'Target modifiers match',onFailure:'Stop at the recorded budget and reconsider'}],nativeRecipe:recipe};
   await queued('propose_crafting_plan',{baseRevision:context.revision,project},'review');await host('apply');context=(await call('get_build_context')).context;
@@ -56,9 +60,10 @@ async function main(){
   const measured=await queued('measure_journey_upgrades',{baseRevision:context.revision},'measured');assert.ok(measured.upgrades.entries.helmet.delta.LifeUnreserved>0);assert.ok(measured.upgrades.entries.alternative.delta.LifeUnreserved>measured.upgrades.entries.helmet.delta.LifeUnreserved);
   const saved=await call('get_build_journey');assert.equal(saved.budget.chaos.available,60);assert.equal(saved.journey.milestones[0].wishlistId,'helmet');
   await host('save-reopen');const reopened=await call('get_build_journey');assert.deepEqual(reopened.journey,saved.journey);
-  const projects=await call('get_crafting_projects');assert.equal(projects.projects[0].run.actions[0].method,'alchemy');assert.equal(projects.projects[0].nativeRecipe.steps[0].method,'alchemy');
+  const projects=await call('get_crafting_projects');assert.equal(projects.projects[0].run.actions[0].method,'alchemy');assert.equal(projects.projects[0].nativeRecipe.steps[0].method,'alchemy');assert.equal(projects.projects[0].nativeRecipe.steps[0].onFailureAction,'stop');
+  const atlasPlans=await call('get_atlas_plans');assert.equal(atlasPlans.plans[1].strategy.setupCost.amount,25);assert.equal(atlasPlans.plans[1].progression.previousId,'starter-atlas');await host('bundle-roundtrip');
   await host('quit');
-  console.log('PLANNING_WORKFLOW_OK: real MCP stdio, native calculations, UI review, crafting simulation, Journey ranking, save/reopen and checkpoint undo');
+  console.log('PLANNING_WORKFLOW_OK: real MCP stdio, native calculations, UI review, crafting simulation, Journey ranking, Atlas strategy, save/reopen, checkpoint undo and portable bundle import');
 }
 main().catch(error=>{console.error(error.stack);console.error(diagnostics.join('\n'));process.exitCode=1;}).finally(()=>{
   for(const child of children)child.kill();

@@ -36,10 +36,12 @@ function M.tick(tab, budget)
 	if not job then return false end
 	job.deadline = os.clock() + (budget or 0.006)
 	local previousCache = GlobalCache
+	local sliceStart=os.clock()
 	GlobalCache = job.cache
 	local ok, message = coroutine.resume(job.thread)
 	job.cache = GlobalCache
 	GlobalCache = previousCache
+	require("Modules.PlanningPerformance").record(tab.build,"Survival simulation slice",os.clock()-sliceStart)
 	if not ok then
 		for _, env in ipairs({ tab.mainEnv, tab.calcsEnv }) do
 			for key in pairs(env.player.output) do if key:match("^RecoverySimulation") or key:match("^RecoveryComparison") then env.player.output[key] = nil end end

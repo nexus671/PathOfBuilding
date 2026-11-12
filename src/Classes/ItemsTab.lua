@@ -1266,6 +1266,7 @@ function ItemsTabClass:Load(xml, dbFileName)
 		return modLines[1] and modLines[1].addedFromBase and 0 or #modLines
 	end
 	for _, node in ipairs(xml) do
+		if self.build.planningCheckpoint then self.build.planningCheckpoint() end
 		if node.elem == "Item" then
 			local item = new("Item"):Item("")
 			item.id = tonumber(node.attrib.id)

@@ -50,6 +50,7 @@ function PassiveSpecClass:Init(treeVersion, convert)
 	-- Make a local copy of the passive tree that we can modify
 	self.nodes = { }
 	for _, treeNode in pairs(self.tree.nodes) do
+		if self.build.planningCheckpoint then self.build.planningCheckpoint() end
 		-- Exclude proxy or groupless nodes, as well as expansion sockets
 		if treeNode.group and not treeNode.isProxy and not treeNode.group.isProxy and (not treeNode.expansionJewel or not treeNode.expansionJewel.parent) then
 			---@class Node
@@ -60,6 +61,7 @@ function PassiveSpecClass:Init(treeVersion, convert)
 		end
 	end
 	for id, node in pairs(self.nodes) do
+		if self.build.planningCheckpoint then self.build.planningCheckpoint() end
 		-- if the node is allocated and between the old and new tree has the same ID but does not share the same name, add to list of nodes to be ignored
 		if convert and previousTreeNodes[id] and self.build.spec.allocNodes[id] and node.name ~= previousTreeNodes[id].name then
 			self.ignoredNodes[id] = previousTreeNodes[id]
@@ -1163,6 +1165,7 @@ function PassiveSpecClass:BuildAllDependsAndPaths()
 	end
 	-- Check all nodes for other nodes which depend on them (i.e. are only connected to the tree through that node)
 	for id, node in pairs(self.nodes) do
+		if self.build.planningCheckpoint then self.build.planningCheckpoint() end
 		node.depends = wipeTable(node.depends)
 		node.intuitiveLeapLikesAffecting = wipeTable(node.intuitiveLeapLikesAffecting)
 		node.conqueredBy = nil
@@ -1233,6 +1236,7 @@ function PassiveSpecClass:BuildAllDependsAndPaths()
 	end
 	self.checkNodeLinks = false
 	for id, node in pairs(self.nodes) do
+		if self.build.planningCheckpoint then self.build.planningCheckpoint() end
 		-- If node is tattooed, replace it
 		if self.hashOverrides[node.id] then
 			self:ReplaceNode(node, self.hashOverrides[node.id])

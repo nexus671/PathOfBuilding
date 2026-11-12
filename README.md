@@ -24,6 +24,8 @@ The encounter tools are experimental. See the [guide](docs/recovery-simulation.m
 
 The [planning UI guide](docs/ui-polish.md) covers navigation, project creation, comparisons, checklists and chart controls.
 
+See [connected planning tools](docs/planning-workflows.md) for background upgrades, performance diagnostics, crafting recovery, Atlas stages and portable bundles.
+
 ## Links
 
 [Published version](https://github.com/nexus671/PathOfBuilding-AI-Edition/tree/main) · [Report a problem](https://github.com/nexus671/PathOfBuilding-AI-Edition/issues) · [Community Edition](https://pathofbuilding.community)

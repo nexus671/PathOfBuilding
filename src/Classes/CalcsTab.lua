@@ -483,8 +483,10 @@ function CalcsTabClass:BuildOutput(deferRecovery)
 
 	self.mainEnv = self.calcs.buildOutput(self.build, "MAIN", deferRecovery)
 	self.mainOutput = self.mainEnv.player.output
+	if self.build.planningCheckpoint then self.build.planningCheckpoint("Calculate detailed stats") end
 	self.calcsEnv = self.calcs.buildOutput(self.build, "CALCS", deferRecovery)
 	self.calcsOutput = self.calcsEnv.player.output
+	if self.build.planningCheckpoint then self.build.planningCheckpoint("Prepare comparison calculator") end
 
 	if deferRecovery and self.build.configTab.input.simulateRecovery then
 		require("Modules.RecoveryTasks").start(self, { self.mainEnv, self.calcsEnv })
@@ -508,7 +510,9 @@ function CalcsTabClass:BuildPower()
 		self.powerBuilder = coroutine.create(self.PowerBuilder)
 	end
 	if self.powerBuilder then
+		local sliceStart=os.clock()
 		local res, errMsg = coroutine.resume(self.powerBuilder, self)
+		require("Modules.PlanningPerformance").record(self.build,"Passive power slice",os.clock()-sliceStart)
 		if launch.devMode and not res then
 			error(errMsg)
 		end

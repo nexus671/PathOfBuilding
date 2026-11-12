@@ -8,7 +8,7 @@ describe("Measured Journey upgrades",function()
 		data.wishlist={{id="small",title="Small upgrade",slot="Helmet",route="buy",targetItem=item(100),resourceId="chaos",estimate=10},{id="large",title="Large upgrade",slot="Helmet",route="buy",targetItem=item(150),resourceId="chaos",estimate=30}}
 		build.savers.BuildJourney:Replace(data);return data
 	end
-	local function finish() for i=1,20 do if not upgrades.job then return end;upgrades.tick(build) end;error("Upgrade job did not finish") end
+	local function finish() for i=1,2000 do if not upgrades.job then return end;upgrades.tick(build) end;error("Upgrade job did not finish") end
 	before_each(function() upgrades.cancel();upgrades.result=nil;newBuild();bridge.plan={goal="balanced"};bridge.history={} end)
 	after_each(function() upgrades.cancel();upgrades.result=nil end)
 	it("measures isolated native candidates and ranks absolute gain separately from gain per resource",function()
@@ -37,7 +37,7 @@ describe("Measured Journey upgrades",function()
 	end)
 	it("cancels when the base changes instead of finishing a mixed-revision ranking",function()
 		setup();upgrades.start(build);upgrades.tick(build);build.notesTab.controls.edit:SetText("Changed base")
-		upgrades.tick(build);assert.is_nil(upgrades.job);assert.is_true(upgrades.result.stale);assert.equal(1,upgrades.result.completed)
+		upgrades.tick(build);assert.is_nil(upgrades.job);assert.is_true(upgrades.result.stale);assert.equal(0,upgrades.result.completed)
 		local _,fresh=upgrades.sorted(build,"LifeUnreserved",false);assert.is_false(fresh)
 	end)
 	it("supports explicit cancellation and an empty wishlist",function()

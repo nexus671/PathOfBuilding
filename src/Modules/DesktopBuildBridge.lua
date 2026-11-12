@@ -17,8 +17,8 @@ local function serialize(build)
 	return result
 end
 
-function M.revision(build)
-	local xml = assert(common.xml.ParseXML(serialize(build)))
+local function revisionXML(build,raw)
+	local xml = assert(common.xml.ParseXML(raw))
 	local root = xml[1]
 	for index=#root,1,-1 do
 		local node = root[index]
@@ -31,6 +31,10 @@ function M.revision(build)
 		end
 	end
 	return sha1((build.buildName or "")..assert(common.xml.ComposeXML(root)))
+end
+function M.revision(build) return revisionXML(build,serialize(build)) end
+function M.freeze(build)
+	local raw=serialize(build);return {build=build,xml=raw,revision=revisionXML(build,raw)}
 end
 
 local function stats(build)
@@ -169,24 +173,32 @@ local function applyOperation(build, op)
 	else error("Unknown operation: "..tostring(op.type)) end
 end
 
-function M.prepare(build, proposal)
+function M.prepare(build, proposal, checkpoint, sourceXML, frozen)
+	local yieldingCheckpoint=checkpoint
+	checkpoint=checkpoint or function() end
 	assert(type(proposal) == "table" and (proposal.mode == "edit" or proposal.mode == "new"),"Choose edit or new build")
 	assert(type(proposal.operations) == "table" and #proposal.operations > 0 and #proposal.operations <= 100,"Use 1 to 100 operations")
-	assert(proposal.baseRevision == M.revision(build),"Build changed. Refresh context and submit a new proposal.")
+	assert(not frozen or frozen.build==build,"Snapshot belongs to a different build")
+	assert(proposal.baseRevision == (frozen and frozen.revision or M.revision(build)),"Build changed. Refresh context and submit a new proposal.")
 	local title = text(proposal.title,120,"proposal title")
 	assert(title:match("%S") and not title:find("[%c]"),"Title must be a nonempty single line")
-	local source = proposal.mode == "edit" and serialize(build) or nil
+	local source = sourceXML or proposal.mode == "edit" and (frozen and frozen.xml or serialize(build)) or nil
+	checkpoint("Load candidate")
 	local computed = sandbox(function(proxy)
 		local candidate = LoadModule("Modules/Build")
 		proxy.modes.BUILD = candidate
+		candidate.planningCheckpoint=yieldingCheckpoint
 		candidate:Init(nil,proposal.mode == "new" and title or build.buildName,source)
 		assert(candidate.abortSave == false,"Unable to initialize proposed build")
+		candidate.planningCheckpoint=yieldingCheckpoint
+		checkpoint("Apply candidate changes")
 		for _,operation in ipairs(proposal.operations) do applyOperation(candidate,operation) end
 		candidate.configTab:BuildModList()
 		candidate.configTab:UpdateControls()
 		candidate:UpdateClassDropdowns()
 		candidate.skillsTab:UpdateSocketGroups()
 		wipeGlobalCache()
+		checkpoint("Calculate candidate")
 		candidate.calcsTab:BuildOutput()
 		candidate:RefreshStatList()
 		local calculatedLevel = candidate.characterLevel
@@ -194,9 +206,11 @@ function M.prepare(build, proposal)
 		if candidate.characterLevel ~= calculatedLevel then candidate.calcsTab:BuildOutput(); candidate:RefreshStatList() end
 		candidate.controls.characterLevel:SetText(tostring(candidate.characterLevel))
 		candidate.buildFlag = false
+		candidate.planningCheckpoint=nil
 		return {candidate=candidate,cache=GlobalCache}
 	end)
 	local candidate = computed.candidate
+	checkpoint("Review requirements")
 	local after = stats(candidate)
 	local before = stats(build)
 	local delta = { }
@@ -221,6 +235,13 @@ function M.prepare(build, proposal)
 		changes=insights.changes(beforeSnapshot,afterSnapshot),audit=audit,quote=proposal.quote,
 		evaluation=evaluation}
 end
+
+function M.prepareBundle(build,bundle)
+	assert(not M.prepared,"Review or reject the pending proposal first")
+	return M.prepare(build,{mode="new",title=bundle.buildName,baseRevision=M.revision(build),operations={{type="set_character"}}},nil,bundle.xml)
+end
+
+M.serialize=serialize
 
 function M.apply(prepared)
 	assert(main.modes.BUILD == prepared.base and M.revision(prepared.base) == prepared.baseRevision,"Build changed since preview. Submit a fresh proposal.")
@@ -296,6 +317,7 @@ end
 function M.refresh(build)
 	local captured = M.capture(build)
 	M.contextRevision = captured.context.revision
+	M.contextStamp=require("Modules.PlanningRevision").stamp(build)
 	M.lastContext = os.time()
 	writeFile(path("context"),captured)
 	M.publishState()
@@ -423,6 +445,8 @@ function M.poll(build, force)
 	require("Modules.CraftingTasks").tick(build)
 	require("Modules.JourneyUpgrades").tick(build)
 	if not M.enabled then return end
+	local upgrades=require("Modules.JourneyUpgrades")
+	if upgrades.job and upgrades.job.build==build and M.status and M.status.kind=="journeyUpgrades" then local result=upgrades.current(build);M.status.progress={completed=result.completed,total=result.total,phase=upgrades.job.phase} end
 	if M.build ~= build then M.close(M.build); return end
 	if not force and GetTime() < (M.nextPoll or 0) then return end
 	M.nextPoll = GetTime()+1000
@@ -438,7 +462,8 @@ function M.poll(build, force)
 	M.lastPoll = os.time()
 	local ok,err = pcall(function()
 		if build.buildFlag then return end
-		if M.contextRevision ~= M.revision(build) then M.refresh(build) else M.publishState() end
+		local revisions=require("Modules.PlanningRevision")
+		if not M.contextRevision or not revisions.same(M.contextStamp,revisions.stamp(build)) then M.refresh(build) else M.publishState() end
 		local file = io.open(path("request"),"rb")
 		if not file then return end
 		local requestText = file:read(262145); file:close()
@@ -464,7 +489,7 @@ function M.poll(build, force)
 				if not M.enabled or M.session~=session then return end
 				M.status={id=request.id,status=result.cancelled and "cancelled" or "measured",upgrades=result};M.publishState()
 			end)
-			M.status={id=request.id,status="calculating"};M.publishState();return
+			M.status={id=request.id,status="calculating",kind="journeyUpgrades"};M.publishState();return
 		end
 		if request.kind == "atlasSearch" or request.kind == "atlasConnect" then
 			assert(request.baseRevision == M.revision(build),"Build changed. Refresh Atlas context.")

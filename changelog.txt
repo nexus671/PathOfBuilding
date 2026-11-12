@@ -1,6 +1,10 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Added calculation timings and cooperative upgrade workers with fewer repeated build snapshots.
+* Added crafting failure recovery, restart costs and median / unlucky spending cards.
+* Added reviewed survival stress presets, Atlas progression stages and strategy requirements.
+* Added portable planning bundles with native new-build review, including kept crafting checkpoints.
 * Refined all planning tools with guided crafting, comparison tables, readable guides and clearer save states.
 * Added large text, keyboard list selection, remembered navigation and resizable Journey details.
 * Added AI connection receipts and round-trip tests, clearer proposal review and interactive chart controls.

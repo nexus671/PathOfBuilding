@@ -35,7 +35,7 @@ function Panel.Open(recipe,currentAction,onKeep)
 			routes[#routes+1]={label="Step "..i,val=i}
 			local function route(target) return target>#draft.steps and "Finish" or "Step "..target end
 			lines[#lines+1]={height=92,textSize=16,x=44,card=true,step=i,selected=i==selected,iconPath=require("Modules.CraftingWorkbench").icon(step.method),
-				subtitle=string.format("Success -> %s | Failure / limit -> %s",route(step.onSuccess or i+1),route(step.onFailure or i+1)),
+				subtitle=string.format("Success -> %s | Failure -> %s",route(step.onSuccess or i+1),step.onFailureAction and step.onFailureAction~="route" and require("Classes.CraftingRecoveryControl").labels[step.onFailureAction] or route(step.onFailure or i+1)),
 				detail=(step.untilTargets or step.untilRequirements) and "Repeat until target conditions match" or "Continue after one successful action",
 				"^7"..string.format("%d. %s | up to %d attempts",i,sim.labels[step.method] or step.method,step.maxAttempts or 1)}
 		end
@@ -66,6 +66,10 @@ function Panel.Open(recipe,currentAction,onKeep)
 		sim.validateRecipe(draft);refresh()
 	end)
 	controls.note=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,604,0,14},"Loops stop at the simulation action budget. Keeping a recipe does not craft or equip an item.")
+	button(controls,"recovery",288,558,272,"Failure recovery",function()
+		local step=assert(draft.steps[selected],"Select a recipe step")
+		require("Classes.CraftingRecoveryControl").Open(step,function(replacement) draft.steps[selected]=replacement;sim.validateRecipe(draft);refresh() end)
+	end)
 	button(controls,"keep",16,642,256,"Keep recipe",function() onKeep(sim.validateRecipe(draft));main:ClosePopup() end)
 	button(controls,"close",728,642,116,"Close",function() main:ClosePopup() end)
 	local height=math.max(520,math.min(690,main.screenH-60));local offset=690-height

@@ -7,7 +7,7 @@ function M.new(build)
 	local anchor=new("Control"):Control(nil,{0,0,0,0})
 	anchor.x=function() return self.viewport.x end;anchor.y=function() return self.viewport.y end
 	for index,page in ipairs({"ai","atlas","crafting","journey"}) do
-		local control=new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{112+(index-1)*142,10,134,28},pages[page],function() self:Show(page) end)
+		local control=new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{112+(index-1)*132,10,124,28},pages[page],function() self:Show(page) end)
 		control.locked=function() return self.page==page end
 		control.tooltipText="Alt+"..index.." | Tab: move focus | Enter: activate"
 		self.nav.controls["nav_"..page]=require("Modules.PlanningUI").styleButton(control)
@@ -15,12 +15,13 @@ function M.new(build)
 	self.nav.controls.nav_build=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{16,10,80,28},"< Build",function()
 		build:SelectControl(nil);build.viewMode=build.plannerPreviousMode or "TREE"
 	end))
-	self.nav.controls.nav_text=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{684,10,54,28},"Aa",function()
+	self.nav.controls.nav_text=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{648,10,54,28},"Aa",function()
 		for page in pairs(self.cache) do self:Remember(page) end
 		main.planningTextLarge=not main.planningTextLarge;self.cache={};self:Show(self.page)
 	end))
 	self.nav.controls.nav_text.tooltipText="Toggle normal / large planning text"
-	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{750,10,function() return math.max(0,self.viewport.width-766) end,28})
+	self.nav.controls.nav_tools=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{710,10,80,28},"Tools",function() require("Classes.PlanningToolsControl").Open(build) end))
+	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{806,10,function() return math.max(0,self.viewport.width-822) end,28})
 	function context:Draw()
 		local x,y=self:GetPos();local w=self:GetSize();local title=build.buildName or "Untitled build"
 		local status=require("Modules.PlanningUI").saveStatus(build)

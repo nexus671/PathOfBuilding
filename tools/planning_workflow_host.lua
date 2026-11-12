@@ -42,6 +42,11 @@ for line in io.lines() do
 			build.viewMode="CONFIG";ui:click("aiBuild");ui:click("nav_crafting");ui:click("native")
 			assert(build.planningWorkspace.controls.undo:IsEnabled(),"Saved checkpoint did not restore undo")
 			bridge.enable(build)
+		elseif command.kind=="bundle-roundtrip" then
+			build.viewMode="CONFIG";ui:bind(build);ui:click("aiBuild");ui:click("nav_tools");ui:text("search","bundle");ui:click("choose");ui:click("export");ui:click("paste");ui:click("review")
+			assert(bridge.prepared and bridge.prepared.mode=="new","Bundle did not prepare a new build")
+			ui:click("apply");build=main.modes.BUILD;ui:bind(build);runCallback("OnFrame")
+			assert(not build.dbFileName and #build.savers.AtlasPlans.plans==2 and build.savers.CraftingProjects.projects[1].run,"Bundle import lost saved metadata or reused the source file")
 		elseif command.kind=="quit" then bridge.disable(build);return {quit=true}
 		else error("Unknown host command") end
 		return {revision=bridge.revision(build),status=bridge.status and bridge.status.status,life=build.calcsTab.calcsOutput.LifeUnreserved}

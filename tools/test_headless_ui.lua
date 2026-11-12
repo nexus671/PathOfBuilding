@@ -63,6 +63,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(main.modes.BUILD==original,"Undo did not restore the original scratch build")
 	ui:click("nav_atlas");frame("atlas-start");assert(not build.controls.statBox:IsShown(),"Build sidebar should be hidden while planning")
 	local workspace=build.planningWorkspace
+	build.buildFlag=true;ui:frame();ui:click("nav_tools");frame("planning-tools");ui:click("choose");frame("performance-diagnostics");ui:click("copy");assert(ui.clipboard:find("ms",1,true));ui:click("refresh");ui:click("close")
 	local canvas=workspace.controls.canvas
 	ui:choose("mechanic","Essence");assert(next(canvas.matches),"Inline mechanic filter did not highlight its nodes");frame("atlas-mechanic-filter");ui:choose("mechanic","All mechanics")
 	ui:text("budget","120");assert(workspace.controls.status.label:find("120 points",1,true),"Point budget feedback is stale");ui:text("budget","138")
@@ -98,6 +99,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:resize(size[1],size[2]);ui:frame();ui:text("title",savedTitle);ui:text("budget","138")
 	ui:click("nav_build");ui:click("modeItems");ui:click("modeSkills");ui:click("atlas");assert(workspace.controls.notes.buf:find("Essence",1,true),"Switching tools lost the Atlas draft")
 	ui:click("keep");assert(#build.savers.AtlasPlans.plans==1)
+	local starter=copyTable(build.savers.AtlasPlans.plans[1]);starter.id="starter-atlas";starter.title="Starter maps";starter.nodes={};starter.progression={stage="starter"};build.savers.AtlasPlans:Upsert(starter)
+	ui:click("progression");ui:choose("stage","final","val");ui:choose("previous","starter-atlas","val");frame("atlas-progression")
+	ui:click("strategyTab");ui:text("maps","T16 maps; avoid reflect");ui:text("scarabs","Record scarabs here");ui:text("requirements","Complete map unlocks");ui:text("avoid","Reflect");ui:text("amount","25");ui:text("source","Manual test quote");frame("atlas-strategy-requirements");ui:click("keep");ui:click("keep")
+	assert(build.savers.AtlasPlans.plans[1].strategy.setupCost.amount==25 and build.savers.AtlasPlans.plans[1].progression.previousId=="starter-atlas","Atlas strategy was not kept")
 	ui:choose("page","Tree");ui:click("tools");ui:text("search","Compare");ui:click("choose");frame("atlas-compare");ui:click("close")
 	ui:click("tools");ui:text("search","history");ui:click("choose");frame("atlas-history");ui:click("close")
 	ui:click("library");frame("atlas-library");ui:click("open")
@@ -188,12 +193,12 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	local jobs=require("Modules.CraftingTasks")
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 	assert(not jobs.job,"Action odds did not finish")
-	ui:choose("page","Simulate recipe");ui:text("budget","2");ui:click("simulate")
+	ui:choose("page","Simulate recipe");ui:text("budget","2");ui:text("price","5");ui:text("baseCost","10");ui:click("simulate")
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 	assert(not jobs.job,"Crafting simulation did not finish")
 	frame("simulation-result");assert(#main.popups[1].controls.resultSummary.list>=4,"Detailed simulation results are missing")
-	ui:click("editRecipe");frame("crafting-recipe-cards");ui:click("close")
-	ui:click("distribution");frame("simulation-distribution");assert(main.popups[1].controls.successCard and main.popups[1].controls.moreTrials,"Simulation result cards are missing");ui:click("moreTrials")
+	ui:click("editRecipe");frame("crafting-recipe-cards");ui:click("recovery");ui:choose("action","stop","val");ui:text("notes","Inspect unwanted rolls before spending more");frame("crafting-failure-recovery");ui:click("keep");frame("crafting-recovery-route");ui:click("keep")
+	ui:click("distribution");frame("simulation-distribution");assert(main.popups[1].controls.successCard and main.popups[1].controls.medianSpend and main.popups[1].controls.veryUnluckySpend and main.popups[1].controls.moreTrials,"Simulation result cards are missing");ui:click("sample");frame("crafting-sampled-outcome");ui:click("close");ui:click("moreTrials")
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 	assert(not jobs.job and main.popups[1].controls.trials.buf=="48","More trials did not rerun the captured setup")
 	frame("simulation-refined")
@@ -232,7 +237,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	local gearId=build.savers.BuildJourney.data.wishlist[1].id
 	local project=copyTable(build.savers.CraftingProjects.projects[1]);project.targetItem="Rarity: RARE\nJourney Hat\nIron Hat\nItem Level: 86\n+100 to maximum Life";build.savers.CraftingProjects:Upsert(project)
 	ui:click("measure")
-	for i=1,12 do ui:frame();if not require("Modules.JourneyUpgrades").job then break end end
+	for i=1,2000 do ui:frame();if not require("Modules.JourneyUpgrades").job then break end end
 	assert(require("Modules.JourneyUpgrades").current(build).entries[gearId].status=="calculated","Native upgrade measurement did not finish")
 	ui:choose("sort","LifeUnreserved","val");ui:click("perCost");frame("journey-upgrade-ranking")
 	ui:click("compareAll");frame("journey-comparison-table");ui:click("choose")
@@ -241,7 +246,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	local background=copyTable(build.savers.BuildJourney.data)
 	for index=2,4 do local extra=copyTable(background.wishlist[1]);extra.id="background-"..index;extra.title="Background candidate "..index;background.wishlist[#background.wishlist+1]=extra end
 	build.savers.BuildJourney:Replace(background);workspace:Show("journey",{page="Gear"});ui:click("measure");ui:click("nav_atlas")
-	for i=1,12 do ui:frame();if not require("Modules.JourneyUpgrades").job then break end end
+	for i=1,2000 do ui:frame();if not require("Modules.JourneyUpgrades").job then break end end
 	assert(workspace.page=="atlas","Finishing background upgrade measurements stole navigation")
 	frame("journey-background-navigation")
 	background.wishlist={background.wishlist[1]};build.savers.BuildJourney:Replace(background);ui:click("nav_journey");ui:click("page3")
@@ -267,6 +272,9 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("nav_journey");ui.keys.ALT=true;ui:key("1");ui:key("4");ui.keys.ALT=nil
 	assert(workspace.page=="journey","Alt+4 did not open Journey")
 	ui:click("nav_text");frame("planning-large-text");ui:click("nav_text")
+	ui:click("nav_tools");ui:text("search","bundle");ui:click("choose");frame("planning-bundle");ui:click("export");local bundle=ui.clipboard;assert(require("Modules.PlanningBundle").import(bundle).contents.checkpoints>=1,"Bundle omitted kept craft")
+	ui:click("paste");frame("planning-bundle-inspected");bridge.prepared=nil;ui:click("review");frame("planning-bundle-review");ui:click("close");assert(main.modes.BUILD==build,"Bundle review changed the active build before Apply");bridge.prepared=nil
+
 	ui:click("page5");ui:click("remove");ui:click("confirm");assert(#build.savers.BuildJourney.data.stages==2,"Guide stage removal failed")
 	ui:click("nav_build")
 	newBuild()
@@ -277,7 +285,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	build.configTab:BuildModList();runCallback("OnFrame")
 	local actor=build.calcsTab.calcsEnv.player
 	assert(actor.recoverySimulationTrace and #actor.recoverySimulationTrace.points>1)
-	build.calcsTab:OpenEncounterWorkspace();frame("encounter-workspace");ui:click("chartUnits");frame("encounter-actual-values");ui:click("series_Life");ui:click("series_Mana");frame("encounter-series-hidden");ui:click("emptyLanes");frame("encounter-empty-lanes");ui:click("close")
+	build.calcsTab:OpenEncounterWorkspace();frame("encounter-workspace");ui:choose("preset",7,"val");ui:click("usePreset");frame("survival-scenario-assumptions");ui:click("create");assert(build.configTab.input.recoverySimulationColdDot==4,"Continuous damage preset did not preserve its stated scale");ui:click("chartUnits");frame("encounter-actual-values");ui:click("series_Life");ui:click("series_Mana");frame("encounter-series-hidden");ui:click("emptyLanes");frame("encounter-empty-lanes");ui:click("close")
 	ui.cursorX,ui.cursorY=300,120
 	ui:frame(function() build.calcsTab.controls.breakdown:DrawEncounterTimeline(16,16,{width=size[1]-32,timeline=actor.recoverySimulationTrace}) end)
 	ui.regions={{0,0,size[1],size[2]}};ui:write(directory.."/"..size[1].."-recovery-hover.json");frames=frames+1

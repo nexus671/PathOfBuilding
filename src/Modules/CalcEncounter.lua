@@ -190,6 +190,10 @@ M.presets = {
 	{ name="Rapid spells", category="Spell", speed=250, scale=1 },
 	{ name="Mixed pressure", category="Average", speed=700, scale=1 },
 	{ name="Sustained damage over time", category="DamageOverTime", speed=700, scale=1 },
+	{ name="Mapping pack stress", category="Melee", speed=300, scale=0.6, window=30, attacking=true, description="Repeated melee hits every 300ms at 60% of your current raw hit damage. Main-skill costs and recovery are active." },
+	{ name="Repeated boss hits", category="Spell", speed=1500, scale=1.8, window=30, attacking=true, description="Spell hits every 1.5s at 180% of current raw hit damage. This is a stress test, not a named boss model." },
+	{ name="Hits plus continuous damage", category="Average", speed=900, scale=1, window=30, dotScale=0.2, description="Average hits every 900ms, plus raw continuous damage per second equal to 20% of each current hit component." },
+	{ name="Resource pressure", category="Average", speed=700, scale=0.5, window=60, attacking=true, description="Attack continuously for 60s under hits at 50% of current damage. Uses the build's main-skill costs, recovery, flask and tincture policies." },
 }
 
 function M.preset(input, placeholder, preset)
@@ -198,11 +202,22 @@ function M.preset(input, placeholder, preset)
 	changed.simulateRecovery, changed.recoverySimulationSingleHit = true, preset.single or false
 	changed.recoverySimulationCompareSet = nil
 	changed.enemyDamageType, changed.enemySpeed = preset.category, preset.speed
+	changed.enemyIsBoss="None"
+	if preset.window then changed.recoverySimulationWindow=preset.window end
+	if preset.attacking~=nil then changed.recoverySimulationAttacking=preset.attacking end
+	changed.recoverySimulationTimedEffects=true
 	for _,kind in ipairs({ "Physical", "Fire", "Cold", "Lightning", "Chaos" }) do
-		changed["recoverySimulation"..kind.."Dot"] = 0
+		changed["recoverySimulation"..kind.."Dot"] = (tonumber(input["enemy"..kind.."Damage"]) or tonumber(placeholder["enemy"..kind.."Damage"]) or 0)*(preset.dotScale or 0)
 		changed["enemy"..kind.."Damage"] = tostring((tonumber(input["enemy"..kind.."Damage"]) or tonumber(placeholder["enemy"..kind.."Damage"]) or 0) * preset.scale)
 	end
 	return changed
+end
+
+function M.presetLines(preset)
+	return {preset.description or ("Uses "..preset.category.." damage at "..preset.speed.."ms intervals, scaled by "..preset.scale.." from the current hit inputs."),
+		"Creates a separate configuration set. Review raw damage values, enemy level, penetration and conditional buffs before running.",
+		"Damage scales from the active configuration; it is not a current monster database or a readiness guarantee.",
+		"Flasks, barriers, leech, recharge and continuous damage use the existing encounter settings and supported mechanics."}
 end
 
 function M.audit(input, context)

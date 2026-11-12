@@ -60,6 +60,19 @@ function M.validate(plan)
 	local result={id=text(plan.id,64,"Atlas plan ID"),title=text(plan.title,120,"Atlas title"),version=plan.version,
 		budget=integer(plan.budget,0,tree.maxPoints,"Atlas point budget"),notes=text(plan.notes or "",8000,"Atlas notes"),nodes={}}
 	assert(result.id:match("^[%w_-]+$") and result.title:match("%S"),"Use an Atlas plan ID and title")
+	if plan.progression then
+		local p=plan.progression;assert(type(p)=="table" and ({starter=true,intermediate=true,final=true})[p.stage],"Choose an Atlas progression stage")
+		result.progression={stage=p.stage}
+		if p.previousId and p.previousId~="" then result.progression.previousId=text(p.previousId,64,"previous Atlas plan");assert(p.previousId~=plan.id,"A plan cannot follow itself") end
+	end
+	if plan.strategy then
+		assert(type(plan.strategy)=="table","Invalid Atlas strategy");local s={};result.strategy=s
+		for _,key in ipairs({"maps","scarabs","requirements","avoid","notes"}) do s[key]=text(plan.strategy[key] or "",4000,"strategy "..key) end
+		if plan.strategy.setupCost then
+			local cost=plan.strategy.setupCost;assert(type(cost)=="table" and type(cost.amount)=="number" and cost.amount>=0 and cost.amount<=1e12,"Invalid Atlas setup cost")
+			s.setupCost={amount=cost.amount,currency=text(cost.currency,40,"setup currency"),source=text(cost.source or "",240,"cost source"),quotedAt=integer(cost.quotedAt,0,4102444800,"cost date")}
+		end
+	end
 	local set=nodeSet(tree,plan.nodes); set[tree.start]=true
 	local connected=reachable(tree,set)
 	local used,bonus=0,0
@@ -171,9 +184,9 @@ function M.new(build)
 	local self={plans={},build=build}
 	function self:Load(xml)
 		local ok,plans=pcall(function()
-			local raw=table.concat(xml); assert(#raw <= 128000,"Atlas metadata too large")
+			local raw=table.concat(xml); assert(#raw <= 2*1024*1024,"Atlas metadata too large")
 			if not raw:match("%S") then return {} end
-			local decoded=assert(json.decode(raw)); assert(decoded.schemaVersion == 1); array(decoded.plans,8,"saved Atlas plans")
+			local decoded=assert(json.decode(raw)); assert(decoded.schemaVersion == 1); array(decoded.plans,math.huge,"saved Atlas plans")
 			local result,ids={},{}
 			for _,plan in ipairs(decoded.plans) do local entry=M.validate(plan); assert(not ids[entry.id]); ids[entry.id]=true; result[#result+1]=entry end
 			return result
@@ -188,8 +201,10 @@ function M.new(build)
 		assert(not self.unreadable,self.warning)
 		local entry=M.validate(plan); local replacement=copyTable(self.plans); local found
 		for i,old in ipairs(replacement) do if old.id == entry.id then replacement[i]=entry; found=true; break end end
-		if not found then assert(#replacement < 8,"Keep up to eight Atlas plans per build"); replacement[#replacement+1]=entry end
-		assert(#json.encode(replacement) <= 128000,"Atlas metadata too large")
+		if not found then replacement[#replacement+1]=entry end
+		local seen={[entry.id]=true};local previous=entry.progression and entry.progression.previousId
+		while previous do assert(not seen[previous],"Atlas progression contains a cycle");seen[previous]=true;local nextPlan;for _,p in ipairs(replacement) do if p.id==previous then nextPlan=p end end;assert(nextPlan and nextPlan.version==entry.version,"Previous Atlas plan is missing or uses a different version");previous=nextPlan.progression and nextPlan.progression.previousId end
+		assert(#json.encode(replacement) <= 2*1024*1024,"Atlas metadata too large")
 		self.plans=replacement; build.modFlag=true;require("Modules.PlanningUI").kept(build,"atlas"); return entry
 	end
 	function self:Remove(id)

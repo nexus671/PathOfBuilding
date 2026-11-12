@@ -258,6 +258,7 @@ function Panel.Open(build,source,layout)
 			end)
 		end)
 		c.measure.label=function() local upgrades=require("Modules.JourneyUpgrades");local r=upgrades.current(build);return upgrades.job and r and string.format("Cancel (%d/%d)",r.completed,r.total) or r and not rankingFresh and "Recalculate upgrades" or "Measure upgrades" end
+		c.measure.tooltipText=function() local upgrades=require("Modules.JourneyUpgrades");return upgrades.job and ("Background calculation: "..upgrades.job.phase..". Navigation stays available; cancel keeps completed results.") or "Calculate exact target items against the current build." end
 	elseif page=="Budget" then button(c,"record",300,h-48,176,"Record transaction",function() Panel.Edit(build,"ledger",{resourceId=selectedEntry and selectedEntry.id,kind="add"},function() reopen() end) end) end
 	if page~="Overview" then
 		button(c,"remove",492,h-48,100,"Remove",function()

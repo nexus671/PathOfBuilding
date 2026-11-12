@@ -1,0 +1,90 @@
+describe("Connected planning workflows",function()
+	local bridge=require("Modules.DesktopBuildBridge")
+	local atlas=require("Modules.AtlasPlanner")
+	local function plan(id) return {id=id,title=id,version="3.29.1",budget=138,nodes={}} end
+	before_each(function() newBuild();main.popups={};bridge.prepared=nil;bridge.plan={goal="balanced"} end)
+	after_each(function() require("Modules.JourneyUpgrades").cancel();main.popups={};bridge.prepared=nil end)
+	it("restores active globals after every background yield, completion, error and cancellation",function()
+		local worker=require("Modules.PlanningWorker");local environment=getfenv(worker.resume);local activeMain,activeCache,activeError=environment.main,environment.GlobalCache,launch.ShowErrMsg
+		local job=worker.new(build,function(checkpoint)
+			environment.main={isolated=true};environment.GlobalCache={isolated=true};launch.ShowErrMsg=function() end;checkpoint("Isolated stage")
+			assert.is_true(environment.main.isolated);assert.is_true(environment.GlobalCache.isolated);return 42
+		end)
+		local done,ok=worker.resume(job);assert.is_false(done);assert.is_true(ok);assert.equal(activeMain,main);assert.equal(activeCache,GlobalCache);assert.equal(activeError,launch.ShowErrMsg)
+		local value;done,ok,value=worker.resume(job);assert.is_true(done);assert.is_true(ok);assert.equal(42,value);assert.equal(activeMain,main);assert.equal(activeCache,GlobalCache)
+		job=worker.new(build,function() environment.main={};environment.GlobalCache={};error("isolated failure") end);done,ok=worker.resume(job);assert.is_true(done);assert.is_false(ok);assert.equal(activeMain,main);assert.equal(activeCache,GlobalCache)
+	end)
+	it("matches synchronous native candidate calculations after yielding between stages",function()
+		local proposal={mode="edit",title="Background life",baseRevision=bridge.revision(build),operations={{type="equip_item",slot="Helmet",text="Rarity: RARE\nTrial Hat\nIron Hat\n+100 to maximum Life"}}}
+		local expected=bridge.prepare(build,proposal);local worker=require("Modules.PlanningWorker");local originalMain,originalCache=main,GlobalCache
+		local job=worker.new(build,function(checkpoint) return bridge.prepare(build,proposal,checkpoint) end);local result
+		for i=1,100 do local done,ok,value=worker.resume(job);assert.equal(originalMain,main);assert.equal(originalCache,GlobalCache);assert.is_true(ok);if done then result=value;break end end
+		assert.is_true(job.slices>1);assert.same(expected.after,result.after);assert.equal(proposal.baseRevision,bridge.revision(build))
+	end)
+	it("records observed timings and resets only the requested build",function()
+		local perf=require("Modules.PlanningPerformance");perf.clear(build);perf.record(build,"Calculation",0.01);perf.record(build,"Calculation",0.03)
+		local row=perf.rows(build)[1];assert.equal(2,row.count);assert.near(20,row.mean,0.001);assert.near(30,row.worst,0.001)
+		local other={};perf.record(other,"Other",0.1);perf.clear(build);assert.equal(0,#perf.rows(build));assert.equal(1,#perf.rows(other))
+	end)
+	it("keeps frame freshness checks cheap and performs an exact check before publishing",function()
+		local upgrades=require("Modules.JourneyUpgrades");local data=require("Modules.BuildJourney").empty()
+		data.wishlist={{id="hat",title="Hat",slot="Helmet",route="buy",targetItem="Rarity: RARE\nHat\nIron Hat\n+100 to maximum Life"}};build.savers.BuildJourney:Replace(data);upgrades.start(build)
+		local revision=bridge.revision;local calls=0;bridge.revision=function(...) calls=calls+1;return revision(...) end
+		local ok,message=pcall(function()
+			for i=1,100 do assert.is_true(upgrades.fresh(build)) end;assert.equal(0,calls)
+			for i=1,1000 do if not upgrades.job then break end;upgrades.tick(build) end
+			assert.is_nil(upgrades.job);assert.equal(1,calls);assert.equal("calculated",upgrades.current(build).entries.hat.status)
+		end)
+		bridge.revision=revision;assert.is_true(ok,message)
+	end)
+	it("cancels a suspended native candidate without leaking state or publishing a partial row",function()
+		local upgrades=require("Modules.JourneyUpgrades");local data=require("Modules.BuildJourney").empty();data.wishlist={{id="hat",title="Hat",slot="Helmet",route="buy",targetItem="Rarity: RARE\nHat\nIron Hat\n+100 to maximum Life"}};build.savers.BuildJourney:Replace(data)
+		local originalMain,originalCache,revision=main,GlobalCache,bridge.revision(build)
+		upgrades.start(build);upgrades.tick(build);upgrades.tick(build);assert.is_truthy(upgrades.job.worker.context)
+		upgrades.cancel();assert.is_nil(upgrades.job);assert.equal(0,upgrades.result.completed);assert.is_nil(upgrades.result.entries.hat);assert.is_true(upgrades.result.cancelled)
+		assert.equal(originalMain,main);assert.equal(originalCache,GlobalCache);assert.equal(revision,bridge.revision(build))
+	end)
+	it("models restart costs, bounded loops and salvage without invented resale proceeds",function()
+		local sim=require("Modules.CraftingSimulator");local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86"
+		local recipe={rarity="MAGIC",targets={},requirements={minAffixes=0},steps={{method="alchemy",untilRequirements={maxAffixes=0},onFailureAction="restart"}}}
+		local options={trials=1,maxActions=3,baseCost=10,currency="chaos",prices={alchemy=1}}
+		local result=sim.simulate(raw,recipe,options);assert.equal(0,result.successes);assert.equal(2,result.recovery.restarts);assert.equal(33,result.meanCost);assert.equal(1,result.budgetExhausted)
+		assert.equal(33,result.spendingQuantiles.p50);assert.equal(33,result.spendingQuantiles.p90);assert.equal(33,result.spendingQuantiles.p99)
+		recipe.steps[1].onFailureAction="salvage";result=sim.simulate(raw,recipe,options);assert.equal(1,result.recovery.salvaged);assert.equal(11,result.meanCost);assert.equal(1,result.meanActions)
+		recipe.steps[1].onFailureAction="stop";result=sim.simulate(raw,recipe,options);assert.equal(1,result.recovery.stopped);assert.equal(0,result.recovery.salvaged)
+		recipe.steps[1].onFailureAction="invented";assert.is_false(pcall(sim.validateRecipe,recipe))
+	end)
+	it("keeps Atlas stages, requirements and dated setup costs and rejects cyclic progression",function()
+		local store=build.savers.AtlasPlans;local starter=plan("starter");starter.progression={stage="starter"};store:Upsert(starter)
+		local final=plan("final");final.progression={stage="final",previousId="starter"};final.strategy={maps="T16 maps",scarabs="Supplied scarabs",requirements="Complete unlocks",avoid="Reflect",setupCost={amount=25,currency="chaos",source="Manual quote",quotedAt=1700000000}};store:Upsert(final)
+		local xml={};store:Save(xml);local loaded=atlas.new(build);loaded:Load(xml);assert.equal("starter",loaded.plans[2].progression.previousId);assert.equal(25,loaded.plans[2].strategy.setupCost.amount)
+		starter.progression.previousId="final";assert.is_false(pcall(store.Upsert,store,starter));final.progression.previousId="missing";assert.is_false(pcall(store.Upsert,store,final))
+		for i=1,12 do store:Upsert(plan("extra"..i)) end;assert.equal(14,#store.plans)
+	end)
+	it("exports native planning data and reviews an imported bundle without changing the source",function()
+		build.savers.AtlasPlans:Upsert(plan("starter"))
+		build.savers.CraftingProjects:Upsert({id="hat",title="Hat",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat",goals={},steps={}})
+		local bundles=require("Modules.PlanningBundle");local revision=bridge.revision(build);local raw=bundles.export(build);local imported=bundles.import(raw)
+		assert.equal(1,imported.contents.atlas);assert.equal(1,imported.contents.crafts)
+		local prepared=bridge.prepareBundle(build,imported);assert.equal("new",prepared.mode);assert.is_nil(prepared.candidate.dbFileName);assert.equal(1,#prepared.candidate.savers.AtlasPlans.plans);assert.equal(revision,bridge.revision(build))
+		local json=require("dkjson");local tampered=json.decode(raw);tampered.xml=tampered.xml.." ";assert.is_false(pcall(bundles.import,json.encode(tampered)))
+	end)
+	it("orders Atlas transitions through valid intermediate trees and reports insufficient progression budgets",function()
+		local strategy=require("Modules.AtlasStrategy");local before=atlas.connect(plan("before"),{65225})
+		local target;for _,entry in ipairs(strategy.results(plan("after"),"","Essence")) do if entry.node.kind=="notable" then target=entry.id;break end end
+		local after=atlas.connect(plan("after"),{assert(target)});local transition=strategy.transition(before,after);assert.is_truthy(transition.steps)
+		local state=copyTable(before);state.budget=math.max(before.budget,after.budget)
+		for _,step in ipairs(transition.steps) do
+			if step.action=="Refund" then for index,id in ipairs(state.nodes) do if id==step.id then table.remove(state.nodes,index);break end end else state.nodes[#state.nodes+1]=step.id end
+			state=atlas.validate(state)
+		end
+		assert.same(after.nodes,state.nodes)
+		local empty=plan("empty");empty.budget=0;local bonus=copyTable(before);bonus.budget=0;atlas.validate(bonus)
+		assert.is_nil(strategy.transition(empty,bonus).steps)
+	end)
+	it("creates stress presets from explicit active inputs without mutating them",function()
+		local encounter=require("Modules.CalcEncounter");local source={enemyPhysicalDamage="1000",recoverySimulationWindow=4}
+		local input=encounter.preset(source,{},encounter.presets[7]);assert.equal(200,input.recoverySimulationPhysicalDot);assert.equal(30,input.recoverySimulationWindow);assert.equal(4,source.recoverySimulationWindow);assert.is_nil(source.recoverySimulationPhysicalDot)
+		input=encounter.preset(source,{},encounter.presets[8]);assert.is_true(input.recoverySimulationAttacking);assert.equal("500",input.enemyPhysicalDamage)
+	end)
+end)

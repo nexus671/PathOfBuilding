@@ -98,7 +98,7 @@ describe("Native Atlas planner", function()
 		assert.is_truthy(table.concat(prepared.changes," "):find("Unwavering Vision",1,true))
 		local store=build.savers.AtlasPlans
 		for i=1,8 do local p=plan(); p.id="atlas-"..i; store:Upsert(p) end
-		local p=plan();p.id="ninth";assert.are.equal(false,pcall(store.Upsert,store,p)); store:Remove("atlas-1"); assert.are.equal(7,#store.plans)
+		local p=plan();p.id="ninth";store:Upsert(p);store:Remove("atlas-1");assert.are.equal(8,#store.plans)
 	end)
 	it("exercises native canvas, search, allocation, undo and plan retention callbacks", function()
 		local panel=require("Classes.AtlasPlannerControl")

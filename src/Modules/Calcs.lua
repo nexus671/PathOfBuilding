@@ -404,6 +404,7 @@ function calcs.buildOutput(build, mode, deferRecovery)
 	-- Build output for selected main skill
 	local env, cachedPlayerDB, cachedEnemyDB, cachedMinionDB = calcs.initEnv(build, mode)
 	env.recoveryDeferred = deferRecovery
+	env.recoveryCheckpoint=build.planningCheckpoint
 	calcs.perform(env)
 
 	local output = env.player.output
