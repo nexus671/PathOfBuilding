@@ -3,7 +3,7 @@ local M={}
 function M.stamp(build)
 	return {output=build.outputRevision,name=build.buildName,level=build.characterLevel,notes=build.notesTab.controls.edit.buf,spec=build.spec,
 		items=build.itemsTab.activeItemSetId,skills=build.skillsTab.activeSkillSetId,config=build.configTab.activeConfigSetId,
-		journey=build.savers.BuildJourney.data,atlas=build.savers.AtlasPlans.plans,atlasCount=#build.savers.AtlasPlans.plans,
+		journey=build.savers.BuildJourney.data,filters=build.savers.LootFilters.data,atlas=build.savers.AtlasPlans.plans,atlasCount=#build.savers.AtlasPlans.plans,
 		crafts=build.savers.CraftingProjects.projects,craftCount=#build.savers.CraftingProjects.projects}
 end
 function M.same(before,after)

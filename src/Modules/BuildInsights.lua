@@ -30,6 +30,7 @@ function M.snapshot(build)
 	result.mainGroup = build.mainSocketGroup
 	result.craftingProjects = copyTable(build.savers.CraftingProjects.projects)
 	result.journey = build.savers.BuildJourney and copyTable(build.savers.BuildJourney.data)
+	result.lootFilters = copyTable(build.savers.LootFilters.data)
 	result.atlasPlans = copyTable(build.savers.AtlasPlans.plans)
 	for _,node in pairs(build.spec.nodes) do if node.alloc then result.passives[node.id] = (node.name or node.dn or node.type or "Passive")..(build.spec.masterySelections[node.id] and " (mastery "..build.spec.masterySelections[node.id]..")" or "") end end
 	return result
@@ -76,6 +77,13 @@ function M.changes(before, after)
 			if plan.notes ~= "" then add("  "..plan.notes) end
 		end
 	end
+	if not tableDeepEquals(before.lootFilters,after.lootFilters) then
+		add("Loot filters updated; export and build Save remain explicit.")
+		for _,profile in ipairs(after.lootFilters.profiles) do
+			add(profile.title.." | "..profile.preset.." | "..require("Modules.LootFilters").strictness[profile.strictness+1])
+			for _,rule in ipairs(profile.rules) do add((rule.enabled and "Enabled: " or "Disabled: ")..rule.title);add(rule.text) end
+		end
+	end
 	if #lines == 0 then add("No character, equipment, gem, passive, configuration, Atlas plan or notes changes.") end
 	return lines
 end
@@ -87,6 +95,7 @@ function M.audit(build)
 	local function assumption(key,message) result.assumptions[#result.assumptions+1] = {key=key,text=message} end
 	local function dependency(key,message) result.dependencies[#result.dependencies+1] = {key=key,text=message} end
 	if treeVersions[build.spec.treeVersion].preview then assumption("previewTree","3.30 preview tree. Items, gems and new mechanics may not yet be modeled; verify unsupported modifiers before relying on these calculations.") end
+	if treeVersions[build.spec.treeVersion].num==3.30 and not treeVersions[build.spec.treeVersion].preview then assumption("patchData","3.30 trees are available; gem, item and new mechanic support is still being updated. Review unsupported modifiers.") end
 	assumption("enemyIsBoss","Enemy preset: "..tostring(c.enemyIsBoss or "None")..". Match the encounter you intend to test.")
 	for _,key in ipairs(sortedKeys(c)) do
 		if c[key] == true and (key:match("^condition") or key:match("^use.*Charges")) then assumption(key,"Enabled condition: "..key..". Check its source and uptime.") end

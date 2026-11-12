@@ -1,3 +1,4 @@
+# cspell:ignore contribs pathlib
 name: Spell Checker
 
 on:
@@ -36,6 +37,17 @@ jobs:
             ${{ env.CONFIG_URL }}/ignore-dict.txt
             ${{ env.CONFIG_URL }}/extra-en-dict.txt
             ${{ env.CONFIG_URL }}/contribs-dict.txt
+
+      - name: Exclude pinned filter templates and generated snapshots
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('cspell.json')
+          text = path.read_text()
+          marker = '"ignorePaths": ['
+          assert marker in text
+          path.write_text(text.replace(marker, marker + '"**/src/Data/LootFilters/**", "**/src/Assets/LootFilters/**",', 1))
+          PY
 
       - name: Run cspell
         uses: streetsidesoftware/cspell-action@v8

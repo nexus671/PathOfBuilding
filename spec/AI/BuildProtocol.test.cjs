@@ -17,6 +17,19 @@ function fixture(t) {
     operations:[{type:'set_character',level:80,className:'Witch',ascendancy:'Elementalist'},{type:'set_skills',groups:[{gems:[{name:'Fireball'}]}]}]}};
 }
 
+test('queues loot-filter generation, evaluation and reviewed profiles without writing exports', t => {
+  const f=fixture(t);const profile={id:'maps',title:'Map pickups',preset:'early_maps',strictness:2,rules:[{id:'base',title:'Craft base',text:'Show\n BaseType == "Iron Hat"',enabled:true}]};
+  const filters={schemaVersion:1,activeId:'maps',profiles:[profile]};f.captured.context.lootFilters=filters;f.write('context',f.captured);
+  assert.deepEqual(f.call('get_loot_filters',{}).filters,filters);
+  for(const name of ['generate_loot_filter','test_loot_filter','export_loot_filter']) {
+    f.call(name,{baseRevision:f.state.revision,profile,...(name==='test_loot_filter'?{sample:{BaseType:'Iron Hat',Fated:false,UnidentifiedItemTier:3}}:{})});
+    const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.equal(request.kind,name);
+    assert.equal(request.profile.id,'maps');assert.equal(request.path,undefined);fs.rmSync(path.join(f.dir,'AI-build-request.json'));
+  }
+  f.call('propose_loot_filters',{title:'Pickups',baseRevision:f.state.revision,filters});
+  const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.equal(request.proposal.operations[0].type,'set_loot_filters');
+  assert.throws(()=>f.call('test_loot_filter',{baseRevision:f.state.revision,profile,sample:{},path:'arbitrary'}),/arguments/);
+});
 test('accepts typed Atlas stages, strategy inputs and explicit failure recovery branches', t => {
   const f=fixture(t);
   const plan={id:'final',title:'Final maps',version:'3.29.1',budget:138,nodes:[],progression:{stage:'final',previousId:'starter'},strategy:{maps:'T16 maps',scarabs:'Supplied scarabs',requirements:'Unlocks complete',avoid:'Reflect',setupCost:{amount:25,currency:'chaos',source:'Manual quote',quotedAt:1700000000}}};

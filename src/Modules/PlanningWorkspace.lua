@@ -1,13 +1,13 @@
 -- A persistent build tab for AI planning, Atlas strategies and crafting projects.
 local M={}
-local pages={ai="AI builds",atlas="Atlas",crafting="Crafting",journey="Journey"}
+local pages={ai="AI builds",atlas="Atlas",crafting="Crafting",journey="Journey",filters="Loot filter"}
 function M.new(build)
 	local self=setmetatable({build=build,page="ai",cache={},drafts={},selections={},craftDrafts={},controls={},viewport={x=0,y=32,width=main.screenW,height=main.screenH-32}},{__index=M})
 	self.nav=new("ControlHost"):ControlHost()
 	local anchor=new("Control"):Control(nil,{0,0,0,0})
 	anchor.x=function() return self.viewport.x end;anchor.y=function() return self.viewport.y end
-	for index,page in ipairs({"ai","atlas","crafting","journey"}) do
-		local control=new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{112+(index-1)*132,10,124,28},pages[page],function() self:Show(page) end)
+	for index,page in ipairs({"ai","atlas","crafting","journey","filters"}) do
+		local control=new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{112+(index-1)*110,10,102,28},pages[page],function() self:Show(page) end)
 		control.locked=function() return self.page==page end
 		control.tooltipText="Alt+"..index.." | Tab: move focus | Enter: activate"
 		self.nav.controls["nav_"..page]=require("Modules.PlanningUI").styleButton(control)
@@ -15,13 +15,13 @@ function M.new(build)
 	self.nav.controls.nav_build=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{16,10,80,28},"< Build",function()
 		build:SelectControl(nil);build.viewMode=build.plannerPreviousMode or "TREE"
 	end))
-	self.nav.controls.nav_text=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{648,10,54,28},"Aa",function()
+	self.nav.controls.nav_text=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{664,10,54,28},"Aa",function()
 		for page in pairs(self.cache) do self:Remember(page) end
 		main.planningTextLarge=not main.planningTextLarge;self.cache={};self:Show(self.page)
 	end))
 	self.nav.controls.nav_text.tooltipText="Toggle normal / large planning text"
-	self.nav.controls.nav_tools=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{710,10,80,28},"Tools",function() require("Classes.PlanningToolsControl").Open(build) end))
-	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{806,10,function() return math.max(0,self.viewport.width-822) end,28})
+	self.nav.controls.nav_tools=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{726,10,80,28},"Tools",function() require("Classes.PlanningToolsControl").Open(build) end))
+	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{822,10,function() return math.max(0,self.viewport.width-838) end,28})
 	function context:Draw()
 		local x,y=self:GetPos();local w=self:GetSize();local title=build.buildName or "Untitled build"
 		local status=require("Modules.PlanningUI").saveStatus(build)
@@ -68,7 +68,8 @@ function M:Show(page,source)
 			self.selections[page]=layout.selectedProject
 			self:UpdateControls()
 		end
-		if page=="journey" then require("Classes.BuildJourneyControl").Open(self.build,source,layout)
+		if page=="filters" then require("Classes.LootFilterControl").Open(self.build,source,layout)
+		elseif page=="journey" then require("Classes.BuildJourneyControl").Open(self.build,source,layout)
 		elseif page=="atlas" then require("Classes.AtlasPlannerControl").Open(self.build,source,layout)
 		elseif page=="crafting" then
 			if source and source.kind=="workbench" then layout.workbench=source.state and source or nil;require("Classes.CraftingSimulatorControl").Open(self.build,source.project,layout)
@@ -85,7 +86,7 @@ end
 function M:ProcessControlsInput(events,viewport)
 	if self.body then require("Modules.PlanningUI").keyboard(self.body,events) end
 	for i,event in pairs(events) do if event.type=="KeyDown" and IsKeyDown("ALT") then
-		local page=({["1"]="ai",["2"]="atlas",["3"]="crafting",["4"]="journey"})[event.key]
+		local page=({["1"]="ai",["2"]="atlas",["3"]="crafting",["4"]="journey",["5"]="filters"})[event.key]
 		if page then self:Show(page);event.type="PlanningHandled" end
 	elseif event.type=="KeyDown" and IsKeyDown("CTRL") and self.body then
 		local focused=self.body.selControl

@@ -31,7 +31,9 @@ jobs:
         run: apk add git python3 py3-pillow
       - uses: actions/checkout@v4
       - name: Exercise controls and audit frames
-        run: python3 tools/check_headless_ui.py
+        run: |
+          python3 tools/check_loot_filter_data.py
+          python3 tools/check_headless_ui.py
       - name: Upload headless UI evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,6 +1,11 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Added visual loot-filter profiles with build, crafting and Atlas pickup rules, drop previews and file export.
+* Added pinned NeverSink presets, 3.30 item migrations, Normal/Ruthless modes and reviewed account publication.
+* AI tools can generate, test, compile and propose saved loot-filter profiles through native review.
+* Integrated upstream 3.30 Standard/Ruthless trees, distance wording, tincture/shield fixes and tree breakdown corrections.
+* Trade results can include the potential of a compatible bench craft (upstream #10164).
 * New builds now default to the published 3.30 tree and its Atlas, while saved builds retain their versions.
 * Added opt-in official 3.30 passive and Atlas previews with bundled artwork and pinned source hashes.
 * Added the 150 point preview Atlas budget and stable Atlas 3.29.3, preserving saved tree versions.

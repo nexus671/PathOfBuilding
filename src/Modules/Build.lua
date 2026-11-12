@@ -650,6 +650,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	-- Load sections from the build file
 	self.savers = {
 		["BuildJourney"] = require("Modules.BuildJourney").new(self),
+		["LootFilters"] = require("Modules.LootFilters").new(self),
 		["AtlasPlans"] = require("Modules.AtlasPlanner").new(self),
 		["CraftingProjects"] = require("Modules.CraftingProjects").new(self),
 		["Config"] = self.configTab,
@@ -2148,6 +2149,8 @@ function buildMode:RefreshStatList()
 	self.controls.warnings.lines = {}
 	if treeVersions[self.spec.treeVersion].preview then
 		t_insert(self.controls.warnings.lines,"3.30 preview tree: gem, item and new mechanic calculations still use the current engine. Review unsupported modifiers.")
+	elseif treeVersions[self.spec.treeVersion].num == 3.30 then
+		t_insert(self.controls.warnings.lines,"3.30 trees are available; gem, item and new mechanic support is still being updated. Review unsupported modifiers.")
 	end
 	local statBoxList = wipeTable(self.controls.statBox.list)
 	if self.calcsTab.mainEnv.player.mainSkill.infoMessage then

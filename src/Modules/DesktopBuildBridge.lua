@@ -166,6 +166,8 @@ local function applyOperation(build, op)
 		build.notesTab.controls.edit:SetText(text(op.text,64000,"notes"))
 	elseif op.type == "set_build_journey" then
 		build.savers.BuildJourney:Replace(op.journey)
+	elseif op.type == "set_loot_filters" then
+		build.savers.LootFilters:Replace(op.filters)
 	elseif op.type == "set_crafting_project" then
 		build.savers.CraftingProjects:Upsert(op.project)
 	elseif op.type == "set_atlas_plan" then
@@ -273,6 +275,7 @@ function M.capture(build)
 		stats=stats(build),items={},skills={},passives={},masteries=copyTable(build.spec.masterySelections),config=copyTable(build.configTab.input),
 		warnings=copyTable(build.controls.warnings.lines),slots={},plan=M.plan,audit=insights.audit(build),encounter=insights.diagnose(build),
 		craftingProjects=copyTable(build.savers.CraftingProjects.projects),craftingWarning=build.savers.CraftingProjects.warning,
+		lootFilters=copyTable(build.savers.LootFilters.data),lootFilterWarning=build.savers.LootFilters.warning,
 		journey=copyTable(build.savers.BuildJourney.data),journeyWarning=build.savers.BuildJourney.warning,
 		journeyBudget=require("Modules.BuildJourney").budget(build.savers.BuildJourney.data),nextActions=require("Modules.BuildJourney").next(build.savers.BuildJourney.data,build),
 		atlasPlans=copyTable(build.savers.AtlasPlans.plans),atlasWarning=build.savers.AtlasPlans.warning,atlasVersions=copyTable(require("Modules.AtlasPlanner").versions)}
@@ -490,6 +493,19 @@ function M.poll(build, force)
 				M.status={id=request.id,status=result.cancelled and "cancelled" or "measured",upgrades=result};M.publishState()
 			end)
 			M.status={id=request.id,status="calculating",kind="journeyUpgrades"};M.publishState();return
+		end
+		if request.kind=="generate_loot_filter" or request.kind=="test_loot_filter" or request.kind=="export_loot_filter" then
+			assert(request.baseRevision==M.revision(build),"Build changed. Refresh loot-filter context.")
+			local filters=require("Modules.LootFilters")
+			local profile=request.profile or filters.find(build.savers.LootFilters.data,request.profileId)
+			assert(profile,"Choose a loot-filter profile")
+			profile=filters.validate({schemaVersion=1,activeId=profile.id,profiles={profile}}).profiles[1]
+			if request.kind=="generate_loot_filter" then
+				profile.rules=filters.generate(build,profile);M.status={id=request.id,status="generated",profile=profile}
+			elseif request.kind=="test_loot_filter" then
+				assert(type(request.sample)=="table","Supply drop properties");M.status={id=request.id,status="tested",result=filters.simulate(profile,request.sample)}
+			else local raw,report=filters.compile(profile);M.status={id=request.id,status="exported",filter=raw,report=report} end
+			M.publishState();return
 		end
 		if request.kind == "atlasSearch" or request.kind == "atlasConnect" then
 			assert(request.baseRevision == M.revision(build),"Build changed. Refresh Atlas context.")

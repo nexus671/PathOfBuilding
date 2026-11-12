@@ -11,6 +11,9 @@ const number = (minimum,maximum) => ({type:'number',minimum,maximum});
 const quoteSchema = object({amount:number(0,1e12),currency:{type:'string',pattern:'^[A-Za-z][A-Za-z0-9 _-]{0,23}$'},quotedAt:integer(0,4102444800),source:string(240)},['amount','currency','quotedAt','source']);
 const journeyId={type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$'};
 const journeyList=items=>({type:'array',items});
+const lootProfile=object({id:journeyId,title:string(120),preset:{enum:['campaign','early_maps','endgame']},strictness:integer(0,6),theme:{enum:['default','contrast']},mode:{enum:['Normal','Ruthless']},baseCommit:string(40),template:string(2000000),rules:journeyList(object({id:string(100),title:string(160),text:string(24000),enabled:boolean,origin:string(240)},['id','title','text']))},['id','title','preset','strictness','rules']);
+const lootFilters=object({schemaVersion:{const:1},activeId:string(64),profiles:journeyList(lootProfile)},['schemaVersion','activeId','profiles']);
+const lootSample={type:'object',maxProperties:80,additionalProperties:{oneOf:[string(1000),number(-1e9,1e9),boolean,array(string(240),40)]}};
 const journeyLinks={projectId:journeyId,atlasId:journeyId,stageId:journeyId,wishlistId:journeyId};
 const journeyEntry={id:journeyId,title:string(120),notes:string(8000),level:integer(1,100),...journeyLinks};
 const journeySchema=object({schemaVersion:{const:1},
@@ -48,6 +51,7 @@ const operations = [
   object({type:{const:'set_notes'},text:string(64000)},['type','text']),
   object({type:{const:'set_atlas_plan'},plan:atlasPlan},['type','plan']),
   object({type:{const:'set_build_journey'},journey:journeySchema},['type','journey']),
+  object({type:{const:'set_loot_filters'},filters:lootFilters},['type','filters']),
   object({type:{const:'set_crafting_project'},project:craftingProjectSchema},['type','project']),
 ];
 const metricNames = ['LifeUnreserved','EnergyShield','ManaUnreserved','CombinedDPS','FullDPS','TotalEHP','PhysicalMaximumHitTaken','ChaosMaximumHitTaken','RecoverySimulationSurvivalChance','RecoverySimulationDamageDPS','RecoverySimulationAttackUptime','ManaRegen','Speed','EffectiveMovementSpeedMod','FireResist','ColdResist','LightningResist','ChaosResist','Str','Dex','Int'];
@@ -82,6 +86,9 @@ const readOnly = {readOnlyHint:true,destructiveHint:false,idempotentHint:true,op
 const tools = [
   {name:'measure_journey_upgrades',description:'Calculate each planned wishlist target against the exact current native build without applying it. Targets come from exact item text or linked crafting targets. Poll get_proposal_status for measured deltas, constraints and ratios per supplied resource. No currency conversion or measured benefit is assumed.',inputSchema:object({baseRevision:string(40)},['baseRevision']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
   {name:'get_build_journey',description:'Read the saved roadmap, gear wishlist, leveling guide, actual resource ledger, reservations and explained next actions. Prices are user supplied. No live inventory or currency conversion is inferred.',inputSchema:object({}),annotations:readOnly},
+  {name:'get_loot_filters',description:'Read kept build-owned loot-filter profiles and personal rules. Bundled NeverSink templates are pinned; there is no live economy feed. Use native preview tools to test rules before proposing changes.',inputSchema:object({}),annotations:readOnly},
+  {name:'propose_loot_filters',description:'Propose replacement loot-filter profiles for native desktop review. Read and preserve existing profiles first. Apply keeps the candidate; build Save persists it. This tool never exports files or publishes account filters.',inputSchema:object({title:string(120),baseRevision:string(40),filters:lootFilters},['title','baseRevision','filters']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
+  ...['generate_loot_filter','test_loot_filter','export_loot_filter'].map(name=>({name,description:name==='generate_loot_filter'?'Queue generation of separate pickup rules from saved crafts, planned gear, gems, budget resources and Atlas plans. Returns a draft profile; propose_loot_filters is required to keep it.':name==='test_loot_filter'?'Queue deterministic drop evaluation. Sample uses exact PoE filter property names (BaseType, Class, ItemLevel, Fated etc). Missing or unsupported information returns unknown, never a certain hide.':'Queue compilation and return .filter text plus migration diagnostics. Returns text only: no files or account filters are written. Poll get_proposal_status and match the request ID.',inputSchema:object({baseRevision:string(40),profileId:string(64),profile:lootProfile,sample:lootSample},['baseRevision',...(name==='test_loot_filter'?['sample']:[])]),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}})),
   {name:'propose_journey_plan',description:'Propose a complete replacement of the build journey against the current revision. Read get_build_journey first and preserve existing entries and spending. Native validation rejects cycles and overspending. The user reviews the candidate and saves explicitly.',inputSchema:object({title:string(120),baseRevision:string(40),journey:journeySchema},['title','baseRevision','journey']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
   {name:'get_atlas_plans',description:'Read named Atlas plans and bundled Standard tree versions from the connected build. Atlas allocations are separate from character passives and do not change character DPS/EHP. Build Save persists reviewed plans.',inputSchema:object({}),annotations:readOnly},
   {name:'search_atlas_nodes',description:'Queue search over pinned official Atlas node names and stat text. Select the exact version. Returns native IDs, links, positions and stats. Decorative mastery labels are excluded. Poll get_proposal_status and match the request ID.',inputSchema:object({baseRevision:{type:'string',pattern:'^[a-f0-9]{40}$'},version:atlasVersion,query:string(160),limit:integer(1,100)},['baseRevision','version','query']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
@@ -160,6 +167,10 @@ function createBridge(reportPath, clientName = () => "MCP client") {
         session:current.session,revision:current.revision,proposalStatus:current.proposal?.status,diagnostics:current.diagnostics,
         steps:['Keep PoB open and wait for calculations to finish.','Enable build proposals, then reconnect your AI client if tools are missing.','A ready desktop heartbeat does not verify that your AI client is connected.']};
     }
+    if (name === 'propose_loot_filters') {
+      args={mode:'edit',title:args.title,baseRevision:args.baseRevision,operations:[{type:'set_loot_filters',filters:args.filters}]};
+      name='propose_build';
+    }
     if (name === 'propose_journey_plan') {
       args={mode:'edit',title:args.title,baseRevision:args.baseRevision,operations:[{type:'set_build_journey',journey:args.journey}]};
       name='propose_build';
@@ -184,6 +195,7 @@ function createBridge(reportPath, clientName = () => "MCP client") {
     if (name === 'get_atlas_plans') return {revision:current.revision,plans:captured.context.atlasPlans ?? [],versions:captured.context.atlasVersions ?? [],warning:captured.context.atlasWarning,limitations:['Atlas plans are separate from character calculations.','Budgets are supplied progression. No account completion or live farming profit is inferred.']};
     if (name === 'get_crafting_projects') return {revision:current.revision,projects:captured.context.craftingProjects ?? [],warning:captured.context.craftingWarning,limitations:['Plans and cost/simulation results are supplied data, not independently verified recipes.','Use desktop review before applying; build Save persists projects.']};
     if (name === 'get_build_journey') return {revision:current.revision,journey:captured.context.journey,budget:captured.context.journeyBudget,nextActions:captured.context.nextActions,warning:captured.context.journeyWarning};
+    if (name === 'get_loot_filters') return {revision:current.revision,filters:captured.context.lootFilters,warning:captured.context.lootFilterWarning};
     if (name === 'get_build_analysis') return {revision:current.revision,capturedAt:captured.capturedAt,audit:captured.context.audit,encounter:captured.context.encounter,plan:current.plan};
     if (name === 'get_build_context') {
       contact(current,true);
@@ -225,7 +237,7 @@ function createBridge(reportPath, clientName = () => "MCP client") {
     if (nodeCount > 400) throw new Error('Use at most 400 passive changes per request.');
     if (name === 'set_build_goals' && args.budget !== undefined && !args.currency) throw new Error('Budget needs a currency.');
     const id = randomUUID();
-    const payload = name === 'measure_journey_upgrades' ? {kind:'journeyUpgrades',...args} : name === 'cancel_crafting_simulation' ? {kind:'craftCancel',...args} : name === 'calculate_crafting' ? {kind:'craftCalculate',...args} : name === 'optimize_crafting_fossils' ? {kind:'craftOptimize',...args} : name === 'search_atlas_nodes' ? {kind:'atlasSearch',...args} : name === 'plan_atlas_tree' ? {kind:'atlasConnect',...args} : name === 'apply_crafting_action' ? {kind:'craftAction',...args} : name === 'simulate_crafting' ? {kind:'craftSimulate',...args} : name === 'inspect_crafting_item' ? {kind:'craftInspect',...args} : name === 'set_build_goals' ? {kind:'plan',plan:args} : name === 'compare_build_candidates' ? {kind:'compare',...args} : name === 'plan_leveling_build' ? {kind:'leveling',...args} : {proposal:args};
+    const payload = ['generate_loot_filter','test_loot_filter','export_loot_filter'].includes(name) ? {kind:name,...args} : name === 'measure_journey_upgrades' ? {kind:'journeyUpgrades',...args} : name === 'cancel_crafting_simulation' ? {kind:'craftCancel',...args} : name === 'calculate_crafting' ? {kind:'craftCalculate',...args} : name === 'optimize_crafting_fossils' ? {kind:'craftOptimize',...args} : name === 'search_atlas_nodes' ? {kind:'atlasSearch',...args} : name === 'plan_atlas_tree' ? {kind:'atlasConnect',...args} : name === 'apply_crafting_action' ? {kind:'craftAction',...args} : name === 'simulate_crafting' ? {kind:'craftSimulate',...args} : name === 'inspect_crafting_item' ? {kind:'craftInspect',...args} : name === 'set_build_goals' ? {kind:'plan',plan:args} : name === 'compare_build_candidates' ? {kind:'compare',...args} : name === 'plan_leveling_build' ? {kind:'leveling',...args} : {proposal:args};
     const request = JSON.stringify({id,session:current.session,...payload});
     if (Buffer.byteLength(request) > 262144) throw new Error('Proposal exceeds 256 KiB.');
     const temporary = filename(`request-${id}`);

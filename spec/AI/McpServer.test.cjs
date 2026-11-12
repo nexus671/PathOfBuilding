@@ -43,9 +43,9 @@ test('negotiates versions, requires initialization, and keeps applying builds in
   assert.equal((await c.request('tools/list')).error.code,-32000);
   assert.equal((await c.initialize('2025-03-26')).result.protocolVersion,'2025-03-26');
   const list = (await c.request('tools/list')).result.tools;
-  assert.equal(list.length,28);
+  assert.equal(list.length,33);
   assert.ok(list.every(tool => !tool.annotations.openWorldHint));
-  assert.equal(list.filter(tool => !tool.annotations.readOnlyHint).length,16);
+  assert.equal(list.filter(tool => !tool.annotations.readOnlyHint).length,20);
   assert.ok(list.some(tool => tool.name === 'propose_build' && !tool.annotations.readOnlyHint));
   assert.ok(!list.some(tool => /apply_build|save/.test(tool.name)));
   assert.ok(list.some(tool => tool.name === 'apply_crafting_action'));

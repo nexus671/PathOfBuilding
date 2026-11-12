@@ -1,0 +1,98 @@
+describe("Build-owned loot filters",function()
+	local filters=require("Modules.LootFilters")
+	local parser=require("Modules.LootFilterParser")
+	before_each(function() newBuild();main.popups={} end)
+	after_each(function() main.popups={} end)
+	it("applies first-match ordering, Continue styles and exact/partial names",function()
+		local raw='Show\n BaseType "Iron"\n SetTextColor 255 0 0\n Continue\nHide\n BaseType == "Iron Hat"\n SetFontSize 25\nShow'
+		local result=parser.simulate(parser.parse(raw),{BaseType="Iron Hat"})
+		assert.equal("Hide",result.action);assert.equal(2,#result.matches);assert.same({"255","0","0"},result.styles.SetTextColor)
+		assert.equal("Show",parser.simulate(parser.parse(raw),{BaseType="Iron Ring"}).action)
+	end)
+	it("never treats incomplete or unsupported samples as a certain hide",function()
+		for _,raw in ipairs({'Hide\n Fated True','Hide\n UnidentifiedItemTier >= 3','Hide\n FutureKeyword True'}) do
+			assert.equal("unknown",parser.simulate(parser.parse(raw),{}).status)
+		end
+		assert.equal("Show",parser.simulate(parser.parse('Hide\n Fated True\n Class == "Viscera"\nShow'),{Class="Currency"}).action)
+		assert.equal("unknown",parser.simulate(parser.parse('Import "other.filter"\nHide'),{}).status)
+		assert.equal("invalid",parser.simulate(parser.parse('Hide\n BaseType "broken'),{}).status)
+	end)
+	it("supports 3.30 tier/fated, numeric alternatives, booleans, sockets and influences",function()
+		local parsed=parser.parse('Show\n UnidentifiedItemTier >= 3\n Fated True\n SocketGroup RGB\n HasInfluence Shaper\nHide')
+		assert.equal("Show",parser.simulate(parsed,{UnidentifiedItemTier=4,Fated=true,SocketGroup="RGB BB",HasInfluence={"Shaper"}}).action)
+		assert.equal("Hide",parser.simulate(parsed,{UnidentifiedItemTier=2,Fated=true,SocketGroup="RGB BB",HasInfluence={"Shaper"}}).action)
+	end)
+	it("requests validated account writes without exposing tokens and distinguishes pending from success",function()
+		local account=require("Modules.LootFilterAccount");local original=launch.DownloadPage;local called=false
+		local api={authToken="test-only",ValidateAuth=function(_,callback) callback(true) end}
+		local payload={filter_name="Test",realm="pc",filter="Show",public=false}
+		local ok,message=pcall(function()
+			launch.DownloadPage=function(_,url,callback,options)
+				called=true;assert.equal("https://api.pathofexile.com/item-filter?validate=true",url)
+				assert.is_truthy(options.header:find("Content-Type: application/json",1,true));assert.is_false(require("dkjson").decode(options.body).public)
+				callback({header="HTTP/1.1 202 Accepted",body='{"filter":{"id":"test"}}'})
+			end
+			account.nextRequest=0;account.request(api,"POST",nil,payload,function(_,err) assert.is_truthy(err:find("processing",1,true)) end)
+			assert.is_true(called);assert.is_false(account.busy)
+			launch.DownloadPage=function(_,_,callback) callback({header="HTTP/1.1 403 Forbidden",body="{}"}) end
+			account.nextRequest=0;account.request(api,"GET",nil,nil,function(_,err) assert.is_truthy(err:find("account:item_filter",1,true)) end)
+			assert.has_error(function() account.request(api,"POST","../other",payload,function() end) end)
+		end)
+		launch.DownloadPage=original;account.busy=false;account.nextRequest=0;assert.is_true(ok,message)
+	end)
+	it("migrates renamed items and drops empty removed-item blocks without widening Hide",function()
+		local raw='Hide\n BaseType == "Orb of Binding"\nShow\n BaseType == "Maven\'s Chisel of Scarabs"\nShow\n BaseType == "Chaos Orb" "Orb of Binding"'
+		local migrated,changes=filters.migrate(raw)
+		assert.is_nil(migrated:find("Orb of Binding",1,true));assert.is_truthy(migrated:find("Maven's Chisel of Threads",1,true))
+		assert.equal(2,#parser.parse(migrated).rules);assert.equal("removed",changes["Orb of Binding"])
+		assert.equal("Show",parser.simulate(parser.parse(migrated),{BaseType="Iron Hat"}).action)
+	end)
+	it("compiles all seven pinned bases with 3.30 item protection and provenance",function()
+		for strictness=0,6 do
+			local profile=filters.profile("test","Test");profile.strictness=strictness
+			local raw,report=filters.compile(profile)
+			assert.is_true(#raw>10000);assert.equal(filters.source().commit,report.baseCommit)
+			assert.equal("Show",filters.simulate(profile,{BaseType="Frayed Thread"}).action)
+			for _,diagnostic in ipairs(report.diagnostics) do assert.is_nil(diagnostic.error,diagnostic.error) end
+		end
+	end)
+	it("preserves imported text, personal rules and unknown future metadata",function()
+		local profile=filters.profile("test","Test");profile.template='Show\n BaseType == "Iron Hat" # original'
+		profile.rules={filters.rule("mine","My rule",{'BaseType == "Chaos Orb"'})}
+		local updated=filters.update(profile);assert.equal(profile.template,updated.template);assert.same(profile.rules,updated.rules)
+		local saver=build.savers.LootFilters;saver:Upsert(profile)
+		local xml={};saver:Save(xml);local restored=filters.new(build);restored:Load(xml);assert.same(saver.data,restored.data)
+		restored:Load({'{"schemaVersion":99,"profiles":[]}'});local preserved={};restored:Save(preserved);assert.equal('{"schemaVersion":99,"profiles":[]}',preserved[1])
+		assert.has_error(function() restored:Upsert(profile) end)
+	end)
+	it("requires an explicit base update and produces Ruthless Minimal blocks",function()
+		local p=filters.profile("test","Test");p.baseCommit=string.rep("0",40)
+		assert.has_error(function() filters.compile(p) end)
+		p=filters.update(p);p.mode="Ruthless";local raw=filters.compile(p)
+		for _,rule in ipairs(parser.parse(raw).rules) do assert.is_not.equal("Hide",rule.action) end
+		assert.is_truthy(raw:find("Minimal",1,true))
+		p.mode="Normal";p.template="Minimal\n BaseType Iron";assert.equal("invalid",filters.simulate(p,{BaseType="Iron"}).status)
+	end)
+	it("generates from saved craft and gear goals while preserving personal rules",function()
+		local craft={id="hat",title="Craft helmet",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",goals={},steps={}}
+		build.savers.CraftingProjects:Upsert(craft)
+		local journey=require("Modules.BuildJourney").empty();journey.wishlist={{id="ring",title="Ring",slot="Ring 1",route="farm",targetItem="Rarity: NORMAL\nIron Ring\nItem Level: 80"}};build.savers.BuildJourney:Replace(journey)
+		local profile=filters.profile("test","Test");profile.rules={filters.rule("mine","My rule",{'BaseType == "Chaos Orb"'})}
+		profile.rules=filters.generate(build,profile);assert.equal(3,#profile.rules);assert.equal("mine",profile.rules[1].id)
+		assert.equal("Show",filters.simulate(profile,{BaseType="Iron Hat",Rarity="Rare",ItemLevel=86}).action)
+		local count=#profile.rules;profile.rules=filters.generate(build,profile);assert.equal(count,#profile.rules)
+	end)
+	it("rejects malformed metadata, title injection, duplicate IDs and executable imports",function()
+		local p=filters.profile("test","Bad\nHide");assert.has_error(function() filters.validate({schemaVersion=1,profiles={p}}) end)
+		p=filters.profile("test","Test");p.rules={{id="bad",title="Bad",text='Import "evil.filter"'}}
+		assert.has_error(function() filters.validate({schemaVersion=1,profiles={p}}) end)
+		p=filters.profile("test","Test");assert.has_error(function() filters.validate({schemaVersion=1,profiles={p,p}}) end)
+	end)
+	it("carries filters through native proposal review and portable XML without exporting files",function()
+		local p=filters.profile("test","Test");p.rules={filters.rule("mine","My rule",{'BaseType == "Chaos Orb"'})}
+		local bridge=require("Modules.DesktopBuildBridge");local prepared=bridge.prepare(build,{mode="edit",title="Loot filter",baseRevision=bridge.revision(build),operations={{type="set_loot_filters",filters={schemaVersion=1,activeId="test",profiles={p}}}}})
+		assert.equal(0,#build.savers.LootFilters.data.profiles);assert.equal(1,#prepared.candidate.savers.LootFilters.data.profiles)
+		assert.is_truthy(table.concat(prepared.changes," "):find("Loot filters updated",1,true))
+		local raw,contents=require("Modules.PlanningBundle").export(prepared.candidate);assert.equal(1,contents.filters);assert.equal(1,require("Modules.PlanningBundle").import(raw).contents.filters)
+	end)
+end)

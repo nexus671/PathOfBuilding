@@ -28,6 +28,8 @@ See [connected planning tools](docs/planning-workflows.md) for background upgrad
 
 [Covens of Umbra trees](docs/covens-preview.md) are the default for new builds and their Atlas plans, with the current engine's calculation limits clearly marked.
 
+[Loot filters](docs/loot-filters.md) connect build targets, crafting bases and Atlas plans to a visual rule editor, drop previews, NeverSink presets and `.filter` export.
+
 ## Links
 
 [Published version](https://github.com/nexus671/PathOfBuilding-AI-Edition/tree/main) · [Report a problem](https://github.com/nexus671/PathOfBuilding-AI-Edition/issues) · [Community Edition](https://pathofbuilding.community)

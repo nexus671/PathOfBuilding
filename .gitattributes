@@ -67,3 +67,6 @@
 # (https://git-scm.com/docs/gitattributes#_executable)
 ###############################################################################
 runtime/*.exe binary
+
+# Preserve pinned third-party filter text, including its original whitespace.
+src/Data/LootFilters/*.filter -text whitespace=-trailing-space

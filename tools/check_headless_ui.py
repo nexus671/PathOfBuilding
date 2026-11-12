@@ -30,7 +30,7 @@ def main():
     (directory / "controls.log").write_text(result.stdout)
     assert result.returncode == 0, result.stdout
     paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 399, f"Expected 399 UI frames, found {len(paths)}"
+    assert len(paths) == 441, f"Expected 441 UI frames, found {len(paths)}"
     failures = []
     for path in paths:
         image, audit = render(json.loads(path.read_text()))
@@ -53,6 +53,10 @@ def main():
     sources += list((ROOT / "src/Assets/Crafting").rglob("*"))
     sources += list((ROOT / "src/Assets/Atlas").rglob("*"))
     sources += list((ROOT / "src/Data/Atlas").glob("*.json"))
+    sources += list((ROOT / "src/Data/LootFilters").glob("*"))
+    sources += list((ROOT / "src/Assets/LootFilters").glob("*"))
+    sources += list((ROOT / "src/TreeData/3_30").glob("*"))
+    sources += list((ROOT / "src/TreeData/3_30_ruthless").glob("*"))
     sources += list((ROOT / "src/TreeData/3_30_preview").glob("*"))
     sources += [ROOT / "src/_SimpleGraphic.def.lua", ROOT / "src/GameVersions.lua", ROOT / "src/Data/HeadlessImageSizes.json"]
     sources += [ROOT / "src/HeadlessWrapper.lua", ROOT / "src/Data/Global.lua", Path(__file__), ROOT / "tools/render_headless_ui.py", ROOT / "tools/test_headless_ui.lua"]

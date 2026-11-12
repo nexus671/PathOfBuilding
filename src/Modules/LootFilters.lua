@@ -1,0 +1,174 @@
+-- Build-owned visual filter profiles; pinned base filters stay outside build XML.
+-- cspell:ignore jsontype
+local json=require("dkjson")
+local parser=require("Modules.LootFilterParser")
+local M={limit=2*1024*1024,strictness={"Soft","Regular","Semi-strict","Strict","Very strict","Uber strict","Uber plus strict"}}
+local cache={}
+local function read(name)
+	if not cache[name] then local f=assert(io.open("Data/LootFilters/"..name,"rb"));cache[name]=f:read("*a");f:close() end
+	return cache[name]
+end
+function M.source() return assert(json.decode(read("source.json"))) end
+function M.patch() return assert(json.decode(read("patch-3.30.json"))) end
+local function text(value,limit,label)
+	assert(type(value)=="string" and #value<=limit and not value:find("\0"),"Invalid "..label);return value
+end
+local function array(value)
+	assert(type(value)=="table" and value~=json.null,"Expected array")
+	assert(not getmetatable(value) or getmetatable(value).__jsontype~="object","Expected array")
+	for k in pairs(value) do assert(type(k)=="number" and k==math.floor(k) and k>=1 and k<=#value,"Expected dense array") end
+	return value
+end
+local function quote(value) assert(not value:find('["\r\n]'),"Filter values cannot contain quotes or newlines");return '"'..value..'"' end
+M.quote=quote
+function M.empty() return {schemaVersion=1,activeId="",profiles={}} end
+function M.profile(id,title,preset)
+	return {id=id,title=title,preset=preset or "early_maps",strictness=preset=="campaign" and 1 or preset=="endgame" and 4 or 2,theme="default",mode="Normal",baseCommit=M.source().commit,rules={}}
+end
+function M.validate(data)
+	assert(type(data)=="table" and data.schemaVersion==1,"Unsupported loot-filter data")
+	local result=M.empty();result.activeId=text(data.activeId or "",64,"active filter");local ids={}
+	for _,p in ipairs(array(data.profiles)) do
+		local entry={id=text(p.id,64,"profile ID"),title=text(p.title,120,"profile title"),preset=p.preset,strictness=p.strictness,theme=p.theme or "default",mode=p.mode or "Normal",rules={}}
+		assert(entry.id:match("^[%w_-]+$") and not ids[entry.id] and entry.title:match("%S") and not entry.title:find("[%c]"),"Invalid or duplicate filter ID/title");ids[entry.id]=true
+		assert(entry.preset=="campaign" or entry.preset=="early_maps" or entry.preset=="endgame","Unknown progression preset")
+		assert(type(p.strictness)=="number" and p.strictness==math.floor(p.strictness) and p.strictness>=0 and p.strictness<=6,"Strictness must be 0 to 6")
+		assert(entry.theme=="default" or entry.theme=="contrast","Unknown filter theme")
+		assert(entry.mode=="Normal" or entry.mode=="Ruthless","Unknown filter mode")
+		entry.baseCommit=p.baseCommit and text(p.baseCommit,40,"template revision") or M.source().commit
+		if p.template then entry.template=text(p.template,M.limit,"imported filter");assert(#parser.parse(p.template).rules>0,"Imported filter has no rules") end
+		local seen={}
+		for _,rule in ipairs(array(p.rules)) do
+			local r={id=text(rule.id,100,"rule ID"),title=text(rule.title,160,"rule title"),text=text(rule.text,24000,"rule text"),enabled=rule.enabled~=false}
+			assert(r.id:match("^[%w_-]+$") and not seen[r.id] and not r.title:find("[%c]"),"Invalid or duplicate rule ID/title");seen[r.id]=true
+			local parsed=parser.parse(r.text);assert(#parsed.rules==1 and #parsed.imports==0,"Use exactly one Show/Hide/Minimal block per personal rule")
+			for _,d in ipairs(parsed.diagnostics) do assert(not d.error,d.error) end
+			if rule.origin then r.origin=text(rule.origin,240,"rule origin");assert(not r.origin:find("[%c]"),"Invalid rule origin") end
+			entry.rules[#entry.rules+1]=r
+		end
+		result.profiles[#result.profiles+1]=entry
+	end
+	assert(result.activeId=="" or ids[result.activeId],"Active loot filter is missing")
+	assert(#json.encode(result)<=M.limit,"Loot-filter metadata exceeds 2 MiB");return result
+end
+function M.find(data,id) for _,p in ipairs(data.profiles) do if p.id==(id or data.activeId) then return p end end end
+local themes={default={text="255 235 175",border="105 195 245",background="20 30 45",sound="2"},contrast={text="255 255 255",border="255 220 0",background="0 0 0",sound="6"}}
+function M.rule(id,title,conditions,origin,theme)
+	local style=themes[theme or "default"];local lines={"Show"}
+	for _,c in ipairs(conditions) do lines[#lines+1]="    "..c end
+	for _,pair in ipairs({{"SetTextColor",style.text},{"SetBorderColor",style.border},{"SetBackgroundColor",style.background},{"SetFontSize","42"},{"PlayAlertSound",style.sound.." 200"},{"MinimapIcon","1 Cyan Diamond"},{"PlayEffect","Cyan"}}) do lines[#lines+1]="    "..pair[1].." "..pair[2] end
+	return {id=id,title=title,text=table.concat(lines,"\n"),enabled=true,origin=origin}
+end
+function M.generate(build,profile)
+	local result={};local used={};local ids={}
+	for _,rule in ipairs(profile.rules) do if not rule.origin then ids[rule.id]=true end end
+	local function add(id,title,conditions,origin)
+		local signature=table.concat(conditions,"\n");if used[signature] then return end;used[signature]=true
+		local base=id;local suffix=1;while ids[id] do suffix=suffix+1;id=base.."-"..suffix end;ids[id]=true
+		result[#result+1]=M.rule(id,title,conditions,origin,profile.theme)
+	end
+	local function base(raw,id,title,origin)
+		local ok,item=pcall(require("Modules.CraftingProjects").item,raw or "")
+		if not ok then return end
+		local conditions={"BaseType == "..quote(item.baseName),"Rarity <= Rare"}
+		local level=tonumber((raw or ""):match("Item Level: (%d+)"));if level then conditions[#conditions+1]="ItemLevel >= "..level end
+		add(id,title,conditions,origin)
+	end
+	for _,p in ipairs(build.savers.CraftingProjects.projects) do base(p.startingItem,"craft-"..p.id,p.title.." base","craft:"..p.id) end
+	for _,e in ipairs(build.savers.BuildJourney.data.wishlist) do if e.status=="planned" then base(e.targetItem,"gear-"..e.id,e.title.." base","gear:"..e.id) end end
+	for i,group in ipairs(build.skillsTab.socketGroupList) do
+		local colours={}
+		for j,gem in ipairs(group.gemList) do if gem.enabled~=false and gem.nameSpec and gem.nameSpec~="" then
+			add("gem-"..i.."-"..j,gem.nameSpec,{"Class == \"Skill Gems\" \"Support Gems\"","BaseType == "..quote(gem.nameSpec)},"gems")
+			local data=gem.grantedEffect or gem.gemData and gem.gemData.grantedEffect;local color=data and data.color;if type(color)=="number" then color=({"R","G","B","W"})[color] end
+			if color=="R" or color=="G" or color=="B" or color=="W" then colours[#colours+1]=color end
+		end end
+		if #colours>=2 and #colours<=6 and profile.preset=="campaign" then
+			add("links-"..i,"Links for skill group "..i,{"SocketGroup "..table.concat(colours),"Rarity <= Rare"},"gems")
+		end
+	end
+	local patch=M.patch();local names={};for class,items in pairs(patch.added) do for _,name in ipairs(items) do names[name]=class end end
+	local removed={};for _,name in ipairs(patch.removed) do removed[name]=true end
+	for _,name in ipairs({"Orb of Alchemy","Chaos Orb","Divine Orb","Orb of Alteration","Orb of Augmentation","Regal Orb","Exalted Orb","Orb of Annulment","Chromatic Orb","Jeweller's Orb","Orb of Fusing","Vaal Orb"}) do names[name]="Stackable Currency" end
+	local aliases={chaos="Chaos Orb",divine="Divine Orb",divines="Divine Orb",alchemy="Orb of Alchemy",alteration="Orb of Alteration",exalt="Exalted Orb",annul="Orb of Annulment",fusing="Orb of Fusing",chromatic="Chromatic Orb",jeweller="Jeweller's Orb"}
+	for name in pairs(names) do aliases[name:lower()]=name;aliases[name:lower().."s"]=name end
+	for _,resource in ipairs(build.savers.BuildJourney.data.resources) do
+		local name=patch.renamed[resource.title] or aliases[resource.title:lower()] or resource.title
+		if names[name] and not removed[name] then add("resource-"..resource.id,name,{"BaseType == "..quote(name)},"budget:"..resource.id) end
+	end
+	for _,plan in ipairs(build.savers.AtlasPlans.plans) do
+		local keywords={};local graph=require("Modules.AtlasPlanner").tree(plan.version)
+		for _,id in ipairs(plan.nodes) do local node=graph.nodes[id];if node then keywords[require("Modules.AtlasStrategy").mechanic(node)]=true end end
+		for _,field in ipairs({"scarabs","maps"}) do for name in pairs(names) do if (plan.strategy and plan.strategy[field] or ""):lower():find(name:lower(),1,true) then add("atlas-item-"..plan.id.."-"..(#result+1),name,{"BaseType == "..quote(name)},"atlas:"..plan.id) end end end
+		for _,name in ipairs(patch.added["Map Fragments"] or {}) do local mechanic=name:match("^(%a+) Thread$");if mechanic and keywords[mechanic] then add("atlas-"..plan.id.."-"..mechanic,name,{"BaseType == "..quote(name)},"atlas:"..plan.id) end end
+	end
+	local rules={};for _,rule in ipairs(profile.rules) do if not rule.origin then rules[#rules+1]=copyTable(rule) end end
+	for _,rule in ipairs(result) do rules[#rules+1]=rule end
+	return rules
+end
+-- Only rewrite BaseType token lists. Removing every value removes the whole rule,
+-- rather than broadening a Hide block. Original imports remain saved verbatim.
+function M.migrate(raw)
+	local patch=M.patch();local removed={};for _,name in ipairs(patch.removed) do removed[name]=true end
+	local out,block,skip,changes={}, {},false,{}
+	local function flush() if not skip then for _,line in ipairs(block) do out[#out+1]=line end end;block={};skip=false end
+	for line in (raw.."\n"):gmatch("([^\n]*)\n") do
+		if line:match("^%s*Show%s*") or line:match("^%s*Hide%s*") or line:match("^%s*Minimal%s*") then flush() end
+		if line:match("^%s*BaseType%s") then
+			local values={};local changed=false
+			line=line:gsub('"([^"\r\n]+)"',function(name)
+				if removed[name] then changed=true;changes[name]="removed";return "" end
+				local nextName=patch.renamed[name] or name;if nextName~=name then changed=true;changes[name]=nextName end;values[#values+1]=nextName;return quote(nextName)
+			end)
+			if changed and #values==0 then skip=true end
+		end
+		block[#block+1]=line
+	end
+	flush();return table.concat(out,"\n"),changes
+end
+function M.base(profile)
+	if profile.template then return profile.template end
+	assert(profile.baseCommit==M.source().commit,"The bundled base changed. Review Audit / update before exporting this profile.")
+	return read(profile.strictness..".filter")
+end
+function M.compile(profile)
+	local checked=M.validate({schemaVersion=1,activeId=profile.id,profiles={profile}}).profiles[1]
+	local output={"# Path of Building AI Edition | "..checked.title,"# PoE 3.30 | NeverSink base "..checked.baseCommit,"# NeverSink templates: MIT. Personal rules precede the base filter."}
+	for _,r in ipairs(checked.rules) do if r.enabled then output[#output+1]="\n# PoB rule: "..r.title..(r.origin and " ["..r.origin.."]" or "");output[#output+1]=r.text end end
+	-- New league items are shown until a later pinned base can tier them.
+	local patch=M.patch();local classes={};for class in pairs(patch.added) do classes[#classes+1]=class end;table.sort(classes)
+	for _,class in ipairs(classes) do local values={};for _,name in ipairs(patch.added[class]) do values[#values+1]=quote(name) end
+		output[#output+1]="\n# 3.30 new-item safety: "..class.."\nShow\n    BaseType == "..table.concat(values," ").."\n    SetTextColor 255 235 175\n    SetBorderColor 175 110 230\n    SetFontSize 40"
+	end
+	local base,changes=M.migrate(M.base(checked));output[#output+1]="\n# Pinned base filter\n"..base
+	local raw=table.concat(output,"\n");assert(#raw<=M.limit,"Compiled filter exceeds 2 MiB")
+	if checked.mode=="Ruthless" then raw=raw:gsub("\n([ \t]*)Hide(%f[%W])","\n%1Minimal%2") end
+	local parsed=parser.parse(raw)
+	if checked.mode=="Normal" then for _,rule in ipairs(parsed.rules) do if rule.action=="Minimal" then parsed.diagnostics[#parsed.diagnostics+1]={line=rule.line,error="Minimal blocks require Ruthless mode"} end end end
+	return raw,{changes=changes,diagnostics=parsed.diagnostics,imports=parsed.imports,rules=#parsed.rules,baseCommit=checked.baseCommit,currentCommit=M.source().commit,imported=checked.template~=nil}
+end
+function M.simulate(profile,item)
+	local raw,report=M.compile(profile)
+	for _,d in ipairs(report.diagnostics) do if d.error then return {status="invalid",action="Unknown",styles={},matches={},reasons={d.error}} end end
+	return parser.simulate(parser.parse(raw),item)
+end
+function M.update(profile)
+	local nextProfile=copyTable(profile);nextProfile.baseCommit=M.source().commit
+	return nextProfile,{previous=profile.baseCommit,current=nextProfile.baseCommit,personalRules=#profile.rules,imported=profile.template~=nil}
+end
+function M.new(build)
+	local self={build=build,data=M.empty()}
+	function self:Load(xml)
+		local raw=table.concat(xml);if raw:match("^%s*$") then return end
+		local ok,result=pcall(function() assert(#raw<=M.limit,"Too large");return M.validate(assert(json.decode(raw,1,json.null))) end)
+		if ok then self.data=result else self.unreadable=raw;self.warning="Loot filters could not be read and will be preserved unchanged." end
+	end
+	function self:Save(xml) xml[#xml+1]=self.unreadable or json.encode(self.data) end
+	function self:Replace(data) assert(not self.unreadable,self.warning);self.data=M.validate(data);build.modFlag=true;require("Modules.PlanningUI").kept(build,"filters");return self.data end
+	function self:Upsert(profile)
+		local data=copyTable(self.data);local found=false;for i,p in ipairs(data.profiles) do if p.id==profile.id then data.profiles[i]=profile;found=true end end
+		if not found then data.profiles[#data.profiles+1]=profile end;data.activeId=profile.id;return self:Replace(data)
+	end
+	return self
+end
+return M

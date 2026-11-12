@@ -90,7 +90,9 @@ function PoEAPIClass:UpdateMain()
 end
 
 --- @param callback fun(errCode: string?)
-function PoEAPIClass:FetchAuthToken(callback)
+function PoEAPIClass:FetchAuthToken(callback, includeItemFilters)
+	local requestedScopes = { unpack(scopesOAuth) }
+	if includeItemFilters then table.insert(requestedScopes, "account:item_filter") end
 	math.randomseed(os.time())
 	local secret = math.random(2 ^ 32 - 1)
 	local code_verifier = base64_encode(tostring(secret))
@@ -103,7 +105,7 @@ function PoEAPIClass:FetchAuthToken(callback)
 
 	local authUrl = string.format(
 		"https://www.pathofexile.com/oauth/authorize?client_id=pob&response_type=code&scope=%s&state=%s&code_challenge=%s&code_challenge_method=S256"
-		, table.concat(scopesOAuth, "%20")
+		, table.concat(requestedScopes, "%20")
 		, initialState
 		, code_challenge
 	)
@@ -131,7 +133,7 @@ function PoEAPIClass:FetchAuthToken(callback)
 				local formText = "client_id=pob&grant_type=authorization_code&code=" ..
 				code ..
 				"&redirect_uri=http://localhost:" ..
-				port .. "&scope=" .. table.concat(scopesOAuth, " ") .. "&code_verifier=" .. code_verifier
+				port .. "&scope=" .. table.concat(requestedScopes, " ") .. "&code_verifier=" .. code_verifier
 				launch:DownloadPage("https://www.pathofexile.com/oauth/token", function(response, errMsg)
 					if errMsg then
 						ConPrintf("Failed to get token from server: " .. errMsg)

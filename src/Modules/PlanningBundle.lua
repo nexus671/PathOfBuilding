@@ -4,13 +4,14 @@ local sha1=require("sha1")
 local M={limit=16*1024*1024}
 function M.contents(xml)
 	local parsed=assert(common.xml.ParseXML(xml));local root=assert(parsed[1]);assert(root.elem=="PathOfBuilding","Bundle needs native Path of Building XML")
-	local result={crafts=0,checkpoints=0,atlas=0,stages=0,wishlist=0,milestones=0,sections={}}
+	local result={crafts=0,checkpoints=0,atlas=0,stages=0,wishlist=0,milestones=0,filters=0,sections={}}
 	for _,node in ipairs(root) do if type(node)=="table" then
 		result.sections[#result.sections+1]=node.elem
-		if node.elem=="CraftingProjects" or node.elem=="AtlasPlans" or node.elem=="BuildJourney" then
+		if node.elem=="CraftingProjects" or node.elem=="AtlasPlans" or node.elem=="BuildJourney" or node.elem=="LootFilters" then
 			local data=json.decode(table.concat(node));if type(data)=="table" then
 				if node.elem=="CraftingProjects" then for _,p in ipairs(data.projects or {}) do result.crafts=result.crafts+1;if p.run then result.checkpoints=result.checkpoints+1 end end
 				elseif node.elem=="AtlasPlans" then result.atlas=#(data.plans or {})
+				elseif node.elem=="LootFilters" then result.filters=#(data.profiles or {})
 				else for _,key in ipairs({"stages","wishlist","milestones"}) do result[key]=#(data[key] or {}) end end
 			end
 		end
@@ -31,6 +32,6 @@ function M.import(raw)
 	bundle.contents=M.contents(bundle.xml);return bundle
 end
 function M.lines(contents)
-	return {string.format("%d crafting guides | %d working checkpoints | %d Atlas plans",contents.crafts,contents.checkpoints,contents.atlas),string.format("%d milestones | %d gear goals | %d leveling stages",contents.milestones,contents.wishlist,contents.stages),"Includes native character, items, skills, passive trees, configuration sets, notes and saved planning metadata.","Only kept plans and checkpoints travel. Keep working drafts before exporting.","Prices, crafting odds and external references retain their recorded dates and assumptions. They are not refreshed on import."}
+	return {string.format("%d crafting guides | %d working checkpoints | %d Atlas plans",contents.crafts,contents.checkpoints,contents.atlas),string.format("%d milestones | %d gear goals | %d leveling stages",contents.milestones,contents.wishlist,contents.stages),string.format("%d loot-filter profiles | native character, items, skills, passives, configuration and notes.",contents.filters or 0),"Only kept plans and checkpoints travel. Keep working drafts before exporting.","Prices, crafting odds and external references retain their recorded dates and assumptions. They are not refreshed on import."}
 end
 return M
