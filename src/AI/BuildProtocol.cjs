@@ -9,6 +9,17 @@ const array = (items,maxItems) => ({type:'array',items,maxItems});
 const boolean = {type:'boolean'};
 const number = (minimum,maximum) => ({type:'number',minimum,maximum});
 const quoteSchema = object({amount:number(0,1e12),currency:{type:'string',pattern:'^[A-Za-z][A-Za-z0-9 _-]{0,23}$'},quotedAt:integer(0,4102444800),source:string(240)},['amount','currency','quotedAt','source']);
+const journeyId={type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$'};
+const journeyList=items=>({type:'array',items});
+const journeyLinks={projectId:journeyId,atlasId:journeyId,stageId:journeyId,wishlistId:journeyId};
+const journeyEntry={id:journeyId,title:string(120),notes:string(8000),level:integer(1,100),...journeyLinks};
+const journeySchema=object({schemaVersion:{const:1},
+  milestones:journeyList(object({...journeyEntry,kind:{enum:['task','passives','gems','gear','craft','atlas','quest','ascendancy']},priority:integer(1,5),done:boolean,dependencies:journeyList(journeyId)},['id','title'])),
+  wishlist:journeyList(object({...journeyEntry,slot:string(80),route:{enum:['buy','craft','farm','owned']},stage:{enum:['next','final','alternative']},status:{enum:['planned','owned','skipped']},priority:integer(1,5),reserve:boolean,targetItem:string(24000),resourceId:journeyId,estimate:number(0,1e12)},['id','title','slot','route'])),
+  resources:journeyList(object({...journeyEntry,unit:string(40)},['id','title'])),
+  ledger:journeyList(object({id:journeyId,resourceId:journeyId,kind:{enum:['add','spend']},amount:number(0.000001,1e12),at:integer(0,4102444800),note:string(1000),projectId:journeyId},['id','resourceId','kind','amount','at'])),
+  stages:journeyList(object({...journeyEntry,gems:string(12000),passives:string(12000),gear:string(12000),ascendancy:string(12000),quests:string(12000),transition:string(12000)},['id','title','level']))
+},['schemaVersion','milestones','wishlist','resources','ledger','stages']);
 const atlasVersion={enum:['3.27.0','3.29.1']};
 const atlasPlan=object({id:{type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$'},title:string(120),version:atlasVersion,budget:integer(0,138),nodes:array(integer(1,65535),300),notes:string(8000)},['id','title','version','budget','nodes']);
 const craftingMethods=['transmute','alteration','augmentation','regal','alchemy','chaos','exalt','annul','scour','divine','bench','remove_crafted','essence','fossil','harvest_reforge','harvest_augment','harvest_resistance','fracture','influence_exalt','awakener','veiled_orb','unveil','dominance','beast_aspect','beast_prefix_suffix','beast_suffix_prefix','beast_imprint','restore_imprint','bench_reroll','eldritch_implicit','eldritch_exalt','eldritch_annul','eldritch_chaos','blessed','sacred','socket_bench','binding','quality','catalyst','tainted_quality','tainted_catalyst','conflict','recombine','vaal','tainted_exalt','tainted_chaos','chromatic','socket_colour_bench','tainted_chromatic','tainted_jeweller','tainted_fusing','ducat_cyaxan','ducat_brinehook','ducat_genteel','ducat_merrick','beast_meta','beast_influence','locus','remembrance','unravelling','foulborn_augmentation','foulborn_regal','foulborn_exalt','recombine_predictable','ducat_rotmother','beast_talisman_fracture','ducat_tzamoto','ducat_kishara'];
@@ -36,6 +47,7 @@ const operations = [
   object({type:{const:'set_config'},values:{type:'object',maxProperties:100,additionalProperties:{type:['string','number','boolean']}}},['type','values']),
   object({type:{const:'set_notes'},text:string(64000)},['type','text']),
   object({type:{const:'set_atlas_plan'},plan:atlasPlan},['type','plan']),
+  object({type:{const:'set_build_journey'},journey:journeySchema},['type','journey']),
   object({type:{const:'set_crafting_project'},project:craftingProjectSchema},['type','project']),
 ];
 const metricNames = ['LifeUnreserved','EnergyShield','ManaUnreserved','CombinedDPS','FullDPS','TotalEHP','PhysicalMaximumHitTaken','ChaosMaximumHitTaken','RecoverySimulationSurvivalChance','RecoverySimulationDamageDPS','RecoverySimulationAttackUptime','ManaRegen','Speed','EffectiveMovementSpeedMod','FireResist','ColdResist','LightningResist','ChaosResist','Str','Dex','Int'];
@@ -68,6 +80,8 @@ function validate(value,schema) {
 }
 const readOnly = {readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false};
 const tools = [
+  {name:'get_build_journey',description:'Read the saved roadmap, gear wishlist, leveling guide, actual resource ledger, reservations and explained next actions. Prices are user supplied. No live inventory or currency conversion is inferred.',inputSchema:object({}),annotations:readOnly},
+  {name:'propose_journey_plan',description:'Propose a complete replacement of the build journey against the current revision. Read get_build_journey first and preserve existing entries and spending. Native validation rejects cycles and overspending. The user reviews the candidate and saves explicitly.',inputSchema:object({title:string(120),baseRevision:string(40),journey:journeySchema},['title','baseRevision','journey']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
   {name:'get_atlas_plans',description:'Read named Atlas plans and bundled Standard tree versions from the connected build. Atlas allocations are separate from character passives and do not change character DPS/EHP. Build Save persists reviewed plans.',inputSchema:object({}),annotations:readOnly},
   {name:'search_atlas_nodes',description:'Queue search over pinned official Atlas node names and stat text. Select the exact version. Returns native IDs, links, positions and stats. Decorative mastery labels are excluded. Poll get_proposal_status and match the request ID.',inputSchema:object({baseRevision:{type:'string',pattern:'^[a-f0-9]{40}$'},version:atlasVersion,query:string(160),limit:integer(1,100)},['baseRevision','version','query']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
   {name:'plan_atlas_tree',description:'Connect desired Atlas node IDs to an existing plan by deterministic shortest paths, optionally avoiding nodes. Targets are processed in order; this is a greedy heuristic, not globally optimal. Enforces supplied budget plus native granted points and connectivity, including gateways. Returns a separate draft and verbatim stat summary; cannot apply/save. Poll get_proposal_status and match its ID.',inputSchema:object({baseRevision:{type:'string',pattern:'^[a-f0-9]{40}$'},plan:atlasPlan,targets:array(integer(1,65535),30),avoid:array(integer(1,65535),300)},['baseRevision','plan','targets']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
@@ -136,6 +150,10 @@ function createBridge(reportPath) {
         session:current.session,revision:current.revision,proposalStatus:current.proposal?.status,diagnostics:current.diagnostics,
         steps:['Keep PoB open and wait for calculations to finish.','Enable build proposals, then reconnect your AI client if tools are missing.','A ready desktop heartbeat does not verify that your AI client is connected.']};
     }
+    if (name === 'propose_journey_plan') {
+      args={mode:'edit',title:args.title,baseRevision:args.baseRevision,operations:[{type:'set_build_journey',journey:args.journey}]};
+      name='propose_build';
+    }
     if (name === 'propose_atlas_plan') {
       args={mode:'edit',title:args.plan.title,baseRevision:args.baseRevision,operations:[{type:'set_atlas_plan',plan:args.plan}]};
       name='propose_build';
@@ -154,6 +172,7 @@ function createBridge(reportPath) {
     if (captured.schemaVersion !== 1 || captured.session !== current.session || captured.context?.revision !== current.revision) throw new Error('Desktop context is refreshing. Try again after calculations finish.');
     if (name === 'get_atlas_plans') return {revision:current.revision,plans:captured.context.atlasPlans ?? [],versions:captured.context.atlasVersions ?? [],warning:captured.context.atlasWarning,limitations:['Atlas plans are separate from character calculations.','Budgets are supplied progression. No account completion or live farming profit is inferred.']};
     if (name === 'get_crafting_projects') return {revision:current.revision,projects:captured.context.craftingProjects ?? [],warning:captured.context.craftingWarning,limitations:['Plans and cost/simulation results are supplied data, not independently verified recipes.','Use desktop review before applying; build Save persists projects.']};
+    if (name === 'get_build_journey') return {revision:current.revision,journey:captured.context.journey,budget:captured.context.journeyBudget,nextActions:captured.context.nextActions,warning:captured.context.journeyWarning};
     if (name === 'get_build_analysis') return {revision:current.revision,capturedAt:captured.capturedAt,audit:captured.context.audit,encounter:captured.context.encounter,plan:current.plan};
     if (name === 'get_build_context') {
       const {xml,...context} = captured.context;

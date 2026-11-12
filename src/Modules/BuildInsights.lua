@@ -27,6 +27,7 @@ function M.snapshot(build)
 	end
 	result.mainGroup = build.mainSocketGroup
 	result.craftingProjects = copyTable(build.savers.CraftingProjects.projects)
+	result.journey = build.savers.BuildJourney and copyTable(build.savers.BuildJourney.data)
 	result.atlasPlans = copyTable(build.savers.AtlasPlans.plans)
 	for _,node in pairs(build.spec.nodes) do if node.alloc then result.passives[node.id] = (node.name or node.dn or node.type or "Passive")..(build.spec.masterySelections[node.id] and " (mastery "..build.spec.masterySelections[node.id]..")" or "") end end
 	return result
@@ -52,6 +53,14 @@ function M.changes(before, after)
 	for key in pairs(after.config) do config[key]=true end
 	for _,key in ipairs(sortedKeys(config)) do if before.config[key] ~= after.config[key] then add("Configuration "..key..": "..tostring(before.config[key]).." -> "..tostring(after.config[key])) end end
 	if before.notes ~= after.notes then add("Notes updated:"); for line in after.notes:gmatch("[^\n]+") do add("  "..line) end end
+	if not tableDeepEquals(before.journey,after.journey) then
+		add("Build journey updated; use build Save to persist.")
+		for _,key in ipairs({"milestones","wishlist","resources","ledger","stages"}) do
+			for _,entry in ipairs(after.journey and after.journey[key] or {}) do
+				add(key.." | "..require("dkjson").encode(entry))
+			end
+		end
+	end
 	if not tableDeepEquals(before.craftingProjects,after.craftingProjects) then
 		add("Crafting projects updated (saved only with an explicit build Save)")
 		for _,project in ipairs(after.craftingProjects) do for _,line in ipairs(require("Modules.CraftingProjects").lines(project)) do add(line) end end

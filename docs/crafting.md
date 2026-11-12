@@ -62,6 +62,8 @@ The price field applies to the selected action. The starting-item cost field add
 
 ## Keep a project
 
+Use **Keep working craft** to checkpoint the working item, undo history, targets, seed and settings, then save the build. Reopening that project resumes the checkpoint. Experiments do not spend your recorded resources; use [Journey](journey.md) to track actual holdings, spending and gear reservations.
+
 Keeping a recipe marks the build unsaved. Use normal build **Save** to persist it. There is no project-count limit: keep plans for every gear slot and alternatives for each piece. Crafting metadata retains a 2 MiB total size limit and per-field validation. Projects and recipes live in AI Edition XML; other editions may discard them on re-save. AI Edition preserves unreadable or newer metadata unchanged.
 
 **Preview in build** calculates a separate candidate. Review controls application, and the existing undo flow restores the build. Simulation and planning never spend game currency.

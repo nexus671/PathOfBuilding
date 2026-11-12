@@ -18,8 +18,9 @@ A Path of Exile build planner with encounter timelines and improved survival cal
 - Plan upgrades and leveling around goals, budgets, dependency checks and candidate comparisons.
 - Emulate items and test crafting recipes with a built-in crafting engine.
 - Plan your Atlas with searchable nodes, connecting paths and saved farming strategies.
+- Connect milestones, gear goals, crafting, leveling and a shared resource budget in Journey.
 
-The encounter tools are experimental. See the [guide](docs/recovery-simulation.md), [crafting guide](docs/crafting.md), or [Atlas guide](docs/atlas.md) to get started.
+The encounter tools are experimental. See the [guide](docs/recovery-simulation.md), [crafting guide](docs/crafting.md), [Atlas guide](docs/atlas.md), or [Journey guide](docs/journey.md) to get started.
 
 ## Links
 

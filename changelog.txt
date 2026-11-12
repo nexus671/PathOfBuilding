@@ -1,6 +1,9 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Added Journey: linked milestones, gear wishlist, resource budget, leveling guide and explained next tasks.
+* Keep and resume working crafts, including item state, action history, targets and settings.
+* AI tools can read and propose Journey plans through native desktop review.
 * Save crafting plans for every gear slot and alternatives without a project-count cap.
 * Refined crafting item cards with grouped affixes and inline currency search and modifier details.
 * Added direct Atlas mechanic filters and preserved unfinished edits when resizing.

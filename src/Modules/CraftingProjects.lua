@@ -34,6 +34,7 @@ function M.validate(project)
 		result.steps[#result.steps+1] = {action=text(step.action,1000,"step action"),stopWhen=text(step.stopWhen,500,"stop condition",true),onFailure=text(step.onFailure,500,"failure route",true),done=step.done == true}
 	end
 	if project.nativeRecipe then result.nativeRecipe=require("Modules.CraftingSimulator").validateRecipe(project.nativeRecipe) end
+	if project.run then result.run=require("Modules.CraftingCheckpoint").validate(result.startingItem,project.run) end
 	if project.estimate then
 		local quote = project.estimate
 		result.estimate = {amount=number(quote.amount,0,1e12,"estimated cost"),currency=text(quote.currency,24,"currency"),source=text(quote.source,240,"price source"),quotedAt=number(quote.quotedAt,0,4102444800,"quote time")}
@@ -81,7 +82,10 @@ function M.new(build)
 		end
 		local replacement=copyTable(self.projects)
 		local found=false
-		for index,existing in ipairs(replacement) do if existing.id == entry.id then replacement[index]=entry; found=true; break end end
+		for index,existing in ipairs(replacement) do if existing.id == entry.id then
+			if not entry.run and entry.startingItem==existing.startingItem then entry.run=copyTable(existing.run) end
+			replacement[index]=entry; found=true; break
+		end end
 		if not found then replacement[#replacement+1]=entry end
 		assert(#json.encode({schemaVersion=1,projects=replacement}) <= 2*1024*1024,"Crafting projects exceed the supported size")
 		self.projects=replacement; build.modFlag=true

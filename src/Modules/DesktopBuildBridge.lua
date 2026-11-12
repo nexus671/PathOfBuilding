@@ -160,6 +160,8 @@ local function applyOperation(build, op)
 		end
 	elseif op.type == "set_notes" then
 		build.notesTab.controls.edit:SetText(text(op.text,64000,"notes"))
+	elseif op.type == "set_build_journey" then
+		build.savers.BuildJourney:Replace(op.journey)
 	elseif op.type == "set_crafting_project" then
 		build.savers.CraftingProjects:Upsert(op.project)
 	elseif op.type == "set_atlas_plan" then
@@ -250,6 +252,8 @@ function M.capture(build)
 		stats=stats(build),items={},skills={},passives={},masteries=copyTable(build.spec.masterySelections),config=copyTable(build.configTab.input),
 		warnings=copyTable(build.controls.warnings.lines),slots={},plan=M.plan,audit=insights.audit(build),encounter=insights.diagnose(build),
 		craftingProjects=copyTable(build.savers.CraftingProjects.projects),craftingWarning=build.savers.CraftingProjects.warning,
+		journey=copyTable(build.savers.BuildJourney.data),journeyWarning=build.savers.BuildJourney.warning,
+		journeyBudget=require("Modules.BuildJourney").budget(build.savers.BuildJourney.data),nextActions=require("Modules.BuildJourney").next(build.savers.BuildJourney.data,build),
 		atlasPlans=copyTable(build.savers.AtlasPlans.plans),atlasWarning=build.savers.AtlasPlans.warning,atlasVersions=copyTable(require("Modules.AtlasPlanner").versions)}
 	local catalog = {gems={},passives={},config={},classes={}}
 	for name,slot in pairs(build.itemsTab.slots) do

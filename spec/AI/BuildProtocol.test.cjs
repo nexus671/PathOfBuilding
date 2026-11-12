@@ -16,6 +16,24 @@ function fixture(t) {
   return {dir,state,captured,write,call:createBridge(path.join(dir,'AI-encounter.json')),proposal:{mode:'new',title:'Fireball candidate',baseRevision:state.revision,
     operations:[{type:'set_character',level:80,className:'Witch',ascendancy:'Elementalist'},{type:'set_skills',groups:[{gems:[{name:'Fireball'}]}]}]}};
 }
+test('reads journey resources and queues a reviewed replacement without applying', t => {
+  const f=fixture(t);
+  const journey={schemaVersion:1,milestones:[{id:'links',title:'Get links',kind:'gems',dependencies:[]}],wishlist:[],resources:[],ledger:[],stages:[]};
+  f.captured.context.journey=journey;f.captured.context.journeyBudget={};f.captured.context.nextActions=[];f.write('context',f.captured);
+  assert.deepEqual(f.call('get_build_journey',{}).journey,journey);
+  f.call('propose_journey_plan',{title:'Roadmap',baseRevision:f.state.revision,journey});
+  const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.equal(request.proposal.operations[0].type,'set_build_journey');
+  assert.deepEqual(request.proposal.operations[0].journey,journey);
+});
+
+test('rejects malformed journey data and accepts more than eight entries', t => {
+  const f=fixture(t);
+  const journey={schemaVersion:1,milestones:[],wishlist:[],resources:[],ledger:[],stages:Array.from({length:20},(_,i)=>({id:`stage-${i}`,title:`Level ${i+1}`,level:i+1}))};
+  assert.throws(()=>f.call('propose_journey_plan',{title:'Bad',baseRevision:f.state.revision,journey:{...journey,ledger:[{id:'bad',resourceId:'chaos',kind:'spend',amount:-1,at:1}]}}),/arguments/);
+  f.call('propose_journey_plan',{title:'Long guide',baseRevision:f.state.revision,journey});
+});
+
 test('reads opted-in desktop context and searches bounded native catalogs', t => {
   const f = fixture(t);
   assert.equal(f.call('get_build_context',{}).context.xml,undefined);

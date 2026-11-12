@@ -644,6 +644,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 
 	-- Load sections from the build file
 	self.savers = {
+		["BuildJourney"] = require("Modules.BuildJourney").new(self),
 		["AtlasPlans"] = require("Modules.AtlasPlanner").new(self),
 		["CraftingProjects"] = require("Modules.CraftingProjects").new(self),
 		["Config"] = self.configTab,

@@ -1,0 +1,92 @@
+describe("Build journey",function()
+	local journey=require("Modules.BuildJourney")
+	local bridge=require("Modules.DesktopBuildBridge")
+	local json=require("dkjson")
+	before_each(function() newBuild() end)
+	local function plan()
+		local data=journey.empty()
+		data.resources={{id="chaos",title="Chaos Orbs"},{id="base",title="Owned Iron Hats",unit="bases"}}
+		data.ledger={{id="stash",resourceId="chaos",kind="add",amount=100,at=1},{id="hats",resourceId="base",kind="add",amount=1,at=1}}
+		data.wishlist={{id="hat",title="Life helmet",slot="Helmet",route="craft",resourceId="chaos",estimate=60,reserve=true}}
+		data.milestones={{id="level",title="Reach level 70",level=70},{id="craft",title="Craft helmet",dependencies={"level"},wishlistId="hat"}}
+		return data
+	end
+	it("round trips all six workflows through native candidate XML without applying",function()
+		local data=plan();data.stages={{id="act1",title="Start",level=12,gems="Fireball + Combustion",passives="Life",gear="Iron Hat",ascendancy="Witch",quests="Complete the act",transition="Switch after acquiring links"}}
+		build.savers.BuildJourney:Replace(data)
+		local revision=bridge.revision(build)
+		local prepared=bridge.prepare(build,{mode="edit",title="Journey",baseRevision=revision,operations={{type="set_character",level=80}}})
+		assert.same(build.savers.BuildJourney.data,prepared.candidate.savers.BuildJourney.data)
+		assert.equal(revision,bridge.revision(build))
+	end)
+	it("rejects cycles including disconnected cycles and duplicate or missing dependencies",function()
+		for _,bad in ipairs({{{id="a",title="a",dependencies={"b"}},{id="b",title="b",dependencies={"a"}}},{{id="a",title="a",dependencies={"missing"}}},{{id="a",title="a",dependencies={"b","b"}},{id="b",title="b"}}}) do
+			local data=journey.empty();data.milestones=bad;assert.has_error(function() journey.validate(data) end)
+		end
+	end)
+	it("validates long dependency chains without a stack recursion limit or project count cap",function()
+		local data=journey.empty();for i=1,1200 do data.milestones[i]={id="m"..i,title="Step "..i,dependencies=i>1 and {"m"..(i-1)} or {}} end
+		assert.equal(1200,#journey.validate(data).milestones)
+	end)
+	it("requires completion in order and reopens completed descendants atomically",function()
+		local saver=build.savers.BuildJourney;saver:Replace(plan())
+		assert.has_error(function() saver:Complete("craft") end)
+		assert.is_false(saver.data.milestones[2].done)
+		saver:Complete("level");saver:Complete("craft");assert.is_true(saver.data.milestones[2].done)
+		saver:Complete("level");assert.is_false(saver.data.milestones[2].done)
+	end)
+	it("keeps resource balances separate, reserves chosen goals and prevents overspending",function()
+		local saver=build.savers.BuildJourney;saver:Replace(plan())
+		local budget=journey.budget(saver.data);assert.equal(40,budget.chaos.available);assert.equal(1,budget.base.available)
+		saver:Put("ledger",{id="spent",resourceId="chaos",kind="spend",amount=30,at=2,projectId="hat"})
+		budget=journey.budget(saver.data);assert.equal(10,budget.chaos.available);assert.equal(30,budget.chaos.spent)
+		assert.has_error(function() saver:Put("ledger",{id="too-much",resourceId="chaos",kind="spend",amount=100,at=3}) end)
+		assert.equal(3,#saver.data.ledger)
+		local data=copyTable(saver.data);data.wishlist[1].status="owned";saver:Replace(data)
+		assert.equal(70,journey.budget(saver.data).chaos.available)
+	end)
+	it("does not report competing reservations as affordable when the shared wallet is short",function()
+		local data=plan();local second=copyTable(data.wishlist[1]);second.id="second";data.wishlist[2]=second;data=journey.validate(data)
+		local actions=journey.next(data,build)
+		for _,e in ipairs(actions) do if e.kind=="gear" then assert.is_true(e.blocked);assert.truthy(table.concat(e.reasons):find("20.00",1,true)) end end
+	end)
+	it("explains level, prerequisite, funding and missing-link blockers",function()
+		local data=plan();data.wishlist[1].estimate=150;data.wishlist[1].projectId="missing";data.milestones[2].atlasId="missing"
+		build.characterLevel=1;data=journey.validate(data)
+		local actions=journey.next(data,build);assert.equal(3,#actions)
+		local reasons=json.encode(actions);assert.truthy(reasons:find("Requires level 70",1,true));assert.truthy(reasons:find("50.00",1,true));assert.truthy(reasons:find("Atlas plan is missing",1,true))
+	end)
+	it("preserves unsupported or malformed data and refuses destructive replacement",function()
+		for _,raw in ipairs({'{"schemaVersion":2}','{"schemaVersion":1,"milestones":{}}','{"schemaVersion":1,"milestones":false}','not json'}) do
+			local saver=journey.new(build);saver:Load({raw});local xml={};saver:Save(xml);assert.equal(raw,xml[1]);assert.has_error(function() saver:Replace(journey.empty()) end)
+		end
+	end)
+	it("rejects invalid slots and non-finite spending before replacing the saved plan",function()
+		local saver=build.savers.BuildJourney;saver:Replace(plan())
+		local data=copyTable(saver.data);data.wishlist[1].slot="invented";assert.has_error(function() saver:Replace(data) end)
+		data=copyTable(saver.data);data.ledger[1].amount=math.huge;assert.has_error(function() saver:Replace(data) end)
+		assert.equal("Helmet",saver.data.wishlist[1].slot);assert.equal(100,saver.data.ledger[1].amount)
+	end)
+	it("reviews journey changes through the existing candidate flow",function()
+		local prepared=bridge.prepare(build,{mode="edit",title="Plan",baseRevision=bridge.revision(build),operations={{type="set_build_journey",journey=plan()}}})
+		assert.equal(0,#build.savers.BuildJourney.data.milestones);assert.equal(2,#prepared.candidate.savers.BuildJourney.data.milestones)
+		assert.truthy(table.concat(prepared.changes," "):find("Life helmet",1,true))
+	end)
+	it("captures readable native stages without applying character changes",function()
+		local stage=journey.captureStage(build,"Start","start",bridge.revision(build))
+		local data=journey.empty();data.stages={stage};assert.equal(build.characterLevel,journey.validate(data).stages[1].level)
+		assert.truthy(stage.notes:find("native calculated candidate",1,true))
+	end)
+	it("persists working items, action history and undo states through XML",function()
+		local sim=require("Modules.CraftingSimulator");local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86"
+		local initial=sim.model(raw).initial;local action={method="alchemy"};local crafted=sim.perform(raw,action,104729,initial)
+		local project={id="run",title="Working hat",slot="Helmet",startingItem=raw,goals={},steps={},run={schemaVersion=1,state=crafted.state,initial=initial,history={initial},actions={action},sequence=1,targets={},configured={},seed="104729"}}
+		build.savers.CraftingProjects:Upsert(project)
+		local prepared=bridge.prepare(build,{mode="edit",title="Resume",baseRevision=bridge.revision(build),operations={{type="set_character",level=80}}})
+		local run=prepared.candidate.savers.CraftingProjects.projects[1].run
+		assert.same(crafted.state.affixes,run.state.affixes);assert.equal("NORMAL",run.history[1].rarity);assert.equal("alchemy",run.actions[1].method)
+		assert.equal(0,#prepared.candidate.savers.BuildJourney.data.ledger)
+		project.run=nil;project.title="Updated plan without replacing the checkpoint";build.savers.CraftingProjects:Upsert(project)
+		assert.same(run,build.savers.CraftingProjects.projects[1].run)
+	end)
+end)

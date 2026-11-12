@@ -53,7 +53,7 @@ function Panel.Open(build,project,layout)
 	local favorites=layout and (layout.favorites or layout.workbench and layout.workbench.favorites) or {}
 	if layout then layout.favorites=favorites end
 	if layout then layout.selectedProject=draft.id end
-	local restored=layout and layout.workbench
+	local restored=layout and layout.workbench or draft.run and require("Modules.CraftingCheckpoint").validate(draft.startingItem,draft.run)
 	if layout then layout.workbench=nil end
 	if restored then
 		state=restored.state;initial=restored.initial;targets=restored.targets;requirements=restored.requirements;requiredGroups=restored.requiredGroups
@@ -493,6 +493,16 @@ function Panel.Open(build,project,layout)
 		layout.snapshot=function() return copyTable({kind="workbench",project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,craftWidth=leftWidth,favorites=favorites,paletteOpen=paletteOpen,palette=paletteView and paletteView.snapshot(),inspectedId=inspectedId,
 			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
 	end
+	button(controls,"keepWorking",232,height-48,200,"Keep working craft",function()
+		local run={schemaVersion=1,state=state,initial=initial,history=history,actions=actions,configured=configured,sequence=sequence,targets=targets,requirements=requirements,requiredGroups=requiredGroups,
+			page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,
+			settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}
+		local saved=copyTable(draft);saved.run=run
+		local kept=build.savers.CraftingProjects:Upsert(saved);draft=copyTable(kept)
+		refresh({"Working item, history and settings kept. Use build Save to resume after restarting. No budget was spent."})
+	end)
+	controls.keepWorking.shown=function() return require("Modules.CraftingTasks").job==nil end
+	ui.styleButton(controls.keepWorking,"primary")
 	paletteView=require("Modules.CraftingPalette").new(controls,leftWidth,height,{current=function() return controls.method:GetSelValueByKey("val") end,favorites=favorites,restore=restored and restored.palette,
 		shown=function() return controls.page:GetSelValue()=="Emulate item" and paletteOpen end,available=function(method) return workbench.available(method,state,model) end,hint=function(method) return workbench.hint(method,state,model) end,
 		choose=chooseMethod,close=function() paletteOpen=false;refresh() end})

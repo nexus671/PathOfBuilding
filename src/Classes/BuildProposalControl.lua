@@ -139,6 +139,24 @@ function Panel.Candidates()
 	controls.candidate = new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,640,24},list)
 	controls.review = button(672,28,192,"Review selected",function() safely(function() bridge.selectHistory(controls.candidate:GetSelValueByKey("val")); Panel.Review() end) end)
 	controls.review.enabled = #list > 0
+	controls.keepLeveling = button(16,height-48,200,"Keep leveling guide",function() safely(function()
+		local comparison=assert(bridge.comparison,"Calculate a leveling plan first")
+		assert(comparison.kind=="leveling","Calculate a leveling plan first")
+		local build=assert(main.modes.BUILD,"Open a build")
+		local data=copyTable(build.savers.BuildJourney.data)
+		for _,result in ipairs(comparison.results) do
+			assert(result.status=="calculated","Resolve failed leveling stages first")
+			local prepared;for _,entry in ipairs(bridge.history) do if entry.id==result.id then prepared=entry;break end end
+			assert(prepared and prepared.baseRevision==bridge.revision(build),"Leveling candidates are stale; recalculate first")
+			local stage=require("Modules.BuildJourney").captureStage(prepared.candidate,prepared.title,"level-"..result.level,prepared.baseRevision)
+			local found=false;for i,e in ipairs(data.stages) do if e.id==stage.id then
+				stage.quests=e.quests;stage.transition=e.transition;stage.notes=(e.notes or "").."\n"..stage.notes
+				data.stages[i]=stage;found=true;break
+			end end
+			if not found then data.stages[#data.stages+1]=stage end
+		end
+		build.savers.BuildJourney:Replace(data);main:ClosePopup();build.planningWorkspace:Show("journey",{page="Leveling"})
+	end) end)
 	local lines = {"Up to eight candidates and five applied versions remain in memory for this session.","A candidate requires its original desktop base to be current and unchanged.",""}
 	local status = bridge.comparison or bridge.status
 	if status and status.results then
