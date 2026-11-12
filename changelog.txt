@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* New builds now default to the published 3.30 tree and its Atlas, while saved builds retain their versions.
 * Added opt-in official 3.30 passive and Atlas previews with bundled artwork and pinned source hashes.
 * Added the 150 point preview Atlas budget and stable Atlas 3.29.3, preserving saved tree versions.
 * Added calculation timings and cooperative upgrade workers with fewer repeated build snapshots.

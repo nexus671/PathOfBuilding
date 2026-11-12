@@ -62,7 +62,8 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("apply");assert(main.modes.BUILD~=original,"Apply did not open the calculated candidate")
 	ui:frame();ui:click("nav_ai");frame("ai-applied");ui:click("restore")
 	assert(main.modes.BUILD==original,"Undo did not restore the original scratch build")
-	ui:click("nav_atlas");frame("atlas-start");assert(not build.controls.statBox:IsShown(),"Build sidebar should be hidden while planning")
+	ui:click("nav_atlas");frame("atlas-new-default");assert(build.planningWorkspace.controls.canvas.tree.version=="3.30.0-preview","New Atlas plan did not default to 3.30")
+	ui:choose("version","3.29.3");ui:click("confirm");frame("atlas-start");assert(not build.controls.statBox:IsShown(),"Build sidebar should be hidden while planning")
 	local workspace=build.planningWorkspace
 	build.buildFlag=true;ui:frame();ui:click("nav_tools");frame("planning-tools");ui:click("choose");frame("performance-diagnostics");ui:click("copy");assert(ui.clipboard:find("ms",1,true));ui:click("refresh");ui:click("close")
 	local canvas=workspace.controls.canvas
@@ -296,7 +297,8 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:write(directory.."/"..size[1].."-recovery-timeline.json");frames=frames+1
 	newBuild();ui:bind(build)
 	assert(not main.popups[1],"Preview setup: "..tostring(main.popups[1] and main.popups[1].title).." | "..tostring(main.popups[1] and main.popups[1].controls[1] and main.popups[1].controls[1].label))
-	assert(build.spec.treeVersion=="3_29","Preview replaced the stable new-build default")
+	assert(build.spec.treeVersion=="3_30_preview","New builds should default to 3.30")
+	ui:choose("versionSelect","3_29","value");ui:click("convert")
 	ui:choose("versionSelect","3_30_preview","value");frame("covens-convert-preview");ui:click("convert")
 	assert(build.spec.treeVersion=="3_30_preview","Native tree conversion did not select the preview")
 	frame("covens-passive-tree");assert(table.concat(build.controls.warnings.lines," "):find("preview",1,true),"Preview warning missing")

@@ -11,10 +11,10 @@ liveTargetVersion = "3_0"
 treeVersionList = { "2_6", "3_6", "3_7", "3_8", "3_9", "3_10", "3_11", "3_12", "3_13", "3_14", "3_15", "3_16", "3_17", "3_18", "3_19", "3_20", "3_21",
 					"3_22_ruthless", "3_22", "3_23_ruthless", "3_23", "3_24_ruthless", "3_24", "3_25_ruthless", "3_25_ruthless_alternate", "3_25_alternate", "3_25",
 					"3_26_ruthless", "3_26_ruthless_alternate", "3_26_alternate", "3_26", "3_27_ruthless", "3_27_ruthless_alternate", "3_27_alternate", "3_27", "3_28_ruthless", "3_28_ruthless_alternate", "3_28_alternate", "3_28", "3_29_ruthless", "3_29" }
---- Always points to the latest skill tree version.
-latestTreeVersion = treeVersionList[#treeVersionList]
--- Published preview trees are selectable without changing the stable default.
+-- Use the published 3.30 tree for new builds; saved specs retain their version.
 table.insert(treeVersionList, "3_30_preview")
+--- Always points to the default skill tree version for new builds.
+latestTreeVersion = treeVersionList[#treeVersionList]
 ---Tree version where multiple skill trees per build were introduced to PoBC.
 defaultTreeVersion = treeVersionList[2]
 ---Display, comparison and export data for all supported skill tree versions.

@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.covens1" />
+	<Version number="2.67.2-ai.covens2" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="7d9716aeef4f71cbdc601a6f3d8b67b15fd3c8b3" />
+	<File name="changelog.txt" part="default" sha1="d7e3fce5355abdcb7c0ad7c691e9ced135e1d40d" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -969,7 +969,7 @@
 	<File name="Classes/TradeQueryRateLimiter.lua" part="program" sha1="2e0853cc35292f769040c1104e7877f791a79c0c" />
 	<File name="Classes/TradeQueryRequests.lua" part="program" sha1="a70ccb5bbaff3a951d3280b9f73988ecc60e85ea" />
 	<File name="Classes/TradeStatWeightMultiplierListControl.lua" part="program" sha1="b83a9eb1dad0e363acb3ce0cd28bb5e43fe08ced" />
-	<File name="Classes/TreeTab.lua" part="program" sha1="f0da21e8f59aad3b1f36d84f0a54737bee4fda4d" />
+	<File name="Classes/TreeTab.lua" part="program" sha1="217cc4bc5a357fc1f5eaa72458cad6d05bf35d53" />
 	<File name="Classes/UndoHandler.lua" part="program" sha1="586afba2e6fea36e34c1109d21498bd86d6ead93" />
 	<File name="Data/Atlas/3.27.0.json" part="program" sha1="48389ee40d1a77cfcae37094d1b0461d8fcd34c8" />
 	<File name="Data/Atlas/3.29.1.json" part="program" sha1="372b2b130c621598bbcd837cbb519607c6d97301" />
@@ -1023,7 +1023,7 @@
 	<File name="Data/IncursionDropOnly.lua" part="program" sha1="1fa5c24b1bf897e781c54b3ce7a7fcd7d23fd645" />
 	<File name="Data/Minions.lua" part="program" sha1="96b00b39dded3f5459349665abc3d2e6c30a142f" />
 	<File name="Data/Misc.lua" part="program" sha1="9c3fdbb7ca8fa4ed4948dea18df0b058e6c0658b" />
-	<File name="Data/ModCache.lua" part="program" sha1="53982aec250c806ee822c7b7f4dba16fda1467ff" />
+	<File name="Data/ModCache.lua" part="program" sha1="812485d2c124ab5b973dfe1c6d0564c9a813bd38" />
 	<File name="Data/ModCorrupted.lua" part="program" sha1="8b8e9275644b74deb84bc717781bb154766d58ec" />
 	<File name="Data/ModDelve.lua" part="program" sha1="482a169c977a59fcf26ce80b4b2e4eed303fc0ed" />
 	<File name="Data/ModDucat.lua" part="program" sha1="bd8f79ab5b1011ce9e34e8a6b93947f1377a9dba" />
@@ -1160,7 +1160,7 @@
 	<File name="Data/Uniques/tincture.lua" part="program" sha1="983b1ee3f2e153f1a6f42b6533756ed691abb2fa" />
 	<File name="Data/Uniques/wand.lua" part="program" sha1="1ea0bee9d0b375d6f7201d3c16fde817f01fce75" />
 	<File name="Data/Vestigial.lua" part="program" sha1="f34c42a3423c598c0c1e2f5660f1d6b83c59a555" />
-	<File name="GameVersions.lua" part="program" sha1="149965ba119dd5f7b3fff576c2ce55dc3064e2c1" />
+	<File name="GameVersions.lua" part="program" sha1="9b7d2c60bfff6dbb0b17da2609ff4bf21a75b4b8" />
 	<File name="HeadlessWrapper.lua" part="program" sha1="4bf2e32c7bd8fd796fad41710f3509f0fea5191d" />
 	<File name="Launch.lua" part="program" sha1="757a1f5ff9e83cacdc9cb056ec13c90f541b02bb" />
 	<File name="LaunchServer.lua" part="program" sha1="f15bdfbedaf887e19556490dce49b720f8365379" />

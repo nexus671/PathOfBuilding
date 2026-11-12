@@ -1,10 +1,10 @@
 # Covens of Umbra tree preview
 
-The fork bundles GGG's pinned **3.30 passive tree preview** and **3.30 Atlas preview 2** from November 12, 2026. These are opt-in previews. Existing builds and the default passive tree remain on their saved/stable versions.
+The fork bundles GGG's pinned **3.30 passive tree preview** and **3.30 Atlas preview 2** from November 12, 2026. **New builds default to 3.30**, and new Atlas plans on those builds use the 150-point preview. Existing builds and saved plans keep their recorded versions.
 
 ## Passive tree
 
-In **Tree > Version**, choose **3.30 preview** and review the native conversion dialog. Keep a separate tree spec when you want to compare versions. The preview includes the published nodes, mastery choices, bloodlines and bundled sprite artwork.
+New builds open on **3.30 preview**. To convert an existing build, choose it in **Tree > Version** and review the native conversion dialog. Keep a separate tree spec when you want to compare versions. The preview includes the published nodes, mastery choices, bloodlines and bundled sprite artwork.
 
 The tree warning and AI build analysis identify the preview. Items, gems and new league mechanics still use the current calculation engine; adding the tree does not establish full 3.30 calculation support. Review unsupported modifiers before relying on a result.
 

@@ -26,7 +26,7 @@ The [planning UI guide](docs/ui-polish.md) covers navigation, project creation, 
 
 See [connected planning tools](docs/planning-workflows.md) for background upgrades, performance diagnostics, crafting recovery, Atlas stages and portable bundles.
 
-[Covens of Umbra previews](docs/covens-preview.md) are available for the passive tree and Atlas, with the current engine's calculation limits clearly marked.
+[Covens of Umbra trees](docs/covens-preview.md) are the default for new builds and their Atlas plans, with the current engine's calculation limits clearly marked.
 
 ## Links
 

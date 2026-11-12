@@ -333,10 +333,10 @@ function TreeTabClass:TreeTab(build)
 		return latestTreeVersion .. (self.specList[self.activeSpec].treeVersion:match("^" .. latestTreeVersion .. "(.*)") or "")
 	end
 	local function buildConvertButtonLabel()
-		return colorCodes.POSITIVE..(treeVersions[self.build.spec.treeVersion].preview and "Use stable " or "Convert to ")..treeVersions[getLatestTreeVersion()].display
+		return colorCodes.POSITIVE.."Convert to "..treeVersions[getLatestTreeVersion()].display
 	end
 	local function buildConvertAllButtonLabel()
-		return colorCodes.POSITIVE..(treeVersions[self.build.spec.treeVersion].preview and "All trees to stable " or "Convert all trees to ")..treeVersions[getLatestTreeVersion()].display
+		return colorCodes.POSITIVE.."Convert all trees to "..treeVersions[getLatestTreeVersion()].display
 	end
 	self.controls.specConvert = new("ButtonControl"):ButtonControl({ "LEFT", self.controls.specConvertText, "RIGHT" }, { 8, 0, function() return DrawStringWidth(16, "VAR", buildConvertButtonLabel()) + 20 end, 20 }, buildConvertButtonLabel, function()
 		self:ConvertToVersion(getLatestTreeVersion(), false, true)
