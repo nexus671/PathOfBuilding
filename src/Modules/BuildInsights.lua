@@ -86,6 +86,7 @@ function M.audit(build)
 	local result = {assumptions={},dependencies={},nativeWarnings=copyTable(build.controls.warnings.lines)}
 	local function assumption(key,message) result.assumptions[#result.assumptions+1] = {key=key,text=message} end
 	local function dependency(key,message) result.dependencies[#result.dependencies+1] = {key=key,text=message} end
+	if treeVersions[build.spec.treeVersion].preview then assumption("previewTree","3.30 preview tree. Items, gems and new mechanics may not yet be modeled; verify unsupported modifiers before relying on these calculations.") end
 	assumption("enemyIsBoss","Enemy preset: "..tostring(c.enemyIsBoss or "None")..". Match the encounter you intend to test.")
 	for _,key in ipairs(sortedKeys(c)) do
 		if c[key] == true and (key:match("^condition") or key:match("^use.*Charges")) then assumption(key,"Enabled condition: "..key..". Check its source and uptime.") end

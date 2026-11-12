@@ -26,6 +26,8 @@ The [planning UI guide](docs/ui-polish.md) covers navigation, project creation, 
 
 See [connected planning tools](docs/planning-workflows.md) for background upgrades, performance diagnostics, crafting recovery, Atlas stages and portable bundles.
 
+[Covens of Umbra previews](docs/covens-preview.md) are available for the passive tree and Atlas, with the current engine's calculation limits clearly marked.
+
 ## Links
 
 [Published version](https://github.com/nexus671/PathOfBuilding-AI-Edition/tree/main) · [Report a problem](https://github.com/nexus671/PathOfBuilding-AI-Edition/issues) · [Community Edition](https://pathofbuilding.community)

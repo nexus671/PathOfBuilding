@@ -307,3 +307,12 @@ test('queues automatic Allflame profiles and typed fracture goals', t => {
   }
   assert.throws(()=>f.call('simulate_crafting',{...base,recipe:{...recipe,requirements:{minFractured:7}}}),/arguments/);
 });
+
+
+test('accepts the pinned 150 point Atlas preview without inventing future versions', t => {
+  const f=fixture(t);const plan={id:'covens',title:'Covens preview',version:'3.30.0-preview',budget:150,nodes:[]};
+  f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan});
+  const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.equal(request.proposal.operations[0].plan.budget,150);
+  assert.throws(()=>f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan:{...plan,budget:151}}),/arguments/);
+  assert.throws(()=>f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan:{...plan,version:'3.31.0'}}),/arguments/);
+});

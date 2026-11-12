@@ -2,12 +2,12 @@
 
 Open **Atlas** beside **AI builds**, or switch to **Atlas** in the full-width planning workspace. **< Build** returns to your previous build tab.
 
-1. Choose the exact tree version. We bundle the official **Standard 3.27.0 and 3.29.1** graphs. League variants and Ruthless are not included.
+1. Choose the exact tree version. We bundle official **3.27.0, 3.29.1, 3.29.3 and 3.30.0-preview** graphs. New stable plans default to 3.29.3. The 3.30 preview has **150 base points**; its Standard and Covens graphs are identical in the pinned publication. Ruthless Atlas graphs are not included.
 2. Enter a name and the number of Atlas points you have earned. The initial budget is the tree's maximum; it does not read account progression.
 3. Filter a mechanic directly in the inspector, or search names and stat text. Matching nodes highlight and preview a result without moving the camera. Choose a result or press **Go** to center it. Result labels show added point costs. Use **Connect +N** to add the previewed shortest connection.
 4. Use the mouse wheel to zoom and drag empty space to pan. **Fit tree** resets the view. The canvas uses the official background, node icons, frames and mechanic emblems. Allocated paths are gold; avoided nodes have red frames. Hover for modifier descriptions. Double click a node to connect it, or remove it if allocated.
 5. **Avoid selected** excludes a node from future paths. Avoided nodes are session preferences, cleared by importing or opening another plan. **Remove branch** also removes nodes that lose their connection to the start. **Undo** and **Redo** restore allocations and exclusions. Press Enter after editing a budget to include it in history.
-6. Open **Notes & sharing** for farming notes and import/export. Choose **Keep plan** to keep the draft in this build. This changes unsaved metadata. Use the normal build **Save** to persist it. Up to eight named plans can be kept with each build; **Saved plans** opens or deletes them.
+6. Open **Notes & sharing** for farming notes and import/export. Choose **Keep plan** to keep the draft in this build. This changes unsaved metadata. Use the normal build **Save** to persist it. Saved plans have a total metadata size guard, with no eight-plan count limit; **Saved plans** opens or deletes them.
 
 **Find nodes** opens a searchable list with mechanic filters and added point costs. Choosing a result highlights its mechanic on the tree. The minimap moves the camera without changing allocations. Drag the divider beside the inspector to resize it.
 
@@ -36,12 +36,14 @@ Search and routing are queued. Poll `get_proposal_status` and match the returned
 
 Example request: “Use my Atlas version and a 90-point budget. Find Essence and map-sustain nodes, avoid mechanics I dislike, and propose a connected farming plan. Explain the keystones and tradeoffs before I apply it.”
 
-This first version does not fetch character Atlas completion, scrape community trees, provide popularity heatmaps, price scarabs or predict farming income. Maps, scarabs and strategy steps can be recorded in notes.
+The planner does not fetch character Atlas completion, scrape community trees, provide popularity heatmaps, price scarabs or predict farming income. **Stages & strategy** records progression, respec routes, maps, scarabs, requirements and dated setup estimates; see [connected planning tools](planning-workflows.md).
 
 ## Sources and maintenance
 
 Node names, stats, links, positions, point limits, granted points and artwork come from [GGG's official Atlas export](https://github.com/grindinggear/atlastree-export). Each bundled graph records its immutable source URL, commit and SHA-256. Decorative mastery icons are excluded from allocation. Artwork is bundled from the same pinned official export; planning works offline. No third-party planner code or artwork is bundled.
 
 `python tools/update_atlas_data.py` regenerates the graphs from pinned official exports. Updating versions also requires changing the native and MCP version allowlists, testing changed rules and budgets, and publishing the new files in the updater manifest. There is no silent network update of saved plans.
+
+Use `--version 3.30.0-preview` to regenerate only that pinned preview. Its provenance includes checksums for both Standard and Covens exports and verifies that their graph data is identical. Existing plans retain their original version; changing versions starts an empty draft rather than reinterpreting old node IDs.
 
 Feature research: [Path of Pathing](https://pathofpathing.com/) offers desired/avoided-node routing and exports; [poe.ninja](https://poe.ninja/posts/atlas-trees) offers community-tree filters, heatmaps and stat breakdowns. Our planner provides local versioned planning and AI review; those broader discovery tools remain useful alongside it.

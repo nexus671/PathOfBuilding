@@ -173,9 +173,9 @@ function TreeTabClass:TreeTab(build)
 	end)
 	self.controls.versionSelect.maxDroppedWidth = 1000
 	self.controls.versionSelect.enableDroppedWidth = true
-	self.controls.versionSelect.enableChangeBoxWidth = true
+	self.controls.versionSelect.enableChangeBoxWidth = false
 	self.controls.versionSelect:CheckDroppedWidth(true)
-	self.controls.versionSelect.selIndex = #self.treeVersions
+	self.controls.versionSelect:SelByValue(latestTreeVersion,"value")
 
 	-- Tree Search Textbox
 	self.controls.treeSearch = new("EditControl"):EditControl({ "LEFT", self.controls.versionSelect, "RIGHT" }, { 8, 0, main.portraitMode and 200 or 300, 20 }, "", "Search", "%c", 100, function(buf)
@@ -326,14 +326,17 @@ function TreeTabClass:TreeTab(build)
 	self.controls.specConvertText.shown = function()
 		return self.showConvert
 	end
+	self.controls.specConvertText.label=function()
+		return treeVersions[self.build.spec.treeVersion].preview and "^7Preview tree: some 3.30 mechanics are not yet modeled." or "^7This is an older tree version, which may not be fully compatible with the current game version."
+	end
 	local function getLatestTreeVersion()
 		return latestTreeVersion .. (self.specList[self.activeSpec].treeVersion:match("^" .. latestTreeVersion .. "(.*)") or "")
 	end
 	local function buildConvertButtonLabel()
-		return colorCodes.POSITIVE.."Convert to "..treeVersions[getLatestTreeVersion()].display
+		return colorCodes.POSITIVE..(treeVersions[self.build.spec.treeVersion].preview and "Use stable " or "Convert to ")..treeVersions[getLatestTreeVersion()].display
 	end
 	local function buildConvertAllButtonLabel()
-		return colorCodes.POSITIVE.."Convert all trees to "..treeVersions[getLatestTreeVersion()].display
+		return colorCodes.POSITIVE..(treeVersions[self.build.spec.treeVersion].preview and "All trees to stable " or "Convert all trees to ")..treeVersions[getLatestTreeVersion()].display
 	end
 	self.controls.specConvert = new("ButtonControl"):ButtonControl({ "LEFT", self.controls.specConvertText, "RIGHT" }, { 8, 0, function() return DrawStringWidth(16, "VAR", buildConvertButtonLabel()) + 20 end, 20 }, buildConvertButtonLabel, function()
 		self:ConvertToVersion(getLatestTreeVersion(), false, true)
@@ -358,6 +361,8 @@ end
 function TreeTabClass:Draw(viewPort, inputEvents)
 	self.anchorControls.x = viewPort.x + 4
 	self.anchorControls.y = viewPort.y + viewPort.height - 24
+	local versionX=self.controls.versionSelect:GetPos()
+	self.controls.versionSelect.width=m_max(100,m_min(self.controls.versionSelect.droppedWidth,viewPort.x+viewPort.width-versionX-8))
 
 	for id, event in ipairs(inputEvents) do
 		if event.type == "KeyDown" then

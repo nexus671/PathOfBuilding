@@ -1,0 +1,74 @@
+{
+  "_comment": "Generated official GGG data. cspell:disable",
+  "preview": true,
+  "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/data.json",
+  "commit": "550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3",
+  "sha256": "9686b969bbd744a77f13eeadc57bb71be5032b0ed22be1ee4dbf2025649ccab0",
+  "preprocessor": "fix_ascendancy_positions.py",
+  "assets": {
+    "ascendancy-3.webp": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/ascendancy-3.webp",
+      "sha256": "966bde805fe33cddb49db94c7c5fc728a95648f0529f08d60357af9e3ae7857e"
+    },
+    "background-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/background-3.png",
+      "sha256": "180ff1c42924d9989c3b4fa82bfa294c64fd1fa321516b0e3cb51f59bfb8e145"
+    },
+    "bloodline-3.webp": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/bloodline-3.webp",
+      "sha256": "2d604c68621109a18d04c934804a1a0cd5a7f7d0e56cbff54ea9a99e9921e6b8"
+    },
+    "frame-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/frame-3.png",
+      "sha256": "506b34053cde6616e3a2202970a7c387bc5df6daec2c9813eb09ee82f575cc63"
+    },
+    "group-background-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/group-background-3.png",
+      "sha256": "81346e855858cb6ea44b00bcb670f303a6547ff33de3027d81b1f301a3ad614b"
+    },
+    "jewel-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/jewel-3.png",
+      "sha256": "c2a3134f8e0ece177c46cfc531937038e4448cd4185a80243acb04d72bac7525"
+    },
+    "jewel-radius.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/jewel-radius.png",
+      "sha256": "84dfda13fd672dd02a56bb6d6a031ddcc079691c8a2c1a4002a3bb6c124d1b87"
+    },
+    "line-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/line-3.png",
+      "sha256": "e1bcf8436e11a91ad6ca620eee60bdcba2847ad9538ec688c7107a35c650457e"
+    },
+    "mastery-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/mastery-3.png",
+      "sha256": "0fa21d63628baa980afaf5211f91b38e694e2030f8edfbe72e1c66a3bbbda9c9"
+    },
+    "mastery-active-effect-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/mastery-active-effect-3.png",
+      "sha256": "4d0ddae0a9e85eb7bf9a541d6d8898c57d057fd82addf39f6360d86a2d82eace"
+    },
+    "mastery-active-selected-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/mastery-active-selected-3.png",
+      "sha256": "8357b76163221de4a2f6f5d07f2bf5f0fe6552b54c0e02a86516e66b184f8356"
+    },
+    "mastery-connected-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/mastery-connected-3.png",
+      "sha256": "a960d7b4ae460178d3e7476310272cdbf37ac096c4ea2eeb9d4b5e379883fea6"
+    },
+    "mastery-disabled-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/mastery-disabled-3.png",
+      "sha256": "f2c47bcd23177f502b4ef271baca072e5ef3bd21e32e8e4279110e7d5f9bf63c"
+    },
+    "skills-3.jpg": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/skills-3.jpg",
+      "sha256": "314342fec3028206fc41d2a1a98c77fe4999fe942147bba96e76adce6ec72b78"
+    },
+    "skills-disabled-3.jpg": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/skills-disabled-3.jpg",
+      "sha256": "398173bf9b877ea134141150cff1c5c7bb3aa6897380d81419954915d6263165"
+    },
+    "tattoo-active-effect-3.png": {
+      "source": "https://raw.githubusercontent.com/grindinggear/skilltree-export/550fb34ae7fca9ec4d760a2ac845bb2ba1032ec3/assets/tattoo-active-effect-3.png",
+      "sha256": "425f54aac33e00faabe410c732757596c4e88955313fb994c6cc2d857e235149"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 -- Native Atlas plans use pinned GGG data, independently of character passives.
 -- cspell:ignore jsontype
 local json = require("dkjson")
-local M = {versions={"3.27.0","3.29.1"},cache={}}
+local M = {versions={"3.27.0","3.29.1","3.29.3","3.30.0-preview"},cache={}}
 local function integer(value,low,high,label)
 	assert(type(value) == "number" and value == math.floor(value) and value >= low and value <= high,"Invalid "..label)
 	return value
@@ -18,7 +18,7 @@ local function array(value,limit,label)
 	return value
 end
 function M.tree(version)
-	assert(version == "3.27.0" or version == "3.29.1","Unsupported Atlas version; choose a bundled Standard tree")
+	assert(isValueInTable(M.versions,version),"Unsupported Atlas version; choose a bundled tree")
 	if not M.cache[version] then
 		local root=GetScriptPath()
 		local file=assert(io.open((root ~= "" and root.."/" or "").."Data/Atlas/"..version..".json","rb"))
@@ -144,7 +144,7 @@ function M.report(plan)
 	local lines={}
 	for stat,count in pairs(stats) do lines[#lines+1]={text=stat,count=count} end
 	table.sort(lines,function(a,b) return a.text < b.text end); table.sort(notables); table.sort(keystones)
-	return {version=plan.version,mode="Standard",used=#plan.nodes,budget=plan.budget,bonus=bonus,remaining=plan.budget+bonus-#plan.nodes,
+	return {version=plan.version,mode="Standard",preview=tree.preview,compatibleModes=tree.compatibleModes,used=#plan.nodes,budget=plan.budget,bonus=bonus,remaining=plan.budget+bonus-#plan.nodes,
 		counts=counts,notables=notables,keystones=keystones,stats=lines,source=tree.source,sourceCommit=tree.commit,
 		limitations={"Atlas plans do not modify character DPS or EHP.","Stat lines are grouped verbatim, not combined into effective map odds. Keystone interactions are not simulated.","Budget is supplied progression, not imported account completion. Routing is greedy shortest connection, not a global optimum."}}
 end

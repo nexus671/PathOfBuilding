@@ -1,0 +1,3297 @@
+{
+  "_comment": "Generated official GGG artwork. cspell:disable",
+  "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/data.json",
+  "sprites": {
+    "normalActive": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-skills-4.webp",
+      "w": 637,
+      "h": 963,
+      "coords": {
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNode1.png": {
+          "x": 0,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNode.png": {
+          "x": 34,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNode1.png": {
+          "x": 68,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AscendancyNode.png": {
+          "x": 102,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasAnomalies.png": {
+          "x": 136,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasDivinationCards2.png": {
+          "x": 170,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasGold1.png": {
+          "x": 204,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMagicmonstersNode.png": {
+          "x": 238,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNode.png": {
+          "x": 272,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasUniquemonstersNode.png": {
+          "x": 306,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AzmeriForest.png": {
+          "x": 340,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNode1.png": {
+          "x": 374,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BeyondNode1.png": {
+          "x": 408,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNode1.png": {
+          "x": 442,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BossMapDrops.png": {
+          "x": 476,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ConquerorNode1.png": {
+          "x": 510,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/DeliriumNode1.png": {
+          "x": 544,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ElderShaperNode1.png": {
+          "x": 578,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ElderShaperNotable3.png": {
+          "x": 0,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNode2.png": {
+          "x": 34,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionNode1.png": {
+          "x": 68,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNode.png": {
+          "x": 102,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ItemQuantity.png": {
+          "x": 136,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ItemQuantityandRarity.png": {
+          "x": 170,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNode1.png": {
+          "x": 204,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNode.png": {
+          "x": 238,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNode1.png": {
+          "x": 272,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnode.png": {
+          "x": 306,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercNode.png": {
+          "x": 340,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MirageNode.png": {
+          "x": 374,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ModifierTier.png": {
+          "x": 408,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewAtlasKeystone4.png": {
+          "x": 442,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNode.png": {
+          "x": 476,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RareMonstersnode.png": {
+          "x": 510,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualNode1.png": {
+          "x": 544,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ScryingOrbNode.png": {
+          "x": 578,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SentinelNode.png": {
+          "x": 0,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ShrinesNode.png": {
+          "x": 34,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxNode1.png": {
+          "x": 68,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SynthesisNode1.png": {
+          "x": 102,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheCleansingFireNode.png": {
+          "x": 136,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheMavenNode.png": {
+          "x": 170,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheTangleNode.png": {
+          "x": 204,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ThreadNode1.png": {
+          "x": 238,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNode1.png": {
+          "x": 272,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNode1.png": {
+          "x": 306,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/MasteryBlank.png": {
+          "x": 340,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-skills-4.webp",
+      "sha256": "ec7b78eddd60fa3c62baa2cf51ccbcc691e83cdfd5d60e20cbefff6ee701aef3"
+    },
+    "notableActive": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-skills-4.webp",
+      "w": 637,
+      "h": 963,
+      "coords": {
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssCrack.png": {
+          "x": 0,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssMonstersSpawn.png": {
+          "x": 49,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable.png": {
+          "x": 98,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable2.png": {
+          "x": 147,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable3.png": {
+          "x": 196,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable4.png": {
+          "x": 245,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable5.png": {
+          "x": 294,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable6.png": {
+          "x": 343,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNode2.png": {
+          "x": 392,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNotable1.png": {
+          "x": 441,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNotable2.png": {
+          "x": 490,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNotable3.png": {
+          "x": 539,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNotable4.png": {
+          "x": 588,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Anarchy4.png": {
+          "x": 0,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Anarchy5.png": {
+          "x": 49,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNode1.png": {
+          "x": 98,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNotable1.png": {
+          "x": 147,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNotable2.png": {
+          "x": 196,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNotable3.png": {
+          "x": 245,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Ascendancy.png": {
+          "x": 294,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasAnomalies.png": {
+          "x": 343,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasDifficultMonstersNotable.png": {
+          "x": 392,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasDivinationCards1.png": {
+          "x": 441,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasGold2.png": {
+          "x": 490,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasHarvestLifeforceDuplicated.png": {
+          "x": 539,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMagicmonsters1.png": {
+          "x": 588,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMagicmonsters2.png": {
+          "x": 0,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMapModGenericNotable.png": {
+          "x": 49,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNotableAnger.png": {
+          "x": 98,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNotableBenevolence.png": {
+          "x": 147,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNotableIgnorance.png": {
+          "x": 196,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNotableMemoryTears.png": {
+          "x": 245,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasThreads1.png": {
+          "x": 294,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasThreads3.png": {
+          "x": 343,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasThreads4.png": {
+          "x": 392,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasUniquemonsters1.png": {
+          "x": 441,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasUniquemonsters2.png": {
+          "x": 490,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AzmeriForestNotable1.png": {
+          "x": 539,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AzmeriForestNotable2.png": {
+          "x": 588,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable1.png": {
+          "x": 0,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable2.png": {
+          "x": 49,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable3.png": {
+          "x": 98,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable4.png": {
+          "x": 147,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable5.png": {
+          "x": 196,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable6.png": {
+          "x": 245,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Bestiarybosses1.png": {
+          "x": 294,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Bestiarybosses2.png": {
+          "x": 343,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BeyondNotable2.png": {
+          "x": 392,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BeyondNotable3.png": {
+          "x": 441,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightInfectedMap.png": {
+          "x": 490,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightMapsEncounter.png": {
+          "x": 539,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNotable1.png": {
+          "x": 588,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNotable3.png": {
+          "x": 0,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNotable4.png": {
+          "x": 49,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNotable6.png": {
+          "x": 98,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightedLands.png": {
+          "x": 147,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ConquerorNotable3.png": {
+          "x": 196,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/DeliriumNotable1.png": {
+          "x": 245,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/DeliriumNotable4.png": {
+          "x": 294,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ElderShaperNotable1.png": {
+          "x": 343,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ElderShaperNotable3.png": {
+          "x": 392,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNode2.png": {
+          "x": 441,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNotable1.png": {
+          "x": 490,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNotable2.png": {
+          "x": 539,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNotable3.png": {
+          "x": 588,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionNotable1.png": {
+          "x": 0,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionNotable2.png": {
+          "x": 49,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionNotable3.png": {
+          "x": 98,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionSpawnMissingLife.png": {
+          "x": 147,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/GreedShrinenoteble.png": {
+          "x": 196,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable1.png": {
+          "x": 245,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable2.png": {
+          "x": 294,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable3.png": {
+          "x": 343,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable4.png": {
+          "x": 392,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable6.png": {
+          "x": 441,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNode2.png": {
+          "x": 490,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable1.png": {
+          "x": 539,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable2.png": {
+          "x": 588,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable3.png": {
+          "x": 0,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable4.png": {
+          "x": 49,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable5.png": {
+          "x": 98,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable6.png": {
+          "x": 147,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNode.png": {
+          "x": 196,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable1.png": {
+          "x": 245,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable2.png": {
+          "x": 294,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable3.png": {
+          "x": 343,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable4.png": {
+          "x": 392,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable5.png": {
+          "x": 441,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable6.png": {
+          "x": 490,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable7.png": {
+          "x": 539,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable8.png": {
+          "x": 588,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionAdditionalReward.png": {
+          "x": 0,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable1.png": {
+          "x": 49,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable2.png": {
+          "x": 98,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable4.png": {
+          "x": 147,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable5.png": {
+          "x": 196,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable6.png": {
+          "x": 245,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionPackSize.png": {
+          "x": 294,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnotable1.png": {
+          "x": 343,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnotable2.png": {
+          "x": 392,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnotable3.png": {
+          "x": 441,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnotable4.png": {
+          "x": 490,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercAppear.png": {
+          "x": 539,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercGold.png": {
+          "x": 588,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercInt.png": {
+          "x": 0,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercOnslaught.png": {
+          "x": 49,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercRandomShrine.png": {
+          "x": 98,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercRucksack.png": {
+          "x": 147,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercStrength.png": {
+          "x": 196,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercenaryFighting.png": {
+          "x": 245,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MirageNotable1.png": {
+          "x": 294,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MirageNotable2.png": {
+          "x": 343,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MorePrimalWisps.png": {
+          "x": 392,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachKeystoneUnstable.png": {
+          "x": 441,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable1.png": {
+          "x": 490,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable2.png": {
+          "x": 539,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable3.png": {
+          "x": 588,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable4.png": {
+          "x": 0,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable5.png": {
+          "x": 49,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable6.png": {
+          "x": 98,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable7.png": {
+          "x": 147,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RareMonstersnode.png": {
+          "x": 196,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RareMonstersnotable.png": {
+          "x": 245,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Ritual.png": {
+          "x": 294,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualChanceBloodFilledVessel.png": {
+          "x": 343,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualNotable.png": {
+          "x": 392,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualNotable1.png": {
+          "x": 441,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualNotable2.png": {
+          "x": 490,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualReduceRerollCost.png": {
+          "x": 539,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualReducedCostDeferRewards.png": {
+          "x": 588,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ScryingOrbNotable.png": {
+          "x": 0,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SentinelNotable1.png": {
+          "x": 49,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SentinelNotable2.png": {
+          "x": 98,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Shrines.png": {
+          "x": 147,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ShrinesNode.png": {
+          "x": 196,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxCelestial.png": {
+          "x": 245,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxCurrency.png": {
+          "x": 294,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxDiviner.png": {
+          "x": 343,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxNode1.png": {
+          "x": 392,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxNotable1.png": {
+          "x": 441,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxNotable2.png": {
+          "x": 490,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxScarab.png": {
+          "x": 539,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SynthesisNotable3.png": {
+          "x": 588,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TempestNotable1.png": {
+          "x": 0,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TempestNotable3.png": {
+          "x": 49,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheCleansingFire1.png": {
+          "x": 98,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheCleansingFire3.png": {
+          "x": 147,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheCleansingFire4.png": {
+          "x": 196,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheMaven1.png": {
+          "x": 245,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheTangle1.png": {
+          "x": 294,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheTangle3.png": {
+          "x": 343,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheTangle4.png": {
+          "x": 392,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNode1.png": {
+          "x": 441,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNotable1.png": {
+          "x": 490,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNotable2.png": {
+          "x": 539,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNotable3.png": {
+          "x": 588,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable1.png": {
+          "x": 0,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable2.png": {
+          "x": 49,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable3.png": {
+          "x": 98,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable4.png": {
+          "x": 147,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable5.png": {
+          "x": 196,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable6.png": {
+          "x": 245,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotableMonsters1.png": {
+          "x": 294,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotableMonsters2.png": {
+          "x": 343,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/WheelofDisablingDelirium.png": {
+          "x": 392,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/WheelofDisablingExpedition.png": {
+          "x": 441,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/WheelofDisablingOreDesposits.png": {
+          "x": 490,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/WheelofDisablingUltimatum.png": {
+          "x": 539,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-skills-4.webp",
+      "sha256": "ec7b78eddd60fa3c62baa2cf51ccbcc691e83cdfd5d60e20cbefff6ee701aef3"
+    },
+    "keystoneActive": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-skills-4.webp",
+      "w": 637,
+      "h": 963,
+      "coords": {
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ArbitraryTenets.png": {
+          "x": 0,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/CassiasPride.png": {
+          "x": 68,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/DestructivePlay.png": {
+          "x": 136,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EagonKeystone.png": {
+          "x": 204,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExtremeArchaeology.png": {
+          "x": 272,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/GruelingGauntletKeystone.png": {
+          "x": 340,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewAtlasKeystone4.png": {
+          "x": 408,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/OverloadedCircuits.png": {
+          "x": 476,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RuinousWagerKeystone.png": {
+          "x": 544,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RuptureMeter.png": {
+          "x": 0,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SpeakeroftheDead.png": {
+          "x": 68,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TwinProphecyKeystone.png": {
+          "x": 136,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/DanceofDestructKeystone.png": {
+          "x": 204,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/EldritchGazeKeystone.png": {
+          "x": 272,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/StreamOfConsciousnessKeystone.png": {
+          "x": 340,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/TwistOfFateKeystone.png": {
+          "x": 408,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/WellspringofCreationKeystone.png": {
+          "x": 476,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/WrathOfTheCosmosKeystone.png": {
+          "x": 544,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-skills-4.webp",
+      "sha256": "ec7b78eddd60fa3c62baa2cf51ccbcc691e83cdfd5d60e20cbefff6ee701aef3"
+    },
+    "wormholeActive": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-skills-4.webp",
+      "w": 637,
+      "h": 963,
+      "coords": {
+        "Wormhole": {
+          "x": 0,
+          "y": 877,
+          "w": 86,
+          "h": 86
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-skills-4.webp",
+      "sha256": "ec7b78eddd60fa3c62baa2cf51ccbcc691e83cdfd5d60e20cbefff6ee701aef3"
+    },
+    "normalInactive": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-skills-disabled-4.webp",
+      "w": 637,
+      "h": 963,
+      "coords": {
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNode1.png": {
+          "x": 0,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNode.png": {
+          "x": 34,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNode1.png": {
+          "x": 68,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AscendancyNode.png": {
+          "x": 102,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasAnomalies.png": {
+          "x": 136,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasDivinationCards2.png": {
+          "x": 170,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasGold1.png": {
+          "x": 204,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMagicmonstersNode.png": {
+          "x": 238,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNode.png": {
+          "x": 272,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasUniquemonstersNode.png": {
+          "x": 306,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AzmeriForest.png": {
+          "x": 340,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNode1.png": {
+          "x": 374,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BeyondNode1.png": {
+          "x": 408,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNode1.png": {
+          "x": 442,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BossMapDrops.png": {
+          "x": 476,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ConquerorNode1.png": {
+          "x": 510,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/DeliriumNode1.png": {
+          "x": 544,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ElderShaperNode1.png": {
+          "x": 578,
+          "y": 0,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ElderShaperNotable3.png": {
+          "x": 0,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNode2.png": {
+          "x": 34,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionNode1.png": {
+          "x": 68,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNode.png": {
+          "x": 102,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ItemQuantity.png": {
+          "x": 136,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ItemQuantityandRarity.png": {
+          "x": 170,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNode1.png": {
+          "x": 204,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNode.png": {
+          "x": 238,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNode1.png": {
+          "x": 272,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnode.png": {
+          "x": 306,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercNode.png": {
+          "x": 340,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MirageNode.png": {
+          "x": 374,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ModifierTier.png": {
+          "x": 408,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewAtlasKeystone4.png": {
+          "x": 442,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNode.png": {
+          "x": 476,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RareMonstersnode.png": {
+          "x": 510,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualNode1.png": {
+          "x": 544,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ScryingOrbNode.png": {
+          "x": 578,
+          "y": 34,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SentinelNode.png": {
+          "x": 0,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ShrinesNode.png": {
+          "x": 34,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxNode1.png": {
+          "x": 68,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SynthesisNode1.png": {
+          "x": 102,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheCleansingFireNode.png": {
+          "x": 136,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheMavenNode.png": {
+          "x": 170,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheTangleNode.png": {
+          "x": 204,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ThreadNode1.png": {
+          "x": 238,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNode1.png": {
+          "x": 272,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNode1.png": {
+          "x": 306,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        },
+        "Art/2DArt/SkillIcons/passives/MasteryBlank.png": {
+          "x": 340,
+          "y": 68,
+          "w": 34,
+          "h": 34
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-skills-disabled-4.webp",
+      "sha256": "337dcc6a08bb63abb74b03ab3089d60cdb242c3a8b4c47eb515772f1acece0d1"
+    },
+    "notableInactive": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-skills-disabled-4.webp",
+      "w": 637,
+      "h": 963,
+      "coords": {
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssCrack.png": {
+          "x": 0,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssMonstersSpawn.png": {
+          "x": 49,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable.png": {
+          "x": 98,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable2.png": {
+          "x": 147,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable3.png": {
+          "x": 196,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable4.png": {
+          "x": 245,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable5.png": {
+          "x": 294,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AbyssNotable6.png": {
+          "x": 343,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNode2.png": {
+          "x": 392,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNotable1.png": {
+          "x": 441,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNotable2.png": {
+          "x": 490,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNotable3.png": {
+          "x": 539,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AlvaNotable4.png": {
+          "x": 588,
+          "y": 102,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Anarchy4.png": {
+          "x": 0,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Anarchy5.png": {
+          "x": 49,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNode1.png": {
+          "x": 98,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNotable1.png": {
+          "x": 147,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNotable2.png": {
+          "x": 196,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AnarchyNotable3.png": {
+          "x": 245,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Ascendancy.png": {
+          "x": 294,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasAnomalies.png": {
+          "x": 343,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasDifficultMonstersNotable.png": {
+          "x": 392,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasDivinationCards1.png": {
+          "x": 441,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasGold2.png": {
+          "x": 490,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasHarvestLifeforceDuplicated.png": {
+          "x": 539,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMagicmonsters1.png": {
+          "x": 588,
+          "y": 151,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMagicmonsters2.png": {
+          "x": 0,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMapModGenericNotable.png": {
+          "x": 49,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNotableAnger.png": {
+          "x": 98,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNotableBenevolence.png": {
+          "x": 147,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNotableIgnorance.png": {
+          "x": 196,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasMemoriesNotableMemoryTears.png": {
+          "x": 245,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasThreads1.png": {
+          "x": 294,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasThreads3.png": {
+          "x": 343,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasThreads4.png": {
+          "x": 392,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasUniquemonsters1.png": {
+          "x": 441,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasUniquemonsters2.png": {
+          "x": 490,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AzmeriForestNotable1.png": {
+          "x": 539,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AzmeriForestNotable2.png": {
+          "x": 588,
+          "y": 200,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable1.png": {
+          "x": 0,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable2.png": {
+          "x": 49,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable3.png": {
+          "x": 98,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable4.png": {
+          "x": 147,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable5.png": {
+          "x": 196,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BestiaryNotable6.png": {
+          "x": 245,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Bestiarybosses1.png": {
+          "x": 294,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Bestiarybosses2.png": {
+          "x": 343,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BeyondNotable2.png": {
+          "x": 392,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BeyondNotable3.png": {
+          "x": 441,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightInfectedMap.png": {
+          "x": 490,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightMapsEncounter.png": {
+          "x": 539,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNotable1.png": {
+          "x": 588,
+          "y": 249,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNotable3.png": {
+          "x": 0,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNotable4.png": {
+          "x": 49,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightNotable6.png": {
+          "x": 98,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/BlightedLands.png": {
+          "x": 147,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ConquerorNotable3.png": {
+          "x": 196,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/DeliriumNotable1.png": {
+          "x": 245,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/DeliriumNotable4.png": {
+          "x": 294,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ElderShaperNotable1.png": {
+          "x": 343,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ElderShaperNotable3.png": {
+          "x": 392,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNode2.png": {
+          "x": 441,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNotable1.png": {
+          "x": 490,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNotable2.png": {
+          "x": 539,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EssenceNotable3.png": {
+          "x": 588,
+          "y": 298,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionNotable1.png": {
+          "x": 0,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionNotable2.png": {
+          "x": 49,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionNotable3.png": {
+          "x": 98,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExpeditionSpawnMissingLife.png": {
+          "x": 147,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/GreedShrinenoteble.png": {
+          "x": 196,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable1.png": {
+          "x": 245,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable2.png": {
+          "x": 294,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable3.png": {
+          "x": 343,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable4.png": {
+          "x": 392,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/HarvestNotable6.png": {
+          "x": 441,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNode2.png": {
+          "x": 490,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable1.png": {
+          "x": 539,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable2.png": {
+          "x": 588,
+          "y": 347,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable3.png": {
+          "x": 0,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable4.png": {
+          "x": 49,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable5.png": {
+          "x": 98,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/JunNotable6.png": {
+          "x": 147,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNode.png": {
+          "x": 196,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable1.png": {
+          "x": 245,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable2.png": {
+          "x": 294,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable3.png": {
+          "x": 343,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable4.png": {
+          "x": 392,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable5.png": {
+          "x": 441,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable6.png": {
+          "x": 490,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable7.png": {
+          "x": 539,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/KalguurNotable8.png": {
+          "x": 588,
+          "y": 396,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionAdditionalReward.png": {
+          "x": 0,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable1.png": {
+          "x": 49,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable2.png": {
+          "x": 98,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable4.png": {
+          "x": 147,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable5.png": {
+          "x": 196,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionNotable6.png": {
+          "x": 245,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/LegionPackSize.png": {
+          "x": 294,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnotable1.png": {
+          "x": 343,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnotable2.png": {
+          "x": 392,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnotable3.png": {
+          "x": 441,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Mapnotable4.png": {
+          "x": 490,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercAppear.png": {
+          "x": 539,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercGold.png": {
+          "x": 588,
+          "y": 445,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercInt.png": {
+          "x": 0,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercOnslaught.png": {
+          "x": 49,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercRandomShrine.png": {
+          "x": 98,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercRucksack.png": {
+          "x": 147,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercStrength.png": {
+          "x": 196,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MercenaryFighting.png": {
+          "x": 245,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MirageNotable1.png": {
+          "x": 294,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MirageNotable2.png": {
+          "x": 343,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/MorePrimalWisps.png": {
+          "x": 392,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachKeystoneUnstable.png": {
+          "x": 441,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable1.png": {
+          "x": 490,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable2.png": {
+          "x": 539,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable3.png": {
+          "x": 588,
+          "y": 494,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable4.png": {
+          "x": 0,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable5.png": {
+          "x": 49,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable6.png": {
+          "x": 98,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewBreachNotable7.png": {
+          "x": 147,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RareMonstersnode.png": {
+          "x": 196,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RareMonstersnotable.png": {
+          "x": 245,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Ritual.png": {
+          "x": 294,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualChanceBloodFilledVessel.png": {
+          "x": 343,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualNotable.png": {
+          "x": 392,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualNotable1.png": {
+          "x": 441,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualNotable2.png": {
+          "x": 490,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualReduceRerollCost.png": {
+          "x": 539,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RitualReducedCostDeferRewards.png": {
+          "x": 588,
+          "y": 543,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ScryingOrbNotable.png": {
+          "x": 0,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SentinelNotable1.png": {
+          "x": 49,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SentinelNotable2.png": {
+          "x": 98,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/Shrines.png": {
+          "x": 147,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ShrinesNode.png": {
+          "x": 196,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxCelestial.png": {
+          "x": 245,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxCurrency.png": {
+          "x": 294,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxDiviner.png": {
+          "x": 343,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxNode1.png": {
+          "x": 392,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxNotable1.png": {
+          "x": 441,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxNotable2.png": {
+          "x": 490,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/StrongboxScarab.png": {
+          "x": 539,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SynthesisNotable3.png": {
+          "x": 588,
+          "y": 592,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TempestNotable1.png": {
+          "x": 0,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TempestNotable3.png": {
+          "x": 49,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheCleansingFire1.png": {
+          "x": 98,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheCleansingFire3.png": {
+          "x": 147,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheCleansingFire4.png": {
+          "x": 196,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheMaven1.png": {
+          "x": 245,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheTangle1.png": {
+          "x": 294,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheTangle3.png": {
+          "x": 343,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TheTangle4.png": {
+          "x": 392,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNode1.png": {
+          "x": 441,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNotable1.png": {
+          "x": 490,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNotable2.png": {
+          "x": 539,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TormentNotable3.png": {
+          "x": 588,
+          "y": 641,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable1.png": {
+          "x": 0,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable2.png": {
+          "x": 49,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable3.png": {
+          "x": 98,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable4.png": {
+          "x": 147,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable5.png": {
+          "x": 196,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotable6.png": {
+          "x": 245,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotableMonsters1.png": {
+          "x": 294,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/UltimatumNotableMonsters2.png": {
+          "x": 343,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/WheelofDisablingDelirium.png": {
+          "x": 392,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/WheelofDisablingExpedition.png": {
+          "x": 441,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/WheelofDisablingOreDesposits.png": {
+          "x": 490,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/WheelofDisablingUltimatum.png": {
+          "x": 539,
+          "y": 690,
+          "w": 49,
+          "h": 49
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-skills-disabled-4.webp",
+      "sha256": "337dcc6a08bb63abb74b03ab3089d60cdb242c3a8b4c47eb515772f1acece0d1"
+    },
+    "keystoneInactive": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-skills-disabled-4.webp",
+      "w": 637,
+      "h": 963,
+      "coords": {
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ArbitraryTenets.png": {
+          "x": 0,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/CassiasPride.png": {
+          "x": 68,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/DestructivePlay.png": {
+          "x": 136,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/EagonKeystone.png": {
+          "x": 204,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/ExtremeArchaeology.png": {
+          "x": 272,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/GruelingGauntletKeystone.png": {
+          "x": 340,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/NewAtlasKeystone4.png": {
+          "x": 408,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/OverloadedCircuits.png": {
+          "x": 476,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RuinousWagerKeystone.png": {
+          "x": 544,
+          "y": 739,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/RuptureMeter.png": {
+          "x": 0,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/SpeakeroftheDead.png": {
+          "x": 68,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/TwinProphecyKeystone.png": {
+          "x": 136,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/DanceofDestructKeystone.png": {
+          "x": 204,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/EldritchGazeKeystone.png": {
+          "x": 272,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/StreamOfConsciousnessKeystone.png": {
+          "x": 340,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/TwistOfFateKeystone.png": {
+          "x": 408,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/WellspringofCreationKeystone.png": {
+          "x": 476,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        },
+        "Art/2DArt/SkillIcons/passives/WrathOfTheCosmosKeystone.png": {
+          "x": 544,
+          "y": 808,
+          "w": 68,
+          "h": 69
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-skills-disabled-4.webp",
+      "sha256": "337dcc6a08bb63abb74b03ab3089d60cdb242c3a8b4c47eb515772f1acece0d1"
+    },
+    "wormholeInactive": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-skills-disabled-4.webp",
+      "w": 637,
+      "h": 963,
+      "coords": {
+        "Wormhole": {
+          "x": 0,
+          "y": 877,
+          "w": 86,
+          "h": 86
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-skills-disabled-4.webp",
+      "sha256": "337dcc6a08bb63abb74b03ab3089d60cdb242c3a8b4c47eb515772f1acece0d1"
+    },
+    "mastery": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-mastery-4.webp",
+      "w": 791,
+      "h": 678,
+      "coords": {
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryAbyss.png": {
+          "x": 0,
+          "y": 0,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryAlva.png": {
+          "x": 113,
+          "y": 0,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryAnarchy.png": {
+          "x": 226,
+          "y": 0,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryAnomalies.png": {
+          "x": 339,
+          "y": 0,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryAzmeriForest.png": {
+          "x": 452,
+          "y": 0,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryBestiary.png": {
+          "x": 565,
+          "y": 0,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryBeyond.png": {
+          "x": 678,
+          "y": 0,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryBlight.png": {
+          "x": 0,
+          "y": 113,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryBreach.png": {
+          "x": 113,
+          "y": 113,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryCleansingFire.png": {
+          "x": 226,
+          "y": 113,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryConqueror.png": {
+          "x": 339,
+          "y": 113,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryDelirium.png": {
+          "x": 452,
+          "y": 113,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryDivination.png": {
+          "x": 565,
+          "y": 113,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryDomination.png": {
+          "x": 678,
+          "y": 113,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryElderShaper.png": {
+          "x": 0,
+          "y": 226,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryEssence.png": {
+          "x": 113,
+          "y": 226,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryExpedition.png": {
+          "x": 226,
+          "y": 226,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryGold.png": {
+          "x": 339,
+          "y": 226,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryHarvest.png": {
+          "x": 452,
+          "y": 226,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryJun.png": {
+          "x": 565,
+          "y": 226,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryLabyrinth.png": {
+          "x": 678,
+          "y": 226,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryLegion.png": {
+          "x": 0,
+          "y": 339,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryMagicMonsters.png": {
+          "x": 113,
+          "y": 339,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryMap.png": {
+          "x": 226,
+          "y": 339,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryMemories.png": {
+          "x": 339,
+          "y": 339,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryMercenaries.png": {
+          "x": 452,
+          "y": 339,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryMirage.png": {
+          "x": 565,
+          "y": 339,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryRareMonsters.png": {
+          "x": 678,
+          "y": 339,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryRitual.png": {
+          "x": 0,
+          "y": 452,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasterySentinek.png": {
+          "x": 113,
+          "y": 452,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasterySettlers.png": {
+          "x": 226,
+          "y": 452,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryStrongbox.png": {
+          "x": 339,
+          "y": 452,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasterySynthesis.png": {
+          "x": 452,
+          "y": 452,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryTangle.png": {
+          "x": 565,
+          "y": 452,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryThread.png": {
+          "x": 678,
+          "y": 452,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryTorment.png": {
+          "x": 0,
+          "y": 565,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryUltimatum.png": {
+          "x": 113,
+          "y": 565,
+          "w": 113,
+          "h": 113
+        },
+        "Art/2DArt/SkillIcons/passives/AtlasTrees/AtlasPassiveMasteryUniqueMonsters.png": {
+          "x": 226,
+          "y": 565,
+          "w": 113,
+          "h": 113
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-mastery-4.webp",
+      "sha256": "ec505dbe4b7b9b998943b40c7970083c4d1338b3d6fcde66ab13fd525b9f64fd"
+    },
+    "groupBackground": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-group-background-4.webp",
+      "w": 1697,
+      "h": 1005,
+      "coords": {
+        "GroupBackgroundCleansingFire": {
+          "x": 0,
+          "y": 0,
+          "w": 772,
+          "h": 511
+        },
+        "GroupBackgroundTangle": {
+          "x": 772,
+          "y": 0,
+          "w": 548,
+          "h": 466
+        },
+        "PSGroupBackground3Alt": {
+          "x": 0,
+          "y": 511,
+          "w": 476,
+          "h": 494
+        },
+        "PSGroupBackground3": {
+          "x": 476,
+          "y": 511,
+          "w": 476,
+          "h": 494
+        },
+        "PSGroupBackground2Alt": {
+          "x": 1320,
+          "y": 0,
+          "w": 377,
+          "h": 377
+        },
+        "PSGroupBackground2": {
+          "x": 1320,
+          "y": 377,
+          "w": 377,
+          "h": 377
+        },
+        "PSGroupBackground1Alt": {
+          "x": 952,
+          "y": 511,
+          "w": 220,
+          "h": 220
+        },
+        "PSGroupBackground1": {
+          "x": 952,
+          "y": 731,
+          "w": 220,
+          "h": 220
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-group-background-4.webp",
+      "sha256": "f92f8f5efbfb3b0f392ed951f5e1a3c68697907114e38b4c81a2651ebeb177cd"
+    },
+    "startNode": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-group-background-4.webp",
+      "w": 1697,
+      "h": 1005,
+      "coords": {
+        "AtlasPassiveSkillScreenStart": {
+          "x": 1320,
+          "y": 754,
+          "w": 220,
+          "h": 229
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-group-background-4.webp",
+      "sha256": "f92f8f5efbfb3b0f392ed951f5e1a3c68697907114e38b4c81a2651ebeb177cd"
+    },
+    "frame": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-frame-4.webp",
+      "w": 435,
+      "h": 405,
+      "coords": {
+        "WormholeFrameUnallocated": {
+          "x": 0,
+          "y": 0,
+          "w": 145,
+          "h": 147
+        },
+        "WormholeFrameHighlight": {
+          "x": 145,
+          "y": 0,
+          "w": 145,
+          "h": 147
+        },
+        "WormholeFrameCanAllocate": {
+          "x": 290,
+          "y": 0,
+          "w": 145,
+          "h": 147
+        },
+        "WormholeFrameAllocated": {
+          "x": 0,
+          "y": 147,
+          "w": 145,
+          "h": 147
+        },
+        "KeystoneFrameUnallocated": {
+          "x": 145,
+          "y": 147,
+          "w": 109,
+          "h": 111
+        },
+        "KeystoneFrameCanAllocate": {
+          "x": 254,
+          "y": 147,
+          "w": 109,
+          "h": 111
+        },
+        "KeystoneFrameAllocated": {
+          "x": 0,
+          "y": 294,
+          "w": 109,
+          "h": 111
+        },
+        "NotableFrameUnallocated": {
+          "x": 109,
+          "y": 294,
+          "w": 76,
+          "h": 76
+        },
+        "NotableFrameCanAllocate": {
+          "x": 185,
+          "y": 294,
+          "w": 76,
+          "h": 76
+        },
+        "NotableFrameAllocated": {
+          "x": 261,
+          "y": 294,
+          "w": 76,
+          "h": 76
+        },
+        "PSSkillFrameHighlighted": {
+          "x": 363,
+          "y": 147,
+          "w": 51,
+          "h": 51
+        },
+        "PSSkillFrameActive": {
+          "x": 363,
+          "y": 198,
+          "w": 51,
+          "h": 51
+        },
+        "PSSkillFrame": {
+          "x": 337,
+          "y": 294,
+          "w": 51,
+          "h": 51
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-frame-4.webp",
+      "sha256": "9d3a03db16cd340ae602b2f96537342f1aedfb5e8ac755c06355113fa6759b05"
+    },
+    "atlasBackground": {
+      "filename": "Assets/Atlas/3.30.0-preview/atlas-background-4.webp",
+      "w": 5184,
+      "h": 5184,
+      "coords": {
+        "AtlasPassiveBackground": {
+          "x": 0,
+          "y": 0,
+          "w": 5184,
+          "h": 5184
+        }
+      },
+      "source": "https://raw.githubusercontent.com/grindinggear/atlastree-export/d225501d7a3e52c991309116473908c284075e89/assets/atlas-background-4.webp",
+      "sha256": "c5574f3caf62e3caa86f0e2809185a39688abd866c7cc1f6101629ad9ec50484"
+    }
+  }
+}

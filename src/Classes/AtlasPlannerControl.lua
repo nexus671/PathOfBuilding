@@ -147,7 +147,7 @@ function Canvas:OnFocusLost() self.drag=nil end
 
 function Panel.Open(build,source,layout)
 	local store=build.savers.AtlasPlans
-	local version=(build.spec.treeVersion or ""):match("3_27") and "3.27.0" or "3.29.1"
+	local version=(build.spec.treeVersion or ""):match("3_30") and "3.30.0-preview" or (build.spec.treeVersion or ""):match("3_27") and "3.27.0" or "3.29.3"
 	local draft=copyTable(source or store.plans[1] or {id="atlas-"..require("sha1")(tostring({})..os.time()):sub(1,12),title="New Atlas plan",version=version,budget=atlas.tree(version).maxPoints,nodes={},notes=""})
 	local width=layout and layout.width or math.min(1180,main.screenW-40); local height=layout and layout.height or math.min(820,main.screenH-50)
 	local inspector=math.max(260,math.min(width-600,layout and (layout.inspectorWidth or layout.restore and layout.restore.inspectorWidth) or 260))

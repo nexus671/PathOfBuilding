@@ -2146,6 +2146,9 @@ end
 -- Build list of side bar stats
 function buildMode:RefreshStatList()
 	self.controls.warnings.lines = {}
+	if treeVersions[self.spec.treeVersion].preview then
+		t_insert(self.controls.warnings.lines,"3.30 preview tree: gem, item and new mechanic calculations still use the current engine. Review unsupported modifiers.")
+	end
 	local statBoxList = wipeTable(self.controls.statBox.list)
 	if self.calcsTab.mainEnv.player.mainSkill.infoMessage then
 			if #self.calcsTab.mainEnv.player.mainSkill.infoMessage > 40 then

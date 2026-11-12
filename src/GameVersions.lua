@@ -13,11 +13,19 @@ treeVersionList = { "2_6", "3_6", "3_7", "3_8", "3_9", "3_10", "3_11", "3_12", "
 					"3_26_ruthless", "3_26_ruthless_alternate", "3_26_alternate", "3_26", "3_27_ruthless", "3_27_ruthless_alternate", "3_27_alternate", "3_27", "3_28_ruthless", "3_28_ruthless_alternate", "3_28_alternate", "3_28", "3_29_ruthless", "3_29" }
 --- Always points to the latest skill tree version.
 latestTreeVersion = treeVersionList[#treeVersionList]
+-- Published preview trees are selectable without changing the stable default.
+table.insert(treeVersionList, "3_30_preview")
 ---Tree version where multiple skill trees per build were introduced to PoBC.
 defaultTreeVersion = treeVersionList[2]
 ---Display, comparison and export data for all supported skill tree versions.
 ---@type table<string, {display: string, num: number, url: string}>
 treeVersions = {
+	["3_30_preview"] = {
+		display = "3.30 preview",
+		num = 3.30,
+		url = "https://www.pathofexile.com/passive-skill-tree/3.30.0/",
+		preview = true,
+	},
 	["2_6"] = {
 		display = "2.6",
 		num = 2.06,

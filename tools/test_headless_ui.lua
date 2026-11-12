@@ -2,6 +2,7 @@
 local directory=assert(arg[1],"Supply an output directory")
 arg={}
 dofile("HeadlessWrapper.lua")
+main.disableDevAutoSave=true
 local UI=require("Modules.HeadlessUI")
 local sim=require("Modules.CraftingSimulator")
 local frames=0
@@ -293,6 +294,15 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:frame(function() build.calcsTab.controls.breakdown:DrawEncounterTimeline(16,16,{width=size[1]-32,timeline=actor.recoverySimulationTrace}) end)
 	ui.regions={{0,0,size[1],size[2]}}
 	ui:write(directory.."/"..size[1].."-recovery-timeline.json");frames=frames+1
+	newBuild();ui:bind(build)
+	assert(not main.popups[1],"Preview setup: "..tostring(main.popups[1] and main.popups[1].title).." | "..tostring(main.popups[1] and main.popups[1].controls[1] and main.popups[1].controls[1].label))
+	assert(build.spec.treeVersion=="3_29","Preview replaced the stable new-build default")
+	ui:choose("versionSelect","3_30_preview","value");frame("covens-convert-preview");ui:click("convert")
+	assert(build.spec.treeVersion=="3_30_preview","Native tree conversion did not select the preview")
+	frame("covens-passive-tree");assert(table.concat(build.controls.warnings.lines," "):find("preview",1,true),"Preview warning missing")
+	ui:click("atlas");ui:text("search","Massing Forces");ui:click("find");ui:click("allocate");frame("covens-atlas-tree")
+	assert(build.planningWorkspace.controls.canvas.tree.maxPoints==150,"Atlas preview lost its 150 point budget")
+	ui:click("keep");assert(build.savers.AtlasPlans.plans[1].version=="3.30.0-preview","Atlas preview version not retained")
 	ui:restore()
 end
 -- These checks exercise the audit itself: raw uncoloured list text inherits the

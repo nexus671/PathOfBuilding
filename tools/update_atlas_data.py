@@ -1,5 +1,6 @@
 """Rebuild bundled Atlas graphs from pinned, official GGG Standard exports."""
 import hashlib
+import argparse
 import json
 import math
 import re
@@ -9,11 +10,17 @@ from urllib.request import urlopen
 VERSIONS = {
     "3.27.0": "dd12728df527cf96a93f91cbee7d5951285b8883",
     "3.29.1": "0ae2e0f94f266fc21c86ee8dd561d7b559bf2db4",
+    "3.29.3": "dcb2a006b68740f3ecbd317775c262fc6ed7b8af",
+    "3.30.0-preview": "d225501d7a3e52c991309116473908c284075e89",
 }
 DESTINATION = Path(__file__).resolve().parents[1] / "src" / "Data" / "Atlas"
 ANGLES = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330]
 
-for version, commit in VERSIONS.items():
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--version", action="append", choices=VERSIONS, help="Rebuild only this pinned version")
+selected = parser.parse_args().version or VERSIONS
+for version in selected:
+    commit = VERSIONS[version]
     source = f"https://raw.githubusercontent.com/grindinggear/atlastree-export/{commit}/data.json"
     with urlopen(source, timeout=30) as response:
         raw = response.read()
@@ -53,6 +60,16 @@ for version, commit in VERSIONS.items():
         "groups": [{"x": group["x"], "y": group["y"], "background": group["background"]["image"]}
                    for group in data["groups"].values() if group.get("background")],
     }
+    if version.endswith("-preview"):
+        result["preview"] = True
+        league_source = source.replace("/data.json", "/league.json")
+        with urlopen(league_source, timeout=30) as response:
+            league_raw = response.read()
+        league = json.loads(league_raw)
+        assert {k: v for k, v in data.items() if k != "tree"} == {k: v for k, v in league.items() if k != "tree"}
+        result["compatibleModes"] = ["Standard", "Covens of Umbra"]
+        result["leagueSource"] = league_source
+        result["leagueSha256"] = hashlib.sha256(league_raw).hexdigest()
     DESTINATION.mkdir(parents=True, exist_ok=True)
     # Preserve the game's spelling in generated data, as with other GGG exports.
     encoded = '{"_comment":"Generated official GGG data. cspell:disable",\n' + json.dumps(

@@ -38,6 +38,7 @@ end
 ---@param ... "ASYNC"|"CLAMP"|"MIPMAP"
 function imageHandleClass:Load(fileName, ...)
 	self.valid = true
+	self.headlessImagePath = fileName
 end
 
 ---@class ArtHandle
@@ -84,8 +85,15 @@ function imageHandleClass:SetLoadingPriority(priority) end
 
 ---@return integer width
 ---@return integer height
+local headlessImageSizes
 function imageHandleClass:ImageSize()
-	return 1, 1
+	if not headlessImageSizes then
+		local file=io.open("Data/HeadlessImageSizes.json","r")
+		headlessImageSizes=file and require("dkjson").decode(file:read("*a")) or {}
+		if file then file:close() end
+	end
+	local size=headlessImageSizes[self.headlessImagePath or ""]
+	return size and size[1] or 1, size and size[2] or 1
 end
 
 ---@param fileName string

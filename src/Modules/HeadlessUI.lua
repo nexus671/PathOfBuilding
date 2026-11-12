@@ -82,11 +82,12 @@ function M.install(options)
 	replace("SetDrawLayer",function(value,sub) layer=value or layer;sublayer=sub or 0 end)
 	replace("GetDrawLayer",function() return layer end)
 	replace("DrawImage",function(handle,x,y,w,h,left,top,right,bottom)
-		record({kind="rect",x=x+viewport[1],y=y+viewport[2],width=w,height=h,textured=handle~=nil,asset=images[handle],uv=left and {left,top,right,bottom} or nil})
+		record({kind="rect",x=x+viewport[1],y=y+viewport[2],width=w,height=h,textured=handle~=nil,asset=images[handle] or type(handle)=="table" and handle.headlessImagePath,uv=left and {left,top,right,bottom} or nil})
 	end)
 	replace("DrawImageQuad",function(handle,...)
-		local points={...};for i=1,8,2 do points[i]=points[i]+viewport[1];points[i+1]=points[i+1]+viewport[2] end
-		record({kind="polygon",points=points,textured=handle~=nil})
+		local values={...};local points={};for i=1,8,2 do points[i]=values[i]+viewport[1];points[i+1]=values[i+1]+viewport[2] end
+		local uv;if #values>=16 then uv={unpack(values,9,16)} end
+		record({kind="polygon",points=points,textured=handle~=nil,asset=images[handle] or type(handle)=="table" and handle.headlessImagePath,uv=uv})
 	end)
 	replace("DrawString",function(x,y,align,height,name,text)
 		text=tostring(text):gsub("[\194-\244][\128-\191]*","?")
@@ -120,6 +121,7 @@ function M.install(options)
 		if host.viewMode=="PLANNER" and host.planningWorkspace then
 			for key,control in pairs(host.planningWorkspace.controls) do controls[key]=control end
 		end
+		if host.viewMode=="TREE" and host.treeTab then for key,control in pairs(host.treeTab.controls) do controls[key]=control end end
 		return controls
 	end
 	function ui:dispatch(host,events)
@@ -173,9 +175,17 @@ function M.install(options)
 		return self
 	end
 	function ui:choose(key,value,member)
-		local host=self:activeHost();local control=assert(controlsFor(host)[key]);local target
+		local host=self:activeHost();local control=assert(controlsFor(host)[key],"Unknown dropdown: "..key.." in "..tostring(host.title or host.viewMode));local target
 		for i,entry in ipairs(control.list) do if (member and entry[member] or entry)==value then target=i;break end end
 		assert(target,"Dropdown choice not found: "..tostring(value));if control.tabKeys then return self:click(assert(control.tabKeys[value],"Missing navigation tab")) end;self:click(key)
+		-- Click a visible row directly: arrowing through versions can open an
+		-- intermediate confirmation before reaching the requested version.
+		self:frame()
+		if control.dropped and control.dropHeight and not control:IsSearchActive() then
+			local x,y=control:GetPos();local w,h=control:GetSize();local offset=control.controls.scrollBar.offset
+			local row=(target-0.5)*(h-4)-offset
+			if row>=0 and row<control.dropHeight then return self:clickAt(x+w/2,(control.dropUp and y-control.dropHeight-4 or y+h)+row) end
+		end
 		local attempts=0
 		while control.selIndex~=target do
 			attempts=attempts+1;assert(attempts<=#control.list+1,"Dropdown selection did not advance")

@@ -49,8 +49,65 @@ def contrast(first, second):
 def texture_region(path, uv):
     texture = Image.open(path).convert("RGBA")
     if uv:
-        texture = texture.crop(tuple(round(v * (texture.width if i % 2 == 0 else texture.height)) for i, v in enumerate(uv)))
+        left, top, right, bottom = [round(v * (texture.width if i % 2 == 0 else texture.height)) for i, v in enumerate(uv)]
+        texture = texture.crop((min(left, right), min(top, bottom), max(left, right), max(top, bottom)))
+        if right < left:
+            texture = texture.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        if bottom < top:
+            texture = texture.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
     return texture
+
+
+def bundled_texture(asset):
+    path = (ROOT / "src" / asset).resolve()
+    if not any(path.is_relative_to((ROOT / "src" / folder).resolve()) for folder in ("Assets", "TreeData")):
+        raise ValueError("Texture outside bundled assets")
+    return path
+
+
+def rect_texture(asset, uv, size):
+    if uv and (min(uv) < 0 or max(uv) > 1) and uv[2] > uv[0] and uv[3] > uv[1]:
+        # Native tree backgrounds repeat outside 0..1. Tile at output resolution
+        # instead of allocating a potentially enormous source-image crop.
+        tile_width, tile_height = size[0] / (uv[2] - uv[0]), size[1] / (uv[3] - uv[1])
+        tile = texture_region(str(asset), None).resize((max(1, math.ceil(tile_width)), max(1, math.ceil(tile_height))), Image.Resampling.LANCZOS)
+        result = Image.new("RGBA", size)
+        for x in range(math.floor(uv[0]), math.ceil(uv[2])):
+            for y in range(math.floor(uv[1]), math.ceil(uv[3])):
+                result.alpha_composite(tile, (round((x - uv[0]) * tile_width), round((y - uv[1]) * tile_height)))
+        return result
+    return texture_region(str(asset), tuple(uv) if uv else None).resize(size, Image.Resampling.LANCZOS)
+
+
+def textured_quad(layer, command):
+    """Rasterize two affine triangles using the native quad's four UV pairs."""
+    texture = texture_region(str(bundled_texture(command["asset"])), None)
+    points = list(zip(command["points"][::2], command["points"][1::2]))
+    uv = command.get("uv") or [0, 0, 1, 0, 1, 1, 0, 1]
+    source = [(uv[i] * texture.width, uv[i + 1] * texture.height) for i in range(0, 8, 2)]
+    for indices in ((0, 1, 2), (0, 2, 3)):
+        target = [points[i] for i in indices]
+        (x1, y1), (x2, y2), (x3, y3) = target
+        determinant = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)
+        if abs(determinant) < 1e-8:
+            continue
+        box = (max(0, math.floor(min(p[0] for p in target))), max(0, math.floor(min(p[1] for p in target))),
+               min(layer.width, math.ceil(max(p[0] for p in target))), min(layer.height, math.ceil(max(p[1] for p in target))))
+        if box[2] <= box[0] or box[3] <= box[1]:
+            continue
+        coefficients = []
+        for axis in (0, 1):
+            v1, v2, v3 = [source[i][axis] for i in indices]
+            a = ((v2 - v1) * (y3 - y1) - (v3 - v1) * (y2 - y1)) / determinant
+            b = ((x2 - x1) * (v3 - v1) - (x3 - x1) * (v2 - v1)) / determinant
+            coefficients += [a, b, v1 - a * x1 - b * y1 + a * box[0] + b * box[1]]
+        size = (box[2] - box[0], box[3] - box[1])
+        patch = texture.transform(size, Image.Transform.AFFINE, coefficients, Image.Resampling.BILINEAR)
+        patch = ImageChops.multiply(patch, Image.new("RGBA", size, rgba(command["color"])))
+        mask = Image.new("L", size)
+        ImageDraw.Draw(mask).polygon([(x - box[0], y - box[1]) for x, y in target], fill=255)
+        patch.putalpha(ImageChops.multiply(patch.getchannel("A"), mask))
+        layer.alpha_composite(patch, box[:2])
 
 
 def render(frame):
@@ -81,6 +138,16 @@ def render(frame):
                min(canvas.width, round(clip[0] + clip[2])), min(canvas.height, round(clip[1] + clip[3])))
         if box[2] <= box[0] or box[3] <= box[1]:
             continue
+        if command["kind"] == "rect":
+            x, y, w, h = [command[k] for k in ("x", "y", "width", "height")]
+            if x + w <= box[0] or y + h <= box[1] or x >= box[2] or y >= box[3]:
+                continue
+            box = (max(box[0], math.floor(x)), max(box[1], math.floor(y)), min(box[2], math.ceil(x + w)), min(box[3], math.ceil(y + h)))
+        elif command["kind"] == "polygon":
+            xs, ys = command["points"][::2], command["points"][1::2]
+            if max(xs) <= box[0] or max(ys) <= box[1] or min(xs) >= box[2] or min(ys) >= box[3]:
+                continue
+            box = (max(box[0], math.floor(min(xs))), max(box[1], math.floor(min(ys))), min(box[2], math.ceil(max(xs))), min(box[3], math.ceil(max(ys))))
         layer = Image.new("RGBA", canvas.size)
         draw = ImageDraw.Draw(layer)
         if command["kind"] == "rect":
@@ -88,17 +155,17 @@ def render(frame):
             draw.rectangle((rect[0], rect[1], rect[0] + rect[2] - 1, rect[1] + rect[3] - 1), fill=rgba(command["color"]))
             background.append((rect, clip, command["color"]))
             if command.get("asset"):
-                asset = (ROOT / "src" / command["asset"]).resolve()
-                if not asset.is_relative_to((ROOT / "src/Assets").resolve()):
-                    raise ValueError("Texture outside bundled assets")
-                texture = texture_region(str(asset), tuple(command["uv"]) if command.get("uv") else None)
-                texture = texture.resize((max(1, round(rect[2])), max(1, round(rect[3]))), Image.Resampling.LANCZOS)
+                asset = bundled_texture(command["asset"])
+                texture = rect_texture(asset, command.get("uv"), (max(1, round(rect[2])), max(1, round(rect[3]))))
                 texture = ImageChops.multiply(texture, Image.new("RGBA", texture.size, rgba(command["color"])))
                 layer = Image.new("RGBA", canvas.size)
                 layer.alpha_composite(texture, (round(rect[0] + (rect[2]-texture.width)/2), round(rect[1] + (rect[3]-texture.height)/2)))
         elif command["kind"] == "polygon":
             points = command["points"]
-            draw.polygon(list(zip(points[::2], points[1::2])), fill=rgba(command["color"]))
+            if command.get("asset"):
+                textured_quad(layer, command)
+            else:
+                draw.polygon(list(zip(points[::2], points[1::2])), fill=rgba(command["color"]))
         elif command["kind"] == "text":
             entries, atlas = glyphs(command["font"], command["fontHeight"])
             x, y, height = command["x"], command["y"], command["height"]
