@@ -2381,6 +2381,8 @@ function buildMode:SaveDBFile()
 
 	-- Reset all modFlags
 	self:ResetModFlags()
+	self.unsaved = false
+	require("Modules.PlanningUI").saved(self)
 
 	if action == "LIST" then
 		self:CloseBuild()

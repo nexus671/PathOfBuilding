@@ -737,83 +737,68 @@ function CalcBreakdownClass:DrawRadiusVisual(x, y, width, height, radius)
 end
 
 function CalcBreakdownClass:DrawEncounterTimeline(x,y,section)
-	local trace=section.timeline
+	local trace=section.timeline;local options=section.options or {};local hidden=options.hidden or {}
 	local width,plotX,plotWidth=section.width,x+48,section.width-65
-	local stop=m_max(0.001,trace.time or trace.window)
-	local step=m_min(100,((section.height or 340)-40)/3)
-	local plotHeight=step-38
+	local stop=m_max(0.001,trace.time or trace.window);local height=section.height or 340
 	local function line(x1,y1,x2,y2)
-		local dx,dy=x2-x1,y2-y1
-		local length=math.sqrt(dx*dx+dy*dy)
-		if length < 1e-8 then return end
-		local ox,oy=-dy/length*0.75,dx/length*0.75
-		DrawImageQuad(nil,x1+ox,y1+oy,x2+ox,y2+oy,x2-ox,y2-oy,x1-ox,y1-oy)
+		local dx,dy=x2-x1,y2-y1;local length=math.sqrt(dx*dx+dy*dy);if length<1e-8 then return end
+		local ox,oy=-dy/length*0.75,dx/length*0.75;DrawImageQuad(nil,x1+ox,y1+oy,x2+ox,y2+oy,x2-ox,y2-oy,x1-ox,y1-oy)
 	end
-	local plots={
-		{label="Resources",series={{"Life",{0.3,1,0.4}},{"EnergyShield",{0.3,0.9,1}},{"Mana",{0.5,0.6,1}}}},
-		{label="Defenses",series={{"crab",{1,0.75,0.25}},{"shrouds",{0.8,0.5,1}},{"chargesTotal",{0.9,0.9,0.9}}}},
-		{label="Poison DPS",series={{"poison",{1,0.4,0.6}}}},
-	}
-	local labels={Life="Life",EnergyShield="ES",Mana="Mana",crab="Crab",shrouds="Shrouds",chargesTotal="Charges",poison="Poison DPS"}
-	local cursorX,cursorY=GetCursorPos()
-	local hovered=cursorX >= plotX and cursorX <= plotX+plotWidth and cursorY >= y and cursorY <= y+step*3
-	local hoverTime=(cursorX-plotX)/plotWidth*stop
-	local nearest
-	for _,point in ipairs(trace.points) do if not nearest or math.abs(point.time-hoverTime) < math.abs(nearest.time-hoverTime) then nearest=point end end
-	-- Cache immutable trace summaries instead of scanning every series every frame.
 	if self.timelineTrace~=trace then
 		self.timelineTrace=trace;self.timelineCaps=copyTable(trace.caps);self.timelineMarkers={}
 		for _,point in ipairs(trace.points) do for _,key in ipairs({"Life","EnergyShield","Mana","crab","shrouds","chargesTotal","poison"}) do self.timelineCaps[key]=m_max(self.timelineCaps[key] or 0,point[key] or 0) end end
 		for _,row in ipairs(trace.rows or {}) do if row.event~="Sample" and row.event~="Start" then self.timelineMarkers[#self.timelineMarkers+1]=row end end
 	end
+	local definitions={
+		{label="Resources",series={{"Life",{0.3,1,0.4}},{"EnergyShield",{0.3,0.9,1}},{"Mana",{0.5,0.6,1}}}},
+		{label="Defenses",series={{"crab",{1,0.75,0.25}},{"shrouds",{0.8,0.5,1}},{"chargesTotal",{0.9,0.9,0.9}}}},
+		{label="Poison DPS",series={{"poison",{1,0.4,0.6}}}},
+	}
+	local plots={};for _,definition in ipairs(definitions) do local plot={label=definition.label,series={},maximum=0}
+		for _,series in ipairs(definition.series) do if not hidden[series[1]] then plot.series[#plot.series+1]=series;plot.maximum=m_max(plot.maximum,self.timelineCaps[series[1]] or 0) end end
+		if #plot.series>0 and (options.hideEmpty==false or plot.maximum>0) then plots[#plots+1]=plot end
+	end
+	if #plots==0 then SetDrawColor(1,1,1);DrawString(x+4,y+24,"LEFT",14,"VAR","No visible series. Enable a resource or show empty lanes.");return end
+	local labels={Life="Life",EnergyShield="ES",Mana="Mana",crab="Crab",shrouds="Shrouds",chargesTotal="Charges",poison="Poison DPS"}
+	local step=(height-64)/#plots;local plotHeight=m_max(8,step-38)
+	local cursorX,cursorY=GetCursorPos();local hovered=cursorX>=plotX and cursorX<=plotX+plotWidth and cursorY>=y and cursorY<=y+step*#plots
+	local hoverTime=(cursorX-plotX)/plotWidth*stop;local nearest
+	for _,point in ipairs(trace.points) do if not nearest or math.abs(point.time-hoverTime)<math.abs(nearest.time-hoverTime) then nearest=point end end
 	for index,plot in ipairs(plots) do
 		local top=y+(index-1)*step+22
-		SetDrawColor(0.12,0.12,0.15); DrawImage(nil,plotX,top,plotWidth,plotHeight)
-		SetDrawColor(0.45,0.45,0.5); line(plotX,top+plotHeight,plotX+plotWidth,top+plotHeight)
-		DrawString(x+2,top,"LEFT",12,"VAR","100%")
+		SetDrawColor(0.12,0.12,0.15);DrawImage(nil,plotX,top,plotWidth,plotHeight)
+		SetDrawColor(0.45,0.45,0.5);line(plotX,top+plotHeight,plotX+plotWidth,top+plotHeight)
+		DrawString(x+2,top,"LEFT",12,"VAR",options.raw and s_format("%.0f",plot.maximum) or "100%")
 		DrawString(x+20,top+plotHeight-14,"LEFT",12,"VAR","0")
-		SetDrawColor(1,1,1); DrawString(x+4,top-20,"LEFT",14,"VAR",plot.label.." (normalized)")
-		if plot.label == "Poison DPS" and (trace.caps.poison or 0) == 0 then DrawString(x+240,top-20,"LEFT",12,"VAR","No poison applied in this trial") end
+		SetDrawColor(1,1,1);DrawString(x+4,top-20,"LEFT",14,"VAR",plot.label..(options.raw and " (actual values)" or " (normalized)"))
 		local legendX=x+240
-		for _,series in ipairs(plot.series) do
-			local key,color=series[1],series[2]
-			local cap=self.timelineCaps[key] or 0
-			if cap > 0 then
-				SetDrawColor(unpack(color))
-				local text=labels[key]..": "..s_format("%.0f",cap)
-				DrawString(legendX,top-20,"LEFT",12,"VAR",text)
-				legendX=legendX+DrawStringWidth(12,"VAR",text)+14
-				local previous
-				for _,p in ipairs(trace.points) do
-					local px,py=plotX+p.time/stop*plotWidth,top+plotHeight-m_min(1,m_max(0,(p[key] or 0)/cap))*plotHeight
-					if previous then line(previous[1],previous[2],px,py) end
-					previous={px,py}
+		for seriesIndex,series in ipairs(plot.series) do local key,color=series[1],series[2];local cap=self.timelineCaps[key] or 0
+			if cap>0 then
+				SetDrawColor(unpack(color));local text=labels[key]..": "..s_format("%.0f",hovered and nearest and nearest[key] or cap)
+				if legendX+DrawStringWidth(12,"VAR",text)<x+width then DrawString(legendX,top-20,"LEFT",12,"VAR",text) end;legendX=legendX+DrawStringWidth(12,"VAR",text)+14
+				local previous;for pointIndex,p in ipairs(trace.points) do local scale=options.raw and m_max(1,plot.maximum) or cap
+					local px,py=plotX+p.time/stop*plotWidth,top+plotHeight-m_min(1,m_max(0,(p[key] or 0)/scale))*plotHeight
+					if previous and (seriesIndex==1 or pointIndex%4~=0) then line(previous[1],previous[2],px,py) end;previous={px,py}
 				end
 			end
 		end
-		if hovered and nearest then SetDrawColor(0.7,0.7,0.7); local px=plotX+nearest.time/stop*plotWidth; line(px,top,px,top+plotHeight) end
-		if index==1 then
-			local last=-10
-			for _,row in ipairs(self.timelineMarkers) do local px=plotX+row.time/stop*plotWidth
-				if px-last>=3 then SetDrawColor(row.event=="Death" and "^xEF8D8D" or "^xCBB37D");line(px,top+plotHeight-4,px,top+plotHeight);last=px end
-			end
-		end
+		if hovered and nearest then SetDrawColor(0.7,0.7,0.7);local px=plotX+nearest.time/stop*plotWidth;line(px,top,px,top+plotHeight) end
+		if index==1 then local last=-10;for _,row in ipairs(self.timelineMarkers) do local px=plotX+row.time/stop*plotWidth;if px-last>=3 then SetDrawColor(row.event=="Death" and "^xEF8D8D" or "^xCBB37D");line(px,top+plotHeight-4,px,top+plotHeight);last=px end end end
 	end
-	SetDrawColor(1,1,1)
-	DrawString(plotX,y+step*3-14,"LEFT",12,"VAR","0s")
-	for fraction=1,3 do
-		local label=s_format("%.1fs",stop*fraction/4)
-		DrawString(plotX+plotWidth*fraction/4-DrawStringWidth(12,"VAR",label)/2,y+step*3-14,"LEFT",12,"VAR",label)
-	end
-	DrawString(plotX+plotWidth,y+step*3-14,"RIGHT_X",12,"VAR",s_format("%.2fs",stop))
+	local bottom=y+step*#plots
+	SetDrawColor(1,1,1);DrawString(plotX,bottom-14,"LEFT",12,"VAR","0s")
+	for fraction=1,3 do local text=s_format("%.1fs",stop*fraction/4);DrawString(plotX+plotWidth*fraction/4-DrawStringWidth(12,"VAR",text)/2,bottom-14,"LEFT",12,"VAR",text) end
+	DrawString(plotX+plotWidth,bottom-14,"RIGHT_X",12,"VAR",s_format("%.2fs",stop))
+	local function fit(text) while #text>4 and DrawStringWidth(12,"VAR",text)>width-8 do text=text:sub(1,-5).."..." end;return text end
 	if hovered and nearest then
-		DrawString(x+4,y+step*3+4,"LEFT",12,"VAR",s_format("%.3fs: Life %.0f | ES %.0f | Mana %.0f | Crab %d | Shrouds %d",nearest.time,nearest.Life,nearest.EnergyShield,nearest.Mana,nearest.crab,nearest.shrouds))
+		DrawString(x+4,bottom+4,"LEFT",12,"VAR",fit(s_format("%.3fs: Life %.0f | ES %.0f | Mana %.0f | Shrouds %d",nearest.time,nearest.Life,nearest.EnergyShield,nearest.Mana,nearest.shrouds)))
 		local event;for _,row in ipairs(self.timelineMarkers) do if not event or math.abs(row.time-hoverTime)<math.abs(event.time-hoverTime) then event=row end end
-		local label=s_format("Flask charges: %s | Poison DPS: %.0f",nearest.charges,nearest.poison)..(event and s_format(" | %.3fs: %s",event.time,event.event) or "")
-		while #label>4 and DrawStringWidth(12,"VAR",label)>width-8 do label=label:sub(1,-5).."..." end
-		DrawString(x+4,y+step*3+20,"LEFT",12,"VAR",label)
-	else DrawString(x+4,y+step*3+8,"LEFT",12,"VAR","Hover for samples and nearby events. Ticks mark events; legends show each series' reference maximum.") end
+		DrawString(x+4,bottom+20,"LEFT",12,"VAR",fit(event and s_format("%.3fs: %s",event.time,event.event) or "No nearby event"))
+	else DrawString(x+4,bottom+4,"LEFT",12,"VAR",fit("Hover for exact samples. Solid and dashed lines distinguish series.")) end
+	local events={};for _,row in ipairs(self.timelineMarkers) do local name=row.event:lower();if name:find("tincture",1,true) or name:find("recharge",1,true) or name:find("shroud",1,true) or name:find("death",1,true) then events[#events+1]=s_format("%.2fs %s",row.time,row.event);if #events==3 then break end end end
+	if #events>0 then DrawString(x+4,bottom+38,"LEFT",12,"VAR",fit(table.concat(events," | "))) end
 end
+
 
 function CalcBreakdownClass:Draw(viewPort)
 	local sourceData = self.sourceData

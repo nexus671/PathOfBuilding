@@ -40,6 +40,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:choose("page","Connection");frame("ai-connection");ui:click("setup")
 	assert(ui.clipboard:find("McpServer.cjs",1,true))
 	ui:click("enable");assert(bridge.enabled and files.context and files.state)
+	ui:click("testConnection")
+	files.client=json.encode({schemaVersion=1,session=bridge.session,name="Headless MCP client",seenAt=os.time(),contextRevision=bridge.contextRevision,testNonce=bridge.connectionTest.nonce})
+	bridge.poll(build,true);assert(bridge.connectionTest.passed and bridge.client.name=="Headless MCP client","Client round-trip receipt was not recognized")
+	frame("ai-client-confirmed")
 	ui:click("diagnostics");frame("ai-diagnostics");ui:click("close")
 	ui:choose("page","Plan & review")
 	local original=main.modes.BUILD
@@ -49,6 +53,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	for i=1,60 do prepared.audit.assumptions[#prepared.audit.assumptions+1]={text="Review checklist entry "..i..": verify conditions and uptime before applying the candidate."} end
 	bridge.remember(prepared);bridge.prepared=prepared
 	ui:click("review");frame("ai-review-summary")
+	ui:click("toggleMetrics");frame("ai-review-all-metrics");ui:click("toggleMetrics")
 	ui:choose("page","Changes");frame("ai-review-changes")
 	ui:choose("page","Checks");frame("ai-review-checks")
 	ui:choose("page","Explain");frame("ai-review-explanation");assert(main.popups[1].controls.details.list[1][1]:find("Measured",1,true))
@@ -107,12 +112,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("nav_crafting");frame("crafting-empty-workspace")
 	ui:click("new");frame("crafting-project-editor")
 	ui:text("title","Life helmet");ui:text("starting","Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B")
-	ui:text("goals","Life\nResistances");ui:text("steps","Roll life\nCheck resistances");ui:click("save")
+	ui:click("next");frame("crafting-wizard-target");ui:text("goals","Life\nResistances");ui:click("next");frame("crafting-wizard-plan");ui:text("steps","Roll life\nCheck resistances");ui:click("next");frame("crafting-wizard-review");ui:click("save")
 	assert(#build.savers.CraftingProjects.projects==1 and #build.savers.CraftingProjects.projects[1].goals==2,"Project editor lost pasted line breaks")
 	frame("crafting-workspace")
 	ui:click("native");frame("crafting-workspace-item")
 	assert(not main.popups[1],"Workbench should be embedded in the planning workspace")
 	ui:click("currency_alchemy");ui:click("item");frame("workspace-crafted")
+	assert(require("Modules.PlanningUI").saveStatus(build):find("Working draft",1,true),"Working item was incorrectly presented as saved")
 	assert(not workspace.controls.apply:IsEnabled() and workspace.controls.currency_chaos:IsEnabled(),"Currency eligibility did not follow the crafted rarity")
 	ui:click("history");frame("crafting-history");ui:choose("state",1,"val");frame("crafting-history-before");ui:click("restore")
 	assert(not workspace.controls.undo:IsEnabled(),"History restore did not undo subsequent actions");ui:click("currency_alchemy");ui:click("item")
@@ -186,12 +192,16 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 	assert(not jobs.job,"Crafting simulation did not finish")
 	frame("simulation-result");assert(#main.popups[1].controls.resultSummary.list>=4,"Detailed simulation results are missing")
-	ui:click("distribution");frame("simulation-distribution");ui:click("close")
+	ui:click("editRecipe");frame("crafting-recipe-cards");ui:click("close")
+	ui:click("distribution");frame("simulation-distribution");assert(main.popups[1].controls.successCard and main.popups[1].controls.moreTrials,"Simulation result cards are missing");ui:click("moreTrials")
+	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
+	assert(not jobs.job and main.popups[1].controls.trials.buf=="48","More trials did not rerun the captured setup")
+	frame("simulation-refined")
 	ui:click("simulate");ui:click("cancelJob");assert(not jobs.job);frame("simulation-cancelled")
 	ui:click("compareRecipes");frame("crafting-recipe-comparison");ui:click("run")
 	for i=1,200 do if not jobs.job then break end;jobs.tick(build) end
 	assert(not jobs.job,"Recipe comparison did not finish");frame("crafting-comparison-result");ui:click("close")
-	assert(main.popups[1].controls.trials.buf=="12","Native character events did not reach the edit control")
+	assert(main.popups[1].controls.trials.buf=="48","Native character events did not reach the edit control")
 	ui:click("close");main.popups={}
 	ui:bind(build);ui:click("nav_crafting");ui:click("native");ui:choose("page","Emulate item");ui:click(workspace.controls.currency_chaos:IsEnabled() and "currency_chaos" or "currency_alchemy");ui:click("item");ui:click("keepWorking")
 	assert(build.savers.CraftingProjects.projects[1].run,"Working craft was not kept: "..tostring(main.popups[1] and main.popups[1].controls[1] and main.popups[1].controls[1].label))
@@ -214,12 +224,19 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("page3");ui:click("add");ui:text("title","Final life helmet");ui:choose("slot","Helmet");ui:choose("route","craft")
 	ui:choose("resourceId",resource,"val");ui:text("estimate","60");ui:choose("reserve","yes");ui:choose("projectId",build.savers.CraftingProjects.projects[1].id,"val")
 	frame("journey-gear-editor");ui:click("keep");frame("journey-gear")
+	ui:click("pasteTarget");ui:text("text","Rarity: RARE\nWishlist Hat\nIron Hat\nItem Level: 86\n+100 to maximum Life");frame("journey-paste-target");ui:click("keep")
+	ui:click("expandDetails");frame("journey-expanded-details");ui:click("expandDetails")
+	local splitter=workspace.controls.detailSplitter;local sx,sy=splitter:GetPos();local oldHeight=select(2,workspace.controls.details:GetSize())
+	ui.cursorX,ui.cursorY=sx+40,sy+4;ui:dispatch(build,{{type="KeyDown",key="LEFTBUTTON"}});ui.cursorY=ui.cursorY-16;ui:dispatch(build,{{type="KeyUp",key="LEFTBUTTON"}})
+	assert(select(2,workspace.controls.details:GetSize())>oldHeight,"Journey detail splitter did not resize the panel");frame("journey-resized-details")
 	local gearId=build.savers.BuildJourney.data.wishlist[1].id
 	local project=copyTable(build.savers.CraftingProjects.projects[1]);project.targetItem="Rarity: RARE\nJourney Hat\nIron Hat\nItem Level: 86\n+100 to maximum Life";build.savers.CraftingProjects:Upsert(project)
 	ui:click("measure")
 	for i=1,12 do ui:frame();if not require("Modules.JourneyUpgrades").job then break end end
 	assert(require("Modules.JourneyUpgrades").current(build).entries[gearId].status=="calculated","Native upgrade measurement did not finish")
 	ui:choose("sort","LifeUnreserved","val");ui:click("perCost");frame("journey-upgrade-ranking")
+	ui:click("compareAll");frame("journey-comparison-table");ui:click("choose")
+	ui:click("reviewIssues");frame("journey-requirement-reasons");ui:click("close")
 	ui:click("edit");ui:click("notesExpand");ui:text("text","Record exact target and price source");ui:click("keep");ui:click("keep");frame("journey-stale-ranking")
 	local background=copyTable(build.savers.BuildJourney.data)
 	for index=2,4 do local extra=copyTable(background.wishlist[1]);extra.id="background-"..index;extra.title="Background candidate "..index;background.wishlist[#background.wishlist+1]=extra end
@@ -231,6 +248,8 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("page5");ui:click("add");ui:text("title","Campaign links");ui:text("level","12");ui:text("gems","Fireball + Combustion")
 	ui:text("passives","Take nearby life");ui:text("quests","Finish Act 1");ui:text("transition","After finding a linked item");frame("journey-stage-editor")
 	ui:click("gemsExpand");ui:text("text","Fireball + Combustion\nKeep an extra gem leveling");frame("journey-guide-text");ui:click("keep");ui:click("keep");frame("journey-leveling")
+	ui:click("openLink");local quests=main.popups[1].controls.quests;local qx,qy=quests:GetPos();ui:clickAt(qx+30,qy+10);frame("journey-quest-guide");ui:click("close")
+	assert(build.savers.BuildJourney.data.stages[3].questChecks[1]=="Finish Act 1","Quest completion was not kept")
 	ui:click("page2");ui:click("add");ui:text("title","Craft the helmet");ui:choose("wishlistId",gearId,"val");ui:choose("projectId",build.savers.CraftingProjects.projects[1].id,"val")
 	frame("journey-milestone-editor");ui:click("keep");frame("journey-roadmap")
 	ui:click("complete");assert(build.savers.BuildJourney.data.milestones[1].done);ui:click("complete")
@@ -241,10 +260,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	local milestones=workspace.controls.entries;local lx,ly=milestones:GetPos();ui:clickAt(lx+30,ly+10);ui:click("complete")
 	assert(build.savers.BuildJourney.data.milestones[1].done and not build.savers.BuildJourney.data.milestones[2].done,"Clicking a different Journey entry did not select it")
 	frame("journey-completed-progress");ui:click("complete")
+	local entryX,entryY=workspace.controls.entries:GetPos();ui:clickAt(entryX+30,entryY+10)
+	ui:key("DOWN");assert(workspace.controls.entries.selectedKey==2,"Keyboard navigation did not select the next milestone");frame("journey-keyboard-selection");ui:key("UP")
 	ui:click("page1");frame("journey-overview");ui:click("openLink")
 	assert(workspace.page=="crafting" and workspace.controls.keepWorking,"Journey link did not open the working craft")
 	ui:click("nav_journey");ui.keys.ALT=true;ui:key("1");ui:key("4");ui.keys.ALT=nil
 	assert(workspace.page=="journey","Alt+4 did not open Journey")
+	ui:click("nav_text");frame("planning-large-text");ui:click("nav_text")
 	ui:click("page5");ui:click("remove");ui:click("confirm");assert(#build.savers.BuildJourney.data.stages==2,"Guide stage removal failed")
 	ui:click("nav_build")
 	newBuild()
@@ -255,7 +277,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	build.configTab:BuildModList();runCallback("OnFrame")
 	local actor=build.calcsTab.calcsEnv.player
 	assert(actor.recoverySimulationTrace and #actor.recoverySimulationTrace.points>1)
-	build.calcsTab:OpenEncounterWorkspace();frame("encounter-workspace");ui:click("close")
+	build.calcsTab:OpenEncounterWorkspace();frame("encounter-workspace");ui:click("chartUnits");frame("encounter-actual-values");ui:click("series_Life");ui:click("series_Mana");frame("encounter-series-hidden");ui:click("emptyLanes");frame("encounter-empty-lanes");ui:click("close")
 	ui.cursorX,ui.cursorY=300,120
 	ui:frame(function() build.calcsTab.controls.breakdown:DrawEncounterTimeline(16,16,{width=size[1]-32,timeline=actor.recoverySimulationTrace}) end)
 	ui.regions={{0,0,size[1],size[2]}};ui:write(directory.."/"..size[1].."-recovery-hover.json");frames=frames+1

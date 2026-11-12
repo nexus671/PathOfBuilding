@@ -151,7 +151,7 @@ function Panel.Open(build,source,layout)
 	local draft=copyTable(source or store.plans[1] or {id="atlas-"..require("sha1")(tostring({})..os.time()):sub(1,12),title="New Atlas plan",version=version,budget=atlas.tree(version).maxPoints,nodes={},notes=""})
 	local width=layout and layout.width or math.min(1180,main.screenW-40); local height=layout and layout.height or math.min(820,main.screenH-50)
 	local inspector=math.max(260,math.min(width-600,layout and (layout.inspectorWidth or layout.restore and layout.restore.inspectorWidth) or 260))
-	local graphWidth=width-inspector-48; local graphHeight=height-206; local side=graphWidth+32
+	local graphWidth=width-inspector-48; local graphHeight=height-262; local side=graphWidth+32
 	local controls,undo,avoided,redo={},{},{},{}
 	local preferred
 	local pointUsage,routeAvailable
@@ -168,6 +168,12 @@ function Panel.Open(build,source,layout)
 		if not controls.canvas.tree.nodes[controls.canvas.focus] then controls.canvas.focus=nil end
 		controls.version:SelByValue(draft.version)
 		local report=atlas.report(draft)
+		if controls.strategySummary then
+			local counts={};for _,id in ipairs(draft.nodes) do local mechanic=strategy.mechanic(controls.canvas.tree.nodes[id]);counts[mechanic]=(counts[mechanic] or 0)+1 end
+			local parts={};for name,count in pairsSortByKey(counts) do parts[#parts+1]=name.." "..count end
+			local lines={#parts>0 and table.concat(parts," | ") or "Allocate nodes to build your strategy.",report.stats[1] and (report.stats[1].count.."x "..report.stats[1].text) or "Selected bonuses will appear here."}
+			controls.strategySummary.list=ui.rows(lines,graphWidth-16,14)
+		end
 		local budget=tonumber(controls.budget.buf)
 		if budget and budget==math.floor(budget) and budget>=0 and budget<=controls.canvas.tree.maxPoints then
 			report.budget=budget;report.remaining=budget+report.bonus-report.used;pointUsage=report
@@ -236,21 +242,32 @@ function Panel.Open(build,source,layout)
 	controls.search.changeFunc=function() findNodes(false) end
 	controls.search.enterFunc=function() findNodes(true) end
 	controls.search.disableCol="^x8797A8"
-	controls.results=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{side,130,260,24},{},function(_,value)
+	controls.results=new("TextListControl"):TextListControl(ui.anchor,{side,188,260,88},nil,{})
+	controls.results.selIndex=1
+	controls.results.selFunc=function(_,value)
 		controls.canvas.focus=value.val; local node=atlas.tree(draft.version).nodes[value.val]
 		controls.canvas.centerX,controls.canvas.centerY=node.x,node.y
 		controls.canvas.scale=math.max(controls.canvas.scale,0.12); refresh(value.val)
-	end)
+	end
+	function controls.results:SetList(entries)
+		self.list={};for _,entry in ipairs(entries) do local row=copyTable(entry);local node=controls.canvas.tree.nodes[row.val]
+			local title=node and node.name or row.label;while #title>0 and DrawStringWidth(14,"VAR",title)>inspector-30 do title=title:sub(1,-2) end
+			row[1]="^7"..title;row.height=40;row.textSize=14;row.subtitle=node and strategy.mechanic(node).." | "..(row.label:match("%+%d+") or "blocked").." points" or "";self.list[#self.list+1]=row
+		end
+	end
+	function controls.results:SelByValue(value,key) for i,row in ipairs(self.list) do if row[key or "val"]==value then self.selIndex=i end end end
+	ui.selectable(controls.results,function(row) return row.val end,function(row) for i,entry in ipairs(controls.results.list) do if row==entry then controls.results.selIndex=i end end;controls.results.selFunc(controls.results.selIndex,row) end)
 	local mechanics={"All mechanics"};for _,name in ipairs(strategy.mechanics) do mechanics[#mechanics+1]=name end
-	controls.mechanic=new("DropDownControl"):DropDownControl(ui.anchor,{side,164,260,24},mechanics,function() findNodes(false) end)
-	controls.matchCount=new("LabelControl"):LabelControl(ui.anchor,{side,196,0,14},"Filter a mechanic or search nodes")
-	controls.details=new("TextListControl"):TextListControl(ui.anchor,{side,220,260,height-420},nil,{})
+	controls.mechanic=new("DropDownControl"):DropDownControl(ui.anchor,{side,130,260,24},mechanics,function() findNodes(false) end)
+	controls.matchCount=new("LabelControl"):LabelControl(ui.anchor,{side,164,0,14},"Filter a mechanic or search nodes")
+	controls.details=new("TextListControl"):TextListControl(ui.anchor,{side,286,260,math.max(54,height-486)},nil,{})
+	ui.description(controls,"strategySummary",16,height-158,graphWidth,44,{"Allocate nodes to build your strategy."},14)
 	local function syncEditors()
 		controls.title:SetText(draft.title); controls.budget:SetText(tostring(draft.budget)); controls.notes:SetText(draft.notes)
 	end
 	local function snapshot() return {plan=copyTable(draft),avoided=copyTable(avoided)} end
 	local function remember() undo[#undo+1]=snapshot();if #undo>40 then table.remove(undo,1) end;redo={} end
-	local function change(nextPlan) remember();draft=nextPlan;syncEditors();refresh() end
+	local function change(nextPlan) remember();draft=nextPlan;ui.draft(build,"atlas");syncEditors();refresh() end
 	controls.allocate=button(side,height-188,124,"Connect path",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.connect(current(),{controls.canvas.focus},avoided)) end)
 	controls.remove=button(side+136,height-188,124,"Remove branch",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.remove(current(),controls.canvas.focus)) end)
 	controls.undo=button(16,height-86,64,"Undo",function() assert(#undo>0,"No changes to undo");redo[#redo+1]=snapshot();local saved=table.remove(undo);draft=saved.plan;avoided=saved.avoided;syncEditors();refresh() end)
@@ -334,7 +351,7 @@ function Panel.Open(build,source,layout)
 	controls.close=button(width-132,height-42,116,"Close",function() main:ClosePopup() end)
 	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{side,64,260,24},{"Tree","Notes & sharing"})
 	ui.label(controls,"notesLabel",16,88,"Farming goals, maps, scarabs and strategy notes")
-	for _,key in ipairs({"canvas","search","find","results","mechanic","matchCount","details","allocate","remove","undo","redo","fit","help","avoid","clearAvoid","stats","browse","routes","tools"}) do
+	for _,key in ipairs({"canvas","strategySummary","search","find","results","mechanic","matchCount","details","allocate","remove","undo","redo","fit","help","avoid","clearAvoid","stats","browse","routes","tools"}) do
 		controls[key].shown=function() return controls.page:GetSelValue()=="Tree" end
 	end
 	for _,key in ipairs({"notes","notesLabel","copy","import","url"}) do controls[key].shown=function() return controls.page:GetSelValue()=="Notes & sharing" end end
@@ -372,7 +389,9 @@ function Panel.Open(build,source,layout)
 		if pointUsage and pointUsage.used>0 then SetDrawColor("^xC8A569");DrawImage(nil,x,y,graphWidth*math.min(1,pointUsage.used/math.max(1,pointUsage.budget+pointUsage.bonus)),3) end
 	end
 	ui.tabs(controls,controls.page,{{"tab_tree","Tree","Tree"},{"tab_notes","Notes & sharing","Plan & notes"}},side,64,260)
-	controls.budget.changeFunc=function() refresh() end
+	controls.title.changeFunc=function() ui.draft(build,"atlas") end
+	controls.notes.changeFunc=function() ui.draft(build,"atlas") end
+	controls.budget.changeFunc=function() ui.draft(build,"atlas");refresh() end
 	controls.budget.enterFunc=function() safely(function() local nextPlan=current();if nextPlan.budget~=draft.budget then change(nextPlan) end end) end
 	controls.budget.tooltipText="Press Enter to keep this budget in change history."
 	if layout then

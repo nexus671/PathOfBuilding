@@ -10,11 +10,11 @@ function M.Open(data,id,selected,keep)
 	local function refresh()
 		local rows={};local count=0
 		for _,entry in ipairs(data.milestones) do if not blocked[entry.id] and entry.title:lower():find(c.search.buf:lower(),1,true) then
-			for _,row in ipairs(ui.rows({(chosen[entry.id] and "[x] " or "[ ] ")..entry.title..(entry.done and " (completed)" or "")},w-64)) do row.id=entry.id;rows[#rows+1]=row end
+			for _,row in ipairs(ui.rows({(chosen[entry.id] and "[x] " or "[ ] ")..entry.title..(entry.done and " (completed)" or "")},w-64)) do row.id=entry.id;row.selected=row.id==c.entries.selectedKey;rows[#rows+1]=row end
 		end;if chosen[entry.id] then count=count+1 end end
 		c.entries.list=rows;c.count.label="^7"..count.." prerequisites selected | Click a milestone to toggle"
 	end
-	c.entries.onClick=function(row) if row and row.line then local key=row.line.id;chosen[key]=not chosen[key] or nil;refresh() end end
+	ui.selectable(c.entries,function(row) return row.id end,function() end,function(row) chosen[row.id]=not chosen[row.id] or nil;refresh() end)
 	c.search.changeFunc=refresh
 	ui.label(c,"count",16,h-90,"",14)
 	ui.description(c,"hint",16,h-124,w-32,28,{"This milestone and its dependent milestones are excluded to prevent cycles."},14)

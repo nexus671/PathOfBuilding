@@ -131,8 +131,9 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 					local first=#lines+1
 					wrap(lines,itemLib.applyRange(line,entry.range or 0.5),entry.fractured and "^xD6B677" or entry.crafted and "^xB4B4FF" or "^x8888FF",w-(options.compact and 98 or 30))
 					for i=first,#lines do lines[i].affixId=entry.id end
+					if options.changedAffixes and options.changedAffixes()[entry.id] then for i=first,#lines do lines[i][1]="^x92D39C"..StripEscapes(lines[i][1]);lines[i].changed=true end end
 				end
-				if options.compact and lines[firstMod] then lines[firstMod][2]=(entry.fractured and "^xD6B677F " or entry.crafted and "^xB4B4FFC " or "^x8D9DB0")..mod.type:sub(1,1)..groupIndex end
+				if options.compact and lines[firstMod] then lines[firstMod][2]=(lines[firstMod].changed and "^x92D39C+" or entry.fractured and "^xD6B677" or "^x8D9DB0")..(entry.fractured and "F " or entry.crafted and "C " or "")..mod.type:sub(1,1)..groupIndex end
 			end
 			if #state.affixes == 0 then wrap(lines,"No explicit modifiers","^xAAAAAA",w-30) end
 			if state.veil then wrap(lines,"Veiled modifier - select Unveil to reveal choices","^xD3B987",w-30) end

@@ -1,7 +1,9 @@
 -- Evidence and readable comparisons for native build candidates.
 local M = { }
+local friendlyMetrics={CombinedDPS="Combined DPS",FullDPS="Full skill DPS",FireResist="Fire resistance",ColdResist="Cold resistance",LightningResist="Lightning resistance",ChaosResist="Chaos resistance",Str="Strength",Dex="Dexterity",Int="Intelligence"}
 M.goals = { "balanced", "boss_damage", "mapping", "survival", "comfort" }
 M.labels = {CombinedDPS="Combined DPS",FullDPS="Full DPS",TotalEHP="EHP",LifeUnreserved="Unreserved Life",EnergyShield="Energy Shield",ManaUnreserved="Unreserved Mana",PhysicalMaximumHitTaken="Physical maximum hit",ChaosMaximumHitTaken="Chaos maximum hit",RecoverySimulationSurvivalChance="Encounter survival (%)",RecoverySimulationDamageDPS="Encounter DPS",RecoverySimulationAttackUptime="Affordable attack fraction",Speed="Skill speed",EffectiveMovementSpeedMod="Movement speed",ManaRegen="Mana regeneration"}
+for key,label in pairs(friendlyMetrics) do M.labels[key]=label end
 
 local function sortedKeys(t)
 	local keys = { }

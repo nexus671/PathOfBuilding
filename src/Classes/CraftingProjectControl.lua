@@ -64,53 +64,10 @@ function Panel.Preview(build,project)
 end
 
 function Panel.Edit(build,source,initialItem,initialSlot,layout)
-	local draft=source and copyTable(source) or {id="craft-"..require("sha1")(tostring({})..os.time()):sub(1,16),title="New crafting plan",slot=initialSlot or "Helmet",startingItem=initialItem or "",targetItem="",goals={},steps={}}
-	local controls,slots={},{ }
-	for name in pairs(build.itemsTab.slots) do slots[#slots+1]=name end
-	table.sort(slots)
-	local stepLines={ }
-	for _,step in ipairs(draft.steps) do stepLines[#stepLines+1]=step.action end
-	local originalSteps=table.concat(stepLines,"\n")
-	label(controls,"titleLabel",16,18,"Project name")
-	editor(controls,"title",16,38,580,24,draft.title,"Project name",120)
-	controls.slot=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{612,38,252,24},slots)
-	controls.slot:SelByValue(draft.slot)
-	label(controls,"startingLabel",16,82,"Starting item (paste PoB or advanced in-game text)")
-	label(controls,"targetLabel",448,82,"Target item (hypothetical or copied from the simulator)")
-	editor(controls,"starting",16,102,416,132,draft.startingItem,"Starting item",24000)
-	editor(controls,"target",448,102,416,132,draft.targetItem,"Target item (optional)",24000)
-	label(controls,"goalsLabel",16,252,"Target modifiers (one per line)")
-	label(controls,"stepsLabel",448,252,"Crafting steps (one per line)")
-	editor(controls,"goals",16,272,416,90,table.concat(draft.goals,"\n"),"Targets",4000)
-	editor(controls,"steps",448,272,416,130,originalSteps,"Crafting steps",40000)
-	label(controls,"notesLabel",16,382,"Notes / stop and failure conditions")
-	editor(controls,"notes",16,402,848,70,draft.notes,"Planning notes",8000)
-	label(controls,"costLabel",16,492,"Estimated total / currency / source (optional, supplied estimate)")
-	editor(controls,"cost",16,512,130,24,draft.estimate and draft.estimate.amount or "","Cost",20)
-	editor(controls,"currency",162,512,130,24,draft.estimate and draft.estimate.currency or "chaos","Currency",24)
-	editor(controls,"priceSource",308,512,556,24,draft.estimate and draft.estimate.source or "","Price source",240)
-	label(controls,"explanation",16,558,"Planning steps are notes. Edit executable actions through Native crafting or AI. Build Save persists changes.")
-	local function readDraft()
-		draft.title,draft.slot,draft.startingItem,draft.targetItem,draft.notes=controls.title.buf,controls.slot:GetSelValue(),controls.starting.buf,controls.target.buf,controls.notes.buf
-		draft.goals={ }
-		for line in controls.goals.buf:gmatch("[^\r\n]+") do if line:match("%S") then draft.goals[#draft.goals+1]=line end end
-		if controls.steps.buf ~= originalSteps then
-			draft.steps={ }
-			for line in controls.steps.buf:gmatch("[^\r\n]+") do if line:match("%S") then draft.steps[#draft.steps+1]={action=line} end end
-		end
-		if controls.cost.buf ~= "" then
-			local old=draft.estimate
-			local amount=assert(tonumber(controls.cost.buf),"Enter a numeric cost")
-			draft.estimate={amount=amount,currency=controls.currency.buf,source=controls.priceSource.buf,
-				quotedAt=old and amount == old.amount and controls.currency.buf == old.currency and controls.priceSource.buf == old.source and old.quotedAt or os.time()}
-		else draft.estimate=nil end
-		return projects.validate(draft)
-	end
-	controls.save=button(16,596,180,"Keep project in build",function() build.savers.CraftingProjects:Upsert(readDraft());if layout then layout.selectedProject=draft.id end; main.popups={}; Panel.Open(build,nil,nil,layout) end)
-	controls.preview=button(212,596,180,"Preview target stats",function() Panel.Preview(build,readDraft()) end)
-	controls.close=button(748,596,116,"Cancel",function() main:ClosePopup() end)
-	ui.style(controls,{save=true})
-	main:OpenPopup(880,644,"Edit crafting project",controls,nil,"title","close")
+ require("Classes.CraftingProjectWizard").Open(build,source,initialItem,initialSlot,layout,function(project) Panel.Preview(build,project) end,function(project)
+  if layout then layout.selectedProject=project.id end
+  Panel.Open(build,nil,nil,layout)
+ end)
 end
 
 function Panel.Open(build,displayItem,displaySlot,layout)

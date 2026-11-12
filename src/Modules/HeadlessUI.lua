@@ -130,6 +130,8 @@ function M.install(options)
 		self.clock=self.clock+16
 		host=host or self:activeHost()
 		if type(host)=="function" then host(main.viewPort);host={} elseif host.OnFrame then host:OnFrame({}) else host:Draw(main.viewPort,{}) end
+		self.dialog=nil
+		if host.title and host.GetPos then local dx,dy=host:GetPos();local dw,dh=host:GetSize();self.dialog={x=dx,y=dy-10,width=dw,height=dh+10} end
 		self.controls={};self.regions={}
 		for key,control in pairs(controlsFor(host)) do if control:IsShown() then
 			local x,y=control:GetPos();local w,h=control:GetSize()
@@ -140,7 +142,7 @@ function M.install(options)
 		return self
 	end
 	function ui:click(key)
-		local host=self:activeHost();local control=assert(controlsFor(host)[key],"Unknown control "..key)
+		local host=self:activeHost();local first=host.controls and host.controls[1];local control=assert(controlsFor(host)[key],"Unknown control "..key.." | "..tostring(host.title or "build").." | "..tostring(first and first.label or ""))
 		assert(control:IsShown() and control:IsEnabled(),"Control is hidden or disabled: "..key)
 		local x,y=control:GetPos();local w,h=control:GetSize()
 		assert(x>=0 and y>=0 and x+w<=self.width and y+h<=self.height,"Control is outside the window: "..key)
@@ -191,7 +193,7 @@ function M.install(options)
 	end
 	function ui:write(path)
 		local file=assert(io.open(path,"w"));file:write(require("dkjson").encode({schemaVersion=1,width=self.width,height=self.height,
-			commands=self.commands,controls=self.controls,regions=self.regions,limitations={"Text uses bundled bitmap-font metrics and atlases. Untracked textures and non-ASCII glyphs are placeholders; this is not a GPU screenshot."}}));file:close()
+			commands=self.commands,controls=self.controls,regions=self.regions,dialog=self.dialog,limitations={"Text uses bundled bitmap-font metrics and atlases. Untracked textures and non-ASCII glyphs are placeholders; this is not a GPU screenshot."}}));file:close()
 	end
 	function ui:restore()
 		for name,value in pairs(originals) do _G[name]=value end

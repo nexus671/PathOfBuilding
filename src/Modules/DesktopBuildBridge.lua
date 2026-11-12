@@ -290,7 +290,7 @@ function M.capture(build)
 end
 
 function M.publishState()
-	writeFile(path("state"),{schemaVersion=1,session=M.session,enabled=M.enabled,heartbeat=os.time(),revision=M.contextRevision,proposal=M.status,history=M.historySummary(),plan=M.plan,diagnostics={lastPoll=M.lastPoll,lastContext=M.lastContext,lastRequest=M.lastRequest,lastError=M.lastError,undoDepth=#M.undo}})
+	writeFile(path("state"),{schemaVersion=1,session=M.session,enabled=M.enabled,heartbeat=os.time(),revision=M.contextRevision,connectionTest=M.connectionTest,proposal=M.status,history=M.historySummary(),plan=M.plan,diagnostics={lastPoll=M.lastPoll,lastContext=M.lastContext,lastRequest=M.lastRequest,lastError=M.lastError,undoDepth=#M.undo}})
 end
 
 function M.refresh(build)
@@ -302,6 +302,7 @@ function M.refresh(build)
 end
 
 function M.enable(build)
+	M.client=nil;M.connectionTest=nil
 	M.enabled,M.build,M.prepared,M.status,M.contextRevision = true,build,nil,nil,nil
 	if M.owner ~= build then M.history,M.undo,M.previous,M.previousCache,M.comparison = {},{},nil,nil,nil end
 	M.owner = build
@@ -425,6 +426,15 @@ function M.poll(build, force)
 	if M.build ~= build then M.close(M.build); return end
 	if not force and GetTime() < (M.nextPoll or 0) then return end
 	M.nextPoll = GetTime()+1000
+	local clientFile=io.open(path("client"),"rb")
+	if clientFile then
+		local raw=clientFile:read(8193);clientFile:close()
+		local ok,client=pcall(json.decode,raw)
+		if ok and type(client)=="table" and client.session==M.session and type(client.seenAt)=="number" and client.seenAt<=os.time()+5 and client.seenAt>=os.time()-180 and type(client.name)=="string" and #client.name<=80 then
+			M.client=client
+			if M.connectionTest and client.testNonce==M.connectionTest.nonce then M.connectionTest.passed=true end
+		end
+	end
 	M.lastPoll = os.time()
 	local ok,err = pcall(function()
 		if build.buildFlag then return end

@@ -38,6 +38,8 @@ async function main(){
   async function host(kind,frames){const response=await native.send({kind,frames});assert.ok(response.ok,response.error);return response.result;}
   async function queued(name,args,status){const request=await call(name,args);await host('tick',24);const result=await call('get_proposal_status');assert.equal(result.proposal.id,request.id);assert.equal(result.proposal.status,status,JSON.stringify(result.proposal));return result.proposal;}
   let context=(await call('get_build_context')).context;const baseLife=context.stats.LifeUnreserved;
+  await host('request-test');await call('get_build_connection');await host('tick',1);
+  const proof=await host('connection-proof');assert.equal(proof.client,'planning-workflow-test');assert.equal(proof.tested,true);assert.equal(proof.synced,true);
   const raw='Rarity: NORMAL\nIron Hat\nItem Level: 86';
   const item=life=>`Rarity: RARE\nPlanned Hat\nIron Hat\nItem Level: 86\n+${life} to maximum Life`;
   await queued('propose_build',{mode:'edit',title:'Measured helmet',baseRevision:context.revision,operations:[{type:'equip_item',slot:'Helmet',text:item(100)}]},'review');

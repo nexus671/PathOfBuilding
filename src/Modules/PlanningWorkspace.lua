@@ -15,25 +15,36 @@ function M.new(build)
 	self.nav.controls.nav_build=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{16,10,80,28},"< Build",function()
 		build:SelectControl(nil);build.viewMode=build.plannerPreviousMode or "TREE"
 	end))
-	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{702,10,function() return math.max(0,self.viewport.width-718) end,28})
+	self.nav.controls.nav_text=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{684,10,54,28},"Aa",function()
+		for page in pairs(self.cache) do self:Remember(page) end
+		main.planningTextLarge=not main.planningTextLarge;self.cache={};self:Show(self.page)
+	end))
+	self.nav.controls.nav_text.tooltipText="Toggle normal / large planning text"
+	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{750,10,function() return math.max(0,self.viewport.width-766) end,28})
 	function context:Draw()
 		local x,y=self:GetPos();local w=self:GetSize();local title=build.buildName or "Untitled build"
-		local suffix=build.unsaved and " | Unsaved" or ""
-		while #title>0 and DrawStringWidth(13,"VAR",title..suffix)>w do title=title:sub(1,-2) end
-		SetDrawColor("^x9BA9BA");DrawString(x+w,y+7,"RIGHT_X",13,"VAR",title..suffix)
+		local status=require("Modules.PlanningUI").saveStatus(build)
+		while #title>0 and DrawStringWidth(13,"VAR",title)>w do title=title:sub(1,-2) end
+		while #status>0 and DrawStringWidth(12,"VAR",status)>w do status=status:sub(1,-2) end
+		SetDrawColor("^x9BA9BA");DrawString(x+w,y,"RIGHT_X",13,"VAR",title);DrawString(x+w,y+15,"RIGHT_X",12,"VAR",status)
 	end
 	self.nav.controls.nav_context=context
 	return self
 end
+function M:Remember(page)
+	local entry=self.cache[page];if not entry then return end
+	self.drafts[page]={plan=entry.layout.snapshot and entry.layout.snapshot(),view=entry.layout.viewState and entry.layout.viewState(),controls=require("Modules.PlanningUI").capture(entry.body.controls)}
+end
 function M:Show(page,source)
 	assert(pages[page],"Unknown planning page")
+	if self.page~=page then self:Remember(self.page) end
 	self.page=page
 	if source or page=="journey" then self.cache[page]=nil end
 	local cached=self.cache[page]
 	local saved=self.drafts[page]
 	source=source or saved and saved.plan
 	if not cached then
-		local layout={selectedProject=self.selections[page],restore=saved and saved.view,width=self.viewport.width,height=self.viewport.height-52,navigate=function(target,value) self:Show(target,value) end}
+		local layout={selectedProject=self.selections[page],restore=saved and saved.view,restorePage=saved and saved.plan and saved.plan.page,width=self.viewport.width,height=self.viewport.height-52,navigate=function(target,value) self:Show(target,value) end}
 		layout.openProjects=function()
 			local current=self.cache.crafting
 			if current and current.layout.snapshot then
@@ -52,6 +63,7 @@ function M:Show(page,source)
 			local body=new("PopupDialog"):PopupDialog(width,height,title,controls)
 			body.x=function() return self.viewport.x end;body.y=function() return self.viewport.y+52 end
 			self.cache[page]={body=body,layout=layout};self.body=body
+			require("Modules.PlanningUI").restore(body,saved and saved.controls)
 			self.selections[page]=layout.selectedProject
 			self:UpdateControls()
 		end
@@ -88,7 +100,7 @@ function M:Draw(viewport,events)
 	local resized=self.viewport.width~=viewport.width or self.viewport.height~=viewport.height
 	self.viewport=viewport
 	if resized then
-		for page,entry in pairs(self.cache) do if entry.layout.snapshot then self.drafts[page]={plan=entry.layout.snapshot(),view=entry.layout.viewState and entry.layout.viewState()} end end
+		for page in pairs(self.cache) do self:Remember(page) end
 		self.cache={};self.body=nil
 		self:Show(self.page)
 	elseif not self.body then self:Show(self.page) end

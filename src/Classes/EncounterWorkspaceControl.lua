@@ -40,7 +40,7 @@ function Workspace:Draw()
 	local chartY=math.max(112,78+#deathLines*18+16)
 	local chartHeight=math.min(340,height-chartY-28)
 	if current.trace and current.trace.caps and chartHeight>=210 then
-		self.tab.controls.breakdown:DrawEncounterTimeline(x,y+chartY,{timeline=current.trace,width=width,height=chartHeight})
+		self.tab.controls.breakdown:DrawEncounterTimeline(x,y+chartY,{timeline=current.trace,width=width,height=chartHeight,options=self.options})
 	else text(184,"Open the event log to inspect the full chart and exact resource changes.") end
 	text(height-18,"One trial is shown. The survival estimate and confidence interval describe the configured encounter only.",12)
 end
@@ -98,7 +98,13 @@ function Workspace.Open(tab)
 		controls.compare:SetList(config.varControls.recoverySimulationCompareSet.list);controls.compare:SelByValue(0,"val");build.buildFlag=true
 	end)
 	button("close",width-112,88,96,"Close",function() main:ClosePopup() end)
-	controls.overview = new("EncounterWorkspaceControl"):EncounterWorkspaceControl({"TOPLEFT",nil,"TOPLEFT"},{16,132,width-32,height-148},tab)
+	controls.overview = new("EncounterWorkspaceControl"):EncounterWorkspaceControl({"TOPLEFT",nil,"TOPLEFT"},{16,168,width-32,height-184},tab)
+	local options={hidden={},hideEmpty=true,raw=false};controls.overview.options=options
+	for index,entry in ipairs({{"Life","Life",16,68},{"EnergyShield","ES",92,68},{"Mana","Mana",168,68},{"crab","Crab",244,68},{"shrouds","Shrouds",320,88},{"chargesTotal","Charges",416,88},{"poison","Poison",512,88}}) do
+		local key,label,x,w=unpack(entry);button("series_"..key,x,124,w,function() return (options.hidden[key] and "[ ] " or "[x] ")..label end,function() options.hidden[key]=not options.hidden[key] end)
+	end
+	button("chartUnits",608,124,128,function() return options.raw and "Actual values" or "Normalized %" end,function() options.raw=not options.raw end)
+	button("emptyLanes",744,124,160,function() return options.hideEmpty and "Hide empty: on" or "Hide empty: off" end,function() options.hideEmpty=not options.hideEmpty end)
 	require("Modules.PlanningUI").style(controls,{run=true})
 	main:OpenPopup(width,height,"Encounter simulation",controls,nil,nil,"close")
 end

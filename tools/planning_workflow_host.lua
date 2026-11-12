@@ -22,6 +22,8 @@ for line in io.lines() do
 	local ok,result=xpcall(function()
 		if command.kind=="tick" then
 			for i=1,command.frames or 1 do runCallback("OnFrame");bridge.poll(build,true) end
+		elseif command.kind=="request-test" then bridge.connectionTest={nonce="workflow-connection-test",requestedAt=os.time()};bridge.publishState()
+		elseif command.kind=="connection-proof" then return {client=bridge.client and bridge.client.name,tested=bridge.connectionTest and bridge.connectionTest.passed,synced=bridge.client and bridge.client.contextRevision==bridge.contextRevision}
 		elseif command.kind=="apply" then
 			assert(bridge.prepared,"Expected a pending native review")
 			build.viewMode="CONFIG";ui:bind(build);ui:click("aiBuild");ui:click("review");ui:click("apply")
@@ -32,6 +34,7 @@ for line in io.lines() do
 			ui:click("currency_alchemy");ui:click("item");ui:click("keepWorking")
 			assert(build.savers.CraftingProjects.projects[1].run,"Checkpoint was not kept")
 			build.dbFileName=directory.."journey.xml";build:SaveDBFile()
+			assert(require("Modules.PlanningUI").saveStatus(build)=="Build saved","Save status did not acknowledge the actual file save")
 			local file=assert(io.open(directory.."journey.xml","rb"));local xml=file:read("*a");file:close()
 			bridge.disable(build);loadBuildFromXML(xml,"MCP workflow fixture");build=main.modes.BUILD;ui:bind(build)
 			assert(not main.popups[1],"Reload opened a popup: "..tostring(main.popups[1] and main.popups[1].title).." | "..tostring(main.popups[1] and main.popups[1].controls[1] and main.popups[1].controls[1].label))

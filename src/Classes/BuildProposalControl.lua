@@ -35,15 +35,24 @@ function Panel.Review()
 	ui.card(controls,"lifeCard",48+cardWidth*2,24,cardWidth,"UNRESERVED LIFE",metric("LifeUnreserved"),previous("LifeUnreserved"))
 	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{16,136,260,26},{"Summary","Changes","Checks","Explain"})
 	ui.label(controls,"candidateTitle",584,142,prepared.title:sub(1,28),14)
-	ui.label(controls,"goal",16,170,"Goal: "..goalName(evaluation.goal).." | "..(evaluation.eligible and "Within constraints" or "Constraints need attention"),14)
-	local metricRows={{height=26,textSize=16,"^7Metric","^7Current","^7Proposed","^7Change"}}
-	for key in pairsSortByKey(prepared.after) do
-		if prepared.after[key] then metricRows[#metricRows+1]={height=24,textSize=16,"^7"..(insights.labels[key] or key),"^7"..number(prepared.before[key] or 0),"^7"..number(prepared.after[key]),"^7"..number(prepared.delta[key] or 0,true)} end
-	end
-	if evaluation.quote then metricRows[#metricRows+1]={height=24,textSize=16,"^7Quoted cost","","^7"..string.format("%.2f %s",evaluation.quote.amount,evaluation.quote.currency),""} end
-	if evaluation.configurationChanged then metricRows[#metricRows+1]={height=24,textSize=16,"^7Configuration changed","","^7Yes",""} end
+	ui.label(controls,"goal",16,170,"Goal: "..goalName(evaluation.goal),14)
+ local showUnchanged=false
+ local function metricRows()
+  local rows={{height=26,textSize=16,"^7Metric","^7Current","^7Proposed","^7Change"}}
+  local keys={};for key in pairs(prepared.after) do if showUnchanged or (prepared.delta[key] or 0)~=0 then keys[#keys+1]=key end end
+  table.sort(keys,function(a,b) local ac,bc=(prepared.delta[a] or 0)~=0,(prepared.delta[b] or 0)~=0;if ac~=bc then return ac end;return (insights.labels[a] or a)<(insights.labels[b] or b) end)
+  for _,key in ipairs(keys) do rows[#rows+1]={height=26,textSize=16,"^7"..(insights.labels[key] or key:gsub("(%l)(%u)","%1 %2")),"^7"..number(prepared.before[key] or 0),"^7"..number(prepared.after[key]),((prepared.delta[key] or 0)>0 and "^x92D39C" or (prepared.delta[key] or 0)<0 and "^xE58F8F" or "^7")..number(prepared.delta[key] or 0,true)} end
+  if #keys==0 then rows[#rows+1]={height=26,"^7No measured stat changes"} end
+  if evaluation.quote then rows[#rows+1]={height=26,"^7Quoted cost","","^7"..string.format("%.2f %s",evaluation.quote.amount,evaluation.quote.currency),""} end
+  return rows
+ end
+
 	local metricWidth=math.floor((width-48)*0.61)
-	controls.metrics=new("TextListControl"):TextListControl(ui.anchor,{16,198,metricWidth,height-292},{{x=8,align="LEFT"},{x=math.floor(metricWidth*0.43),align="LEFT"},{x=math.floor(metricWidth*0.62),align="LEFT"},{x=math.floor(metricWidth*0.81),align="LEFT"}},metricRows)
+	controls.metrics=new("TextListControl"):TextListControl(ui.anchor,{16,198,metricWidth,height-292},{{x=8,align="LEFT"},{x=math.floor(metricWidth*0.43),align="LEFT"},{x=math.floor(metricWidth*0.62),align="LEFT"},{x=math.floor(metricWidth*0.81),align="LEFT"}},metricRows())
+ controls.toggleMetrics=button(width-216,166,200,"Show unchanged metrics",function() showUnchanged=not showUnchanged;controls.metrics.list=metricRows();controls.toggleMetrics.label=showUnchanged and "Hide unchanged metrics" or "Show unchanged metrics" end)
+ controls.toggleMetrics.shown=function() return controls.page:GetSelValue()=="Summary" end
+ controls.constraintCheck=button(280,166,230,evaluation.eligible and "Within constraints" or "Review constraints",function() controls.page:SelByValue("Checks");controls.page.selFunc() end)
+
 	controls.metrics.shown=function() return controls.page:GetSelValue()=="Summary" end
 	controls.changeSummary=new("TextListControl"):TextListControl(ui.anchor,{32+metricWidth,198,width-metricWidth-48,height-292},nil,wrapRows(prepared.changes,width-metricWidth-78))
 	controls.changeSummary.shown=controls.metrics.shown
@@ -150,7 +159,7 @@ function Panel.Candidates()
 			assert(prepared and prepared.baseRevision==bridge.revision(build),"Leveling candidates are stale; recalculate first")
 			local stage=require("Modules.BuildJourney").captureStage(prepared.candidate,prepared.title,"level-"..result.level,prepared.baseRevision)
 			local found=false;for i,e in ipairs(data.stages) do if e.id==stage.id then
-				stage.quests=e.quests;stage.transition=e.transition;stage.notes=(e.notes or "").."\n"..stage.notes
+				stage.quests=e.quests;stage.questChecks=e.questChecks;stage.transition=e.transition;stage.notes=(e.notes or "").."\n"..stage.notes
 				data.stages[i]=stage;found=true;break
 			end end
 			if not found then data.stages[#data.stages+1]=stage end
@@ -231,6 +240,28 @@ function Panel.Open(build,layout)
 	controls.enable.enabled=function() return not build.buildFlag end
 	action("setup",302,"Copy MCP configuration","Connect a local MCP client to this build.",function() Copy(report.mcpConfig(GetScriptPath().."/AI/McpServer.cjs",main.userPath.."AI-encounter.json")) end)
 	action("diagnostics",354,"Connection details","Check requests, errors and connection setup.",Panel.Diagnostics)
+	controls.connectionSteps=new("Control"):Control(ui.anchor,{300,248,width-316,176})
+	function controls.connectionSteps:Draw()
+		local x,y=self:GetPos();local w=self:GetSize();local client=bridge.client
+		local recent=client and os.time()-client.seenAt<=180
+		local steps={
+			{bridge.enabled,"1. Enable desktop proposals",bridge.enabled and "Enabled for this build" or "Choose Enable proposals"},
+			{recent,"2. Connect your AI client",recent and (StripEscapes(client.name).." | seen "..math.max(0,math.floor(os.time()-client.seenAt)).."s ago") or "Copy the configuration into your MCP client"},
+			{recent and client.contextRevision==bridge.contextRevision,"3. Synchronize the build",recent and client.contextRevision==bridge.contextRevision and "Client has contacted the current build revision" or "Refresh context, then ask your client to read this build"},
+			{bridge.connectionTest and bridge.connectionTest.passed,"4. Test the connection",bridge.connectionTest and bridge.connectionTest.passed and "Round trip confirmed" or bridge.connectionTest and "Waiting for client tool call" or "Choose Test connection"},
+		}
+		for index,step in ipairs(steps) do
+			SetDrawColor(step[1] and "^x92D39C" or "^xD3B987");DrawString(x,y+(index-1)*44,"LEFT",16,"VAR",(step[1] and "[OK] " or "[ ] ")..step[2])
+			local text=step[3];while #text>0 and DrawStringWidth(14,"VAR",text)>w do text=text:sub(1,-2) end
+			SetDrawColor("^xD5DEE8");DrawString(x,y+(index-1)*44+23,"LEFT",14,"VAR",text)
+		end
+	end
+	controls.syncConnection=button(16,406,buttonWidth,"Synchronize build",function() safely(function() assert(bridge.enabled,"Enable proposals first");bridge.refresh(build) end) end)
+	controls.testConnection=button(16,458,buttonWidth,"Test connection",function() safely(function()
+		assert(bridge.enabled,"Enable proposals first")
+		bridge.connectionTest={nonce=require("sha1")(tostring({})..os.time()),requestedAt=os.time()};bridge.publishState()
+	end) end)
+	ui.description(controls,"connectionHint",300,438,width-316,76,{"After requesting a test, ask your AI client to call get_build_connection. A recent client contact and the matching test response confirm the link."},14)
 	controls.status=ui.label(controls,"status",16,height-86,"",14)
 	controls.status.label=function() return "^7"..(bridge.lastError and "Connection needs attention. Open Connection details." or bridge.prepared and "A calculated proposal is ready for your review." or "Your current build stays in place until you apply a proposal.") end
 	for _,key in ipairs({"goals","review","candidates","analysis","restore","charts"}) do
@@ -241,6 +272,10 @@ function Panel.Open(build,layout)
 		controls[key].shown=function() return controls.page:GetSelValue()=="Connection" end
 		controls[key.."Hint"].shown=controls[key].shown
 	end
+	for _,key in ipairs({"connectionSteps","syncConnection","testConnection","connectionHint"}) do controls[key].shown=function() return controls.page:GetSelValue()=="Connection" end end
+	for _,key in ipairs({"enableHint","setupHint","diagnosticsHint"}) do controls[key].shown=false end
+	controls.status.shown=function() return controls.page:GetSelValue()~="Connection" end
+	if layout then layout.snapshot=function() return {page=controls.page:GetSelValue()} end;if layout.restorePage then controls.page:SelByValue(layout.restorePage) end end
 	controls.close=button(width-132,height-48,116,"Close",function() main:ClosePopup() end)
 	ui.style(controls,{review=true})
 	ui.tabs(controls,controls.page,{{"tab_plan","Plan & review","Plan & review"},{"tab_connection","Connection","Connection"}},16,202,360)

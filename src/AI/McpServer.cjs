@@ -5,7 +5,8 @@ const fs = require('node:fs');
 const { StringDecoder } = require('node:string_decoder');
 const reportPath = process.argv[2];
 const buildProtocol = require('./BuildProtocol.cjs');
-const callBuildTool = buildProtocol.createBridge(reportPath);
+let clientName = "MCP client";
+const callBuildTool = buildProtocol.createBridge(reportPath, () => clientName);
 const supportedVersions = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 const tools = [
   ['get_encounter_report', 'Read the last explicitly captured desktop encounter, settings, assumptions and selected-trial history.'],
@@ -62,6 +63,7 @@ function handle(message) {
   if (method === 'initialize') {
     if (phase !== 'new') return error(-32600, 'Already initialized');
     if (typeof params.protocolVersion !== 'string' || !params.clientInfo || !params.capabilities) return error(-32602, 'Invalid initialization parameters');
+    clientName=typeof params.clientInfo.name==='string' ? params.clientInfo.name : 'MCP client';
     phase = 'initializing';
     return send(id, { protocolVersion: supportedVersions.includes(params.protocolVersion) ? params.protocolVersion : supportedVersions[0],
       capabilities: { tools: {}, prompts: {} }, serverInfo: { name: 'pob-ai-edition', version: '1.7.0' },

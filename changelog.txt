@@ -1,6 +1,9 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Refined all planning tools with guided crafting, comparison tables, readable guides and clearer save states.
+* Added large text, keyboard list selection, remembered navigation and resizable Journey details.
+* Added AI connection receipts and round-trip tests, clearer proposal review and interactive chart controls.
 * Compare equipped and wishlist item cards, choose prerequisites by name and track milestone progress.
 * Measure wishlist upgrades with native calculations and compare benefit per recorded resource.
 * Test the complete MCP planning, native review and save/reopen workflow without opening a window.

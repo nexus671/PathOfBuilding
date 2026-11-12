@@ -676,6 +676,7 @@ function main:LoadSettings(ignoreBuild)
 				if node.attrib.disableScrollControlInteraction then
 					self.disableScrollControlInteraction = node.attrib.disableScrollControlInteraction == "true"
 				end
+				self.planningTextLarge=node.attrib.planningTextLarge=="true"
 				if node.attrib.dpiScaleOverridePercent then
 					self.dpiScaleOverridePercent = tonumber(node.attrib.dpiScaleOverridePercent) or 0
 					SetDPIScaleOverridePercent(self.dpiScaleOverridePercent)
@@ -813,6 +814,7 @@ function main:SaveSettings()
 		showAllItemAffixes = tostring(self.showAllItemAffixes),
 		disableScrollControlInteraction = tostring(self.disableScrollControlInteraction),
 		dpiScaleOverridePercent = tostring(self.dpiScaleOverridePercent),
+		planningTextLarge = tostring(self.planningTextLarge or false),
 	} })
 	local res, errMsg = common.xml.SaveXMLFile(setXML, self.userPath.."Settings.xml")
 	if not res then

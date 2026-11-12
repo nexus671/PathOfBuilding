@@ -34,6 +34,10 @@ function M.validate(project)
 		result.steps[#result.steps+1] = {action=text(step.action,1000,"step action"),stopWhen=text(step.stopWhen,500,"stop condition",true),onFailure=text(step.onFailure,500,"failure route",true),done=step.done == true}
 	end
 	if project.nativeRecipe then result.nativeRecipe=require("Modules.CraftingSimulator").validateRecipe(project.nativeRecipe) end
+	if project.preferredMethod then
+		local valid=false;for _,method in ipairs(require("Modules.CraftingSimulator").methods) do if project.preferredMethod==method then valid=true end end
+		assert(valid,"Unknown starting currency");result.preferredMethod=project.preferredMethod
+	end
 	if project.run then result.run=require("Modules.CraftingCheckpoint").validate(result.startingItem,project.run) end
 	if project.estimate then
 		local quote = project.estimate
@@ -89,6 +93,7 @@ function M.new(build)
 		if not found then replacement[#replacement+1]=entry end
 		assert(#json.encode({schemaVersion=1,projects=replacement}) <= 2*1024*1024,"Crafting projects exceed the supported size")
 		self.projects=replacement; build.modFlag=true
+		require("Modules.PlanningUI").kept(build,"crafting")
 		return entry
 	end
 	return self

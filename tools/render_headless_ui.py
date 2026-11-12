@@ -58,6 +58,9 @@ def render(frame):
     audit = {"lowContrast": [], "horizontalClipping": [], "controlClipping": [], "controlOverlaps": [], "texturedPlaceholders": 0,
              "limitations": frame.get("limitations", [])}
     controls = frame.get("controls", [])
+    dialog = frame.get("dialog")
+    if dialog and (dialog["x"] < 0 or dialog["y"] < 0 or dialog["x"] + dialog["width"] > frame["width"] or dialog["y"] + dialog["height"] > frame["height"]):
+        audit["controlClipping"].append({"key": "dialog-title-and-body", "bounds": dialog})
     for i, first in enumerate(controls):
         if not first.get("group"):
             continue

@@ -50,6 +50,7 @@ function Panel.Open(build,project,layout)
 	local configured={}
 	local sequence=0
 	local lastSimulation
+	local changedAffixes={}
 	local favorites=layout and (layout.favorites or layout.workbench and layout.workbench.favorites) or {}
 	if layout then layout.favorites=favorites end
 	if layout then layout.selectedProject=draft.id end
@@ -69,7 +70,7 @@ function Panel.Open(build,project,layout)
 	local itemWidth=math.min(540,width-leftWidth-64)
 	local itemX=leftWidth+32+math.floor((width-leftWidth-48-itemWidth)/2)
 	label(controls,"intro",16,64,"Select a currency, then click your item to craft.")
-	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=196,artSize=96,compact=true,selectedAffix=function() return inspectedId end})
+	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=196,artSize=96,compact=true,selectedAffix=function() return inspectedId end,changedAffixes=function() return changedAffixes end})
 	controls.targetSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,244,416,height-312},nil,{})
 	local function refresh(extra)
 		if inspectedId then local exists;for _,entry in ipairs(state.affixes) do if entry.id==inspectedId then exists=true end end;if not exists then inspectedId=nil end end
@@ -148,6 +149,9 @@ function Panel.Open(build,project,layout)
 		local craft=action();local usedSeed=assert(tonumber(controls.seed.buf),"Invalid seed")+sequence-1
 		local result=simulator.perform(draft.startingItem,craft,usedSeed,state)
 		local function keep(nextState,index)
+			changedAffixes={};local previous={};for _,entry in ipairs(state.affixes) do previous[entry.id]=require("dkjson").encode(entry) end
+			for _,entry in ipairs(nextState.affixes) do if previous[entry.id]~=require("dkjson").encode(entry) then changedAffixes[entry.id]=true end end
+			ui.draft(build,"workingCraft")
 			history[#history+1]=copyTable(state);if #history > 40 then table.remove(history,1) end
 			if index then craft.allflame=craft.allflame or copyTable(result.allflame.settings);craft.allflame.choiceIndex=index end
 			state=nextState;actions[#actions+1]=craft;updateOptions();refresh({"Applied "..(simulator.labels[craft.method] or "craft")..". Select another currency or undo."})
@@ -165,7 +169,7 @@ function Panel.Open(build,project,layout)
 			main:OpenPopup(660,440,"Allflame outcomes",popup,nil,nil,"close")
 		else keep(result.state) end
 	end)
-	button(controls,"undo",308,204,124,"Undo currency",function() assert(#history > 0,"No currency action to undo"); state=table.remove(history); table.remove(actions); updateOptions(); refresh() end)
+	button(controls,"undo",308,204,124,"Undo currency",function() assert(#history > 0,"No currency action to undo"); state=table.remove(history);table.remove(actions);changedAffixes={};ui.draft(build,"workingCraft");updateOptions();refresh() end)
 	button(controls,"history",232,390,200,"Item history",function()
 		require("Classes.CraftingHistoryControl").Open(model,state,history,actions,function(saved,count)
 			state=saved;for i=1,count do table.remove(history);table.remove(actions) end;updateOptions();refresh({"Restored an earlier working item."})
@@ -381,7 +385,13 @@ function Panel.Open(build,project,layout)
 		local popup={}
 		local resultHeight=math.max(420,math.min(650,main.screenH-60))
 		local display={};for _,line in ipairs(lines) do for _,row in ipairs(require("Modules.PlanningUI").rows({line[1]},798)) do display[#display+1]=row end end;lines=display
-		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,828,resultHeight-130},nil,lines)
+		local cardWidth=195
+		ui.card(popup,"successCard",16,28,cardWidth,"SUCCESS",string.format("%.1f%%",result.successChance),result.successes.." / "..result.trials.." trials")
+		ui.card(popup,"attemptCard",227,28,cardWidth,"MEAN ACTIONS",string.format("%.1f",result.meanActions),"All trials, including failures")
+		ui.card(popup,"costCard",438,28,cardWidth,"MEAN SPENDING",result.meanCost and string.format("%.2f",result.meanCost) or "Not priced",result.meanCost and result.costCurrency or "Unpriced actions")
+		ui.card(popup,"intervalCard",649,28,195,"95% INTERVAL",string.format("%.1f-%.1f%%",result.confidenceLow,result.confidenceHigh),"Sampling uncertainty")
+		ui.description(popup,"precision",16,132,828,32,{(result.trials<100 or result.confidenceHigh-result.confidenceLow>10) and "Imprecise estimate: run more trials before choosing a crafting route." or "Results describe the captured starting item, targets and supplied prices."},15)
+		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,174,828,resultHeight-288},nil,lines)
 		local kept={};for i,entry in ipairs(result.retainedSuccesses or {}) do kept[#kept+1]={label="Successful item "..i.." (trial "..entry.trial..")",val=i} end
 		popup.item=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,resultHeight-84,540,24},kept)
 		button(popup,"preview",572,resultHeight-84,272,"Preview retained item",function()
@@ -390,16 +400,22 @@ function Panel.Open(build,project,layout)
 			require("Classes.CraftingProjectControl").Preview(build,entry)
 		end)
 		popup.item.enabled=#kept>0;popup.preview.enabled=#kept>0
+		if #kept==0 then popup.item:SetList({{label="No successful items retained",val=0}}) end
 		button(popup,"close",728,resultHeight-42,116,"Close",function() main:ClosePopup() end)
+		button(popup,"moreTrials",16,resultHeight-42,220,"Run more trials",function()
+			local budget=math.max(1,tonumber(controls.budget.buf) or 1);controls.trials:SetText(tostring(math.min(2000,math.floor(20000/budget),math.max(32,result.trials*4))));main:ClosePopup();controls.simulate:Click()
+		end)
+		popup.moreTrials.enabled=result.trials<math.min(2000,math.floor(20000/math.max(1,tonumber(controls.budget.buf) or 1)))
+		ui.style(popup,{moreTrials=true})
 		main:OpenPopup(860,resultHeight,"Crafting simulation results",popup,nil,nil,"close")
 	end)
 	button(controls,"manual",16,448,416,"Edit hypothetical item",function()
 		require("Classes.CraftingItemEditorControl").Open(model,state,function(edited)
-			state=edited;initial=copyTable(edited);history={};actions={};lastSimulation=nil
+			state=edited;initial=copyTable(edited);history={};actions={};lastSimulation=nil;changedAffixes={};ui.draft(build,"workingCraft")
 			updateOptions();refresh({"Manual edits set a new recipe starting state."})
 		end)
 	end)
-	button(controls,"reset",232,530,200,"Reset item",function() state=copyTable(initial); history={}; actions={}; updateOptions();refresh() end)
+	button(controls,"reset",232,530,200,"Reset item",function() state=copyTable(initial);history={};actions={};changedAffixes={};ui.draft(build,"workingCraft");updateOptions();refresh() end)
 	button(controls,"preview",16,height-48,200,"Preview in build",function()
 		assert(not state.veil and not state.destroyed,"A pending unveil or destroyed item cannot be previewed")
 		local entry=copyTable(draft); entry.targetItem=simulator.toItem(model,state).raw
@@ -499,6 +515,7 @@ function Panel.Open(build,project,layout)
 			settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}
 		local saved=copyTable(draft);saved.run=run
 		local kept=build.savers.CraftingProjects:Upsert(saved);draft=copyTable(kept)
+		ui.kept(build,"workingCraft")
 		refresh({"Working item, history and settings kept. Use build Save to resume after restarting. No budget was spent."})
 	end)
 	controls.keepWorking.shown=function() return require("Modules.CraftingTasks").job==nil end
@@ -526,7 +543,8 @@ function Panel.Open(build,project,layout)
 		layout.workbench=layout.snapshot();layout.craftWidth=math.max(416,math.min(width-400,leftWidth+delta));Panel.Open(build,draft,layout)
 	end) end
 	updateOptions();refresh()
-	if restored then controls.method:SelByValue(restored.method or "alchemy","val");updateOptions();controls.resultSummary.list=restored.resultRows or controls.resultSummary.list end
+	if restored then controls.method:SelByValue(restored.method or "alchemy","val");updateOptions();controls.resultSummary.list=restored.resultRows or controls.resultSummary.list
+	elseif draft.preferredMethod then controls.method:SelByValue(draft.preferredMethod,"val");updateOptions() end
 	if inspectedId then populateAffix(inspectedId) end
 	for key,control in pairs(controls) do if key~="stage" then control.layoutAudit="crafting-workbench" end end
 	if layout then layout.mount(width,height,"Crafting workbench",controls) else main:OpenPopup(width,height,"Crafting workbench",controls,nil,nil,"close") end

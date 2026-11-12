@@ -71,9 +71,12 @@ function Panel.Open(build,source,layout)
 	local saver=build.savers.BuildJourney;local c={};local w,h=layout.width,layout.height
 	local page=source and source.page or "Overview";local selected=source and source.selected
 	local sortMetric=source and source.sortMetric or "priority";local perCost=source and source.perCost or false
+	local expanded=source and source.expanded or false
+	local itemHeight=source and source.itemHeight or 196
+	local rankingFresh=false
 	local pages={"Overview","Roadmap","Gear","Budget","Leveling"};local keys={Roadmap="milestones",Gear="wishlist",Budget="resources",Leveling="stages"}
 	local left=math.floor(math.max(300,math.min(390,w*0.36)));local right=w-left-48
-	local function reopen(id) layout.navigate("journey",{page=page,selected=id or selected,sortMetric=sortMetric,perCost=perCost}) end
+	local function reopen(id) layout.navigate("journey",{page=page,selected=id or selected,sortMetric=sortMetric,perCost=perCost,expanded=expanded,itemHeight=itemHeight}) end
 	ui.label(c,"heading",16,18,"Your build journey",24)
 	ui.description(c,"intro",16,50,w-32,24,{saver.warning or "A roadmap from your current character to the gear and content you want to play."},14)
 	for i,name in ipairs(pages) do button(c,"page"..i,16+(i-1)*150,82,140,name,function() page=name;selected=nil;reopen() end);c["page"..i].locked=page==name end
@@ -98,8 +101,11 @@ function Panel.Open(build,source,layout)
 		if page=="Leveling" then table.sort(list,function(a,b) if (a.level or 1)==(b.level or 1) then return a.id<b.id end;return (a.level or 1)<(b.level or 1) end) end
 		local measurements=page=="Gear" and require("Modules.JourneyUpgrades").current(build)
 		local fresh=measurements and require("Modules.JourneyUpgrades").fresh(build)
+		local activeStage
+		if page=="Leveling" then for _,stage in ipairs(list) do if stage.level<=build.characterLevel then activeStage=stage.id end end end
 		for _,e in ipairs(list) do
 			local label=(e.done and "[DONE] " or "")..(e.level and "Lv "..e.level.." | " or "")..e.title
+			if page=="Leveling" then label=(e.id==activeStage and "[CURRENT] " or "-> ")..label end
 			if page=="Gear" then
 				local row=fresh and measurements.entries[e.id];local metric=sortMetric=="priority" and "LifeUnreserved" or sortMetric
 				local value
@@ -118,17 +124,25 @@ function Panel.Open(build,source,layout)
 		end
 	end
 	local listY=page=="Overview" and 242 or 168;local selectedEntry
-	local currentPreview,targetPreview
+	local currentPreview,targetPreview,targetMissing
 	if page=="Gear" then
+		rankingFresh=require("Modules.JourneyUpgrades").fresh(build);local nextFreshCheck=GetTime()+500
 		local cardW=math.floor((right-12)/2)
-		currentPreview=require("Classes.JourneyItemControl").new(c,"equippedItem",left+32,listY,cardW,196,"EQUIPPED NOW")
-		targetPreview=require("Classes.JourneyItemControl").new(c,"targetItem",left+44+cardW,listY,cardW,196,"PLANNED UPGRADE")
+		itemHeight=math.max(148,math.min(itemHeight,h-listY-200))
+		currentPreview=require("Classes.JourneyItemControl").new(c,"equippedItem",left+32,listY,cardW,itemHeight,"EQUIPPED NOW")
+		targetPreview=require("Classes.JourneyItemControl").new(c,"targetItem",left+44+cardW,listY,cardW,itemHeight,"PLANNED UPGRADE")
+		ui.rowSplitter(c,"detailSplitter",left+32,listY+itemHeight+1,right,function(delta) itemHeight=math.floor(math.max(148,math.min(h-listY-200,itemHeight+delta)));reopen() end).shown=function() return not expanded end
 		c.sort=new("DropDownControl"):DropDownControl(ui.anchor,{16,128,left,26},require("Modules.JourneyUpgrades").metrics);c.sort:SelByValue(sortMetric,"val")
 		local sortDirty=false
 		c.sort.selFunc=function() sortMetric=c.sort:GetSelValueByKey("val");sortDirty=true end
-		layout.tick=function() if (sortDirty or layout.resultsDirty) and not c.sort.dropped then sortDirty=false;layout.resultsDirty=nil;reopen() end end
+		layout.tick=function()
+			if GetTime()>=nextFreshCheck then nextFreshCheck=GetTime()+500;local fresh=require("Modules.JourneyUpgrades").fresh(build);if fresh~=rankingFresh then rankingFresh=fresh;layout.resultsDirty=true end end
+			if (sortDirty or layout.resultsDirty) and not c.sort.dropped then sortDirty=false;layout.resultsDirty=nil;reopen() end
+		end
 		button(c,"perCost",left+32,128,188,perCost and "Per resource: on" or "Per resource: off",function() perCost=not perCost;reopen() end)
-		ui.description(c,"rankingHint",left+236,128,right-204,32,{"Per-resource ranking groups currencies separately."},13)
+		button(c,"expandDetails",left+232,128,148,expanded and "Show item mods" or "Expand details",function() expanded=not expanded;reopen() end)
+		button(c,"compareAll",w-168,128,152,"Compare all",function() require("Classes.JourneyViews").compare(build,sortMetric,perCost,function(id) reopen(id) end) end)
+		c.equippedItemMods.shown=function() return not expanded end;c.targetItemMods.shown=function() return not expanded and not targetMissing end
 	else
 		local complete,total=0,0
 		local collection=page=="Roadmap" and data.milestones or page=="Leveling" and data.stages or page=="Budget" and data.resources
@@ -149,6 +163,8 @@ function Panel.Open(build,source,layout)
 	local labels={kind="Type",slot="Slot",route="Acquire by",stage="Upgrade stage",status="Status",level="Level",priority="Priority",projectId="Craft",atlasId="Atlas plan",stageId="Guide stage",wishlistId="Gear goal",gems="Gems and links",passives="Passives",gear="Gear",ascendancy="Ascendancy",quests="Quests",transition="Switch when",notes="Notes"}
 	local function show(e)
 		selectedEntry=e;selected=e.id;local lines={e.title}
+		for index,entry in ipairs(entries) do if entry.id==selected then c.entries.selectedKey=index;break end end
+		for _,row in ipairs(c.entries.list) do row.selected=row.line and entries[row.line] and entries[row.line].id==selected end
 		if page=="Overview" then
 			lines[#lines+1]=e.blocked and "Waiting on the following" or "Ready: prerequisites met; no recorded funding gap."
 			for _,reason in ipairs(e.reasons) do lines[#lines+1]=reason end;e=e.entry
@@ -174,12 +190,13 @@ function Panel.Open(build,source,layout)
 			if #audit.dependencies==0 then lines[#lines+1]="No issues detected by the available dependency checks." end
 		end
 		if page=="Budget" then
-			local r=budget[e.id];lines[#lines+1]=string.format("Owned %.2f | Spent %.2f | Reserved %.2f",r.owned,r.spent,r.reserved);lines[#lines+1]=string.format("Available %.2f | Funding gap %.2f",r.available,r.gap)
-			for _,record in ipairs(data.ledger) do if record.resourceId==e.id then lines[#lines+1]=record.kind.." "..record.amount.." | "..(record.projectId and linkedTitle("projectId",record.projectId) or "").." | "..(record.note or "") end end
+			local r=budget[e.id];lines={"Transactions | "..e.title..string.format(" | Funding gap %.2f",r.gap)}
+			for _,record in ipairs(data.ledger) do if record.resourceId==e.id then lines[#lines+1]=os.date("%Y-%m-%d",record.at).." | "..(record.kind=="add" and "Added " or "Spent ")..record.amount.." | "..(record.projectId and linkedTitle("projectId",record.projectId) or "").." | "..(record.note or "") end end
 		end
 		if page=="Gear" then
-			local slot=build.itemsTab.slots[e.slot];currentPreview(slot and build.itemsTab.items[slot.selItemId])
-			local raw=require("Modules.JourneyUpgrades").target(build,e);local ok,target=pcall(require("Modules.CraftingProjects").item,raw);targetPreview(ok and target or nil)
+			local slot=build.itemsTab.slots[e.slot];local current=slot and build.itemsTab.items[slot.selItemId]
+			local raw=require("Modules.JourneyUpgrades").target(build,e);local ok,target=pcall(require("Modules.CraftingProjects").item,raw);target=ok and target or nil;targetMissing=target==nil
+			currentPreview(current,target);targetPreview(target,current)
 			local measured=require("Modules.JourneyUpgrades").current(build)
 			if measured then
 				if not require("Modules.JourneyUpgrades").fresh(build) then lines[#lines+1]="Measurements are stale. Recalculate after build or plan changes."
@@ -195,11 +212,35 @@ function Panel.Open(build,source,layout)
 		c.details.list=ui.rows(lines,right-24,15)
 	end
 	c.entries=new("TextListControl"):TextListControl(ui.anchor,{16,listY,left,h-listY-72},nil,rows)
-	c.entries.onClick=function(row) if row and row.line and row.line.line then show(entries[row.line.line]) end end
-	local detailY=listY+(page=="Gear" and 208 or 0)
+	ui.selectable(c.entries,function(row) return row.line end,function(row) show(entries[row.line]) end)
+	local detailY=listY+(page=="Gear" and (expanded and 120 or itemHeight+12) or 0)
+	if page=="Budget" then
+		c.entries.width=w-32;c.entries.height=148;c.entries.columns={{x=38},{x=w*0.34},{x=w*0.48},{x=w*0.63},{x=w*0.79}}
+		local tableRows={{height=30,textSize=15,"^7Resource","^7Owned","^7Reserved","^7Available","^7Spent"}}
+		for index,entry in ipairs(entries) do local r=budget[entry.id];local row={height=36,textSize=15,line=index,"^7"..ui.fit(entry.title,w*0.34-58,15),"^7"..r.owned,"^7"..r.reserved,"^7"..r.available,"^7"..r.spent}
+			for _,currency in ipairs({"chaos","divine","exalt","alchemy","alteration","regal","annul"}) do if entry.title:lower():find(currency,1,true) then row.iconPath="Assets/Crafting/"..currency..".png" end end;tableRows[#tableRows+1]=row
+		end;c.entries.list=tableRows;detailY=listY+164
+	end
 	c.details=new("TextListControl"):TextListControl(ui.anchor,{left+32,detailY,right,h-detailY-72},nil,ui.rows(detail,right-24,15))
+	if page=="Budget" then c.details.x=16;c.details.width=w-32 end
 	for _,e in ipairs(entries) do if e.id==selected then show(e);break end end
 	if not selectedEntry and entries[1] then show(entries[1]) end
+	if page=="Gear" then
+		local targetX=left+44+math.floor((right-12)/2);local targetWidth=math.floor((right-12)/2)
+		button(c,"pasteTarget",targetX+8,listY+114,targetWidth-16,"Paste target item",function() assert(selectedEntry,"Select a gear goal");require("Classes.JourneyViews").paste(build,selectedEntry,function() reopen() end) end)
+		button(c,"useEquipped",targetX+8,listY+142,targetWidth-16,"Use equipped item",function() local slot=build.itemsTab.slots[selectedEntry.slot];local item=slot and build.itemsTab.items[slot.selItemId];assert(item,"This slot is empty");local e=copyTable(selectedEntry);e.targetItem=item.raw;build.savers.BuildJourney:Put("wishlist",e);reopen() end)
+		button(c,"linkCraft",targetX+8,listY+170,targetWidth-16,"Link crafting project",function()
+			local list={};for _,project in ipairs(build.savers.CraftingProjects.projects) do if project.slot==selectedEntry.slot then list[#list+1]={id=project.id,label=project.title,details=project.goals} end end
+			require("Classes.PlanningBrowserControl").Open("Choose a crafting project",list,{choose=function(entry) local e=copyTable(selectedEntry);e.projectId=entry.id;build.savers.BuildJourney:Put("wishlist",e);reopen() end})
+		end)
+		for _,key in ipairs({"pasteTarget","useEquipped","linkCraft"}) do c[key].height=24;c[key].shown=function() return selectedEntry and targetMissing and not expanded end end
+		local captions={"Paste","Equipped","Link craft"};local actionWidth=math.floor((targetWidth-32)/3)
+		for index,key in ipairs({"pasteTarget","useEquipped","linkCraft"}) do c[key].x=targetX+8+(index-1)*(actionWidth+8);c[key].y=listY+114;c[key].width=actionWidth;c[key].label=captions[index] end
+		c.useEquipped.enabled=function() local slot=selectedEntry and build.itemsTab.slots[selectedEntry.slot];return slot and build.itemsTab.items[slot.selItemId]~=nil end
+		button(c,"reviewIssues",left+32,h-82,right,"Why this needs review",function() require("Classes.JourneyViews").issues(build,selectedEntry) end)
+		c.reviewIssues.shown=function() local result=require("Modules.JourneyUpgrades").current(build);local row=result and selectedEntry and result.entries[selectedEntry.id];return row and rankingFresh and (row.eligible==false or row.status=="failed") end
+		c.details.height=function() return h-detailY-(c.reviewIssues:IsShown() and 114 or 72) end
+	end
 	if page~="Overview" then
 		button(c,"add",16,h-48,136,"Add "..(page=="Budget" and "resource" or "entry"),function() Panel.Edit(build,keys[page],nil,reopen) end)
 		button(c,"edit",168,h-48,116,"Edit",function() assert(selectedEntry,"Select an entry");Panel.Edit(build,keys[page],selectedEntry,reopen) end)
@@ -216,7 +257,7 @@ function Panel.Open(build,source,layout)
 				if workspace and build.viewMode=="PLANNER" and workspace.page=="journey" and view and view.page=="Gear" then active.layout.resultsDirty=true end
 			end)
 		end)
-		c.measure.label=function() local upgrades=require("Modules.JourneyUpgrades");local r=upgrades.current(build);return upgrades.job and r and string.format("Cancel (%d/%d)",r.completed,r.total) or "Measure upgrades" end
+		c.measure.label=function() local upgrades=require("Modules.JourneyUpgrades");local r=upgrades.current(build);return upgrades.job and r and string.format("Cancel (%d/%d)",r.completed,r.total) or r and not rankingFresh and "Recalculate upgrades" or "Measure upgrades" end
 	elseif page=="Budget" then button(c,"record",300,h-48,176,"Record transaction",function() Panel.Edit(build,"ledger",{resourceId=selectedEntry and selectedEntry.id,kind="add"},function() reopen() end) end) end
 	if page~="Overview" then
 		button(c,"remove",492,h-48,100,"Remove",function()
@@ -232,14 +273,16 @@ function Panel.Open(build,source,layout)
 	end
 	button(c,"openLink",w-200,h-48,184,"Open linked plan",function()
 		assert(selectedEntry,"Select an entry");local e=selectedEntry.entry or selectedEntry
+		if page=="Leveling" then require("Classes.JourneyViews").guide(build,e);return end
 		if e.projectId then for _,project in ipairs(build.savers.CraftingProjects.projects) do if project.id==e.projectId then layout.openWorkbench(project);return end end;error("Linked craft is missing")
 		elseif e.atlasId then for _,plan in ipairs(build.savers.AtlasPlans.plans) do if plan.id==e.atlasId then layout.navigate("atlas",plan);return end end;error("Linked Atlas plan is missing")
 		elseif e.stageId then page="Leveling";selected=e.stageId;reopen();return
 		elseif e.wishlistId then page="Gear";selected=e.wishlistId;reopen();return end
 		error("This entry has no linked plan")
 	end)
-	c.openLink.enabled=function() local e=selectedEntry and (selectedEntry.entry or selectedEntry);return e and (e.projectId or e.atlasId or e.stageId or e.wishlistId)~=nil end
-	layout.snapshot=function() return {page=page,selected=selected,sortMetric=sortMetric,perCost=perCost} end
+	c.openLink.label=page=="Leveling" and "Open leveling guide" or "Open linked plan"
+	c.openLink.enabled=function() local e=selectedEntry and (selectedEntry.entry or selectedEntry);return e and (page=="Leveling" or (e.projectId or e.atlasId or e.stageId or e.wishlistId)~=nil) end
+	layout.snapshot=function() return {page=page,selected=selected,sortMetric=sortMetric,perCost=perCost,expanded=expanded,itemHeight=itemHeight} end
 	for _,control in pairs(c) do control.layoutAudit="journey-workspace" end
 	ui.style(c,{add=true});layout.mount(w,h,"Journey",c)
 end

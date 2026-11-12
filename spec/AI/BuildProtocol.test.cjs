@@ -48,6 +48,16 @@ test('reads opted-in desktop context and searches bounded native catalogs', t =>
   assert.equal(result.total,1); assert.equal(result.matches[0].id,123);
   assert.throws(() => f.call('search_build_catalog',{kind:'gems',query:'Fireball',limit:0}),/arguments/);
 });
+
+test('records real client contacts, context receipts and requested test nonces separately', t => {
+  const f=fixture(t);f.state.connectionTest={nonce:'test-round-trip'};f.write('state',f.state);
+  f.call('get_build_connection',{});
+  const receipt=()=>JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-client.json')));
+  assert.equal(receipt().testNonce,'test-round-trip');assert.equal(receipt().contextRevision,undefined);
+  f.call('get_build_context',{});assert.equal(receipt().contextRevision,f.state.revision);
+  f.call('get_proposal_status',{});assert.equal(receipt().contextRevision,f.state.revision);
+  f.state.session='another-session';f.write('state',f.state);f.call('get_build_connection',{});assert.equal(receipt().contextRevision,undefined);
+});
 test('queues a typed proposal bound to session and revision without applying it', t => {
   const f = fixture(t); const result = f.call('propose_build',f.proposal);
   const request = JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));

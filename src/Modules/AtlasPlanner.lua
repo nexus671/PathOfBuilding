@@ -190,7 +190,7 @@ function M.new(build)
 		for i,old in ipairs(replacement) do if old.id == entry.id then replacement[i]=entry; found=true; break end end
 		if not found then assert(#replacement < 8,"Keep up to eight Atlas plans per build"); replacement[#replacement+1]=entry end
 		assert(#json.encode(replacement) <= 128000,"Atlas metadata too large")
-		self.plans=replacement; build.modFlag=true; return entry
+		self.plans=replacement; build.modFlag=true;require("Modules.PlanningUI").kept(build,"atlas"); return entry
 	end
 	function self:Remove(id)
 		assert(not self.unreadable,self.warning)

@@ -22,6 +22,8 @@ A Path of Exile build planner with encounter timelines and improved survival cal
 
 The encounter tools are experimental. See the [guide](docs/recovery-simulation.md), [crafting guide](docs/crafting.md), [Atlas guide](docs/atlas.md), or [Journey guide](docs/journey.md) to get started.
 
+The [planning UI guide](docs/ui-polish.md) covers navigation, project creation, comparisons, checklists and chart controls.
+
 ## Links
 
 [Published version](https://github.com/nexus671/PathOfBuilding-AI-Edition/tree/main) · [Report a problem](https://github.com/nexus671/PathOfBuilding-AI-Edition/issues) · [Community Edition](https://pathofbuilding.community)

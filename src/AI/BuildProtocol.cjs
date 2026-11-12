@@ -18,7 +18,7 @@ const journeySchema=object({schemaVersion:{const:1},
   wishlist:journeyList(object({...journeyEntry,slot:string(80),route:{enum:['buy','craft','farm','owned']},stage:{enum:['next','final','alternative']},status:{enum:['planned','owned','skipped']},priority:integer(1,5),reserve:boolean,targetItem:string(24000),resourceId:journeyId,estimate:number(0,1e12)},['id','title','slot','route'])),
   resources:journeyList(object({...journeyEntry,unit:string(40)},['id','title'])),
   ledger:journeyList(object({id:journeyId,resourceId:journeyId,kind:{enum:['add','spend']},amount:number(0.000001,1e12),at:integer(0,4102444800),note:string(1000),projectId:journeyId},['id','resourceId','kind','amount','at'])),
-  stages:journeyList(object({...journeyEntry,gems:string(12000),passives:string(12000),gear:string(12000),ascendancy:string(12000),quests:string(12000),transition:string(12000)},['id','title','level']))
+  stages:journeyList(object({...journeyEntry,gems:string(12000),passives:string(12000),gear:string(12000),ascendancy:string(12000),quests:string(12000),transition:string(12000),questChecks:journeyList(string(1000))},['id','title','level']))
 },['schemaVersion','milestones','wishlist','resources','ledger','stages']);
 const atlasVersion={enum:['3.27.0','3.29.1']};
 const atlasPlan=object({id:{type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$'},title:string(120),version:atlasVersion,budget:integer(0,138),nodes:array(integer(1,65535),300),notes:string(8000)},['id','title','version','budget','nodes']);
@@ -34,7 +34,7 @@ const craftingState=object({...craftingStateProperties,imprint:object(craftingSt
 const craftingAction=object({method:{enum:craftingMethods},modId:string(160),essenceId:string(200),tangledOutcome:string(200),fossils:{type:'array',minItems:1,maxItems:4,items:string(200)},tag:{enum:['attack','caster','physical','fire','cold','lightning','chaos','life','defences','speed','critical','influence']},influence,donorItem:string(24000),selectedMods:object({left:{type:'array',minItems:1,maxItems:5,items:string(160)},right:{type:'array',minItems:1,maxItems:5,items:string(160)}},['left','right']),reportedSuccessChance:number(0,100),allflame:{oneOf:[object({auto:{const:true},upgradeTier:integer(0,2),choiceIndex:integer(1,4),preferredTargets:craftingTargets},['auto']),object({outcomes:integer(1,4),gainMin:integer(0,100),gainMax:integer(0,100),sulphur:integer(0,1e9),choiceIndex:integer(1,4),preferredTargets:craftingTargets},['outcomes','gainMin','gainMax','sulphur'])]},preferredMods:array(string(160),30),count:integer(1,6),catalyst:integer(1,12),linked:boolean,side:{enum:['Exarch','Eater']},tier:integer(1,4),from:{enum:['fire','cold','lightning']},to:{enum:['fire','cold','lightning']}},['method']);
 const craftingRequirements=object({openPrefixes:integer(0,3),openSuffixes:integer(0,3),minAffixes:integer(0,6),maxAffixes:integer(0,6),minQuality:integer(0,30),minMemoryStrands:integer(0,100),maxMemoryStrands:integer(0,100),minFractured:integer(0,6),maxFractured:integer(0,6),minIntangibility:integer(0,100),maxIntangibility:integer(0,100),sockets:integer(0,6),links:integer(0,6),corrupted:boolean});
 const craftingRecipe=object({rarity:{enum:['MAGIC','RARE']},steps:{type:'array',minItems:1,maxItems:20,items:object({...craftingAction.properties,maxAttempts:integer(1,200),untilTargets:craftingTargets,untilRequirements:craftingRequirements,onSuccess:integer(1,21),onFailure:integer(1,21)},['method'])},targets:{...craftingTargets,minItems:0},requirements:craftingRequirements,requiredGroups:integer(0,6),initialState:craftingState},['steps','targets']);
-const craftingProjectSchema = object({id:{type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$'},title:string(120),slot:string(80),startingItem:string(24000),targetItem:string(24000),
+const craftingProjectSchema = object({preferredMethod:{enum:craftingMethods},id:{type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$'},title:string(120),slot:string(80),startingItem:string(24000),targetItem:string(24000),
   nativeRecipe:craftingRecipe,goals:array(string(300),12),steps:array(object({action:string(1000),stopWhen:string(500),onFailure:string(500),done:boolean},['action']),40),notes:string(8000),estimate:quoteSchema,simulatorExport:string(128000),
   simulation:object({patch:string(40),observedAt:integer(0,4102444800),trials:integer(1,1e9),successes:integer(0,1e9),notes:string(4000)},['patch','observedAt','trials','successes'])},['id','title','slot','startingItem','goals','steps']);
 const operations = [
@@ -115,7 +115,7 @@ const tools = [
     inputSchema:object({baseRevision:proposalSchema.properties.baseRevision,slot:string(80),itemText:string(24000),recipe:craftingRecipe,options:object({trials:integer(1,2000),maxActions:integer(1,2000),baseCost:number(0,1e12),retainSuccesses:integer(0,100),seed:integer(1,2147483646),prices:{type:'object',maxProperties:100,additionalProperties:number(0,1e12)},currency:string(24)})},['baseRevision','recipe']),annotations:{...readOnly,readOnlyHint:false,idempotentHint:false}},
 ];
 
-function createBridge(reportPath) {
+function createBridge(reportPath, clientName = () => "MCP client") {
   const filename = name => path.join(path.dirname(reportPath || '.'),`AI-build-${name}.json`);
   const retryDelay = new Int32Array(new SharedArrayBuffer(4));
   function read(name) {
@@ -139,12 +139,21 @@ function createBridge(reportPath) {
     }
     return result;
   }
+  let contextRead;
+  function contact(current, readContext = false) {
+    if (!current.enabled || typeof current.session !== 'string') return;
+    const name=String(clientName() || 'MCP client').replace(/[\x00-\x1f]/g,' ').slice(0,80);
+    if (readContext) contextRead={session:current.session,revision:current.revision};
+    const record={schemaVersion:1,contextRevision:contextRead?.session===current.session ? contextRead.revision : undefined,session:current.session,name,seenAt:Date.now()/1000,revision:current.revision,testNonce:current.connectionTest?.nonce};
+    fs.writeFileSync(filename('client'),JSON.stringify(record));
+  }
   return function call(name,args) {
     const tool = tools.find(t => t.name === name);
     if (!tool || !validate(args ?? {},tool.inputSchema)) throw new Error('Invalid build tool arguments. Follow the advertised schema.');
     if (name === 'get_build_connection') {
       let current;
       try { current = read('state'); } catch (_) { return {status:'unavailable',steps:['Open a build in PoB > AI builds.','Enable build proposals.','Copy MCP configuration into your AI client and reconnect.']}; }
+      contact(current);
       const heartbeatAgeSeconds = Number.isFinite(current.heartbeat) ? Math.max(0,Date.now()/1000-current.heartbeat) : null;
       const calculating = current.proposal?.status === 'calculating';
       return {status:current.schemaVersion !== 1 ? 'incompatible' : !current.enabled ? 'disabled' : heartbeatAgeSeconds === null || heartbeatAgeSeconds > (calculating ? 120 : 15) ? 'stale' : calculating ? 'calculating' : 'ready',heartbeatAgeSeconds,
@@ -167,6 +176,7 @@ function createBridge(reportPath) {
       name='propose_build';
     }
     const current = state();
+    contact(current);
     if (name === 'get_build_history') return {history:current.history ?? [],plan:current.plan,undoDepth:current.diagnostics?.undoDepth ?? 0};
     if (name === 'get_proposal_status') return {session:current.session,revision:current.revision,proposal:current.proposal ?? null};
     const captured = read('context');
@@ -176,6 +186,7 @@ function createBridge(reportPath) {
     if (name === 'get_build_journey') return {revision:current.revision,journey:captured.context.journey,budget:captured.context.journeyBudget,nextActions:captured.context.nextActions,warning:captured.context.journeyWarning};
     if (name === 'get_build_analysis') return {revision:current.revision,capturedAt:captured.capturedAt,audit:captured.context.audit,encounter:captured.context.encounter,plan:current.plan};
     if (name === 'get_build_context') {
+      contact(current,true);
       const {xml,...context} = captured.context;
       return {session:current.session,capturedAt:captured.capturedAt,context};
     }

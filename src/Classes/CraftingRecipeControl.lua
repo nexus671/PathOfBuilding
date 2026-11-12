@@ -12,6 +12,7 @@ end
 function Panel.Open(recipe,currentAction,onKeep)
 	local draft=copyTable(recipe or {steps={},targets={}})
 	local controls={};local selected=1
+	local ui=require("Modules.PlanningUI")
 	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,0,14},"Capture actions in the emulator, then connect success and failure routes here.")
 	controls.graph=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,62,828,264},nil,{})
 	controls.step=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,350,828,24},{})
@@ -22,6 +23,7 @@ function Panel.Open(recipe,currentAction,onKeep)
 	controls.routeLabel=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,436,0,14},"Success route                                                   Failure / exhausted attempts route")
 	local function loadStep()
 		local step=draft.steps[selected];if not step then return end
+		for _,row in ipairs(controls.graph.list) do row.selected=row.step==selected end
 		controls.attempts:SetText(tostring(step.maxAttempts or 1))
 		controls.condition:SelByValue((step.untilTargets or step.untilRequirements) and "Keep custom conditions" or "After a successful action")
 		controls.success:SelByValue(step.onSuccess or 0,"val");controls.failure:SelByValue(step.onFailure or 0,"val")
@@ -31,15 +33,18 @@ function Panel.Open(recipe,currentAction,onKeep)
 		for i,step in ipairs(draft.steps) do
 			list[#list+1]={label=i..". "..(sim.labels[step.method] or step.method),val=i}
 			routes[#routes+1]={label="Step "..i,val=i}
-			lines[#lines+1]={height=24,string.format("[%d] %s | up to %d attempt(s)",i,sim.labels[step.method] or step.method,step.maxAttempts or 1)}
-			lines[#lines+1]={height=22,string.format("      Success -> %s    Failure -> %s",step.onSuccess or i+1,step.onFailure or i+1)}
-			if step.untilTargets or step.untilRequirements then lines[#lines+1]={height=20,"      Stop repeating when the selected target conditions match."} end
+			local function route(target) return target>#draft.steps and "Finish" or "Step "..target end
+			lines[#lines+1]={height=92,textSize=16,x=44,card=true,step=i,selected=i==selected,iconPath=require("Modules.CraftingWorkbench").icon(step.method),
+				subtitle=string.format("Success -> %s | Failure / limit -> %s",route(step.onSuccess or i+1),route(step.onFailure or i+1)),
+				detail=(step.untilTargets or step.untilRequirements) and "Repeat until target conditions match" or "Continue after one successful action",
+				"^7"..string.format("%d. %s | up to %d attempts",i,sim.labels[step.method] or step.method,step.maxAttempts or 1)}
 		end
 		routes[#routes+1]={label="End recipe",val=#draft.steps+1}
 		controls.graph.list=lines;controls.step:SetList(list);controls.step:SelByValue(selected,"val")
 		controls.success:SetList(routes);controls.failure:SetList(copyTable(routes));loadStep()
 	end
 	controls.step.selFunc=function(_,entry) selected=entry.val;loadStep() end
+	ui.selectable(controls.graph,function(row) return row.step end,function(row) selected=row.step;controls.step:SelByValue(selected,"val");loadStep() end)
 	button(controls,"add",16,514,256,"Append current emulator action",function()
 		assert(#draft.steps < 20,"Use up to twenty steps")
 		draft.steps[#draft.steps+1]=copyTable(currentAction);selected=#draft.steps;refresh()
@@ -66,7 +71,7 @@ function Panel.Open(recipe,currentAction,onKeep)
 	local height=math.max(520,math.min(690,main.screenH-60));local offset=690-height
 	controls.graph.height=264-offset
 	for key,control in pairs(controls) do if key ~= "graph" and control.y >= 350 then control.y=control.y-offset end end
-	refresh();main:OpenPopup(860,height,"Crafting recipe routes",controls,nil,nil,"close")
+	refresh();ui.style(controls,{keep=true});for _,control in pairs(controls) do control.layoutAudit="recipe-editor" end;main:OpenPopup(860,height,"Crafting recipe routes",controls,nil,nil,"close")
 	return controls
 end
 return Panel

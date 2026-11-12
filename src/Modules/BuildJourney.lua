@@ -60,6 +60,7 @@ function M.validate(input,build)
 				if entry.resourceId then e.resourceId=id(entry.resourceId);e.estimate=num(entry.estimate,0,1e12,"estimate") end
 			elseif key=="stages" then
 				for _,field in ipairs({"gems","passives","gear","ascendancy","quests","transition"}) do e[field]=text(entry[field],12000,field,true) end
+				if entry.questChecks then e.questChecks={};for _,quest in ipairs(array(entry.questChecks)) do e.questChecks[#e.questChecks+1]=text(quest,1000,"completed quest") end end
 			end
 			if entry.level then e.level=num(entry.level,1,100,"level");assert(e.level==math.floor(e.level),"Level must be an integer") end
 			if e.priority then assert(e.priority==math.floor(e.priority),"Priority must be an integer") end
@@ -153,7 +154,7 @@ function M.new(build)
 		if ok then self.data=data else self.unreadable=raw;self.warning="Journey data could not be read. It will be preserved unchanged." end
 	end
 	function self:Save(xml) xml[#xml+1]=self.unreadable or json.encode(self.data) end
-	function self:Replace(data) assert(not self.unreadable,self.warning);self.data=M.validate(data,build);build.modFlag=true;return self.data end
+	function self:Replace(data) assert(not self.unreadable,self.warning);self.data=M.validate(data,build);build.modFlag=true;require("Modules.PlanningUI").kept(build,"journey");return self.data end
 	function self:Put(key,entry)
 		assert(type(self.data[key])=="table","Unknown collection")
 		local data=copyTable(self.data);local found=false
