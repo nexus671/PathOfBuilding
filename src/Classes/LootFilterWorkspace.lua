@@ -34,7 +34,7 @@ function M.Open(build,source,layout,controller)
 		selectedEntry=entry;selected=entry and entry.rule.id;item=entry and copyTable(entry.sample) or item;if parsed then result=parser.simulate(parsed,item) end
 		if c.detail then local lines={}
 			if entry then
-				lines={entry.rule.title,entry.category.." / "..entry.tier,(entry.base and "Base preset. Editing creates a personal override." or entry.rule.origin and "Linked to "..entry.rule.origin or "Personal rule"),tostring(#entry.block.conditions).." matching conditions",result and result.action=="Unknown" and "Add missing sample properties to resolve this drop." or "Preview uses this profile's complete filter."}
+				lines={entry.rule.title,entry.category.." / "..entry.tier,(entry.rule.enabled==false and "Disabled. The base preset still applies." or entry.base and "Base preset. Editing creates a personal override." or entry.rule.origin and "Linked to "..entry.rule.origin or "Personal rule"),tostring(#entry.block.conditions).." matching conditions",result and result.action=="Unknown" and "Add missing sample properties to resolve this drop." or "Preview uses this profile's complete filter."}
 			else lines={"Choose a rule or a drop to inspect it.","Personal rules take priority over the base preset."} end
 			c.detail.list=ui.rows(lines,c.detail.width-28,14)
 		end
@@ -130,7 +130,7 @@ function M.Open(build,source,layout,controller)
 			for _,row in ipairs(self.list) do if row.entry and top+row.height>0 and top<height then local entry=row.entry
 				visual.box(2,top+2,width-24,70,selected==entry.rule.id and "^x293D50" or "^x17232E");visual.text(12,top+8,14,entry.rule.title,selected==entry.rule.id and "^xF0D49B" or "^xDCE5EC",width-44)
 				local styles=entry.block.styles;visual.chip(8,top+24,width-34,32,entry.sample,{action=entry.block.action,styles={SetTextColor=styles.SetTextColor,SetBorderColor=styles.SetBorderColor,SetBackgroundColor=styles.SetBackgroundColor,SetFontSize={"24"}}})
-				visual.text(12,top+58,12,entry.category.." / "..entry.tier,"^x9DB0C1",width-44)
+				visual.text(12,top+58,12,(entry.rule.enabled==false and "DISABLED / " or "")..entry.category.." / "..entry.tier,"^x9DB0C1",width-44)
 			end;top=top+row.height end;SetViewport()
 		end
 		ui.selectable(c.rules,function(row) return row.entry and row.entry.rule.id end,function(row) updateSelection(row.entry) end,edit)
@@ -142,7 +142,7 @@ function M.Open(build,source,layout,controller)
 			if selectedEntry.base then rule.text=rule.text:gsub("^%a+",selectedEntry.block.action=="Show" and (profile.mode=="Ruthless" and "Minimal" or "Hide") or "Show");rule.enabled=true else rule.enabled=not rule.enabled end
 			keepRule(rule)
 		end end)
-		c.toggle.label=function() return selectedEntry and selectedEntry.base and (selectedEntry.block.action=="Show" and "Hide" or "Show") or "On / off" end
+		c.toggle.label=function() return selectedEntry and (selectedEntry.base and (selectedEntry.block.action=="Show" and "Hide" or "Show") or selectedEntry.rule.enabled==false and "Enable" or "Disable") or "On / off" end
 		button(c,"remove",listX+(bw+8)*3,h-94,bw,"Delete",function() if selectedEntry and not selectedEntry.base then for i,r in ipairs(profile.rules) do if r.id==selected then table.remove(profile.rules,i);break end end;selected=nil;draft();reopen() end end)
 		c.remove.enabled=function() return selectedEntry~=nil and not selectedEntry.base end
 		local function move(delta) if selectedEntry and not selectedEntry.base then for i,rule in ipairs(profile.rules) do if rule.id==selected then local next=i+delta;if next>=1 and next<=#profile.rules then profile.rules[i],profile.rules[next]=profile.rules[next],profile.rules[i];draft();reopen() end;break end end end end

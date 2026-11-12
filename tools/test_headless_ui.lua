@@ -318,6 +318,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:text("textHex","FFE0A0FF");ui:text("backgroundHex","101820FF");ui:choose("sound","Alert 6");ui:choose("icon","Diamond");ui:click("keepRule");frame("filter-base-override")
 	ui:click("add");ui:text("title","Keep crafting helmets");ui:click("textHexColor1");ui:click("borderHexColor2");ui:click("conditions");frame("filter-rule-editor")
 	ui:click("addCondition");ui:choose("c2key","ItemLevel");ui:choose("c2op",">=");ui:text("c2values","83");ui:click("keepRule");frame("filter-custom-rule")
+	ui:click("toggle");frame("filter-disabled-rule");ui:click("toggle")
 	ui:click("sampleEdit");frame("filter-drop-properties")
 	ui:text("BaseType","Iron Hat");ui:text("Class","Helmets");ui:text("Rarity","Rare");ui:click("useSample");frame("filter-matched-drop")
 	ui:click("viewSimulate");frame("filter-loot-pile");ui:click("drop2");frame("filter-selected-drop");ui:click("regenerate");ui:click("hidden");frame("filter-hidden-drops")
