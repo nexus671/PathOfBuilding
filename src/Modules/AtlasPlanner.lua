@@ -147,8 +147,11 @@ function M.import(raw,version,id,title,budget)
 		local plan=M.validate(decoded.atlasPlan); plan.id=id or plan.id; plan.title=title or plan.title
 		return M.validate(plan)
 	end
-	local token=raw:match("^https://www%.pathofexile%.com/fullscreen%-atlas%-skill%-tree/([%w_%-=]+)$")
-	assert(token,"Paste our plan JSON or a full official Atlas URL without query parameters")
+	local host,path=raw:match("^https://([^/]+)/(.+)$")
+	assert(host=="www.pathofexile.com" or host=="pathofexile.com","Paste plan JSON or an official pathofexile.com Atlas link. Other planners must export an official link first.")
+	path=path:match("^[^?#]+") or ""
+	local token=path:match("^fullscreen%-atlas%-skill%-tree/([%w_%-=]+)/?$")
+	assert(token,"This is not a supported official Atlas tree link. Choose the matching bundled version before importing.")
 	local bytes=common.base64.decode(token:gsub("-","+"):gsub("_","/"))
 	assert(bytes and #bytes >= 9 and bytes:sub(1,5) == string.char(0,0,0,6,0),"Unsupported Atlas URL format or game mode")
 	local count=bytes:byte(6)*256+bytes:byte(7)

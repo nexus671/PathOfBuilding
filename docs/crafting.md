@@ -8,6 +8,14 @@ Plain item copies can be imported when their complete modifier identities and ro
 
 ## Emulate an item
 
+**Find currencies** searches crafting actions by name or category. Favorite actions for quick access during the session. Hover a currency for its purpose and current prerequisites. **Settings** retains the complete method selector and advanced configuration.
+
+The item shows prefix/suffix usage and labels fractured, crafted and natural modifiers. Click a modifier to inspect its ranges, tags and required level, choose a relevant action, or use it as a target. Tier ranks are derived from required levels within the eligible modifier group; special modifier variants keep their data names.
+
+**Item history** previews earlier items and the changes between them; restoring one undoes all subsequent actions. **Before / after** in Settings compares the working item with its recipe starting state. Drag the divider to give more space to the controls or item. Working state, favorites and history survive tool switches and resizing during the session.
+
+In **Targets**, use **Find target modifiers** to search modifier text and tags, filter prefixes/suffixes or implicit types, inspect ranges and add a target without entering an ID.
+
 Select an icon in the currency tray, then click the item card or **Apply to item**. The card shows the base artwork, rarity, sockets, defences and modifiers; applied currency counts appear on the tray. Other methods remain in the dropdown, with their choices below it. **Settings** opens recipe controls, donor/fossil configuration and the reproducible random seed. **Configure fossil combination / donor item** accepts up to four fossils or a second item for Awakener and recombination. A Tangled Fossil requires the effect already revealed by the socketed resonator.
 
 **Undo currency** reverses an action; **Reset item** restores the starting state. Veiled Orbs leave an unfinished choice: select **Choose an unveil** and pick an offered modifier before previewing. An imprint belongs to this starting item and can be restored once.
@@ -55,6 +63,12 @@ The price field applies to the selected action. The starting-item cost field add
 Keeping a recipe marks the build unsaved. Use normal build **Save** to persist it. Up to eight projects fit in a build. Projects and recipes live in AI Edition XML; other editions may discard them on re-save. AI Edition preserves unreadable or newer metadata unchanged.
 
 **Preview in build** calculates a separate candidate. Review controls application, and the existing undo flow restores the build. Simulation and planning never spend game currency.
+
+## Compare recipes
+
+The desktop **Simulate → Compare recipes** view compares up to three supported routes with the same captured item, final targets, seed, trial count and action budget. Optional unit prices apply to single-action routes. A saved recipe without every executed action priced reports an unknown cost. Results include success intervals, mean actions, spending when known, and failed transitions. **Cancel comparison** stops the job. These are bounded model experiments, not guaranteed game costs.
+
+**Coverage** is searchable by mechanic and lists assumptions alongside implemented actions. Advanced actions still validate item-specific prerequisites when applied.
 
 ## Use AI through MCP
 

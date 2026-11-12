@@ -31,13 +31,16 @@ function Workspace:Draw()
 		text(46,string.format("Comparison B - A: survival %+.1f points | time %+.2fs | damage %+.0f DPS",
 			current.comparison.SurvivalDelta,current.comparison.TimeDelta,current.comparison.DamageDelta))
 	end
-	for index,line in ipairs(report.deathLines(current)) do
+	local deathLines=report.deathLines(current)
+	for index,line in ipairs(deathLines) do
 		-- Fit long hit descriptions to the workspace instead of drawing over its border.
 		while DrawStringWidth(14,"VAR",line) > width and #line > 4 do line = line:sub(1,-5).."..." end
 		text(78+(index-1)*18,line)
 	end
-	if current.trace and current.trace.caps and height >= 510 then
-		self.tab.controls.breakdown:DrawEncounterTimeline(x,y+174,{ timeline=current.trace,width=width })
+	local chartY=math.max(112,78+#deathLines*18+16)
+	local chartHeight=math.min(340,height-chartY-28)
+	if current.trace and current.trace.caps and chartHeight>=210 then
+		self.tab.controls.breakdown:DrawEncounterTimeline(x,y+chartY,{timeline=current.trace,width=width,height=chartHeight})
 	else text(184,"Open the event log to inspect the full chart and exact resource changes.") end
 	text(height-18,"One trial is shown. The survival estimate and confidence interval describe the configured encounter only.",12)
 end
@@ -89,8 +92,14 @@ function Workspace.Open(tab)
 		main:ClosePopup(); tab:ShowRecoverySimulation()
 		tab:SetDisplayStat({{breakdown="RecoverySimulationWarnings"},x=100,y=100,width=0},true)
 	end)
+	controls.preset=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{574,88,math.max(60,width-822),24},(function() local list={};for i,preset in ipairs(require("Modules.CalcEncounter").presets) do list[#list+1]={label=preset.name,val=i} end;return list end)())
+	button("usePreset",width-236,88,112,"New scenario",function()
+		config:CreateEncounterConfigSet(controls.preset:GetSelValueByKey("val"));config:UpdateEncounterComparisonList()
+		controls.compare:SetList(config.varControls.recoverySimulationCompareSet.list);controls.compare:SelByValue(0,"val");build.buildFlag=true
+	end)
 	button("close",width-112,88,96,"Close",function() main:ClosePopup() end)
 	controls.overview = new("EncounterWorkspaceControl"):EncounterWorkspaceControl({"TOPLEFT",nil,"TOPLEFT"},{16,132,width-32,height-148},tab)
+	require("Modules.PlanningUI").style(controls,{run=true})
 	main:OpenPopup(width,height,"Encounter simulation",controls,nil,nil,"close")
 end
 

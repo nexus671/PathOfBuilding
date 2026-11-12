@@ -165,4 +165,27 @@ function M.diagnose(build)
 	return result
 end
 
+function M.explain(prepared)
+	local lines={"Measured result for the complete proposal", "These are paired native calculation outputs. Individual changes have not been isolated."}
+	for _,key in ipairs({"TotalEHP","PhysicalMaximumHitTaken","ChaosMaximumHitTaken","RecoverySimulationSurvivalChance","RecoverySimulationTime","RecoverySimulationDamageDPS"}) do
+		local a,b=prepared.before[key],prepared.after[key]
+		if a and b then lines[#lines+1]=string.format("%s: %.2f -> %.2f (%+.2f)",M.labels[key] or key,a,b,b-a) end
+	end
+	local before=prepared.base.calcsTab.calcsOutput;local after=prepared.candidate.calcsTab.calcsOutput
+	local groups={
+		{"Pools and mitigation",{"LifeUnreserved","EnergyShield","ManaUnreserved","Armour","Evasion","PhysicalDamageReduction","FireResist","ColdResist","LightningResist","ChaosResist"}},
+		{"Avoidance and block",{"EvadeChance","BlockChance","SpellBlockChance","SpellSuppressionChance","AttackDodgeChance","SpellDodgeChance","AvoidAllDamageFromHitsChance"}},
+		{"Recovery",{"LifeRegen","EnergyShieldRegen","ManaRegen","EnergyShieldRecharge","EnergyShieldRechargeDelay","MaxLifeLeechRate","MaxEnergyShieldLeechRate","LifeOnBlock","EnergyShieldOnBlock","ManaOnBlock"}},
+	}
+	for _,group in ipairs(groups) do
+		lines[#lines+1]="";lines[#lines+1]=group[1];local count=0
+		for _,key in ipairs(group[2]) do local a,b=before[key],after[key];if type(a)=="number" and type(b)=="number" and math.abs(a-b)>0.00001 then lines[#lines+1]=string.format("%s: %.2f -> %.2f (%+.2f)",M.labels[key] or key:gsub("(%l)(%u)","%1 %2"),a,b,b-a);count=count+1 end end
+		if count==0 then lines[#lines+1]="No changed outputs recorded in this group." end
+	end
+	lines[#lines+1]="";lines[#lines+1]="Static EHP and timed survival measure different things. Recharge needs an uninterrupted window; recovery only helps if the character survives until it applies."
+	if prepared.evaluation and prepared.evaluation.configurationChanged then lines[#lines+1]="Encounter or configuration settings changed. Compare under matching settings before attributing the result to equipment or passives." end
+	lines[#lines+1]="Use the encounter chart and native Calcs breakdowns to inspect event order and individual formulas."
+	return lines
+end
+
 return M

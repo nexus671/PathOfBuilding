@@ -123,7 +123,7 @@ function M.install(options)
 		return controls
 	end
 	function ui:dispatch(host,events)
-		if host.OnFrame then host:OnFrame(events) else host:ProcessControlsInput(events,main.viewPort) end
+		if host.OnFrame then host:OnFrame(events) elseif host.ProcessInput then host:ProcessInput(events,main.viewPort) else host:ProcessControlsInput(events,main.viewPort) end
 	end
 	function ui:frame(host)
 		self.commands={};color={1,1,1,1};viewport={0,0,self.width,self.height};layer,sublayer=0,0

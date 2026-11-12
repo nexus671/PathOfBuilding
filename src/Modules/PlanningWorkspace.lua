@@ -9,6 +9,7 @@ function M.new(build)
 	for index,page in ipairs({"ai","atlas","crafting"}) do
 		local control=new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{112+(index-1)*142,10,134,28},pages[page],function() self:Show(page) end)
 		control.locked=function() return self.page==page end
+		control.tooltipText="Alt+"..index.." | Tab: move focus | Enter: activate"
 		self.nav.controls["nav_"..page]=require("Modules.PlanningUI").styleButton(control)
 	end
 	self.nav.controls.nav_build=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{16,10,80,28},"< Build",function()
@@ -65,6 +66,17 @@ function M:UpdateControls()
 	for key,control in pairs(self.body and self.body.controls or {}) do self.controls[key]=control end
 end
 function M:ProcessControlsInput(events,viewport)
+	if self.body then require("Modules.PlanningUI").keyboard(self.body,events) end
+	for i,event in pairs(events) do if event.type=="KeyDown" and IsKeyDown("ALT") then
+		local page=({["1"]="ai",["2"]="atlas",["3"]="crafting"})[event.key]
+		if page then self:Show(page);event.type="PlanningHandled" end
+	elseif event.type=="KeyDown" and IsKeyDown("CTRL") and self.body then
+		local focused=self.body.selControl
+		if event.key=="f" and self.body.controls.search then self.body:SelectControl(self.body.controls.search);event.type="PlanningHandled"
+		elseif event.key=="z" and not (focused and focused.buf) then
+			local action=self.body.controls[IsKeyDown("SHIFT") and "redo" or "undo"];if action then action:Click();event.type="PlanningHandled" end
+		end
+	end end
 	self.nav:ProcessControlsInput(events,viewport)
 	if self.body then self.body:ProcessControlsInput(events,viewport) end
 end

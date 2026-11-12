@@ -22,27 +22,36 @@ function Panel.Review()
 	local evaluation=bridge.evaluate(prepared)
 	local controls = { }
 	local height = math.min(680,main.screenH-60)
-	local cardWidth=272
-	local function metric(key) local value=prepared.after[key] or 0;return string.format(value<100 and "%.2f" or "%.0f",value) end
-	local function previous(key) local value=prepared.before[key] or 0;return string.format("Current %s (%+.2f)",string.format(value<100 and "%.2f" or "%.0f",value),prepared.delta[key] or 0) end
+	local width=math.min(1120,main.screenW-40)
+	local cardWidth=math.floor((width-64)/3)
+	local function number(value,signed)
+		local scale,suffix=1,"";for _,unit in ipairs({{1e9,"b"},{1e6,"m"},{1e3,"k"}}) do if math.abs(value)>=unit[1] then scale,suffix=unpack(unit);break end end
+		return string.format(signed and "%+.2f%s" or "%.2f%s",value/scale,suffix)
+	end
+	local function metric(key) return number(prepared.after[key] or 0) end
+	local function previous(key) return "Current "..number(prepared.before[key] or 0).." ("..number(prepared.delta[key] or 0,true)..")" end
 	ui.card(controls,"damageCard",16,24,cardWidth,"DAMAGE PER SECOND",metric("CombinedDPS"),previous("CombinedDPS"))
-	ui.card(controls,"defenceCard",304,24,cardWidth,"EFFECTIVE HIT POOL",metric("TotalEHP"),previous("TotalEHP"))
-	ui.card(controls,"lifeCard",592,24,cardWidth,"UNRESERVED LIFE",metric("LifeUnreserved"),previous("LifeUnreserved"))
-	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{16,136,260,26},{"Summary","Changes","Checks"})
-	ui.label(controls,"candidateTitle",464,142,prepared.title:sub(1,42),14)
+	ui.card(controls,"defenceCard",32+cardWidth,24,cardWidth,"EFFECTIVE HIT POOL",metric("TotalEHP"),previous("TotalEHP"))
+	ui.card(controls,"lifeCard",48+cardWidth*2,24,cardWidth,"UNRESERVED LIFE",metric("LifeUnreserved"),previous("LifeUnreserved"))
+	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{16,136,260,26},{"Summary","Changes","Checks","Explain"})
+	ui.label(controls,"candidateTitle",584,142,prepared.title:sub(1,28),14)
 	ui.label(controls,"goal",16,170,"Goal: "..goalName(evaluation.goal).." | "..(evaluation.eligible and "Within constraints" or "Constraints need attention"),14)
 	local metricRows={{height=26,textSize=16,"^7Metric","^7Current","^7Proposed","^7Change"}}
 	for key in pairsSortByKey(prepared.after) do
-		if prepared.after[key] then metricRows[#metricRows+1]={height=24,textSize=16,"^7"..(insights.labels[key] or key),"^7"..string.format("%.2f",prepared.before[key] or 0),"^7"..string.format("%.2f",prepared.after[key]),"^7"..string.format("%+.2f",prepared.delta[key] or 0)} end
+		if prepared.after[key] then metricRows[#metricRows+1]={height=24,textSize=16,"^7"..(insights.labels[key] or key),"^7"..number(prepared.before[key] or 0),"^7"..number(prepared.after[key]),"^7"..number(prepared.delta[key] or 0,true)} end
 	end
 	if evaluation.quote then metricRows[#metricRows+1]={height=24,textSize=16,"^7Quoted cost","","^7"..string.format("%.2f %s",evaluation.quote.amount,evaluation.quote.currency),""} end
 	if evaluation.configurationChanged then metricRows[#metricRows+1]={height=24,textSize=16,"^7Configuration changed","","^7Yes",""} end
-	controls.metrics=new("TextListControl"):TextListControl(ui.anchor,{16,198,848,height-292},{{x=8,align="LEFT"},{x=330,align="LEFT"},{x=490,align="LEFT"},{x=650,align="LEFT"}},metricRows)
+	local metricWidth=math.floor((width-48)*0.61)
+	controls.metrics=new("TextListControl"):TextListControl(ui.anchor,{16,198,metricWidth,height-292},{{x=8,align="LEFT"},{x=math.floor(metricWidth*0.43),align="LEFT"},{x=math.floor(metricWidth*0.62),align="LEFT"},{x=math.floor(metricWidth*0.81),align="LEFT"}},metricRows)
 	controls.metrics.shown=function() return controls.page:GetSelValue()=="Summary" end
-	controls.details = new("TextListControl"):TextListControl(ui.anchor,{16,198,848,height-292},nil,{})
+	controls.changeSummary=new("TextListControl"):TextListControl(ui.anchor,{32+metricWidth,198,width-metricWidth-48,height-292},nil,wrapRows(prepared.changes,width-metricWidth-78))
+	controls.changeSummary.shown=controls.metrics.shown
+	controls.details = new("TextListControl"):TextListControl(ui.anchor,{16,198,width-32,height-292},nil,{})
 	controls.details.shown=function() return controls.page:GetSelValue()~="Summary" end
 	controls.page.selFunc=function()
 		if controls.page:GetSelValue()=="Changes" then controls.details.list=wrapRows(prepared.changes)
+		elseif controls.page:GetSelValue()=="Explain" then controls.details.list=wrapRows(insights.explain(prepared))
 		else
 			local checks={"Native warnings"}
 			for _,warning in ipairs(prepared.warnings) do checks[#checks+1]=warning end
@@ -69,9 +78,9 @@ function Panel.Review()
 		main.popups = { }
 	end) end)
 	controls.reject = button(192,height-52,120,"Reject",function() bridge.reject(); main:ClosePopup() end)
-	controls.close = button(748,height-52,116,"Back",function() main:ClosePopup() end)
-	ui.style(controls,{apply=true});ui.tabs(controls,controls.page,{{"tab_summary","Summary","Summary"},{"tab_changes","Changes","Changes"},{"tab_checks","Checks","Checks"}},16,136,420)
-	main:OpenPopup(880,height,"Review AI build proposal",controls,nil,nil,"close")
+	controls.close = button(width-132,height-52,116,"Back",function() main:ClosePopup() end)
+	ui.style(controls,{apply=true});ui.tabs(controls,controls.page,{{"tab_summary","Summary","Summary"},{"tab_changes","Changes","Changes"},{"tab_checks","Checks","Checks"},{"tab_explain","Explain","Explain"}},16,136,540)
+	main:OpenPopup(width,height,"Review AI build proposal",controls,nil,nil,"close")
 end
 
 local function textPopup(title,lines)
@@ -196,6 +205,7 @@ function Panel.Open(build,layout)
 	action("candidates",354,"Candidates and leveling","Compare upgrades and progression.",Panel.Candidates)
 	action("analysis",406,"Build checks","Inspect requirements and encounter evidence.",function() Panel.Analysis(build) end)
 	action("restore",458,"Undo applied build","Restore the previous reviewed version.",function() safely(function() bridge.restore();main.popups={} end) end)
+	action("charts",510,"Survival charts","Inspect resource history and encounter events.",function() build.calcsTab:OpenEncounterWorkspace() end)
 	controls.restore.enabled=function() return bridge.previous~=nil and bridge.build==main.modes.BUILD end
 	action("enable",250,function() return bridge.enabled and "Disable connection" or "Enable proposals" end,"Allow your local AI client to propose builds.",function() safely(function()
 		if bridge.enabled then bridge.disable(bridge.build) else bridge.enable(build) end
@@ -205,7 +215,7 @@ function Panel.Open(build,layout)
 	action("diagnostics",354,"Connection details","Check requests, errors and connection setup.",Panel.Diagnostics)
 	controls.status=ui.label(controls,"status",16,height-86,"",14)
 	controls.status.label=function() return "^7"..(bridge.lastError and "Connection needs attention. Open Connection details." or bridge.prepared and "A calculated proposal is ready for your review." or "Your current build stays in place until you apply a proposal.") end
-	for _,key in ipairs({"goals","review","candidates","analysis","restore"}) do
+	for _,key in ipairs({"goals","review","candidates","analysis","restore","charts"}) do
 		controls[key].shown=function() return controls.page:GetSelValue()=="Plan & review" end
 		controls[key.."Hint"].shown=controls[key].shown
 	end

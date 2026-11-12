@@ -2,6 +2,8 @@
 local simulator=require("Modules.CraftingSimulator")
 local workbench=require("Modules.CraftingWorkbench")
 local ui=require("Modules.PlanningUI")
+local inspect=require("Modules.CraftingInspection")
+local browser=require("Classes.PlanningBrowserControl")
 local Panel={ }
 local function button(controls,key,x,y,w,label,callback)
 	controls[key]=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function()
@@ -47,6 +49,8 @@ function Panel.Open(build,project,layout)
 	local configured={}
 	local sequence=0
 	local lastSimulation
+	local favorites=layout and (layout.favorites or layout.workbench and layout.workbench.favorites) or {}
+	if layout then layout.favorites=favorites end
 	if layout then layout.selectedProject=draft.id end
 	local restored=layout and layout.workbench
 	if layout then layout.workbench=nil end
@@ -56,14 +60,15 @@ function Panel.Open(build,project,layout)
 	end
 	local width=layout and layout.width or math.min(1120,main.screenW-40)
 	local height=layout and layout.height or math.max(520,math.min(740,main.screenH-60))
-	local itemWidth=math.min(540,width-480)
-	local itemX=448+math.floor((width-464-itemWidth)/2)
+	local leftWidth=math.max(416,math.min(width-400,layout and layout.craftWidth or restored and restored.craftWidth or 416))
+	local itemWidth=math.min(540,width-leftWidth-64)
+	local itemX=leftWidth+32+math.floor((width-leftWidth-48-itemWidth)/2)
 	label(controls,"intro",16,64,"Select a currency, then click your item to craft.")
 	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=212,artSize=112})
 	controls.targetSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,244,416,height-312},nil,{})
 	local function refresh(extra)
 		refreshItem()
-		local lines={"Target groups: "..#targets.." ("..(requiredGroups or "all").." required)"}
+		local lines={inspect.slots(model,state),"Target groups: "..#targets.." ("..(requiredGroups or "all").." required)"}
 		for index,group in ipairs(targets) do
 			local names={}
 			for _,id in ipairs(group.anyOf) do names[#names+1]=model.byId[id] and table.concat(model.byId[id]," / ") or "Unknown modifier" end
@@ -103,6 +108,34 @@ function Panel.Open(build,project,layout)
 		local option=controls.option:GetSelValue()
 		return copyTable(configured[method] or option and option.action or {method=method})
 	end
+	local function chooseMethod(method)
+		controls.method:SelByValue(method,"val");updateOptions();refresh()
+	end
+	local function palette()
+		local entries={}
+		for _,method in ipairs(simulator.methods) do
+			entries[#entries+1]={id=method,label=simulator.labels[method] or method,icon=workbench.icon(method),category=inspect.category(method),details=function()
+				return {simulator.labels[method] or method,workbench.hint(method,state,model),"Current item: "..state.rarity,inspect.slots(model,state),"Options and special prerequisites are checked when applying.","Use Calculate action odds to inspect modeled target probability."}
+			end}
+		end
+		browser.Open("Find a crafting action",entries,{favorites=favorites,action="Select action",choose=function(entry) chooseMethod(entry.id);controls.page:SelByValue("Emulate item") end})
+	end
+	local function pickTarget(id)
+		assert(#targets<6,"Use up to six target groups")
+		local kind=model.byId[id].type;targets[#targets+1]={anyOf={id},scope=(kind=="Exarch" or kind=="Eater" or kind=="Corrupted") and "implicit" or "explicit"};refresh()
+	end
+	controls.itemMods.onClick=function(row)
+		local id=row and row.line.affixId;if not id then return end
+		local found;for _,entry in ipairs(state.affixes) do if entry.id==id then found=entry end end
+		local facts=inspect.modDetails(model,id,found);local entries={{id="target",label="Use this modifier as a target",details=facts}}
+		for _,method in ipairs(found.crafted and {"remove_crafted","divine"} or found.fractured and {"divine","bench"} or {"divine","annul","bench"}) do
+			local details=copyTable(facts);details[#details+1]="";details[#details+1]=workbench.hint(method,state,model)
+			entries[#entries+1]={id=method,label=simulator.labels[method],details=details}
+		end
+		browser.Open("Inspect item modifier",entries,{action="Choose",choose=function(entry)
+			if entry.id=="target" then pickTarget(id);controls.page:SelByValue("Target conditions") else chooseMethod(entry.id);controls.page:SelByValue("Emulate item") end
+		end})
+	end
 
 	button(controls,"apply",162,204,130,"Apply currency",function()
 		sequence=sequence+1
@@ -127,6 +160,19 @@ function Panel.Open(build,project,layout)
 		else keep(result.state) end
 	end)
 	button(controls,"undo",308,204,124,"Undo currency",function() assert(#history > 0,"No currency action to undo"); state=table.remove(history); table.remove(actions); updateOptions(); refresh() end)
+	button(controls,"history",232,390,200,"Item history",function()
+		require("Classes.CraftingHistoryControl").Open(model,state,history,actions,function(saved,count)
+			state=saved;for i=1,count do table.remove(history);table.remove(actions) end;updateOptions();refresh({"Restored an earlier working item."})
+		end)
+	end)
+	button(controls,"compareItem",16,238,200,"Before / after",function()
+		local entries={};for i,line in ipairs(inspect.diff(model,initial,state)) do entries[#entries+1]={id=i,label=line,details={line,"Compared with the recipe starting item."}} end
+		browser.Open("Starting item versus working item",entries)
+	end)
+	button(controls,"inspectItem",16,338,416,"Inspect affixes and slots",function()
+		local entries={};for _,entry in ipairs(state.affixes) do local id=entry.id;entries[#entries+1]={id=id,label=table.concat(model.byId[id]," / "),category=model.byId[id].type,details=function() return inspect.modDetails(model,id,entry) end} end
+		browser.Open(inspect.slots(model,state),entries,{action="Use as target",choose=function(entry) pickTarget(entry.id);controls.page:SelByValue("Target conditions") end})
+	end)
 	button(controls,"allflame",16,410,416,"Allflame settings",function()
 		local craft=action();local profile=craft.allflame or {};local popup={}
 		popup.mode=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,296,24},{"Current game data","Observed override"})
@@ -211,6 +257,11 @@ function Panel.Open(build,project,layout)
 	for _,entry in ipairs(model.essences) do mods[#mods+1]={label=entry.name.." guaranteed mod",val=entry.modId} end
 	for id in pairs(model.special) do local mod=model.byId[id]; if mod.type == "Prefix" or mod.type == "Suffix" or mod.type == "Corrupted" or mod.type == "Exarch" or mod.type == "Eater" then mods[#mods+1]={label=mod.type.." | "..table.concat(mod," / "),val=id} end end
 	controls.target=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,282,416,24},mods)
+	button(controls,"targetPicker",16,188,416,"Find target modifiers",function()
+		local entries={};local seen={}
+		for _,entry in ipairs(mods) do if not seen[entry.val] then local id=entry.val;seen[id]=true;local mod=model.byId[id];entries[#entries+1]={id=id,label=table.concat(mod," / "),category=mod.type,search=table.concat(mod.tags or {}," "),details=function() return inspect.modDetails(model,id) end} end end
+		browser.Open("Find target modifiers",entries,{action="Add target",choose=function(entry) pickTarget(entry.id) end})
+	end)
 	button(controls,"addTarget",16,310,132,"Add target",function()
 		assert(#targets < 6,"Use up to six target groups")
 		local id=controls.target:GetSelValueByKey("val");local kind=model.byId[id].type
@@ -248,7 +299,7 @@ function Panel.Open(build,project,layout)
 			for key,count in pairsSortByKey(result.currencySpent) do lines[#lines+1]=key..": "..count.." total uses" end
 			for message,count in pairsSortByKey(result.transitionErrors) do lines[#lines+1]="Failed transitions: "..count.." | "..message end
 			refresh(lines)
-		end,function(message) refresh({message}) end,function(progress) refresh({"Simulation running: trial "..progress.trial.." / "..progress.trials}) end)
+		end,function(message) refresh({message}) end,function(progress) controls.resultSummary.list=rows({"Simulation running: trial "..progress.trial.." / "..progress.trials}) end)
 		refresh({"Simulation queued. You can cancel it below."})
 	end
 	button(controls,"simulate",16,486,200,"Simulate action",function()
@@ -256,6 +307,11 @@ function Panel.Open(build,project,layout)
 		showSimulation({steps={a},targets=copyTable(targets),requirements=(requirements and copyTable(requirements) or nil),requiredGroups=requiredGroups},false)
 	end)
 	button(controls,"runRecipe",232,486,200,"Simulate saved recipe",function() assert(draft.nativeRecipe,"This project has no saved native recipe"); showSimulation(draft.nativeRecipe,true) end)
+	button(controls,"compareRecipes",16,354,200,"Compare recipes",function()
+		assert(#targets>0 or requirements and next(requirements),"Choose target modifiers or item conditions first")
+		require("Classes.CraftingCompareControl").Open(build,draft.startingItem,copyTable(state),copyTable(targets),requirements and copyTable(requirements),requiredGroups,action(),draft.nativeRecipe,
+			{trials=assert(tonumber(controls.trials.buf)),budget=assert(tonumber(controls.budget.buf)),seed=assert(tonumber(controls.seed.buf)),currency=controls.currency.buf})
+	end)
 	button(controls,"keepRecipe",16,530,200,"Keep actions as recipe",function()
 		assert(#actions > 0,"Apply a crafting action first")
 		draft.nativeRecipe=simulator.validateRecipe({steps=copyTable(actions),targets=copyTable(targets),requirements=(requirements and copyTable(requirements) or nil),requiredGroups=requiredGroups,initialState=copyTable(initial),rarity=state.rarity})
@@ -345,10 +401,10 @@ function Panel.Open(build,project,layout)
 	end)
 	button(controls,"cancelJob",232,height-48,200,"Cancel crafting job",function() require("Modules.CraftingTasks").cancel() end)
 	button(controls,"coverage",width-312,height-48,132,"Coverage",function()
-		local popup={};local coverageHeight=math.max(420,math.min(650,main.screenH-60))
-		popup.details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,828,coverageHeight-90},nil,rows(simulator.limits))
-		button(popup,"close",728,coverageHeight-42,116,"Close",function() main:ClosePopup() end)
-		main:OpenPopup(860,coverageHeight,"Crafting coverage and assumptions",popup,nil,nil,"close")
+		local entries={}
+		for i,line in ipairs(simulator.limits) do entries[#entries+1]={id=i,label=line,category="Assumptions",details={line,"Data patch: "..tostring(simulator.dataPatch or "bundled")}} end
+		for _,method in ipairs(simulator.methods) do entries[#entries+1]={id=method,label=simulator.labels[method],category=inspect.category(method),details={"Implemented in the bounded model",workbench.hint(method,state,model),"Item-specific options and prerequisites are validated when applying.","Coverage does not imply complete game parity."}} end
+		browser.Open("Crafting coverage and assumptions",entries)
 	end)
 	button(controls,"close",width-164,height-48,148,layout and "Back to projects" or "Close",function() if layout then layout.openProjects() else main:ClosePopup() end end)
 	controls.resultSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,398,416,height-464},nil,rows({"Run an action or a recipe to inspect its results."}))
@@ -365,7 +421,7 @@ function Panel.Open(build,project,layout)
 	controls.preview.enabled=function() return not state.destroyed and not state.veil end
 	controls.configure.enabled=function() local method=controls.method:GetSelValueByKey("val");return method=="fossil" or method=="awakener" or method=="recombine" or method=="recombine_predictable" end
 	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,18,416,28},{"Emulate item","Target conditions","Simulate recipe","Craft settings"})
-	button(controls,"settings",16,380,416,"More crafting options",function() controls.page:SelByValue("Craft settings") end)
+	button(controls,"settings",16,380,200,"Find currencies",palette)
 	controls.item.enabled=function() return controls.page:GetSelValue() == "Emulate item" and controls.apply:IsEnabled() end
 	controls.apply.x=16;controls.apply.width=200;controls.undo.x=232;controls.undo.width=200
 	ui.label(controls,"selectedAction",16,230,"",20)
@@ -373,20 +429,22 @@ function Panel.Open(build,project,layout)
 	ui.label(controls,"actionHint",16,264,"",14)
 	controls.actionHint.label=function() return "^7"..workbench.hint(controls.method:GetSelValueByKey("val"),state,model) end
 	local pages={
-		["Craft settings"]={methodLabel=96,method=116,configure=160,keepRecipe=198,reset=198,exact=238,seedLabel=278,seed=298},
-		["Emulate item"]={selectedAction=230,actionHint=264,optionLabel=280,option=298,apply=346,undo=346,settings=390,allflame=424,manual=458},
-		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetConditions=202,targetSummary=244},
-		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354,resultSummary=398},
+		["Craft settings"]={methodLabel=96,method=116,configure=160,keepRecipe=198,reset=198,exact=238,compareItem=238,seedLabel=278,seed=298,inspectItem=338},
+		["Emulate item"]={selectedAction=230,actionHint=264,optionLabel=280,option=298,apply=346,undo=346,settings=390,history=390,allflame=424,manual=458},
+		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetPicker=188,targetConditions=226,targetSummary=270},
+		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354,compareRecipes=354,resultSummary=398},
 	}
 	for page,layout in pairs(pages) do for key,y in pairs(layout) do
 		local control=controls[key];control.y=y;control.shown=function() return controls.page:GetSelValue() == page end
 	end end
-	controls.distribution.x=16;controls.distribution.width=416
+	controls.distribution.x=232;controls.distribution.width=200
 	controls.option.shown=function() return controls.page:GetSelValue()=="Emulate item" and #controls.option.list>0 end
 	controls.optionLabel.shown=controls.option.shown
 	controls.apply.enabled=function() return workbench.available(controls.method:GetSelValueByKey("val"),state,model) end
 	controls.apply.height=32;controls.undo.height=32
-	controls.settings.label="All currencies & craft settings"
+	controls.targetSummary.height=height-338
+	controls.history.enabled=function() return #history>0 end
+	controls.settings.label="Find currencies"
 	controls.cancelJob.shown=function() return require("Modules.CraftingTasks").job~=nil end
 	ui.style(controls,{apply=true,preview=true},{item=true})
 	ui.tabs(controls,controls.page,{{"tab_craft","Emulate item","Craft"},{"tab_targets","Target conditions","Targets"},{"tab_simulate","Simulate recipe","Simulate"},{"tab_settings","Craft settings","Settings"}},16,18,416)
@@ -394,17 +452,17 @@ function Panel.Open(build,project,layout)
 		controls.method:SelByValue(method,"val");updateOptions();refresh()
 	end,function() return controls.method:GetSelValueByKey("val") end,function() return controls.page:GetSelValue() == "Emulate item" end,function(method)
 		local count=0;for _,entry in ipairs(actions) do if entry.method == method then count=count+1 end end;return count
-	end,function() return state end,model)
+	end,function() return state end,model,leftWidth)
 	controls.methodLabel.label="More currencies and crafting methods"
 	controls.optionLabel.label="Options for selected currency"
 	controls.apply.label="Apply to item"
-	ui.label(controls,"projectName",448,24,"",18)
+	ui.label(controls,"projectName",leftWidth+32,24,"",18)
 	controls.projectName.label=function()
 		local title=draft.title
-		while #title>0 and DrawStringWidth(18,"VAR",title)>width-480 do title=title:sub(1,-2) end
+		while #title>0 and DrawStringWidth(18,"VAR",title)>width-leftWidth-64 do title=title:sub(1,-2) end
 		return "^7"..title
 	end
-	controls.stage=new("Control"):Control(ui.anchor,{448,84,width-464,height-148})
+	controls.stage=new("Control"):Control(ui.anchor,{leftWidth+32,84,width-leftWidth-48,height-148})
 	function controls.stage:Draw()
 		local x,y=self:GetPos();local w,h=self:GetSize()
 		SetDrawLayer(nil,1);SetDrawColor("^x0A1018");DrawImage(nil,x,y,w,h);SetDrawColor("^x8D9DB0")
@@ -419,11 +477,20 @@ function Panel.Open(build,project,layout)
 		for key,value in pairs(restored.settings or {}) do controls[key]:SetText(value) end
 	end
 	if layout then
-		layout.snapshot=function() return copyTable({kind="workbench",project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,
+		layout.snapshot=function() return copyTable({kind="workbench",project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,craftWidth=leftWidth,favorites=favorites,
 			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
 	end
+	for key,control in pairs(controls) do
+		if key~="item" and key~="itemMods" and key~="stage" and key~="projectName" and not key:match("^currency_") and type(control.x)=="number" and control.x<448 and type(control.width)=="number" then
+			control.x=16+math.floor((control.x-16)*leftWidth/416);if control.width>0 then control.width=math.floor(control.width*leftWidth/416) end
+		end
+	end
+	if layout then ui.splitter(controls,"splitter",leftWidth+19,84,height-148,function(delta)
+		layout.workbench=layout.snapshot();layout.craftWidth=math.max(416,math.min(width-400,leftWidth+delta));Panel.Open(build,draft,layout)
+	end) end
 	updateOptions();refresh()
 	if restored then controls.method:SelByValue(restored.method or "alchemy","val");updateOptions();controls.resultSummary.list=restored.resultRows or controls.resultSummary.list end
+	for key,control in pairs(controls) do if key~="stage" then control.layoutAudit="crafting-workbench" end end
 	if layout then layout.mount(width,height,"Crafting workbench",controls) else main:OpenPopup(width,height,"Crafting workbench",controls,nil,nil,"close") end
 	return controls
 end

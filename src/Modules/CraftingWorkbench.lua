@@ -70,6 +70,8 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 			box(sx,cy+133,14,14,"^xA68B59")
 			box(sx+2,cy+135,10,10,({R="^xE07070",G="^x70BB70",B="^x7070EE",W="^xEEEEEE"})[socket.color] or "^xC8C8C8")
 		end
+		if header>=212 and self.slotSummary then text(cx+propertyX,cy+158,14,self.slotSummary,"^xA6B3C6",w-propertyX-16) end
+		if header>=212 and self.influenceSummary then text(cx+propertyX,cy+176,12,self.influenceSummary,"^xD3B987",w-propertyX-16) end
 		text(cx+16,cy+header-21,14,state.destroyed and "Undo or reset to continue" or onClick and self:IsEnabled() and "Click the item to apply the selected currency" or "Item preview","^xD3B987")
 	end
 	local function refresh()
@@ -85,12 +87,21 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 				if value and value>0 then defences[#defences+1]=(property == "EnergyShield" and "ES" or property)..": "..math.floor(value) end
 			end
 			card.defences=#defences>0 and table.concat(defences," / ") or nil
+			if #(item.implicitModLines or {})>0 then wrap(lines,"Implicit modifiers","^xA6B3C6",w-30) end
 			for _,line in ipairs(item.implicitModLines or {}) do wrap(lines,itemLib.formatModLine(line,false) or line.line,"^x8888FF",w-30) end
+			if #(item.enchantModLines or {})>0 then wrap(lines,"Enchantments","^xA6B3C6",w-30) end
 			for _,line in ipairs(item.enchantModLines or {}) do wrap(lines,itemLib.formatModLine(line,false) or line.line,"^xB4B4FF",w-30) end
+			local influences={};for _,info in ipairs(itemLib.influenceInfo.all) do if item[info.key] then influences[#influences+1]=info.display end end
+			card.influenceSummary=#influences>0 and table.concat(influences," / ") or nil
 			if #lines>0 then lines[#lines+1]={height=12,""} end
 			for _,entry in ipairs(state.affixes) do
+				local mod=context.byId[entry.id]
+				local marker=(entry.fractured and "Fractured " or entry.crafted and "Crafted " or "")..(mod.type or "Explicit")
+				wrap(lines,marker,entry.fractured and "^xD6B677" or "^xA6B3C6",w-30)
 				for _,line in ipairs(context.byId[entry.id] or {}) do
+					local first=#lines+1
 					wrap(lines,itemLib.applyRange(line,entry.range or 0.5),entry.fractured and "^xD6B677" or entry.crafted and "^xB4B4FF" or "^x8888FF",w-30)
+					for i=first,#lines do lines[i].affixId=entry.id end
 				end
 			end
 			if #state.affixes == 0 then wrap(lines,"No explicit modifiers","^xAAAAAA",w-30) end
@@ -100,6 +111,7 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 			if (state.memoryStrands or 0)>0 then wrap(lines,"Memory strands: "..state.memoryStrands,"^xD3B987",w-30) end
 		end
 		mods.list=lines;mods.controls.scrollBar.offset=0
+		card.slotSummary=not state.destroyed and require("Modules.CraftingInspection").slots(model,state) or nil
 	end
 	return refresh
 end
@@ -109,6 +121,7 @@ local currencies={
 	{"exalt","Exalted"},{"annul","Annul"},{"scour","Scour"},{"divine","Divine"},{"vaal","Vaal"},{"chromatic","Chromatic"},
 }
 local descriptions={transmute="Add magic modifiers to a normal item.",alteration="Reroll the modifiers on a magic item.",augmentation="Add a modifier to a magic item.",regal="Upgrade a magic item and add a modifier.",alchemy="Turn a normal item into a rare item.",chaos="Reroll the modifiers on a rare item.",exalt="Add a modifier to a rare item.",annul="Remove a random modifier.",scour="Remove the item's modifiers.",divine="Reroll the values of existing modifiers.",vaal="Corrupt the item. Outcomes can be destructive.",chromatic="Reroll socket colours."}
+function M.icon(method) return descriptions[method] and "Assets/Crafting/"..method..".png" or nil end
 function M.available(method,state,model)
 	if state.destroyed then return false,"Undo or reset the destroyed item." end
 	if not descriptions[method] then return true end
@@ -130,20 +143,22 @@ function M.hint(method,state,model)
 	local available,reason=M.available(method,state,model)
 	return available and (descriptions[method] or "Choose the craft options, then apply to the item.") or reason
 end
-function M.currencies(controls,selectMethod,currentMethod,isShown,usage,getState,model)
+function M.currencies(controls,selectMethod,currentMethod,isShown,usage,getState,model,leftWidth)
+	local cell=math.floor(((leftWidth or 416)-20)/6)
 	for i,entry in ipairs(currencies) do
 		local method,caption=unpack(entry)
-		local control=new("ButtonControl"):ButtonControl(anchor,{16+(i-1)%6*70,94+math.floor((i-1)/6)*65,66,61},"",function() selectMethod(method) end)
+		local control=new("ButtonControl"):ButtonControl(anchor,{16+(i-1)%6*(cell+4),94+math.floor((i-1)/6)*65,cell,61},"",function() selectMethod(method) end)
 		controls["currency_"..method]=control;control.shown=isShown
+		control.planningFocusable=true
 		local art=image("Assets/Crafting/"..method..".png")
 		control.enabled=function() return M.available(method,getState(),model) end
 		control.tooltipText=function() return (simulator.labels[method] or caption).."\n"..M.hint(method,getState(),model) end
 		function control:Draw(viewPort,noTooltip)
 			local x,y=self:GetPos();local selected=currentMethod() == method
-			box(x,y,66,61,selected and "^xD3B987" or self:IsMouseOver() and "^xAAAAAA" or "^x4E473A")
-			box(x+1,y+1,64,59,selected and "^x302B20" or "^x18181C")
-			local tint=self:IsEnabled() and 1 or 0.38;SetDrawColor(tint,tint,tint);DrawImage(art,x+14,y+2,38,38)
-			SetDrawColor("^xDDDDDD");DrawString(x+33,y+44,"CENTER_X",13,"VAR",caption)
+			box(x,y,cell,61,self.hasFocus and "^x83C8EF" or selected and "^xD3B987" or self:IsMouseOver() and "^xAAAAAA" or "^x4E473A")
+			box(x+1,y+1,cell-2,59,selected and "^x302B20" or "^x18181C")
+			local tint=self:IsEnabled() and 1 or 0.38;SetDrawColor(tint,tint,tint);DrawImage(art,x+(cell-38)/2,y+2,38,38)
+			SetDrawColor("^xDDDDDD");DrawString(x+cell/2,y+44,"CENTER_X",12,"VAR",caption)
 			local count=usage(method)
 			if count>0 then text(x+48,y+3,12,tostring(count),"^xFFFF77") end
 			if self:IsMouseOver() and not noTooltip then

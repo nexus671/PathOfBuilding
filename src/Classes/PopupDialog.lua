@@ -70,6 +70,7 @@ function PopupDialogClass:Draw(viewPort)
 end
 
 function PopupDialogClass:ProcessInput(inputEvents, viewPort)
+	require("Modules.PlanningUI").keyboard(self,inputEvents)
 	self:ProcessControlsInput(inputEvents, viewPort)
 	for id, event in ipairs(inputEvents) do
 		if event.type == "KeyDown" then

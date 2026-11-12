@@ -6,10 +6,14 @@ Open **Atlas** beside **AI builds**, or switch to **Atlas** in the full-width pl
 2. Enter a name and the number of Atlas points you have earned. The initial budget is the tree's maximum; it does not read account progression.
 3. Search names or stat text. Matching nodes highlight as you type. Choose a result or press **Go** to focus it. Select a node to preview its connecting path and point cost, then **Connect +N**. The planner adds a shortest connecting path.
 4. Use the mouse wheel to zoom and drag empty space to pan. **Fit tree** resets the view. The canvas uses the official background, node icons, frames and mechanic emblems. Allocated paths are gold; avoided nodes have red frames. Hover for modifier descriptions. Double click a node to connect it, or remove it if allocated.
-5. **Avoid selected** excludes a node from future paths. Avoided nodes are session preferences, cleared by importing or opening another plan. **Remove branch** also removes nodes that lose their connection to the start. **Undo** restores the previous allocation draft.
+5. **Avoid selected** excludes a node from future paths. Avoided nodes are session preferences, cleared by importing or opening another plan. **Remove branch** also removes nodes that lose their connection to the start. **Undo** and **Redo** restore allocations and exclusions. Press Enter after editing a budget to include it in history.
 6. Open **Notes & sharing** for farming notes and import/export. Choose **Keep plan** to keep the draft in this build. This changes unsaved metadata. Use the normal build **Save** to persist it. Up to eight named plans can be kept with each build; **Saved plans** opens or deletes them.
 
-**Allocated stats** lists selected modifier text, repeated-line counts, notables and keystones. Counts are not effective totals: increased effect, conditional modifiers, blocking and keystone interactions are not simulated. Atlas allocations do not change character DPS, EHP or encounter assumptions.
+**Find nodes** opens a searchable list with mechanic filters and added point costs. Choosing a result highlights its mechanic on the tree. The minimap moves the camera without changing allocations. Drag the divider beside the inspector to resize it.
+
+**Routes** compares the shortest connection with available alternatives. In **Plan tools**, mark a selected node as a preferred waypoint, open editable mechanic starting routes, compare the draft with a saved plan, or restore an earlier history state. Starting routes connect up to three nearby notables from the bundled graph; they do not predict farming income. Route comparisons honor the current budget and exclusions.
+
+**Allocated stats** opens searchable bonuses grouped by mechanic. Counts are not effective totals: increased effect, conditional modifiers, blocking and keystone interactions are not simulated. Atlas allocations do not change character DPS, EHP or encounter assumptions.
 
 ## Sharing
 

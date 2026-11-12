@@ -14,7 +14,7 @@ end
 function M.tick(build)
 	local job=M.job;if not job then return end
 	if job.build ~= build then M.cancel("The active build changed");return end
-	job.deadline=os.clock()+0.008
+	job.deadline=os.clock()+0.004
 	local ok,result=coroutine.resume(job.thread)
 	if not ok then M.job=nil;if job.failed then pcall(job.failed,tostring(result)) end
 	elseif coroutine.status(job.thread) == "dead" then

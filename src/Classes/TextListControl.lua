@@ -45,7 +45,7 @@ function TextListClass:Draw(viewPort)
 	for colIndex, colInfo in pairs(self.columns) do
 		local lineY = -scrollBar.offset
 		for _, lineInfo in ipairs(self.list) do
-			if lineInfo[colIndex] then
+			if lineInfo[colIndex] and lineY+lineInfo.height>=0 and lineY<height-4 then
 				local textX = lineInfo.x or colInfo.x
 				local align = lineInfo.align or colInfo.align
 				DrawString(textX, lineY, align, lineInfo.textSize or lineInfo.height, lineInfo.font or "VAR", lineInfo[colIndex])
