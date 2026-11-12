@@ -1,3 +1,4 @@
+<!-- cspell:ignore RRBG -->
 # Native crafting
 
 Open **AI builds → Crafting**, or choose **Items -> Crafting plan**. Create a project with a starting item and explicit item level, then choose **Open workbench**.
@@ -48,6 +49,8 @@ Add a modifier on **Targets**. Separate groups require all groups by default; **
 - Explicit or implicit modifiers, and how many groups must match.
 - Specific fractured or crafted modifiers, open affix slots, affix/fracture counts, quality, sockets, links, corruption, memory strands and Intangibility.
 
+**Socket colours** accepts one to six exact colours, such as `RRBG`. Order does not matter; repeated letters require that many sockets. Choose **In one linked group** when all requested colours must be linked together. White sockets count as white, rather than substitutes for other colours. These conditions work in action odds, fossil comparisons, saved recipes, repeated-action stop conditions and MCP requests (`socketColours`, `linkedColours`).
+
 Roll percentage means the position within a modifier's native range. For several sampled values, every value must meet the threshold. An unfinished unveil never counts as a completed target.
 
 ## Simulate a recipe
@@ -58,7 +61,7 @@ Jobs run in the background. **Cancel crafting job** stops them. Results include 
 
 The price field applies to the selected action. The starting-item cost field adds the base cost to every trial in the same currency. MCP can supply prices for each action or fossil/resonator component in one currency. Spending divided by observed successes is not a guaranteed in-game cost. Zero successes does not establish impossibility.
 
-**Calculate action odds** enumerates supported finite outcomes, including next-affix draws, Talisman fractures and Allflame selection. Other supported actions and roll thresholds use bounded sampling with a confidence interval. Results state which method was used. **Compare subsets of the configured fossils** samples all combinations from the configured candidates and current state; it is not a global optimizer.
+**Calculate action odds** enumerates supported finite outcomes, including next-affix draws, Talisman fractures and Allflame selection. Item properties, partial group counts, other supported actions and roll thresholds use bounded sampling with a confidence interval. Results state which method was used. **Compare subsets of the configured fossils** samples all combinations from the configured candidates and current state; it is not a global optimizer.
 
 ## Keep a project
 

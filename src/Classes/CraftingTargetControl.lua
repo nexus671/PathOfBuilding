@@ -1,3 +1,4 @@
+-- cspell:ignore RRBG
 local sim=require("Modules.CraftingSimulator")
 local Panel={}
 function Panel.Open(targets,requirements,requiredGroups,onKeep)
@@ -27,6 +28,9 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep)
 	end
 	local properties={{"openPrefixes","Open prefixes"},{"openSuffixes","Open suffixes"},{"minAffixes","Minimum affixes"},{"maxAffixes","Maximum affixes"},{"minQuality","Minimum quality"},{"sockets","Minimum sockets"},{"links","Minimum linked sockets"},{"minMemoryStrands","Minimum memory strands"},{"maxMemoryStrands","Maximum memory strands"},{"minFractured","Minimum fractured mods"},{"maxFractured","Maximum fractured mods"},{"minIntangibility","Minimum Intangibility"},{"maxIntangibility","Maximum Intangibility"}}
 	for i,entry in ipairs(properties) do edit(entry[1],16+(i-1)%3*196,214+math.floor((i-1)/3)*48,conditions[entry[1]],entry[2]) end
+	edit("socketColours",212,406,conditions.socketColours,"Socket colours (e.g. RRBG)")
+	controls.linkedColours=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{408,422,180,24},{"Anywhere on item","In one linked group"})
+	controls.linkedColours:SelByValue(conditions.linkedColours and "In one linked group" or "Anywhere on item")
 	controls.corrupted=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,462,572,24},{"Any corruption state","Must be corrupted","Must be uncorrupted"})
 	controls.corrupted:SelByValue(conditions.corrupted == true and "Must be corrupted" or conditions.corrupted == false and "Must be uncorrupted" or "Any corruption state")
 	button("keep",16,506,220,"Keep target conditions",function()
@@ -38,6 +42,7 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep)
 		end
 		local result={};for _,entry in ipairs(properties) do local value=controls[entry[1]].buf;if value ~= "" then result[entry[1]]=assert(tonumber(value),"Invalid "..entry[2]) end end
 		local corruption=controls.corrupted:GetSelValue();if corruption ~= "Any corruption state" then result.corrupted=corruption == "Must be corrupted" end
+		if controls.socketColours.buf~="" then result.socketColours=controls.socketColours.buf:upper();result.linkedColours=controls.linkedColours:GetSelValue()=="In one linked group" end
 		local required=controls.groups.buf ~= "" and assert(tonumber(controls.groups.buf),"Invalid required group count") or nil
 		if not next(result) then result=nil end
 		sim.validateRecipe({steps={{method="chaos"}},targets=groups,requirements=result,requiredGroups=required})

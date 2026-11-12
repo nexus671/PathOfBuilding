@@ -136,7 +136,7 @@ function M.EditSample(item,save)
 	button(c,"cancel",w-156,h-48,140,"Cancel",function() main:ClosePopup() end);ui.style(c,{useSample=true});main:OpenPopup(w,h,"Test a drop",c,nil,"BaseType","cancel")
 end
 function M.Export(profile,raw)
-	local c={};local w,h=math.min(800,main.screenW-40),300
+	local c={};local w,h=math.min(800,main.screenW-40),342
 	ui.description(c,"help",16,28,w-32,62,{"Save a .filter file, then select it in Path of Exile's item-filter settings. Exporting does not equip items or change the character."},16)
 	ui.label(c,"directoryLabel",16,106,"Destination directory",14)
 	c.directory=new("EditControl"):EditControl(ui.anchor,{16,128,w-32,26},main.userPath.."LootFilters",nil,nil,1000)
@@ -150,6 +150,22 @@ function M.Export(profile,raw)
 		MakeDir(directory);local file=assert(io.open(target,"wb"),"Could not create filter file");assert(file:write(raw));assert(file:close());notify("Filter exported",target)
 	end) end)
 	button(c,"raw",320,236,140,"Inspect text",function() modal("Compiled filter",raw) end)
+	button(c,"writeAll",16,282,280,"Save all seven strictnesses",function() attempt(function()
+		assert(c.filename.buf:match("^[%w_-]+%.filter$"),"Use a filename with letters, numbers, hyphens or underscores")
+		local directory=c.directory.buf;assert(directory~="" and not directory:find("[%c]"),"Choose a directory")
+		local variants=filters.variants(profile);local targets={}
+		for i,variant in ipairs(variants) do
+			local target=directory.."/"..c.filename.buf:gsub("%.filter$","-"..variant.strictness..".filter");local existing=io.open(target,"rb")
+			if existing then existing:close();error("Batch cancelled: file already exists: "..target) end;targets[i]=target
+		end
+		MakeDir(directory);local written=0
+		for i,variant in ipairs(variants) do
+			local file=io.open(targets[i],"wb");assert(file,"Could not create "..targets[i]..". Files already written: "..written)
+			local ok=file:write(variant.text);local closed=file:close();assert(ok and closed,"Could not finish "..targets[i]..". Files already completed: "..written);written=written+1
+		end
+		notify("Filters exported","Saved seven strictnesses to "..directory)
+	end) end)
+	c.writeAll.enabled=not profile.template;c.writeAll.tooltipText="Keeps personal rules and global appearance in every variant. Imported filters have no preset variants."
 	button(c,"close",w-156,236,140,"Close",function() main:ClosePopup() end);ui.style(c,{write=true});main:OpenPopup(w,h,"Export loot filter",c,nil,"filename","close")
 end
 function M.Audit(profile,report,save)

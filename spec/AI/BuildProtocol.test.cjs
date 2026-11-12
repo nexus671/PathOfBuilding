@@ -1,3 +1,4 @@
+// cspell:ignore RRBG
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -328,4 +329,23 @@ test('accepts the pinned 150 point Atlas preview without inventing future versio
   const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.equal(request.proposal.operations[0].plan.budget,150);
   assert.throws(()=>f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan:{...plan,budget:151}}),/arguments/);
   assert.throws(()=>f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan:{...plan,version:'3.31.0'}}),/arguments/);
+});
+
+
+test('queues offline appearance, colour goals and optimized Atlas routing', t => {
+  const f=fixture(t);const base={baseRevision:f.state.revision};
+  const profile={id:'local',title:'Local',preset:'campaign',strictness:1,rules:[],appearance:{minimumFontSize:40,alertVolume:0,disableEffects:true}};
+  f.call('export_loot_filter',{...base,profile});
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json'))).profile.appearance,profile.appearance);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  const recipe={steps:[{method:'chromatic',maxAttempts:10,untilRequirements:{socketColours:'RRBG',linkedColours:true}}],targets:[],requirements:{socketColours:'RRBG',linkedColours:true}};
+  f.call('simulate_crafting',{...base,itemText:craftingProject().startingItem,recipe,options:{trials:10,maxActions:10}});
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  f.call('calculate_crafting',{...base,itemText:craftingProject().startingItem,action:{method:'chromatic'},targets:[],options:{trials:10,requirements:{socketColours:'RRBG',linkedColours:true}}});
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  f.call('plan_atlas_tree',{...base,plan:{id:'atlas',title:'Atlas',version:'3.30.0-preview',budget:150,nodes:[]},targets:[123],optimize:true});
+  assert.equal(JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json'))).optimize,true);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  assert.throws(()=>f.call('export_loot_filter',{...base,profile:{...profile,appearance:{alertVolume:301}}}),/arguments/);
+  assert.throws(()=>f.call('simulate_crafting',{...base,itemText:craftingProject().startingItem,recipe:{...recipe,requirements:{socketColours:'RGX'}}}),/arguments/);
 });

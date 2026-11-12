@@ -1,3 +1,4 @@
+-- cspell:ignore RGBW
 -- Independent, bounded crafting model using PoB's game-data modifier tables.
 local encounter = require("Modules.CalcEncounter")
 local M = { }
@@ -279,6 +280,16 @@ function M.matches(state,targets,rarity,model,requirements,requiredGroups)
   if requirements.maxMemoryStrands and (state.memoryStrands or 0) > requirements.maxMemoryStrands then return false end
   if requirements.corrupted ~= nil and (state.corrupted or false) ~= requirements.corrupted then return false end
   if requirements.sockets and #(state.sockets or model.item.sockets or {}) < requirements.sockets then return false end
+  if requirements.socketColours then
+   local groups={};local needed={}
+   for color in requirements.socketColours:gmatch(".") do needed[color]=(needed[color] or 0)+1 end
+   for _,socket in ipairs(state.sockets or model.item.sockets or {}) do
+    local key=requirements.linkedColours and socket.group or 0;groups[key]=groups[key] or {};local colors=groups[key];colors[socket.color]=(colors[socket.color] or 0)+1
+   end
+   local matched=false
+   for _,colors in pairs(groups) do local enough=true;for color,count in pairs(needed) do if (colors[color] or 0)<count then enough=false end end;if enough then matched=true;break end end
+   if not matched then return false end
+  end
   if requirements.links then
    local groups={}; local best=0
    for _,socket in ipairs(state.sockets or model.item.sockets or {}) do groups[socket.group]=(groups[socket.group] or 0)+1;best=math.max(best,groups[socket.group]) end
@@ -298,7 +309,12 @@ function M.validateRecipe(recipe)
 		if not requirements then return end
 		assert(type(requirements) == "table" and next(requirements),"Choose at least one property condition")
 		local limits={openPrefixes=3,openSuffixes=3,minAffixes=6,maxAffixes=6,minQuality=30,sockets=6,links=6,minMemoryStrands=100,maxMemoryStrands=100,minFractured=6,maxFractured=6,minIntangibility=100,maxIntangibility=100}
-		for key,value in pairs(requirements) do if key == "corrupted" then assert(type(value) == "boolean","Invalid corruption condition") else integer(value,0,assert(limits[key],"Unknown property condition"),key) end end
+		for key,value in pairs(requirements) do
+			if key == "corrupted" or key == "linkedColours" then assert(type(value) == "boolean","Invalid boolean property condition")
+			elseif key == "socketColours" then assert(type(value)=="string" and #value>=1 and #value<=6 and not value:find("[^RGBW]"),"Use one to six socket colours: R, G, B or W")
+			else integer(value,0,assert(limits[key],"Unknown property condition"),key) end
+		end
+		assert(not requirements.linkedColours or requirements.socketColours,"Linked colours require a socket colour target")
 		for _,pair in ipairs({{"minAffixes","maxAffixes"},{"minMemoryStrands","maxMemoryStrands"},{"minFractured","maxFractured"},{"minIntangibility","maxIntangibility"}}) do
 			assert(not requirements[pair[1]] or not requirements[pair[2]] or requirements[pair[1]] <= requirements[pair[2]],"Minimum property condition exceeds maximum")
 		end

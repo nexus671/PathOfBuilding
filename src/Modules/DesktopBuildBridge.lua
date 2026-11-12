@@ -513,8 +513,9 @@ function M.poll(build, force)
 			local result
 			if request.kind == "atlasSearch" then result=planner.search(request.version,request.query,request.limit)
 			else
-				local plan,added=planner.connect(request.plan,request.targets,request.avoid)
-				result={plan=plan,added=added,report=planner.report(plan),officialUrl=planner.url(plan)}
+				assert(request.optimize==nil or type(request.optimize)=="boolean","Invalid Atlas optimization setting")
+				local plan,added,routing=(request.optimize and planner.connectOptimized or planner.connect)(request.plan,request.targets,request.avoid)
+				result={plan=plan,added=added,routing=routing,report=planner.report(plan),officialUrl=planner.url(plan)}
 			end
 			M.status={id=request.id,status="atlas",atlas=result}; M.publishState(); return
 		end

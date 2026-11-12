@@ -7,7 +7,7 @@ The workspace has four pages:
 - **Overview:** choose a profile and strictness, auto-adjust from the build, and preview a collection of drops.
 - **Customize:** browse personal pickups or the complete base preset by category. Search for an item, then edit its colours, size, sound and icon. Editing a base rule creates a personal override. **Advanced conditions** opens its matching criteria.
 - **Simulate:** generate example loot, select drops to inspect their results, configure an item, and show or hide hidden drops. These are deterministic examples, not a model of drop rates.
-- **Style:** choose the palette used for new generated targets and explicitly restyle existing personal pickups. Base-preset colours are preserved.
+- **Style:** choose the palette used for new generated targets and explicitly restyle existing personal pickups. **Whole-filter appearance** raises declared label sizes to a selected minimum and controls alert volume (including mute) and beam visibility across personal pickups and the base preset. Blocks without a font directive retain inherited/default sizes, preserving `Continue` behaviour. Tier colours and pickup conditions stay intact; **Restore original** removes these settings. Imported `Import` files remain unresolved, so their external contents cannot be restyled.
 
 **Profile tools** contains creation, duplication, import, account filters, audit/update and deletion. Keep profiles in the build before using normal **Save**. The [FilterBlade comparison](filterblade-comparison.md) records the reviewed feature set and remaining gaps.
 
@@ -21,7 +21,7 @@ The drop preview shows the label, border and beam, and explains the deciding rul
 
 **Keep in build** keeps all profiles; normal build **Save** persists them. Native XML, shared builds and complete planning bundles carry kept profiles. Working drafts survive planning-page navigation but must be kept before saving or sharing. There is no profile-count cap; a 2 MiB metadata guard protects build loading. Unreadable or future metadata is preserved unchanged.
 
-**Export** copies compiled text or writes a UTF-8 `.filter` to your chosen directory. Existing files are preserved; choose another filename to export a replacement. Select the exported filter in Path of Exile. Export does not install, activate or silently replace game files.
+**Export** copies compiled text or writes a UTF-8 `.filter` to your chosen directory. Existing files are preserved; choose another filename to export a replacement. **Save all seven strictnesses** writes `name-0.filter` through `name-6.filter`, carrying personal rules and global appearance into each preset. It checks every destination before writing and cancels the batch if any file exists. Imported filters have no strictness variants. Select the exported filter in Path of Exile. Export does not install, activate or silently replace game files.
 
 **Account filters** supports listing/importing filters and explicit publication with server validation. The **Log in** action requests `account:item_filter` in addition to normal PoB scopes. GGG must permit that scope for the registered OAuth client; ordinary character-import authentication is not sufficient. If permission is unavailable, use local export. A second review names the destination before creating a private filter or replacing a selected filter. No account changes occur through MCP. Pending processing, validation errors and uncertain write outcomes are reported without automatic retries. Live account sync has not been verified with a filter-authorised account.
 

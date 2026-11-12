@@ -66,7 +66,12 @@ function M.presets(plan)
 		if #targets>0 then
 			local nextPlan=copyTable(plan);local kept={}
 			for _,target in ipairs(targets) do local ok,value=pcall(atlas.connect,nextPlan,{target});if ok then nextPlan=value;kept[#kept+1]=target end end
-			if #kept>0 then result[#result+1]={label=mechanic.." starting route",plan=nextPlan,targets=kept,mechanic=mechanic} end
+			-- Try the whole target set before dropping a notable for the budget.
+			local ok,optimized,_,routing=pcall(atlas.connectOptimized,plan,targets)
+			if ok then nextPlan=optimized;kept=targets else
+				ok,optimized,_,routing=pcall(atlas.connectOptimized,plan,kept);if ok then nextPlan=optimized end
+			end
+			if #kept>0 then result[#result+1]={label=mechanic.." starting route",plan=nextPlan,targets=kept,mechanic=mechanic,routing=ok and routing or nil} end
 		end
 	end
 	return result

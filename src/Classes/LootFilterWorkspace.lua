@@ -174,6 +174,7 @@ function M.Open(build,source,layout,controller)
 			function control:Draw() local px,py=self:GetPos();visual.box(px,py,sw,180,profile.theme==entry[2] and "^xD1B579" or "^x384A5B");visual.box(px+1,py+1,sw-2,178,"^x14202C");visual.floor(px+12,py+12,sw-24,94);visual.chip(px+20,py+20,sw-40,76,{BaseType="Crafting base"},{action="Show",styles={SetTextColor=entry[3],SetBorderColor=entry[4],SetBackgroundColor=entry[5],SetFontSize={"42"}}});visual.text(px+18,py+124,20,entry[1],"^xEED39D",sw-36);visual.text(px+18,py+154,14,profile.theme==entry[2] and "Selected for new build targets" or "Use this palette","^xAFC2D3",sw-36) end
 		end
 		button(c,"applyStyle",16,438,260,"Restyle personal pickups",function() local template=parser.parse(filters.rule("style","Style",{},nil,profile.theme).text).rules[1].styles;for i,rule in ipairs(profile.rules) do profile.rules[i]=library.appearance(rule,template);profile.rules[i].origin=rule.origin end;draft();reopen() end)
+		button(c,"globalStyle",292,438,260,"Whole-filter appearance",function() require("Classes.LootFilterGlobalControl").Open(profile,function(next) profile.appearance=next.appearance;draft();reopen() end) end)
 	end
 	if profile then
 		button(c,"export",w-172,h-38,156,"Export to PoE",function() if raw then controller.Export(profile,raw) end end)

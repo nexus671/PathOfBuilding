@@ -2,7 +2,7 @@
 
 Open **Atlas** beside **AI builds**, or switch to **Atlas** in the full-width planning workspace. **< Build** returns to your previous build tab.
 
-1. Choose the exact tree version. We bundle official **3.27.0, 3.29.1, 3.29.3 and 3.30.0-preview** graphs. New stable plans default to 3.29.3. The 3.30 preview has **150 base points**; its Standard and Covens graphs are identical in the pinned publication. Ruthless Atlas graphs are not included.
+1. Choose the exact tree version. We bundle official **3.27.0, 3.29.1, 3.29.3 and 3.30.0-preview** graphs. New plans for 3.30 characters default to the 3.30 preview; older characters use the stable graph. The 3.30 preview has **150 base points**; its Standard and Covens graphs are identical in the pinned publication. Ruthless Atlas graphs are not included.
 2. Enter a name and the number of Atlas points you have earned. The initial budget is the tree's maximum; it does not read account progression.
 3. Filter a mechanic directly in the inspector, or search names and stat text. Matching nodes highlight and preview a result without moving the camera. Choose a result or press **Go** to center it. Result labels show added point costs. Use **Connect +N** to add the previewed shortest connection.
 4. Use the mouse wheel to zoom and drag empty space to pan. **Fit tree** resets the view. The canvas uses the official background, node icons, frames and mechanic emblems. Allocated paths are gold; avoided nodes have red frames. Hover for modifier descriptions. Double click a node to connect it, or remove it if allocated.
@@ -11,7 +11,7 @@ Open **Atlas** beside **AI builds**, or switch to **Atlas** in the full-width pl
 
 **Find nodes** opens a searchable list with mechanic filters and added point costs. Choosing a result highlights its mechanic on the tree. The minimap moves the camera without changing allocations. Drag the divider beside the inspector to resize it.
 
-**Routes** compares the shortest connection with available alternatives. In **Plan tools**, mark a selected node as a preferred waypoint, open editable mechanic starting routes, compare the draft with a saved plan, or restore an earlier history state. Starting routes connect up to three nearby notables from the bundled graph; they do not predict farming income. Route comparisons honor the current budget and exclusions.
+**Routes** compares the shortest connection with available alternatives. In **Plan tools**, mark a selected node as a preferred waypoint, open editable mechanic starting routes, compare the draft with a saved plan, or restore an earlier history state. Starting routes compare target orders and connect up to three nearby notables from the bundled graph; they do not predict farming income. Route comparisons honor the current budget and exclusions.
 
 **Allocated stats** opens searchable bonuses grouped by mechanic. Counts are not effective totals: increased effect, conditional modifiers, blocking and keystone interactions are not simulated. Atlas allocations do not change character DPS, EHP or encounter assumptions.
 
@@ -32,7 +32,7 @@ Reconnect the MCP client after updating. Enable build proposals in **AI builds**
 - `plan_atlas_tree`: connect up to thirty desired IDs to a plan, optionally avoiding nodes. Returns a separate draft, added nodes, point accounting, stat text and an official link.
 - `propose_atlas_plan`: submit that plan for normal desktop review. Only the desktop **Apply** button commits the candidate; build **Save** persists it.
 
-Search and routing are queued. Poll `get_proposal_status` and match the returned request ID. Neither tool applies changes. Routing uses deterministic shortest connections in target order; it is a greedy heuristic, not a globally optimal multi-target solver. Gateways use the official graph links. Granted Atlas points are counted in the final budget.
+Search and routing are queued. Poll `get_proposal_status` and match the returned request ID. Neither tool applies changes. Routing uses deterministic shortest connections in target order. Set `optimize: true` to compare the original, reversed and cyclic target orders, retaining the valid result with the fewest additional allocations. Starting routes use this comparison automatically. Existing allocations and exclusions stay intact; the final tree must fit the supplied budget. The response includes the number of orders checked and savings against the original order when that order was valid. This bounded search is a heuristic, not a globally optimal multi-target solver. Gateways use the official graph links. Granted Atlas points are counted in the final budget.
 
 Example request: “Use my Atlas version and a 90-point budget. Find Essence and map-sustain nodes, avoid mechanics I dislike, and propose a connected farming plan. Explain the keystones and tradeoffs before I apply it.”
 

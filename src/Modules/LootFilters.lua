@@ -35,6 +35,18 @@ function M.validate(data)
 		assert(type(p.strictness)=="number" and p.strictness==math.floor(p.strictness) and p.strictness>=0 and p.strictness<=6,"Strictness must be 0 to 6")
 		assert(entry.theme=="default" or entry.theme=="contrast","Unknown filter theme")
 		assert(entry.mode=="Normal" or entry.mode=="Ruthless","Unknown filter mode")
+		if p.appearance~=nil then
+			assert(type(p.appearance)=="table" and p.appearance~=json.null,"Invalid global appearance")
+			entry.appearance={}
+			for _,key in ipairs({"minimumFontSize","alertVolume"}) do
+				local value=p.appearance[key]
+				if value~=nil then local low,high=key=="minimumFontSize" and 1 or 0,key=="minimumFontSize" and 45 or 300
+					assert(type(value)=="number" and value==math.floor(value) and value>=low and value<=high,"Invalid "..key);entry.appearance[key]=value
+				end
+			end
+			assert(p.appearance.disableEffects==nil or type(p.appearance.disableEffects)=="boolean","Invalid effect setting")
+			entry.appearance.disableEffects=p.appearance.disableEffects
+		end
 		entry.baseCommit=p.baseCommit and text(p.baseCommit,40,"template revision") or M.source().commit
 		if p.template then entry.template=text(p.template,M.limit,"imported filter");assert(#parser.parse(p.template).rules>0,"Imported filter has no rules") end
 		local seen={}
@@ -142,11 +154,22 @@ function M.compile(profile)
 		output[#output+1]="\n# 3.30 new-item safety: "..class.."\nShow\n    BaseType == "..table.concat(values," ").."\n    SetTextColor 255 235 175\n    SetBorderColor 175 110 230\n    SetFontSize 40"
 	end
 	local base,changes=M.migrate(M.base(checked));output[#output+1]="\n# Pinned base filter\n"..base
-	local raw=table.concat(output,"\n");assert(#raw<=M.limit,"Compiled filter exceeds 2 MiB")
+	local raw=require("Modules.LootFilterDecorators").apply(table.concat(output,"\n"),checked.appearance);assert(#raw<=M.limit,"Compiled filter exceeds 2 MiB")
 	if checked.mode=="Ruthless" then raw=raw:gsub("\n([ \t]*)Hide(%f[%W])","\n%1Minimal%2") end
 	local parsed=parser.parse(raw)
 	if checked.mode=="Normal" then for _,rule in ipairs(parsed.rules) do if rule.action=="Minimal" then parsed.diagnostics[#parsed.diagnostics+1]={line=rule.line,error="Minimal blocks require Ruthless mode"} end end end
 	return raw,{changes=changes,diagnostics=parsed.diagnostics,imports=parsed.imports,rules=#parsed.rules,baseCommit=checked.baseCommit,currentCommit=M.source().commit,imported=checked.template~=nil}
+end
+function M.variants(profile)
+	assert(not profile.template,"An imported filter has no bundled strictness variants")
+	local variants={}
+	for strictness=0,6 do
+		local nextProfile=copyTable(profile);nextProfile.strictness=strictness
+		local raw,report=M.compile(nextProfile)
+		for _,d in ipairs(report.diagnostics) do assert(not d.error,d.error) end
+		variants[#variants+1]={strictness=strictness,label=M.strictness[strictness+1],text=raw}
+	end
+	return variants
 end
 function M.simulate(profile,item)
 	local raw,report=M.compile(profile)

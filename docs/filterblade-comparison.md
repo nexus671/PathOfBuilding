@@ -37,8 +37,8 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Font size | Live size slider | Additional typography presets |
 | Alert sound selection | All 16 numbered IDs plus silence; custom references preserved | Exact game audio preview and custom sound pack management |
 | Minimap icons | Icon selection and live label/beam previews | Exact rendering and colour controls for every supported icon shape |
-| Themes | Generated-target palette and personal-rule restyling | Shared global decorators across all base rules |
-| Global one-click edits | Explicit personal-rule restyle | Safe whole-filter transformation presets |
+| Themes | Generated-target palette and personal-rule restyling | Minimum font size, common alert volume/mute and disabled beams apply across base and personal rules; full colour decorators remain |
+| Global one-click edits | Explicit personal-rule restyle | Reversible whole-filter size, alert and beam settings; broader transformations remain |
 | Shared modules | Individual build-owned profiles | Reusable modules across profiles, dependencies and sharing |
 | Review changes | Patch migration audit and visible personal overrides | Full before/after diff and undo history |
 | Filter structure | Searchable parsed base rules; raw export inspection | A dedicated structure tree |
@@ -50,10 +50,10 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Automatic uploads | Not implemented | Requires a separately operated update service |
 | Frequent economy refresh | Not connected | FilterBlade's hosted economy feed is not bundled |
 | Single-filter download | Copy/export `.filter`, preserving existing files | Optional replacement workflow |
-| Export all strictnesses | Each profile can select any strictness | Batch files and ZIP export |
+| Export all strictnesses | Each profile can select any strictness; batch export includes personal edits | Seven strictness files with collision checks; ZIP packaging remains |
 | Validation | Native parser checks and account-server validation when authorised | Broader syntax coverage and live game validation |
 | Mobile layout | Desktop layouts tested at 960, 1024 and 1280 widths | Native PoB is not a mobile web app |
 
-The most useful next parity work is tier-list item movement, whole-filter decorators, shared modules, and an explicit update/price pipeline. Those require separate data models and correctness tests; a visual redesign alone does not provide them.
+The most useful next parity work is tier-list item movement, broader whole-filter decorators and shared modules. Hosted economy updates remain a separate service. These require separate data models and correctness tests; a visual redesign alone does not provide them.
 
 Reference screenshots were captured outside the repository during the review. Third-party advertising scripts logged browser errors; the main anonymous customizer and simulator remained usable. No login, publication, purchase or subscription was performed.

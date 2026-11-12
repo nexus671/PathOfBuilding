@@ -124,6 +124,28 @@ function M.connect(plan,targets,avoid)
 	set[tree.start]=nil; plan.nodes=sorted(set)
 	return M.validate(plan),additions
 end
+-- Bounded order search, retaining every existing allocation. This is a heuristic,
+-- not a Steiner-tree solver. An invalid baseline must not prevent a valid reorder.
+function M.connectOptimized(plan,targets,avoid)
+	plan=M.validate(plan);array(targets,30,"Atlas targets")
+	local tree=M.tree(plan.version);local blocked=nodeSet(tree,avoid or {})
+	local allocated=nodeSet(tree,plan.nodes);allocated[tree.start]=true
+	for id in pairs(blocked) do assert(not allocated[id],"Cannot avoid an allocated Atlas node") end
+	for _,id in ipairs(targets) do integer(id,1,65535,"Atlas target");assert(tree.nodes[id] and not blocked[id],"Unknown or avoided Atlas target") end
+	local best,additions,baseline;local attempts=0;local seen={}
+	local function try(order)
+		local signature=table.concat(order,",");if seen[signature] then return end;seen[signature]=true;attempts=attempts+1
+		local ok,value,added=pcall(M.connect,plan,order,avoid)
+		if attempts==1 and ok then baseline=#added end
+		if ok and (not best or #added<#additions) then best,additions=value,added end
+	end
+	try(targets)
+	local reversed={};for i=#targets,1,-1 do reversed[#reversed+1]=targets[i] end;try(reversed)
+	-- Every cyclic order offers each target the first connection once.
+	for offset=1,#targets-1 do local order={};for i=1,#targets do order[i]=targets[(i+offset-1)%#targets+1] end;try(order) end
+	assert(best,"Atlas targets cannot be connected within this budget and exclusions")
+	return best,additions,{attempts=attempts,originalCost=baseline,cost=#additions,saved=baseline and baseline-#additions or nil,heuristic=true}
+end
 function M.remove(plan,id)
 	plan=M.validate(plan); local tree=M.tree(plan.version)
 	assert(id ~= tree.start and tree.nodes[id],"Cannot remove the Atlas start")

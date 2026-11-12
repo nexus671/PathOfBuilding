@@ -338,7 +338,7 @@ function Panel.Open(build,project,layout)
 	end)
 	button(controls,"optimize",16,618,416,"Compare subsets of the configured fossils",function()
 		local selected=action();assert(selected.method == "fossil" and selected.fossils,"Configure a fossil combination first")
-		local options={fossils=copyTable(selected.fossils),initialState=copyTable(state),maxSockets=#selected.fossils,trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
+		local options={fossils=copyTable(selected.fossils),initialState=copyTable(state),maxSockets=#selected.fossils,requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups,trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
 		local captured=copyTable(targets)
 		require("Modules.CraftingTasks").start(build,function(checkpoint) options.checkpoint=checkpoint;return simulator.optimizeFossils(draft.startingItem,captured,options) end,function(result)
 			local lines={"Fossil subset comparison; no prices supplied to this comparison."}
@@ -351,7 +351,7 @@ function Panel.Open(build,project,layout)
 	end)
 	button(controls,"exact",232,574,200,"Calculate action odds",function()
 		local craft=action();local captured=copyTable(state);local capturedTargets=copyTable(targets)
-		local options={trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
+		local options={trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf)),requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups}
 		require("Modules.CraftingTasks").start(build,function(checkpoint)
 			options.checkpoint=checkpoint;return simulator.calculate(draft.startingItem,craft,capturedTargets,captured,options)
 		end,function(result)
