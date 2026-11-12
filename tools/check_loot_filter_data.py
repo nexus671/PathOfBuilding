@@ -8,7 +8,7 @@ source = json.loads((root / "source.json").read_text())
 assert source["license"] == "MIT"
 assert set(source["files"]) == {f"{index}.filter" for index in range(7)}
 for filename, record in source["files"].items():
-    raw = (root / filename).read_bytes().replace(b"\r\n", b"\n")
+    raw = (root / filename).read_bytes()
     assert hashlib.sha256(raw).hexdigest() == record["sha256"], filename
     assert source["commit"] in record["source"], filename
 license_text = (root / "LICENSE-NeverSink.txt").read_text()
