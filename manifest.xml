@@ -1181,7 +1181,7 @@
 	<File name="Modules/CraftingMemory.lua" part="program" sha1="8ab3834321d09601f90453d1ad22a595abb61008" />
 	<File name="Modules/CraftingPalette.lua" part="program" sha1="edd27dc9231769e2c5035238bc2e6aa1a5df5de6" />
 	<File name="Modules/CraftingPredictable.lua" part="program" sha1="a61b47112670167522a2c6da8f76a23dfc39ccde" />
-	<File name="Modules/CraftingProjects.lua" part="program" sha1="f60033bf954a372c5f53768f7f222dd71f4f9824" />
+	<File name="Modules/CraftingProjects.lua" part="program" sha1="f4407c86711b77a51c7600403df45aed8536e822" />
 	<File name="Modules/CraftingProperties.lua" part="program" sha1="36d221ff71af904bd564e5152f6daea41a675675" />
 	<File name="Modules/CraftingRecombination.lua" part="program" sha1="e1ae6cd63866f00dcfa407cf796c1dd564f3bb6e" />
 	<File name="Modules/CraftingSimulator.lua" part="program" sha1="cef3021b59bea20cbca5cbbfdf0a142dbfd69d27" />

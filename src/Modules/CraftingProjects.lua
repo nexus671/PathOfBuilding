@@ -83,7 +83,7 @@ function M.new(build)
 		local replacement=copyTable(self.projects)
 		local found=false
 		for index,existing in ipairs(replacement) do if existing.id == entry.id then
-			if not entry.run and entry.startingItem==existing.startingItem then entry.run=copyTable(existing.run) end
+			if not entry.run and existing.run and entry.startingItem==existing.startingItem then entry.run=copyTable(existing.run) end
 			replacement[index]=entry; found=true; break
 		end end
 		if not found then replacement[#replacement+1]=entry end
