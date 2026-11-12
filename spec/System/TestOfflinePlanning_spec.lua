@@ -6,6 +6,11 @@ describe("Offline planning refinements",function()
 	local sim=require("Modules.CraftingSimulator")
 	local originalGraph
 	after_each(function() if originalGraph then atlas.cache["3.27.0"]=originalGraph;originalGraph=nil end;main.popups={} end)
+	it("displays arbitrary valid AI appearance values without silently selecting a preset",function()
+		newBuild();main.popups={};local p=filters.profile("custom","Custom");p.appearance={minimumFontSize=25,alertVolume=150}
+		require("Classes.LootFilterGlobalControl").Open(p,function() end)
+		local c=main.popups[1].controls;assert.equal(25,c.minimumFontSize:GetSelValueByKey("val"));assert.equal(150,c.alertVolume:GetSelValueByKey("val"))
+	end)
 	it("decorates the entire filter without changing matching or imported source",function()
 		local p=filters.profile("appearance","Appearance")
 		p.template='Show\n BaseType == "Iron Hat"\n SetFontSize 18\n CustomAlertSoundOptional "my # sound.wav" 125\n PlayEffect Red Temp\n Continue\nHide\n BaseType == "Iron Ring"\n SetFontSize 45'

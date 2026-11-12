@@ -945,7 +945,7 @@
 	<File name="Classes/ListControl.lua" part="program" sha1="9223f7e90e7fa3f67ad0cf8224e1266e59b9681f" />
 	<File name="Classes/LootFilterAppearance.lua" part="program" sha1="1a885868d43009f618c29d901f5df02affcafdd6" />
 	<File name="Classes/LootFilterControl.lua" part="program" sha1="8af98de07e64fbd7104b622bcbceebe3abfbf487" />
-	<File name="Classes/LootFilterGlobalControl.lua" part="program" sha1="f6d9207ce84335778d50b45ce1bb2200012c97dc" />
+	<File name="Classes/LootFilterGlobalControl.lua" part="program" sha1="92c659e279a492d93e82a1cc0ae1335568b6ed99" />
 	<File name="Classes/LootFilterWorkspace.lua" part="program" sha1="5638b2d52da0aa5670d3d50b900c4ab1c93d6740" />
 	<File name="Classes/MinionListControl.lua" part="program" sha1="655a6ddb06ba75011e51d5a6130db8cf7a9f3895" />
 	<File name="Classes/MinionSearchListControl.lua" part="program" sha1="cfff5d76e380c7bdcbdac229325cefb1599af36c" />

@@ -8,6 +8,8 @@ function M.Open(profile,onKeep)
 	local c={};local settings=copyTable(profile.appearance or {})
 	ui.description(c,"help",16,24,588,48,{"Change labels and alerts across personal rules and the base preset. Only declared sizes change; inherited sizes stay intact. Pickup conditions and tier colours are preserved."},14)
 	local function setting(key,y,title,entries)
+		local present=false;for _,entry in ipairs(entries) do if entry.val==settings[key] then present=true end end
+		if settings[key]~=nil and not present then entries[#entries+1]={label="Custom: "..tostring(settings[key]),val=settings[key]} end
 		ui.label(c,key.."Label",16,y,title,14)
 		c[key]=new("DropDownControl"):DropDownControl(ui.anchor,{268,y-4,336,28},entries,function(_,value) settings[key]=value.val~=false and value.val or nil end)
 		c[key]:SelByValue(settings[key]~=nil and settings[key] or false,"val")
