@@ -11,20 +11,23 @@ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'pob-planning-workflow-'));
 const lua=process.argv[2] || 'luajit';
 const children=[];const diagnostics=[];
 function connection(child,prefix='') {
-  children.push(child);const pending=new Map();let next=0;let ready;
-  const started=new Promise(resolve=>{ready=resolve;});
+  children.push(child);const pending=new Map();let next=0;let ready,rejectReady,didStart=false;
+  const started=new Promise((resolve,reject)=>{ready=resolve;rejectReady=reject;});
   child.stderr.on('data',data=>diagnostics.push(data.toString()));
   createInterface({input:child.stdout}).on('line',line=>{
     if(prefix && !line.startsWith(prefix)){diagnostics.push(line);return;}
     let message;try{message=JSON.parse(line.slice(prefix.length));}catch{diagnostics.push(line);return;}
-    if(message.ready) ready(message);
+    if(message.ready){didStart=true;ready(message);}
     const waiter=pending.get(message.id);if(waiter){pending.delete(message.id);clearTimeout(waiter.timer);waiter.resolve(message);}
   });
-  child.on('exit',code=>{for(const waiter of pending.values()){clearTimeout(waiter.timer);waiter.reject(new Error(`Child exited ${code}: ${diagnostics.join('\n')}`));}});
+  child.on('exit',code=>{const error=new Error(`Child exited ${code}: ${diagnostics.join('\n')}`);if(prefix && !didStart)rejectReady(error);for(const waiter of pending.values()){clearTimeout(waiter.timer);waiter.reject(error);}});
+  child.on('error',error=>{if(prefix && !didStart)rejectReady(error);for(const waiter of pending.values()){clearTimeout(waiter.timer);waiter.reject(error);}});
   return {started,send(body){return new Promise((resolve,reject)=>{const id=++next;pending.set(id,{resolve,reject,timer:setTimeout(()=>{pending.delete(id);reject(new Error('Workflow response timed out'));},60000)});child.stdin.write(JSON.stringify({id,...body})+'\n');});}};
 }
 async function main(){
-  const native=connection(spawn(lua,['../tools/planning_workflow_host.lua',directory],{cwd:path.join(root,'src'),env:{...process.env,LUA_PATH:'../runtime/lua/?.lua;../runtime/lua/?/init.lua;;',LUA_CPATH:path.join(root,'runtime','?.dll')+';;',PATH:path.join(root,'runtime')+path.delimiter+process.env.PATH}}),'WORKFLOW\t');
+  const environment={...process.env,LUA_PATH:'../runtime/lua/?.lua;../runtime/lua/?/init.lua;;'};
+  if(process.platform==='win32'){environment.LUA_CPATH=path.join(root,'runtime','?.dll')+';;';environment.PATH=path.join(root,'runtime')+path.delimiter+process.env.PATH;}
+  const native=connection(spawn(lua,['../tools/planning_workflow_host.lua',directory],{cwd:path.join(root,'src'),env:environment}),'WORKFLOW\t');
   let startupTimer;
   await Promise.race([native.started,new Promise((_,reject)=>{startupTimer=setTimeout(()=>reject(new Error('Native startup timed out')),60000);})]).finally(()=>clearTimeout(startupTimer));
   const mcp=connection(spawn(process.execPath,[path.join(root,'src/AI/McpServer.cjs'),path.join(directory,'AI-encounter.json')]));

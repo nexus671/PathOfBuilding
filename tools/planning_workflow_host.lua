@@ -1,15 +1,20 @@
 -- Isolated native desktop side of the stdio MCP integration test. No live app.
 local directory=assert(arg[1]):gsub("\\","/").."/"
+io.stdout:setvbuf("no")
+io.stderr:write("Native workflow: loading headless wrapper\n")
 arg={};dofile("HeadlessWrapper.lua")
+io.stderr:write("Native workflow: installing UI recorder\n")
 local json=require("dkjson")
 local bridge=require("Modules.DesktopBuildBridge")
 local ui=require("Modules.HeadlessUI").install({width=1024,height=768})
 io.stdout:setvbuf("no")
 main.userPath=directory;main.buildPath=directory;main.defaultBuildPath=directory;main.disableDevAutoSave=true
 newBuild()
+io.stderr:write("Native workflow: calculating fixture\n")
 build.buildName="MCP workflow fixture";build.characterLevel=80;build.characterLevelAutoMode=false
 build.buildFlag=true;runCallback("OnFrame");ui:bind(build)
 bridge.enable(build)
+io.stderr:write("Native workflow: bridge ready\n")
 local function respond(value) io.stdout:write("WORKFLOW\t"..json.encode(value).."\n") end
 respond({ready=true,revision=bridge.revision(build)})
 for line in io.lines() do
