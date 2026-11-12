@@ -1266,7 +1266,7 @@ function buildMode:OnFrame(inputEvents)
 				inputEvents[i] = nil
 			end
 		end
-	
+
 	end
 
 	if self.viewMode~="PLANNER" or cursorX<312 or cursorY<32 then self:ProcessControlsInput(inputEvents, main.viewPort) end
