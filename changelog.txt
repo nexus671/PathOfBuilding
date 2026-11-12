@@ -1,3 +1,10 @@
+VERSION[ai][2026/11/12]
+
+--- AI Edition ---
+* Full-width Atlas planning with search, mechanic filters, routes, minimap and saved strategy comparisons.
+* Item crafting workbench with currency artwork, modifier inspection, history, targets and recipe comparisons.
+* Integrated AI planning, encounter charts, keyboard navigation and resizable panels.
+
 VERSION[2.67.2][2026/08/07]
 
 --- Fixed Calculations ---
