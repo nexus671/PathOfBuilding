@@ -42,7 +42,10 @@ for _,size in ipairs({{1280,720},{1024,768}}) do
 	ui:choose("page","Plan & review")
 	local original=main.modes.BUILD
 	local prepared=bridge.prepare(original,{mode="edit",title="Headless life upgrade",baseRevision=bridge.revision(original),operations={{type="equip_item",slot="Helmet",text="Rarity: RARE\nTrial Hat\nIron Hat\nItem Level: 86\n+100 to maximum Life"}}})
-	prepared.id="headless-review";bridge.remember(prepared);bridge.prepared=prepared
+	prepared.id="headless-review"
+	prepared.audit.assumptions[#prepared.audit.assumptions+1]={text="Enabled condition: conditionFullEnergyShield. Check its source and uptime."}
+	for i=1,60 do prepared.audit.assumptions[#prepared.audit.assumptions+1]={text="Review checklist entry "..i..": verify conditions and uptime before applying the candidate."} end
+	bridge.remember(prepared);bridge.prepared=prepared
 	ui:click("review");frame("ai-review-summary")
 	ui:choose("page","Changes");frame("ai-review-changes")
 	ui:choose("page","Checks");frame("ai-review-checks")

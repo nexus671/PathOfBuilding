@@ -1,10 +1,23 @@
 -- Shared native planning styles and pixel-measured text wrapping.
 local M={anchor={"TOPLEFT",nil,"TOPLEFT"}}
+local conditionLabels
+local function displayLine(line)
+	local key=line:match("^Enabled condition: ([%w_]+)%.")
+	if not key then return line end
+	if not conditionLabels then
+		conditionLabels={}
+		for _,option in ipairs(require("Modules.ConfigOptions")) do
+			if option.var and type(option.label)=="string" then conditionLabels[option.var]=StripEscapes(option.label) end
+		end
+	end
+	local label=conditionLabels[key] or key:gsub("^condition",""):gsub("(%l)(%u)","%1 %2")
+	return "Enabled setting: "..label.." Verify its source and uptime."
+end
 function M.rows(lines,width,size)
 	local rows={};size=size or 16
 	for _,line in ipairs(lines) do
 		for part in tostring(line):gmatch("[^\r\n]+") do
-			part=StripEscapes(part)
+			part=displayLine(StripEscapes(part))
 			while DrawStringWidth(size,"VAR",part)>width do
 				local low,high=1,#part
 				while low<high do local mid=math.ceil((low+high)/2);if DrawStringWidth(size,"VAR",part:sub(1,mid))<=width then low=mid else high=mid-1 end end

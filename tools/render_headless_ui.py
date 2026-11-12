@@ -109,7 +109,7 @@ def render(frame):
             center_y = y + height / 2
             containers = [c for c in frame.get("controls", []) if c["width"] >= 40 and c["height"] <= 40
                           and contains([c["x"], c["y"], c["width"], c["height"]], center_x, center_y)]
-            if containers:
+            if containers and contains(clip, center_x, center_y):
                 control = min(containers, key=lambda c: c["width"] * c["height"])
                 intentional_clip = (clip[0] >= control["x"] and clip[1] >= control["y"]
                                     and clip[0] + clip[2] <= control["x"] + control["width"]
