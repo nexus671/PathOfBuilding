@@ -1253,7 +1253,7 @@
 	<File name="Modules/JourneyUpgrades.lua" part="program" sha1="bb121d8115f693518ae9431fefff305fdb46878f" />
 	<File name="Modules/LootFilterAccount.lua" part="program" sha1="8d3b431416c28b60eebf246a105e980a2913b05f" />
 	<File name="Modules/LootFilterAudio.lua" part="program" sha1="492d64c2ec148944b3d548c3c84ada8021497387" />
-	<File name="Modules/LootFilterParser.lua" part="program" sha1="3addf37d1900044b82b0a2b3ce2481bccadc6f4d" />
+	<File name="Modules/LootFilterParser.lua" part="program" sha1="731abf087de0ab6c7f326b39e793ca1cd89d177b" />
 	<File name="Modules/LootFilters.lua" part="program" sha1="087179cd87a1c5f76fc4c2c1ea92904da137fda6" />
 	<File name="Modules/Main.lua" part="program" sha1="6a77993392e839506b9594e8e0802b13d6bed530" />
 	<File name="Modules/ModParser.lua" part="program" sha1="460cd22503a0a7a79a4d11dba165725a61dd918a" />
