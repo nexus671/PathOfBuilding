@@ -10,8 +10,8 @@ end
 local function button(x,y,w,label,callback)
 	return new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function() safely(callback) end)
 end
-local function edit(x,y,w,h,value,prompt,limit)
-	return new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,h},value or "",prompt,h>24 and "^%C\t\n" or nil,limit,nil,h > 24 and 16 or nil)
+local function edit(x,y,w,h,value,prompt,limit,clearable)
+	return new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,h},value or "",prompt,h>24 and "^%C\t\n" or nil,limit,nil,h > 24 and 16 or nil,nil,clearable)
 end
 local ui=require("Modules.PlanningUI")
 local rows=ui.rows
@@ -65,6 +65,8 @@ function Canvas:Draw()
 		local a,b=self:Position(node);SetDrawColor(0.85,0.85,0.85);self.art:draw("mastery",node.icon,a,b,self.scale*2)
 	end
 	local allocated={[self.tree.start]=true}
+	local desired={};for _,id in ipairs(self.selected().desired or {}) do desired[id]=true end
+	local comparison=self.comparison
 	local avoided={}; for _,id in ipairs(self.avoided and self.avoided() or {}) do avoided[id]=true end
 	for _,id in ipairs(self.selected().nodes) do allocated[id]=true end
 	local planned=copyTable(allocated);for id in pairs(self.preview or {}) do planned[id]=true end
@@ -72,7 +74,10 @@ function Canvas:Draw()
 		local a,b=self:Position(node)
 		for _,other in ipairs(node.links) do if id < other then
 			local c,d=self:Position(self.tree.nodes[other])
-			if allocated[id] and allocated[other] then SetDrawColor(0.75,0.61,0.25) elseif planned[id] and planned[other] then SetDrawColor(0.25,0.8,0.75) else SetDrawColor(0.18,0.22,0.29) end
+			if allocated[id] and allocated[other] then
+				if comparison and (not comparison.before[id] or not comparison.before[other]) then SetDrawColor(0.3,0.95,0.5) else SetDrawColor(0.75,0.61,0.25) end
+			elseif comparison and comparison.before[id] and comparison.before[other] then SetDrawColor(0.9,0.3,0.3)
+			elseif planned[id] and planned[other] then SetDrawColor(0.25,0.8,0.75) else SetDrawColor(0.18,0.22,0.29) end
 			local dx,dy=c-a,d-b; local length=math.max(1,math.sqrt(dx*dx+dy*dy)); local ox,oy=-dy/length,dx/length
 			if math.max(a,c)>=0 and math.min(a,c)<=self.width and math.max(b,d)>=0 and math.min(b,d)<=self.height then
 				DrawImageQuad(nil,a+ox,b+oy,c+ox,d+oy,c-ox,d-oy,a-ox,b-oy)
@@ -92,9 +97,10 @@ function Canvas:Draw()
 			local active=allocated[id]
 			SetDrawColor(1,1,1);self.art:draw(kind..(active and "Active" or "Inactive"),node.icon or "Wormhole",a,b,self.scale*2)
 			if node.kind == "small" then frame=active and "PSSkillFrameActive" or "PSSkillFrame" else frame=frame..(active and "Allocated" or "Unallocated") end
-			SetDrawColor(avoided[id] and 1 or 0.9,avoided[id] and 0.25 or 0.9,avoided[id] and 0.25 or 0.9)
+			if avoided[id] or comparison and comparison.before[id] and not allocated[id] then SetDrawColor(1,0.25,0.25)
+			elseif desired[id] then SetDrawColor(0.2,1,0.85) else SetDrawColor(0.9,0.9,0.9) end
 			local highlight=node.kind=="keystone" and "KeystoneFrameCanAllocate" or node.kind=="notable" and "NotableFrameCanAllocate" or node.kind=="gateway" and "WormholeFrameHighlight" or "PSSkillFrameHighlighted"
-			self.art:draw("frame",(self.focus == id or self.preview and self.preview[id] or self.matches and self.matches[id]) and highlight or frame,a,b,self.scale*2)
+			self.art:draw("frame",(self.focus == id or desired[id] or self.preview and self.preview[id] or self.matches and self.matches[id]) and highlight or frame,a,b,self.scale*2)
 			if id==self.tree.start then self.art:draw("startNode","AtlasPassiveSkillScreenStart",a,b,self.scale*2) end
 		end
 		local dist=(cursorX-x-a)^2+(cursorY-y-b)^2
@@ -119,6 +125,8 @@ function Canvas:Draw()
 	if self.hover then
 		local node=self.tree.nodes[self.hover];self.tooltip:Clear();self.tooltip:AddLine(18,node.name)
 		for _,stat in ipairs(node.stats) do self.tooltip:AddLine(14,stat) end
+		if desired[self.hover] then self.tooltip:AddLine(14,"Desired route target") end
+		self.tooltip:AddLine(14,"Shift-click: toggle desired target")
 		self.tooltip:AddLine(14,"Double click to connect this node")
 		SetDrawLayer(nil,100);self.tooltip:Draw(cursorX,cursorY,1,1,main.viewPort);SetDrawLayer(nil,0)
 	end
@@ -129,7 +137,10 @@ function Canvas:OnKeyDown(key,doubleClick)
 	if key=="LEFTBUTTON" and px>=self.width-132 and py>=self.height-104 and px<self.width-12 and py<self.height-12 then
 		local b=self.mapBounds;self.centerX=b[1]+(px-self.width+128)/112*(b[3]-b[1]);self.centerY=b[2]+(py-self.height+100)/84*(b[4]-b[2]);return
 	end
-	if key == "LEFTBUTTON" and self.hover then self.focus=self.hover; self.onSelect(self.hover);if doubleClick and self.onActivate then self.onActivate(self.hover) end
+	if key == "LEFTBUTTON" and self.hover then
+		self.focus=self.hover
+		if self.onIntent and (IsKeyDown("SHIFT") or self.intentMode and self.intentMode~="Select nodes") then self.onIntent(self.hover,IsKeyDown("SHIFT") and "desired" or self.intentMode=="Mark desired" and "desired" or "avoided")
+		else self.onSelect(self.hover);if doubleClick and self.onActivate then self.onActivate(self.hover) end end
 	elseif key == "LEFTBUTTON" or key == "RIGHTBUTTON" then
 		local x,y=GetCursorPos(); self.drag={x=x,y=y,centerX=self.centerX,centerY=self.centerY}; return self
 	end
@@ -152,14 +163,16 @@ function Panel.Open(build,source,layout)
 	local width=layout and layout.width or math.min(1180,main.screenW-40); local height=layout and layout.height or math.min(820,main.screenH-50)
 	local inspector=math.max(260,math.min(width-600,layout and (layout.inspectorWidth or layout.restore and layout.restore.inspectorWidth) or 260))
 	local graphWidth=width-inspector-48; local graphHeight=height-262; local side=graphWidth+32
-	local controls,undo,avoided,redo={},{},{},{}
+	local controls,undo,avoided,redo={},{},copyTable(draft.avoided or {}),{}
 	local preferred
 	local pointUsage,routeAvailable
 	local function current()
 		local result=copyTable(draft); result.title=controls.title.buf; result.budget=assert(tonumber(controls.budget.buf),"Enter a point budget"); result.notes=controls.notes.buf
+		if result.avoided~=nil or #avoided>0 then result.avoided=copyTable(avoided) end
 		return atlas.validate(result)
 	end
 	local function refresh(id)
+		if draft.avoided~=nil or #avoided>0 then draft.avoided=copyTable(avoided) end
 		if controls.canvas.tree.version ~= draft.version then
 			controls.canvas.tree=atlas.tree(draft.version);controls.canvas.art=require("Modules.AtlasArt").load(draft.version); controls.canvas:Fit(); avoided={}
 			controls.results:SetList({}); controls.matchCount.label="Search names and modifiers"
@@ -171,7 +184,7 @@ function Panel.Open(build,source,layout)
 		if controls.strategySummary then
 			local counts={};for _,id in ipairs(draft.nodes) do local mechanic=strategy.mechanic(controls.canvas.tree.nodes[id]);counts[mechanic]=(counts[mechanic] or 0)+1 end
 			local parts={};for name,count in pairsSortByKey(counts) do parts[#parts+1]=name.." "..count end
-			local lines={#parts>0 and table.concat(parts," | ") or "Allocate nodes to build your strategy.",report.stats[1] and (report.stats[1].count.."x "..report.stats[1].text) or "Selected bonuses will appear here."}
+			local lines={#parts>0 and table.concat(parts," | ") or "Allocate nodes to build your strategy.",#(draft.desired or {}).." desired | "..#avoided.." avoided | "..report.counts.small.." small nodes | "..report.counts.gateway.." gateways"}
 			controls.strategySummary.list=ui.rows(lines,graphWidth-16,14)
 		end
 		local budget=tonumber(controls.budget.buf)
@@ -217,7 +230,7 @@ function Panel.Open(build,source,layout)
 	controls.canvas=new("AtlasTreeCanvas"):AtlasTreeCanvas({16,96,graphWidth,graphHeight},atlas.tree(draft.version),function() return draft end,function(id) refresh(id) end)
 	controls.canvas.avoided=function() return avoided end
 	controls.status=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,70,0,14},"")
-	controls.search=edit(side,96,180,24,"",nil,160)
+	controls.search=edit(side,96,180,24,"",nil,160,true)
 	controls.search.placeholder="Search nodes"
 	local function findNodes(recenter)
 		local mechanic=controls.mechanic:GetSelValue();local filtered=mechanic~="All mechanics" and mechanic or nil
@@ -267,30 +280,30 @@ function Panel.Open(build,source,layout)
 	end
 	local function snapshot() return {plan=copyTable(draft),avoided=copyTable(avoided)} end
 	local function remember() undo[#undo+1]=snapshot();if #undo>40 then table.remove(undo,1) end;redo={} end
-	local function change(nextPlan) remember();draft=nextPlan;ui.draft(build,"atlas");syncEditors();refresh() end
+	local function change(nextPlan) remember();draft=atlas.validate(nextPlan);avoided=copyTable(draft.avoided or {});controls.canvas.comparison=nil;ui.draft(build,"atlas");syncEditors();refresh() end
+	controls.canvas.onIntent=function(id,kind) safely(function() change(require("Modules.AtlasTargets").toggle(current(),id,kind)) end) end
 	controls.allocate=button(side,height-188,124,"Connect path",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.connect(current(),{controls.canvas.focus},avoided)) end)
 	controls.remove=button(side+136,height-188,124,"Remove branch",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.remove(current(),controls.canvas.focus)) end)
 	controls.undo=button(16,height-86,64,"Undo",function() assert(#undo>0,"No changes to undo");redo[#redo+1]=snapshot();local saved=table.remove(undo);draft=saved.plan;avoided=saved.avoided;syncEditors();refresh() end)
 	controls.redo=button(86,height-86,64,"Redo",function() assert(#redo>0,"No changes to redo");undo[#undo+1]=snapshot();local saved=table.remove(redo);draft=saved.plan;avoided=saved.avoided;syncEditors();refresh() end)
 	controls.fit=button(156,height-86,70,"Fit tree",function() controls.canvas:Fit() end)
-	controls.help=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,height-106,0,14},"^7Wheel: zoom | Drag: pan | Double click: connect")
+	controls.help=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,height-106,0,14},"^7Wheel: zoom | Drag: pan | Shift-click: desire | Double click: connect")
 	controls.avoid=button(side,height-156,124,"Avoid selected",function()
 		local id=assert(controls.canvas.focus,"Select a node first"); local tree=atlas.tree(draft.version)
 		assert(id ~= tree.start,"Cannot avoid the start")
 		for _,allocated in ipairs(draft.nodes) do assert(id ~= allocated,"Remove this node before avoiding it") end
-		for _,other in ipairs(avoided) do if id == other then return end end
-		remember();avoided[#avoided+1]=id; controls.avoid.label="Avoid ("..#avoided..")";refresh()
+		change(require("Modules.AtlasTargets").toggle(current(),id,"avoided"))
 	end)
-	controls.clearAvoid=button(side+136,height-156,124,"Clear avoided",function() remember();avoided={}; controls.avoid.label="Avoid selected";refresh() end)
+	controls.clearAvoid=button(side+136,height-156,124,"Clear avoided",function() local next=current();next.avoided={};change(next);controls.avoid.label="Avoid selected" end)
 	controls.notes=edit(16,110,width-32,height-250,draft.notes,nil,8000)
 	controls.stats=button(side,height-124,260,"Allocated stats",function()
-		local report=atlas.report(current()); local lines={string.format("%d allocated | %d small | %d notables | %d keystones | %d gateways",report.used,report.counts.small,report.counts.notable,report.counts.keystone,report.counts.gateway),"Repeated lines are counts, not effective combined values."}
-		lines[#lines+1]="Keystones: "..(#report.keystones > 0 and table.concat(report.keystones,", ") or "none")
-		lines[#lines+1]="Notables: "..(#report.notables > 0 and table.concat(report.notables,", ") or "none")
-		for _,entry in ipairs(report.stats) do lines[#lines+1]=entry.count.."x "..entry.text end
-		for _,line in ipairs(report.limitations) do lines[#lines+1]=line end
-		local entries={}
-		for _,id in ipairs(draft.nodes) do local node=atlas.tree(draft.version).nodes[id];for _,stat in ipairs(node.stats) do entries[#entries+1]={id=id,label=stat,category=strategy.mechanic(node),details={node.name,stat,"Verbatim bonus; keystone interactions are not combined."}} end end
+		local plan=current();local report=atlas.report(plan);local summary=require("Modules.AtlasTargets").summary(plan)
+		local lines={string.format("%d allocated | %d small | %d notables | %d keystones | %d gateways",report.used,report.counts.small,report.counts.notable,report.counts.keystone,report.counts.gateway),summary.connectedDesired.." / "..summary.desired.." desired nodes connected",report.remaining.." points available","Counts describe allocations, not effective map odds or farming income."}
+		for _,warning in ipairs(summary.warnings) do lines[#lines+1]=warning end
+		local entries={{id="summary",label="Allocated investment overview",category="Overview",details=lines}}
+		for _,row in ipairs(summary.mechanics) do entries[#entries+1]={id="mechanic-"..row.name,label=row.name.." | "..row.total.." points",category=row.name,details={row.name,row.small.." small nodes",row.notable.." notables",row.keystone.." keystones",row.gateway.." gateways","Small nodes can carry valuable bonuses; they are not assumed to be wasted travel."}} end
+		for _,keystone in ipairs(summary.keystones) do local details={keystone.name,"Review the whole keystone, including restrictions and tradeoffs."};for _,stat in ipairs(keystone.stats) do details[#details+1]=stat end;entries[#entries+1]={id="keystone-"..keystone.id,label=keystone.name.." | Keystone tradeoffs",category="Keystones",details=details} end
+		for _,id in ipairs(plan.nodes) do local node=atlas.tree(plan.version).nodes[id];for i,stat in ipairs(node.stats) do entries[#entries+1]={id=id.."-"..i,label=stat,category=strategy.mechanic(node),details={node.name,stat,"Verbatim bonus; keystone interactions are not combined."}} end end
 		browser.Open("Atlas bonuses by mechanic",entries)
 	end)
 	controls.browse=button(232,height-86,100,"Find nodes",function()
@@ -317,12 +330,19 @@ function Panel.Open(build,source,layout)
 		end
 		browser.Open("Compare Atlas routes",entries,{action="Use route",choose=function(entry) change(entry.plan) end})
 	end)
+	controls.targets=button(522,height-86,100,"Targets",function()
+		require("Classes.AtlasTargetsControl").Open(build,{current=current,change=change,selected=function() return controls.canvas.focus end,mode=function(value)
+			if value then controls.canvas.intentMode=value;controls.help.label="^7"..ui.fit(value=="Select nodes" and "Wheel: zoom | Drag: pan | Shift-click: desire | Double click: connect" or "Click nodes to "..value:lower().." | Targets: return to selection",graphWidth,14) end
+			return controls.canvas.intentMode or "Select nodes"
+		end})
+	end)
 	controls.tools=button(430,height-86,86,"Plan tools",function()
 		local entries={
 			{id="presets",label="Strategy starting points",details={"Connect up to three nearby notables for a mechanic.","Generated from this version's bundled tree, within your budget.","Editable starting routes, not recommendations for farming profit."}},
 			{id="compare",label="Compare with a saved plan",details={"Review added nodes, removed nodes and changed bonus lines.","Both plans must use the same Atlas version."}},
 			{id="history",label="Change history",details={#undo.." earlier states | "..#redo.." redo states","History includes routes, node exclusions, imports and budget changes."}},
 			{id="preferred",label="Prefer selected node in routes",details={"Use the selected node as a waypoint when comparing routes.",preferred and "Current: "..controls.canvas.tree.nodes[preferred].name or "No preferred waypoint."}},
+			{id="clearComparison",label="Clear comparison overlay",details={"Return to the current plan without saved-plan difference colours."}},
 		}
 		browser.Open("Atlas plan tools",entries,{closeOnChoose=false,action="Open",choose=function(entry)
 			main:ClosePopup()
@@ -334,11 +354,14 @@ function Panel.Open(build,source,layout)
 					local comparison=strategy.compare(plan,current());local lines={"Saved: "..plan.title,"Current draft: "..#comparison.added.." added, "..#comparison.removed.." removed"}
 					for _,node in ipairs(comparison.added) do lines[#lines+1]="+ "..node.name end;for _,node in ipairs(comparison.removed) do lines[#lines+1]="- "..node.name end
 					lines[#lines+1]="Changed bonus counts";for _,stat in ipairs(comparison.stats) do lines[#lines+1]=stat end
-					choices[#choices+1]={id=plan.id,label=plan.title,details=lines}
-				end end;browser.Open("Compare Atlas plans",choices)
+					choices[#choices+1]={id=plan.id,label=plan.title,details=lines,plan=plan}
+				end end;browser.Open("Compare Atlas plans",choices,{action="Show overlay",choose=function(choice)
+					local before={};for _,id in ipairs(choice.plan.nodes) do before[id]=true end;controls.canvas.comparison={before=before};controls.help.label="^7Green: added paths | Red: removed paths | Gold: shared paths"
+				end})
 			elseif entry.id=="history" then
 				local choices={};for i=#undo,1,-1 do local saved=undo[i];choices[#choices+1]={id=i,label="State "..i.." | "..#saved.plan.nodes.." points",details={saved.plan.title,#saved.plan.nodes.." points",#saved.avoided.." exclusions"},saved=saved,index=i} end
 				browser.Open("Atlas change history",choices,{action="Restore state",choose=function(choice) remember();draft=copyTable(choice.saved.plan);avoided=copyTable(choice.saved.avoided);syncEditors();refresh() end})
+			elseif entry.id=="clearComparison" then controls.canvas.comparison=nil;controls.help.label="^7Wheel: zoom | Drag: pan | Shift-click: desire | Double click: connect"
 			else preferred=controls.canvas.focus;refresh() end
 		end})
 	end)
@@ -370,6 +393,7 @@ function Panel.Open(build,source,layout)
 	controls.clearAvoid.enabled=function() return #avoided>0 end
 	if layout then
 		controls.close.shown=false
+		layout.tick=function() require("Modules.AtlasTargets").tick(build) end
 		layout.inspectorWidth=inspector
 		layout.viewState=function() return {centerX=controls.canvas.centerX,centerY=controls.canvas.centerY,scale=controls.canvas.scale,focus=controls.canvas.focus,page=controls.page:GetSelValue(),avoided=copyTable(avoided),undo=copyTable(undo),redo=copyTable(redo),preferred=preferred,inspectorWidth=inspector,search=controls.search.buf,mechanic=controls.mechanic:GetSelValue(),title=controls.title.buf,budgetText=controls.budget.buf,notes=controls.notes.buf} end
 		-- Keep unfinished editor text separate from the validated graph draft.
@@ -416,7 +440,7 @@ function Panel.Library(build,layout)
 	local store=build.savers.AtlasPlans; local controls,list={},{}
 	for _,plan in ipairs(store.plans) do list[#list+1]={label=plan.title.." ["..plan.version.."]",val=plan.id} end
 	controls.plans=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,32,568,24},list)
-	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,76,0,14},"^7"..(store.warning or "Keep up to eight farming strategies in this build."))
+	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,76,0,14},"^7"..(store.warning or "Keep farming strategies in this build. Save the build to persist them."))
 	local function selected() local choice=controls.plans:GetSelValue(); for _,plan in ipairs(store.plans) do if choice and plan.id == choice.val then return plan end end; error("Choose a saved plan") end
 	controls.open=button(16,112,160,"Open plan",function() local plan=selected(); main:ClosePopup(); Panel.Open(build,plan,layout) end)
 	controls.delete=button(188,112,160,"Delete plan",function() local plan=selected(); store:Remove(plan.id); main:ClosePopup(); Panel.Library(build,layout) end)

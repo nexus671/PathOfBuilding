@@ -21,6 +21,8 @@ function M.new(build)
 	end))
 	self.nav.controls.nav_text.tooltipText="Toggle normal / large planning text"
 	self.nav.controls.nav_tools=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{726,10,80,28},"Tools",function() require("Classes.PlanningToolsControl").Open(build) end))
+	self.nav.controls.nav_tools.label=function() return require("Modules.PlanningRecovery").hasPending(build) and "Tools *" or "Tools" end
+	self.nav.controls.nav_tools.tooltipText="Planning tools and local draft recovery. * means an earlier session has a draft to review."
 	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{822,10,function() return math.max(0,self.viewport.width-838) end,28})
 	function context:Draw()
 		local x,y=self:GetPos();local w=self:GetSize();local title=build.buildName or "Untitled build"
@@ -35,6 +37,8 @@ end
 function M:Remember(page)
 	local entry=self.cache[page];if not entry then return end
 	self.drafts[page]={plan=entry.layout.snapshot and entry.layout.snapshot(),view=entry.layout.viewState and entry.layout.viewState(),controls=require("Modules.PlanningUI").capture(entry.body.controls)}
+	local plan=self.drafts[page].plan;if page=="crafting" and plan and plan.kind=="workbench" then self.craftDrafts[plan.project.id]=plan end
+	if self.drafts[page].plan and (page=="filters" or page=="atlas" or page=="crafting" and self.drafts[page].plan.kind=="workbench") then require("Modules.PlanningRecovery").save(self.build,page,self.drafts[page]) end
 end
 function M:Show(page,source)
 	assert(pages[page],"Unknown planning page")
@@ -54,8 +58,17 @@ function M:Show(page,source)
 			self.cache.crafting=nil;self.drafts.crafting=nil;self:Show("crafting")
 		end
 		layout.openWorkbench=function(project)
+			if page~="crafting" then
+				local draft=self.craftDrafts[project.id];if draft and draft.project.startingItem~=project.startingItem then draft=nil end
+				self:Show("crafting",draft or {kind="workbench",project=project});return
+			end
+			local current=self.cache.crafting
+			if current and current.layout.snapshot then
+				local working=current.layout.snapshot();if working.kind=="workbench" then self.craftDrafts[working.project.id]=working end
+			end
 			self.page="crafting";self.cache.crafting=nil
 			local draft=self.craftDrafts[project.id]
+			layout.workbench=nil
 			if draft and draft.project.startingItem==project.startingItem then layout.workbench=draft end
 			if page=="crafting" then require("Classes.CraftingSimulatorControl").Open(self.build,project,layout)
 			else self:Show("crafting",draft or {kind="workbench",project=project}) end
@@ -76,6 +89,7 @@ function M:Show(page,source)
 			else require("Classes.CraftingProjectControl").Open(self.build,nil,nil,layout) end
 		else require("Classes.BuildProposalControl").Open(self.build,layout) end
 	else self.body=cached.body end
+	local active=self.cache[page];if active and active.layout.onShow then active.layout.onShow() end
 	self:UpdateControls()
 end
 function M:UpdateControls()
@@ -107,6 +121,9 @@ function M:Draw(viewport,events)
 		self:Show(self.page)
 	elseif not self.body then self:Show(self.page) end
 	local active=self.cache[self.page];if active and active.layout.tick then active.layout.tick() end
+	if active and active.layout.snapshot and (self.page=="filters" or self.page=="atlas" or self.page=="crafting") then
+		if not launch.headless and (not self.lastRecovery or GetTime()-self.lastRecovery>2000) then self.lastRecovery=GetTime();self:Remember(self.page) end
+	end
 	self:ProcessControlsInput(events or {},viewport)
 	SetDrawColor(0.065,0.075,0.09);DrawImage(nil,viewport.x,viewport.y,viewport.width,viewport.height)
 	SetDrawColor(0.15,0.17,0.2);DrawImage(nil,viewport.x,viewport.y+48,viewport.width,2)

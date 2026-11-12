@@ -410,7 +410,7 @@ function M.simulate(raw,recipe,options)
 	end
 	local successes,totalCost,totalActions,totalExecuted=0,0,0,0
 	local spent,missing,errors,times={},{},{},{}
-	local actionHistogram,costSamples,successfulCosts,routes={},{},{},{}
+	local actionHistogram,costHistogram,costSamples,successfulCosts,routes={},{},{},{},{}
 	local budgetExhausted,destroyedTrials=0,0
 	local recovery={restarts=0,stopped=0,salvaged=0}
 	local sample,sampleSuccess
@@ -470,6 +470,7 @@ function M.simulate(raw,recipe,options)
 		if not hit and not state.destroyed and at <= #recipe.steps and actions >= maxActions then budgetExhausted=budgetExhausted+1 end
 		local bucket=actionHistogram[actions] or {actions=actions,trials=0,successes=0};actionHistogram[actions]=bucket;bucket.trials=bucket.trials+1;if hit then bucket.successes=bucket.successes+1 end
 		costSamples[#costSamples+1]=cost;if hit then successfulCosts[#successfulCosts+1]=cost end
+		local costBucket=costHistogram[cost] or {cost=cost,trials=0,successes=0};costHistogram[cost]=costBucket;costBucket.trials=costBucket.trials+1;if hit then costBucket.successes=costBucket.successes+1 end
 		if not sample or hit and not sampleSuccess then sample,sampleSuccess=state,hit end
 		totalActions=totalActions+actions; totalCost=totalCost+cost
 	end
@@ -486,7 +487,10 @@ function M.simulate(raw,recipe,options)
 		meanActions=totalActions/trials,currencySpent=spent,unpriced=missing,transitionErrors=errors,limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
 		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units",
 		baseCost=baseCost,retainedSuccesses=retained,retentionLimit=retain,affixDistribution=affixDistribution,propertyDistribution=propertyDistribution,actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
-	if not next(missing) then result.meanCost=totalCost/trials; result.costPerSuccess=successes > 0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts) end
+	if not next(missing) then
+		result.meanCost=totalCost/trials;result.costPerSuccess=successes>0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts)
+		result.costDistribution={};for _,bucket in pairs(costHistogram) do result.costDistribution[#result.costDistribution+1]=bucket end;table.sort(result.costDistribution,function(a,b) return a.cost<b.cost end)
+	else for _,entry in ipairs(retained) do entry.cost=nil end end
 	result.recovery=recovery
 	return result
 end

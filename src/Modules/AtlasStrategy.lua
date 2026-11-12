@@ -10,7 +10,7 @@ function M.mechanic(node)
 	return "Other"
 end
 function M.costs(plan,avoid)
-	local tree=atlas.tree(plan.version);local blocked={};for _,id in ipairs(avoid or {}) do blocked[id]=true end
+	local tree=atlas.tree(plan.version);local blocked={};for _,id in ipairs(atlas.exclusions(plan,avoid)) do blocked[id]=true end
 	local costs={[tree.start]=0};local queue={tree.start}
 	for _,id in ipairs(plan.nodes) do costs[id]=0;queue[#queue+1]=id end
 	local index=1

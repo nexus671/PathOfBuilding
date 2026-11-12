@@ -552,7 +552,7 @@ function M.poll(build, force)
 				raw = assert(build.itemsTab.items[slot.selItemId],"Selected slot is empty").raw
 			end
 			M.status = {id=request.id,status="inspected",crafting=require("Modules.CraftingProjects").inspect(raw,request.query,request.limit)}
-			local ok,catalog=pcall(require("Modules.CraftingSimulator").catalog,raw,request.query,request.limit)
+			local ok,catalog=pcall(require("Modules.CraftingSimulator").catalog,raw,request.query,request.limit,request.initialState)
 			if ok then
 				M.status.crafting.nativeEngine=catalog
 				if request.action then

@@ -41,7 +41,14 @@ function M.Open(rule,save,conditions)
 		else if index==2 then changes.PlayAlertSound=false else changes.PlayAlertSound={tostring(index-2),"200"} end;changes.CustomAlertSound=false;changes.CustomAlertSoundOptional=false;changes.PlayAlertSoundPositional=false end
 	end)
 	ui.label(c,"iconLabel",48+column*2,414,"Map icon",14)
-	c.icon=new("DropDownControl"):DropDownControl(ui.anchor,{48+column*2,440,column,26},{"Keep icon","None","Diamond","Circle","Star","Triangle","Square"},function(index,value) if index==1 then changes.MinimapIcon=nil elseif index==2 then changes.MinimapIcon={"-1"} else changes.MinimapIcon={"1","Cyan",value} end end)
+	local shapes={"Keep icon","None"};for _,shape in ipairs(require("Modules.LootFilterAppearanceSettings").shapes) do shapes[#shapes+1]=shape end
+	c.icon=new("DropDownControl"):DropDownControl(ui.anchor,{48+column*2,440,column,26},shapes,function(index,value) local prior=original.styles.MinimapIcon;if index==1 then changes.MinimapIcon=nil elseif index==2 then changes.MinimapIcon={"-1"} else changes.MinimapIcon={prior and prior[1]~="-1" and prior[1] or "1",prior and prior[2] or "Cyan",value} end end)
+	button(c,"effects",16,482,w-32,"More sound, icon and beam options",function()
+		require("Classes.LootFilterEffectsControl").Open(parser.parse(nextRule().text).rules[1].styles,sample,function(styles)
+			for _,key in ipairs({"PlayAlertSound","PlayAlertSoundPositional","CustomAlertSound","CustomAlertSoundOptional","MinimapIcon","PlayEffect"}) do changes[key]=styles[key] or false end
+			c.sound:SelByValue("Keep sound");c.icon:SelByValue("Keep icon")
+		end)
+	end)
 	button(c,"conditions",16,h-48,180,"Advanced conditions",function() local next=nextRule();next.text=next.text:gsub("^%a+",c.action:GetSelValue());main:ClosePopup();conditions(next,save) end)
 	button(c,"cancel",w-320,h-48,140,"Cancel",function() main:ClosePopup() end)
 	button(c,"keepRule",w-164,h-48,148,"Keep appearance",function()

@@ -12,7 +12,7 @@ end
 local methods={
 	fossil="Fossil resonator",harvest_reforge="Harvest: reforge with a tagged modifier",harvest_augment="Harvest: add tagged / remove random",
 	harvest_resistance="Harvest: change elemental resistance",fracture="Fracturing Orb",influence_exalt="Influenced Exalted Orb",awakener="Awakener's Orb",
-	veiled_orb="Veiled Orb",unveil="Choose an unveil",dominance="Orb of Dominance",beast_aspect="Bestiary: Aspect skill",beast_prefix_suffix="Bestiary: prefix to suffix",
+	veiled_orb="Veiled Exalted Orb",unveil="Choose an unveil",dominance="Orb of Dominance",beast_aspect="Bestiary: Aspect skill",beast_prefix_suffix="Bestiary: prefix to suffix",
 	beast_suffix_prefix="Bestiary: suffix to prefix",beast_imprint="Bestiary: create magic imprint",restore_imprint="Restore imprint",
 	bench_reroll="Bench: reroll 1 or 3 modifiers",eldritch_implicit="Eldritch Ember / Ichor",eldritch_exalt="Eldritch Exalted Orb",eldritch_annul="Eldritch Orb of Annulment",
 	eldritch_chaos="Eldritch Chaos Orb",blessed="Blessed Orb",sacred="Sacred Orb",socket_bench="Bench: socket count / links",binding="Orb of Binding",
@@ -390,7 +390,7 @@ function A.extend(M,api)
 			if not conflict then state.affixes[#state.affixes+1]=right elseif random() < 0.5 then state.affixes={right} end
 			fill(model,state,random)
 		elseif method == "veiled_orb" then
-			assert(state.rarity == "RARE" and #state.affixes > 0,"Veiled Orb requires a rare item with modifiers")
+			assert(state.rarity == "RARE" and #state.affixes > 0,"Veiled Exalted Orb requires a rare item with modifiers")
 			for _,entry in ipairs(state.affixes) do assert(not contains(model.byId[entry.id].modTags,"unveiled_mod"),"The item already has an unveiled modifier") end
 			remove(model,state,random)
 			local choices={}; local candidates=pool(model,state,{source=model.veiled,ignoreBlocks=true})
@@ -562,8 +562,12 @@ function A.extend(M,api)
 		if state.veil then assert(api.counts(model,state)[state.veil.type] < cap(model,state)[state.veil.type],"No slot for the pending unveil") end
 		return result
 	end
-	function M.catalog(raw,query,limit)
+	function M.catalog(raw,query,limit,initialState)
 		local result=originalCatalog(raw,query,limit); local model=M.model(raw)
+		local state=initialState and M.validateState(model,initialState) or model.initial
+		local modifiers=require("Modules.CraftingModifiers");local inspection=modifiers.inspect(model,state);local rows=modifiers.filter(inspection,query,nil,nil,nil,"Eligible first")
+		result.modifierTable={total=#rows,totalWeight=inspection.totalWeight,note=inspection.note,rows={}}
+		for i=1,math.min(limit or 50,#rows) do result.modifierTable.rows[i]=copyTable(rows[i]) end
 		result.fossils=model.fossils; result.harvestTags=copyTable(tags); result.influences=copyTable(influences)
 		result.veiled={}; for i=1,math.min(limit or 50,#model.veiled) do local entry=model.veiled[i]; result.veiled[#result.veiled+1]={id=entry.id,text=table.concat(entry.mod," / "),weight=entry.weight,type=entry.mod.type} end
 		result.potentialInfluenced={}
@@ -571,7 +575,7 @@ function A.extend(M,api)
 			result.potentialInfluenced[#result.potentialInfluenced+1]={id=entry.id,text=table.concat(entry.mod," / "),influence=influenced(model,entry.id),level=entry.mod.level}
 		end end
 		result.dataPatch=A.data().patch
-		result.initialState=copyTable(model.initial)
+		result.initialState=copyTable(state)
 		if model.unresolvedEldritch then result.importWarning="At least one imported Eldritch implicit has an ambiguous tier; supply a structured implicit state before changing Eldritch implicits or using dominance." end
 		return result
 	end

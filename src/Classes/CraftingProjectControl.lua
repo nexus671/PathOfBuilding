@@ -127,6 +127,9 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 	end)
 	for _,name in ipairs({"copy","coe","native","preview","inspect","attach","copyExport","done","undoStep"}) do controls[name].enabled=#list > 0 end
 	controls.close=button(748,height-48,116,"Close",function() main:ClosePopup() end)
+	controls.inventory=button(252,height-48,180,"Item inventory",function()
+		require("Classes.CraftingInventoryControl").Open(build,{resume=function(project) if layout then layout.openWorkbench(project) else require("Classes.CraftingSimulatorControl").Open(build,project) end end})
+	end)
 	if layout then
 		ui.label(controls,"heading",16,18,"Crafting projects",24)
 		controls.projects.x=16;controls.projects.y=60;controls.projects.width=width-336
@@ -134,6 +137,7 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 		controls.edit.x=width-156;controls.edit.y=60;controls.edit.width=140;controls.edit.label="Edit project"
 		controls.libraryPage=new("DropDownControl"):DropDownControl(ui.anchor,{16,102,360,28},{"Item","Plan","Sharing"})
 		ui.tabs(controls,controls.libraryPage,{{"tab_item","Item","Item"},{"tab_plan","Plan","Plan"},{"tab_sharing","Sharing","Sharing & tools"}},16,102,440)
+		controls.inventory.x=width-196;controls.inventory.y=102
 		controls.details.x=16;controls.details.y=148;controls.details.width=width-32;controls.details.height=height-224
 		controls.details.shown=function() return controls.libraryPage:GetSelValue()=="Plan" end
 		controls.native.x=16;controls.native.y=404;controls.native.width=260;controls.native.height=32;controls.native.label="Open workbench"

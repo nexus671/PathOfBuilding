@@ -2,6 +2,8 @@
 -- Data-only PoE filter parsing. Unknown conditions produce an explained unknown,
 -- never a falsely certain hidden/shown result. Imports are not read from disk.
 local M={}
+local styleOptions=require("Modules.LootFilterAppearanceSettings");local colors,shapes={},{}
+for _,value in ipairs(styleOptions.colors) do colors[value]=true end;for _,value in ipairs(styleOptions.shapes) do shapes[value]=true end
 M.actions={SetTextColor=true,SetBorderColor=true,SetBackgroundColor=true,SetFontSize=true,PlayAlertSound=true,PlayAlertSoundPositional=true,
 	CustomAlertSound=true,CustomAlertSoundOptional=true,DisableDropSound=true,EnableDropSound=true,DisableDropSoundIfAlertSound=true,EnableDropSoundIfAlertSound=true,MinimapIcon=true,PlayEffect=true}
 M.numeric={AreaLevel=true,ItemLevel=true,DropLevel=true,Quality=true,LinkedSockets=true,Sockets=true,Width=true,Height=true,StackSize=true,GemLevel=true,MapTier=true,
@@ -46,7 +48,9 @@ function M.parse(raw)
 					local invalid
 					if key=="SetTextColor" or key=="SetBorderColor" or key=="SetBackgroundColor" then
 						invalid=#t<3 or #t>4;for _,v in ipairs(t) do local n=tonumber(v);if not n or n<0 or n>255 or n~=math.floor(n) then invalid=true end end
-					elseif key=="SetFontSize" then local n=tonumber(t[1]);invalid=#t~=1 or not n or n<1 or n>45 or n~=math.floor(n) end
+					elseif key=="SetFontSize" then local n=tonumber(t[1]);invalid=#t~=1 or not n or n<1 or n>45 or n~=math.floor(n)
+					elseif key=="MinimapIcon" then local size=tonumber(t[1]);invalid=not (#t==1 and size==-1) and (#t~=3 or not size or size<0 or size>2 or size~=math.floor(size) or not colors[t[2]] or not shapes[t[3]])
+					elseif key=="PlayEffect" then invalid=not (#t==1 and t[1]=="None") and (not colors[t[1]] or #t>2 or #t==2 and t[2]~="Temp") end
 					if invalid then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid "..key} end
 				else
 					local op="=";local first=t[1] or "";local prefix=first:match("^[<>=!]+")
@@ -81,6 +85,7 @@ function M.condition(c,item)
 	local value=item[c.keyword];if value==nil then return nil,"Missing "..c.keyword end
 	local op=c.operator;local values=c.values
 	if c.keyword=="SocketGroup" or c.keyword=="Sockets" and not tonumber(values[1]) then
+		if c.keyword=="Sockets" then value=item.SocketColours or value end
 		if type(value)~="string" then return nil,"Supply socket colours for "..c.keyword end
 		for _,pattern in ipairs(values) do
 			if c.keyword=="SocketGroup" then for group in value:gmatch("[^ ]+") do if socketMatch(group,pattern,op) then return true end end

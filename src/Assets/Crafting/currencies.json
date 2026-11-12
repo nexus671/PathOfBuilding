@@ -1,0 +1,1756 @@
+{
+  "_comment": "Generated GGG currency art. cspell:disable",
+  "copyright": "Item artwork (c) Grinding Gear Games.",
+  "source": {
+    "repo": "repoe-fork/repoe-fork.github.io",
+    "commit": "ae6d85a5c36857e08819852ab8732239294aba59"
+  },
+  "baseItemsSha256": "48afb07a5f40eb51552f90c17d53186469db282a2e759dab7b46e7f9d2a0f58b",
+  "items": {
+    "Metadata/Items/AtlasExiles/AddModToRareCrusader": {
+      "name": "Crusader's Exalted Orb",
+      "path": "Assets/Crafting/Currency/e67d016e45bfaa0d975a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Influence%20Exalts/CrusaderOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "bc6bfa0113055ff9866c8f5805d7a789a08cfc56532f391c8544918b80bcd27b"
+    },
+    "Metadata/Items/AtlasExiles/AddModToRareHunter": {
+      "name": "Hunter's Exalted Orb",
+      "path": "Assets/Crafting/Currency/065b5b8ec6fa2d78af24.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Influence%20Exalts/BasiliskOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "971c5f2f8e2afbea31f3d7a53058952ef66a6c78141ba9e2f86282511904d9de"
+    },
+    "Metadata/Items/AtlasExiles/AddModToRareRedeemer": {
+      "name": "Redeemer's Exalted Orb",
+      "path": "Assets/Crafting/Currency/159983290f7dcd751602.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Influence%20Exalts/EyrieOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0506b949e2322e04fa528750314ddfe3c4c64351e34c9eb38142e636f83d1d7d"
+    },
+    "Metadata/Items/AtlasExiles/AddModToRareWarlord": {
+      "name": "Warlord's Exalted Orb",
+      "path": "Assets/Crafting/Currency/22593df1e690dd3fd88f.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Influence%20Exalts/ConquerorOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "801ff16f659b2cbc22dde4ec5d7f388c0215fd1fc5cbadd05cbd6b4f76b16fb9"
+    },
+    "Metadata/Items/AtlasExiles/ApplyInfluence": {
+      "name": "Awakener's Orb",
+      "path": "Assets/Crafting/Currency/5972d2d48b4e49b7eb8a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/TransferOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "5572880f224331e33fb103dc770e53696109f3c6a71bf73f8d3a9e7b072e530d"
+    },
+    "Metadata/Items/Currency/CurrencyAddModToMagic": {
+      "name": "Orb of Augmentation",
+      "path": "Assets/Crafting/Currency/11ddfa7d4a41b3184596.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyAddModToMagic.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "550590cf001996c6e81d7fd8f2812713befdc81ae24e07ac6f2699e47729aa16"
+    },
+    "Metadata/Items/Currency/CurrencyAddModToRare": {
+      "name": "Exalted Orb",
+      "path": "Assets/Crafting/Currency/b6df87cb82aafc7fdda9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyAddModToRare.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "5fff196a8cc1d43f7a5f13767fa5e533af11fe52d44864c76d1f8d21bbd9deab"
+    },
+    "Metadata/Items/Currency/CurrencyAddModToRareElder": {
+      "name": "Elder's Exalted Orb",
+      "path": "Assets/Crafting/Currency/2c30d6b21417e5be6fff.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/SecretsoftheAtlas/ElderExaltedOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "27c2b9eaee36eb4f7fe2ac8902c094b3bdcdc3ed83b307faba9d0b8da7f1242b"
+    },
+    "Metadata/Items/Currency/CurrencyAddModToRareShaper": {
+      "name": "Shaper's Exalted Orb",
+      "path": "Assets/Crafting/Currency/55fd7b63f6e51cc07298.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/SecretsoftheAtlas/ShaperExaltedOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "96944b4e2a4eb542544b5f5375b1b82599d91a8da49c9e288d6220ae0b76b79c"
+    },
+    "Metadata/Items/Currency/CurrencyAddZanaInfluence": {
+      "name": "Orb of Remembrance",
+      "path": "Assets/Crafting/Currency/14e538b0ba4144c5c160.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/SecretsoftheAtlas/ZanaPinnacleOrb1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "5973947cbe2fc6ac96025b9a51f19326bcdc8d037cf501d3448a5c55c633f1a6"
+    },
+    "Metadata/Items/Currency/CurrencyAfflictionOrbFossils": {
+      "name": "Fossilised Delirium Orb",
+      "path": "Assets/Crafting/Currency/37f23035a036dfc1db67.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delirium/DeliriumOrbFossils.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "fbf4a3345b929b359a11bd09509212f6d0f4c23f6cbf6eb6a3e78b7f1e5077e6"
+    },
+    "Metadata/Items/Currency/CurrencyArmourQuality": {
+      "name": "Armourer's Scrap",
+      "path": "Assets/Crafting/Currency/f3bee36504af7453ea82.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyArmourQuality.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d450bf241a2cbb373d51de36bb944d23087197d2eab4b8cb79efa570786833c2"
+    },
+    "Metadata/Items/Currency/CurrencyConflictOrb": {
+      "name": "Orb of Conflict",
+      "path": "Assets/Crafting/Currency/b4be4bb540bd80e1f052.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/ConflictOrbRank1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "bc03c1505af1cd221b600f5f001348dc660c438a943306ff4bfbae7220323fbb"
+    },
+    "Metadata/Items/Currency/CurrencyConvertToNormal": {
+      "name": "Orb of Scouring",
+      "path": "Assets/Crafting/Currency/141b8801937fdb05c570.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyConvertToNormal.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f406175ae527c209fb609a90d469e6c9d3a6a5de084f146bfbc48a587fe2b2b2"
+    },
+    "Metadata/Items/Currency/CurrencyCorrupt": {
+      "name": "Vaal Orb",
+      "path": "Assets/Crafting/Currency/8fa36762c9b8ce6c7324.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyVaal.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "7b10c0e3c82dad27afe23331ca02a350fe5bebc47afa6ddefdff0f67f70b8513"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingAbyss": {
+      "name": "Hollow Fossil",
+      "path": "Assets/Crafting/Currency/2e917b6fe5bd59f23b15.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/AmberEye.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "a830ff75c81a612b2cc4004de061d89d90067df971588c3d3037050d9c3e31b7"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingAttackMods": {
+      "name": "Serrated Fossil",
+      "path": "Assets/Crafting/Currency/77d4009fabf67bd467df.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/SerratedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "58700a034c1e95f3e240e57824128e2d5e15efa7acaf495dbd6587ba49f4f8bd"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingBleedPoison": {
+      "name": "Corroded Fossil",
+      "path": "Assets/Crafting/Currency/78368157235a7a4c495b.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/CorrodedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "173ffc8efac644441705c7da5b7cd069445a6ba48a9e6c49bdb457b1917b9942"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingCasterMods": {
+      "name": "Aetheric Fossil",
+      "path": "Assets/Crafting/Currency/199a46d91cc6b3fd1a4a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/AethericFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1a54b2132475e1cf889e9673229a75564da5e653f4863757145e7090c463b724"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingChaos": {
+      "name": "Aberrant Fossil",
+      "path": "Assets/Crafting/Currency/fcd9b533fa59a96f7fcf.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/AbberantFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "efab1b49903306023e5979ddb5cb3ca92e85888c126afd4212a9e106bb22d10d"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingCold": {
+      "name": "Frigid Fossil",
+      "path": "Assets/Crafting/Currency/af0ce1760e120ef86ef0.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/AmberFang.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e7f204ae6e0a548734a7bd204976fce1e36c22c76c2ba9894271d935e9633bde"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingCorruptEssence": {
+      "name": "Glyphic Fossil",
+      "path": "Assets/Crafting/Currency/2a23e6d111139d61ae9e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/GlyphicFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d61269620d48b758f8149b1d1282784bd878df4b541ba8a3ccd5b8f6c47cd1e4"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingDefences": {
+      "name": "Dense Fossil",
+      "path": "Assets/Crafting/Currency/03fd8ecb579cf9c46ea7.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/DenseFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "586a0fc86ac7cf2f82224c8a637984ce1c3e9bc0c968f350840191f65f755443"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingElemental": {
+      "name": "Prismatic Fossil",
+      "path": "Assets/Crafting/Currency/d7a6183680deab3cbfb4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/PrismaticFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "7a883e159c31dff69b06e2fa3866e55095f75a8f38d10dc662ce40f4a6e853c8"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingEnchant": {
+      "name": "Deft Fossil",
+      "path": "Assets/Crafting/Currency/40a7327ce0a886a3ca7b.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/EnchantedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "dc89f0c5b5407444ce7a7b6dcc3c380b9ff47864ae155edb2fcd94754c6246b9"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingFire": {
+      "name": "Scorched Fossil",
+      "path": "Assets/Crafting/Currency/da42119c9980b2d86d6b.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/AmberFireFly.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "3b9f94f2a6b4f7cbe8d9a8e0e42e0d45e0db5fd52fd4ed21353e9c4a67440ebe"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingGemLevel": {
+      "name": "Faceted Fossil",
+      "path": "Assets/Crafting/Currency/7b01efe98d235b13c8e0.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/FacetedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1ea9431a0e272a29adb8c8c5cf0df5d8dacf32a4b5544f0c58511f853a3ea82c"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingLife": {
+      "name": "Pristine Fossil",
+      "path": "Assets/Crafting/Currency/80d9bcbb47c94e07a09e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/PristineFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "24e150e538bd8cfaeee4035726104faa72f6e618651b551b803432cd1308bec8"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingLightning": {
+      "name": "Metallic Fossil",
+      "path": "Assets/Crafting/Currency/4b29ecb59d581c2b8eb8.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/MetallicFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c3ec9bcb2299792330329e7abebd91189375462fa613d505694342ac75f7d6b8"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingLuckyModRolls": {
+      "name": "Sanctified Fossil",
+      "path": "Assets/Crafting/Currency/04b01b4d96d7701f854f.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/GildedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "9c6354998e5c086630a7610ba5ca4e36610daefbef5032ff7472b79bf55652fd"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingMana": {
+      "name": "Lucent Fossil",
+      "path": "Assets/Crafting/Currency/8f0af703addedb1daa2a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/LucentFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "62ce9a772ec08791f0c23d5224ea2e1802b28b2031f2dbb445f18bef6f624514"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingMinionsAuras": {
+      "name": "Bound Fossil",
+      "path": "Assets/Crafting/Currency/3ae6bed19180fe18556e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/ResonatingFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f286b047000bcbc49d74895adeca9c481a6476db28ba249ae65dfb321e07371c"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingMirror": {
+      "name": "Fractured Fossil",
+      "path": "Assets/Crafting/Currency/6f75c3426b3aa69110d2.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/FracturedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "b6528008f5ee7469a62d329335a027ea9b38df219b83a5311c66cd25082d4db3"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingPhysical": {
+      "name": "Jagged Fossil",
+      "path": "Assets/Crafting/Currency/41505440145a60258c41.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/JaggedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "6e14e2d39751a8d97be10374d4e1169a2f1ba03c68f46d2abb0d36dcd2cc377a"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingQuality": {
+      "name": "Opulent Fossil",
+      "path": "Assets/Crafting/Currency/2b646b3f9d49e270fe2a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/PerfectFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1afd66c1cf4bf52298767cb053df598756e57f4bb2bcab209845d5e60d07c1f1"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingRandom": {
+      "name": "Tangled Fossil",
+      "path": "Assets/Crafting/Currency/49dd0d4bea0712ecb23a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/TangledFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "2108719d7ea2e48e3dbe3a4386f2aeb4ec7cf81ebeeea7d80336d74d6b4293ef"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingSellPrice": {
+      "name": "Gilded Fossil",
+      "path": "Assets/Crafting/Currency/9c9c26c1ce3613e20f02.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/SanctifiedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "6e9b95812474d727247f5733dba67503cdf380e2666b8e6e19756177704cb631"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingSockets": {
+      "name": "Fundamental Fossil",
+      "path": "Assets/Crafting/Currency/b19ab641e3059ecdfb72.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/EncrustedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "35a0a32d89dba278c3be7e49869ad1d9c4d9f862df3e705ebdf867a0bb80f74b"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingSpeed": {
+      "name": "Shuddering Fossil",
+      "path": "Assets/Crafting/Currency/c90514dcd69f3297c0a2.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/ShudderingFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0467a7de10eceb7835f2ecd74012c08b1f96945d00f75f2868ece535d49f74fe"
+    },
+    "Metadata/Items/Currency/CurrencyDelveCraftingVaal": {
+      "name": "Bloodstained Fossil",
+      "path": "Assets/Crafting/Currency/6013d17f42d65837fa58.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/BloodstainedFossil.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e9691624ea8c73c4923f4bd63b705120275487d82a89e7b27455490ba372fb0f"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchAddModToRare": {
+      "name": "Eldritch Exalted Orb",
+      "path": "Assets/Crafting/Currency/75ebfae9ef24db534311.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/EldritchExaltedOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "427b6cf0abdc7825792f5ee567e1e42820e9e5c7e7df6478449462aa85dddf65"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchEmber1": {
+      "name": "Lesser Eldritch Ember",
+      "path": "Assets/Crafting/Currency/6c5f3bc3ccc0f78171d1.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CleansingFireOrbRank1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "fe105e2b0be852c146e25f30319ca617da4e18ad3edf27cacd264703962f8d56"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchEmber2": {
+      "name": "Greater Eldritch Ember",
+      "path": "Assets/Crafting/Currency/f200d8604bff3a424ba3.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CleansingFireOrbRank2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "cefdb8e260aa43d3a17da610d6d0a31d3f69f419bbd84605711fbabd21580469"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchEmber3": {
+      "name": "Grand Eldritch Ember",
+      "path": "Assets/Crafting/Currency/9eaaaa94c73c46c61dc3.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CleansingFireOrbRank3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "65785d1a1342529c7c08c139084a217422805693e82148bd2e95a7391086ad23"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchEmber4": {
+      "name": "Exceptional Eldritch Ember",
+      "path": "Assets/Crafting/Currency/e9fd9382550a777dffb4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CleansingFireOrbRank4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "b68ee9a69db1805c6e430fcbf7afe8b6335d27db13c417ffb225858a36c5a852"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchIchor1": {
+      "name": "Lesser Eldritch Ichor",
+      "path": "Assets/Crafting/Currency/53da7dadc15bb561d084.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/TangleOrbRank1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "22530c4bac0fb4b96cb58aee14c30c3c488dccecd8452f0fc53b371ffe5e55a9"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchIchor2": {
+      "name": "Greater Eldritch Ichor",
+      "path": "Assets/Crafting/Currency/ca33e9096afd7445a97c.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/TangleOrbRank2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "b72bb316d172c440f89f3298f33f7c86945e0b6181467d9a79e4a23a4bc7758a"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchIchor3": {
+      "name": "Grand Eldritch Ichor",
+      "path": "Assets/Crafting/Currency/376b6d41c3f11cafb131.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/TangleOrbRank3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "fcb63805c186ce0a5c6c07e08f9144ac8789e041c8264898450519d130c057c1"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchIchor4": {
+      "name": "Exceptional Eldritch Ichor",
+      "path": "Assets/Crafting/Currency/9bfd52c8bc5b35fb1154.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/TangleOrbRank4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0458e57ba38c960916301834ea6454090bcc3da1c04ce0ae55a3df06f49128a4"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchRemoveMod": {
+      "name": "Eldritch Orb of Annulment",
+      "path": "Assets/Crafting/Currency/9bad0edc4e2cdf1f7cd5.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/EldritchAnnulmentOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d4e36b22492593df94b6926168a5957b38a962320c01ee1ba42460c2b44a4882"
+    },
+    "Metadata/Items/Currency/CurrencyEldritchRerollRare": {
+      "name": "Eldritch Chaos Orb",
+      "path": "Assets/Crafting/Currency/f2a1ab7adc8c68a229dc.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/EldritchChaosOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "41affdb6741f547ce4bd79d6803d5319ddcbfc46d343b76d9df3c699cf21b683"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnger1": {
+      "name": "Muttering Essence of Anger",
+      "path": "Assets/Crafting/Currency/bb2a311f35a11a7287a4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anger2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "38cbec31fba6d032e4ce0f2f21f9f20ee00151fd8fb98204cebcefa85c0fa805"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnger2": {
+      "name": "Weeping Essence of Anger",
+      "path": "Assets/Crafting/Currency/43f334fc4a06b6f70010.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anger3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "a9b91507f4792b9ef68c4f96e83d666eb61e4998f3238d964d9acab5c5c5de2e"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnger3": {
+      "name": "Wailing Essence of Anger",
+      "path": "Assets/Crafting/Currency/068a8e5a2bf21ce45483.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anger4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "2df9283d24292d7e54e69981ec1f5d9ba7cafc70cdd6eb01503a7279ac3a0d0d"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnger4": {
+      "name": "Screaming Essence of Anger",
+      "path": "Assets/Crafting/Currency/98fcb9e19b0311d02b45.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anger5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "65353eae5994e9e707d515c6f81f8deeefa21ab17264a77f9ea8d0796cdbabb9"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnger5": {
+      "name": "Shrieking Essence of Anger",
+      "path": "Assets/Crafting/Currency/c760ea190f551c7a74ba.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anger6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c1502b06419a1a1f50a19114cb0246cc33a0875991b4d5a8d1a7782fdf21edd4"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnger6": {
+      "name": "Deafening Essence of Anger",
+      "path": "Assets/Crafting/Currency/75e5de5fb98aab01cccf.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anger7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "b41f5d40c95686fe9829c05cfe6e8a14ce0efbcf6a7094a0149cf4cd54e622f7"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnguish1": {
+      "name": "Wailing Essence of Anguish",
+      "path": "Assets/Crafting/Currency/405e57c7da23d2115fba.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anguish4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "99f2fd6428b99f721ed7f1e096a8e825d80a913126101c29975fe913d50f60e5"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnguish2": {
+      "name": "Screaming Essence of Anguish",
+      "path": "Assets/Crafting/Currency/8b705559f6101a538bd9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anguish5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "14ed737da95f1230222d8794a9b9b558b9bde02e240b874a3eed4238119f421e"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnguish3": {
+      "name": "Shrieking Essence of Anguish",
+      "path": "Assets/Crafting/Currency/8ca773ab4f1b746dae8b.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anguish6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "ff6bc70bb4e9918c484977da7e8b0000b1fcc5d5e34ec48e6427351b4de41197"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceAnguish4": {
+      "name": "Deafening Essence of Anguish",
+      "path": "Assets/Crafting/Currency/657f6cf648c2cb40b442.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Anguish7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0441a775726d4a9a228739f9c60594aafc4ffe8400e6eade4757dfd8132cbdfb"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceContempt1": {
+      "name": "Whispering Essence of Contempt",
+      "path": "Assets/Crafting/Currency/9f93369cec342eec0be3.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Contempt1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "b2db304733867eac9d0338993201aba77c3dbc8a84bbfc39f32e3976739fa7a5"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceContempt2": {
+      "name": "Muttering Essence of Contempt",
+      "path": "Assets/Crafting/Currency/87a573020897feb808b0.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Contempt2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "46c67995cb1aa7ae65a6c6c8d7c843c93e444d5c635eb8358177e87e66b5f67d"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceContempt3": {
+      "name": "Weeping Essence of Contempt",
+      "path": "Assets/Crafting/Currency/aebe2cc05122791be2f6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Contempt3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1c0f5c9895234bc5be969ae52acc4795c7216d3aba2469dc4c3765ad5177facb"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceContempt4": {
+      "name": "Wailing Essence of Contempt",
+      "path": "Assets/Crafting/Currency/972ec31d27573e573568.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Contempt4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "ac0f0efeec7844eb82c7469996a5d67062c6b9b0f562f9a4e54f8af1a6bfb6da"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceContempt5": {
+      "name": "Screaming Essence of Contempt",
+      "path": "Assets/Crafting/Currency/b93f90e2c4e934c78091.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Contempt5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "b717ee26f246ec0d4aa820eeac81114febcc3d0aa8332b00644b318cf902c860"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceContempt6": {
+      "name": "Shrieking Essence of Contempt",
+      "path": "Assets/Crafting/Currency/156c6b9d758faa5dddb3.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Contempt6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "5af3bf08fa2253b35fb75705b2a7ba5358318441e80bfd2f18bd9d5c1238708a"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceContempt7": {
+      "name": "Deafening Essence of Contempt",
+      "path": "Assets/Crafting/Currency/e157623163d21650f956.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Contempt7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "48033ce134373306f1cdc9753ccae6ce874eb108a2098b6788864b05ec0673b6"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDelirium1": {
+      "name": "Essence of Delirium",
+      "path": "Assets/Crafting/Currency/a3d9f08cd1df56627ee8.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Madness1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1864c8a448b1712af1a8000f3c2b5532db34c9bd6c14b81772bba38a0b53b097"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDoubt1": {
+      "name": "Weeping Essence of Doubt",
+      "path": "Assets/Crafting/Currency/46fca3015c14bb1cb406.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Doubt3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "85baf0853e6c988938d641c188b44205806d01d432874fdc28f33c83dc869a91"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDoubt2": {
+      "name": "Wailing Essence of Doubt",
+      "path": "Assets/Crafting/Currency/8d2f6f777cacf9a49169.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Doubt4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "cef802ac4642164bdd56d2850f0da5a59272fd4aa3727a7762158ad666683987"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDoubt3": {
+      "name": "Screaming Essence of Doubt",
+      "path": "Assets/Crafting/Currency/6d28a2c8ff63de8b030d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Doubt5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "ed24454d7f66b7d026298c3ed8177e94d1e6b988151d3f03b61362907f682dc0"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDoubt4": {
+      "name": "Shrieking Essence of Doubt",
+      "path": "Assets/Crafting/Currency/4e37c06ecc5eed415d94.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Doubt6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "af8e793f8380ad2defa641c72653c43ea66eac95724b293c373592b572bdfeb7"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDoubt5": {
+      "name": "Deafening Essence of Doubt",
+      "path": "Assets/Crafting/Currency/87ce44672c2fc126b114.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Doubt7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "8fa89e4ae612589986e409d53f3065b78d0f765729a761a6de67e4d41870f969"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDread1": {
+      "name": "Screaming Essence of Dread",
+      "path": "Assets/Crafting/Currency/53cfb301559b7cdc4525.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Dread5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f89c7e8c6c6295db327592e4dac9608e6184cec61bbae9095f29cec710e6ca8e"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDread2": {
+      "name": "Shrieking Essence of Dread",
+      "path": "Assets/Crafting/Currency/fe86082218b7110ff841.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Dread6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d407305cf981dc1c4c7e4499f43d16b6dfdf211b0ba591a7e526db80a5535f32"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceDread3": {
+      "name": "Deafening Essence of Dread",
+      "path": "Assets/Crafting/Currency/81315de97d4c6af04db2.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Dread7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1946a5662542d8fc528a6764caa48c78ea26da4738d7eb6132500792f76dec1a"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceEnvy1": {
+      "name": "Screaming Essence of Envy",
+      "path": "Assets/Crafting/Currency/394d7ef3c223fea515c9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Envy5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "77954702868166b15e024d208e2935e1ac816b156fdeadc1208b224281022509"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceEnvy2": {
+      "name": "Shrieking Essence of Envy",
+      "path": "Assets/Crafting/Currency/85359301c9588dee4658.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Envy6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "ad3522ada0d363b004b042f920b6f670539cadda03c3541cd114f050d6873651"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceEnvy3": {
+      "name": "Deafening Essence of Envy",
+      "path": "Assets/Crafting/Currency/07886598bb4d4ef3232c.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Envy7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "07f4e16ccf8929338f1ffad10e3c36148cf79c25455397bc766305f737e7ecaf"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceFaridun1": {
+      "name": "Essence of Desolation",
+      "path": "Assets/Crafting/Currency/af9c66f31be9dbfde672.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/EssenceofDesolation.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "efd18cd83d0659701553174a6809c8e3bce7758fef2ccddde46d2dc0dcfe3ad6"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceFear1": {
+      "name": "Muttering Essence of Fear",
+      "path": "Assets/Crafting/Currency/8f493d6aafa92713c9f7.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Fear2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "268a356f8f48d9c26e94e5fceff933f06ee70f551c26836b6b9aa40f603f078f"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceFear2": {
+      "name": "Weeping Essence of Fear",
+      "path": "Assets/Crafting/Currency/ff8cbce0beec64c31b97.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Fear3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "a6f62928565d43cf2320c9960a859f8a51205d8a997a6214b08eb919708d5695"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceFear3": {
+      "name": "Wailing Essence of Fear",
+      "path": "Assets/Crafting/Currency/11705e1928ecbf83b380.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Fear4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "66ff30ac9141d76fa2b4e8416071f5ce0588cbfc2db141a89e2408b769d524c5"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceFear4": {
+      "name": "Screaming Essence of Fear",
+      "path": "Assets/Crafting/Currency/e141dac63e09059ca7a2.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Fear5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "6b17bd8706f6af12010a5e0801b451aaa16d36264843898ce8e9fa4ae957f7fb"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceFear5": {
+      "name": "Shrieking Essence of Fear",
+      "path": "Assets/Crafting/Currency/1b314d199728d5afd846.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Fear6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "98dcb908cd62ce83451ca4985c454fe018ba25d535d3a91d412b9844eecf64da"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceFear6": {
+      "name": "Deafening Essence of Fear",
+      "path": "Assets/Crafting/Currency/16aafda65ca0fc6831c0.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Fear7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "96005c00f86984f8c73eeb6945fcf982bdb087a80cad9d12167d3af29fd6b7bf"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceGreed1": {
+      "name": "Whispering Essence of Greed",
+      "path": "Assets/Crafting/Currency/b0fd148eb09e7d26b4d3.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Greed1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "34c19944f2f0b7fb5fe50ab9d763d983e12b45cac1edb70a99066a36a5b057d0"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceGreed2": {
+      "name": "Muttering Essence of Greed",
+      "path": "Assets/Crafting/Currency/489b9eae4d0248f312f2.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Greed2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1bd0623c1d976a4f5ff7a88bba526ff9693ac69dfea37f42d526733de81f4a82"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceGreed3": {
+      "name": "Weeping Essence of Greed",
+      "path": "Assets/Crafting/Currency/faa408b06ba3f9bfdb9a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Greed3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "26c83afc265926694dcd49e93e810d146f77ef3dc48bdee814c6810d2619e580"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceGreed4": {
+      "name": "Wailing Essence of Greed",
+      "path": "Assets/Crafting/Currency/4a9fbde723378b6c471a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Greed4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0620c4e146a48cf726104e1567a50f16bf6a952e862f82eb7498b5be55effa3d"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceGreed5": {
+      "name": "Screaming Essence of Greed",
+      "path": "Assets/Crafting/Currency/07d0766633e11be4cb43.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Greed5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "218855526a373e05f858bf4c6226ed891710a448833f693c9613a9a8a2511519"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceGreed6": {
+      "name": "Shrieking Essence of Greed",
+      "path": "Assets/Crafting/Currency/bb90a00bbefbd65685b8.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Greed6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "13c4268a25d5f78499e4f7cebcfd6b87c59fd98b20c3510cbd9667643d9d93dd"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceGreed7": {
+      "name": "Deafening Essence of Greed",
+      "path": "Assets/Crafting/Currency/15c2649f7e948bb9d2e5.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Greed7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "ea2298b16cd91ccec01d796caac9c5bf7e43ba966d0b05aacb59a967f7938a77"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHatred1": {
+      "name": "Whispering Essence of Hatred",
+      "path": "Assets/Crafting/Currency/5e9f73f32b8b8054fb5a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Hatred1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e685d12b90067395afb30c25c67da5737a74f552041bc704bbcd122eac79a8a7"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHatred2": {
+      "name": "Muttering Essence of Hatred",
+      "path": "Assets/Crafting/Currency/bf3248fa4aaf9e440ccf.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Hatred2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "8b780592d6f75d2cf43db1be0129a5a0a26583f05351d04c6331d8336ea56f96"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHatred3": {
+      "name": "Weeping Essence of Hatred",
+      "path": "Assets/Crafting/Currency/444ff468aabb1cf397ef.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Hatred3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "a000bff6d9dd26b3320ffeebc975fb97592746c847eea2b05f9fab6102c1003b"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHatred4": {
+      "name": "Wailing Essence of Hatred",
+      "path": "Assets/Crafting/Currency/d6198548f11f07fcd5d7.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Hatred4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1e7bc1be40e6546e787b549183bb0f75cf167a1fe40f8b490a59e251402cb8b7"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHatred5": {
+      "name": "Screaming Essence of Hatred",
+      "path": "Assets/Crafting/Currency/83c3cf51fd376fa150b1.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Hatred5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d141b80f39685346430c1746bc71a701ea2ea0554b10bb69944cee994439dfc2"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHatred6": {
+      "name": "Shrieking Essence of Hatred",
+      "path": "Assets/Crafting/Currency/36e39e7f82dcb03db47d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Hatred6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "20948f2163c432bfa9de3c21f7854976099823141c8d4f420771ca7ea2521cb7"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHatred7": {
+      "name": "Deafening Essence of Hatred",
+      "path": "Assets/Crafting/Currency/594b14393a6a24c80255.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Hatred7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e1370c086b7946e83c820bb9dfa824ea9516e722c076b761ae8193b0ad7135f6"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHorror1": {
+      "name": "Essence of Horror",
+      "path": "Assets/Crafting/Currency/3f604cf37da8ee776f3c.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Horror1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "92a189fe1f9be215f1f1a84bdca53ef9163d9c6eec0ab0e3aef9846ee2d5f488"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceHysteria1": {
+      "name": "Essence of Hysteria",
+      "path": "Assets/Crafting/Currency/44fb0bfc79cf2d1149c4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Terror1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f29623d0c9ea922a0aeaac5e2e01391f6c9a804527b3505108331bfa622bb106"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceInsanity1": {
+      "name": "Essence of Insanity",
+      "path": "Assets/Crafting/Currency/f29d4438a5f4ef5a42d4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Insanity1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "46f3561fb402eaf94ea4ae5d2cb03c49ff7cc3c3b5aa518c62edb8cb3679b93d"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceLoathing1": {
+      "name": "Wailing Essence of Loathing",
+      "path": "Assets/Crafting/Currency/812d4a13e5417b40223c.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Loathing4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d0d328fb94e0abe01cdec6f9c469fbc6d1a38d553d1ee08fca16e887438b3fb1"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceLoathing2": {
+      "name": "Screaming Essence of Loathing",
+      "path": "Assets/Crafting/Currency/3d163ba216bb05fc54a6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Loathing5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d9bac860ae23dd5e4855906bb7070d0807be2570ffcf137b06dd6b8fadc93f3e"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceLoathing3": {
+      "name": "Shrieking Essence of Loathing",
+      "path": "Assets/Crafting/Currency/0550e7e48a4d7775c826.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Loathing6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "39160a1df4a3370b91b8edc69b452e72e05c24a6a07ad9ae9ac633580c7a57f6"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceLoathing4": {
+      "name": "Deafening Essence of Loathing",
+      "path": "Assets/Crafting/Currency/1a69c260f10957431e9c.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Loathing7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "7834756f039c47b05fd66d65d5adab7b80763fdb21cfc644b064d0b13b2252b8"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceMisery1": {
+      "name": "Screaming Essence of Misery",
+      "path": "Assets/Crafting/Currency/b5e845f59b4e3692d8c7.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Misery5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f286efd5c073994b14a9205c1bc8eaf40fc96ac84667a490e23e628f5f6cb3c6"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceMisery2": {
+      "name": "Shrieking Essence of Misery",
+      "path": "Assets/Crafting/Currency/333c4046999d8dd1b21e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Misery6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "988df9812f800151b6669aca89bffd5019183ca30d22a920cd61588dcd4618fd"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceMisery3": {
+      "name": "Deafening Essence of Misery",
+      "path": "Assets/Crafting/Currency/52aae293118054dd6889.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Misery7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "82161dda296f4f4d87c513dc1920465f6b7877e6e06867f16759e893a1b90c01"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceRage1": {
+      "name": "Weeping Essence of Rage",
+      "path": "Assets/Crafting/Currency/edf647a288da0aaa8d6f.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Rage3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "8641d7e600e38af3ccb886872e50f5ba2af66d93ed37132c1e75d3c0f4e157f8"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceRage2": {
+      "name": "Wailing Essence of Rage",
+      "path": "Assets/Crafting/Currency/d393ee87d05ed0234714.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Rage4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "8b92b2a3c253b02d1335298a47dccddd8559313a29b5b65a86bda9faeefcd6ae"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceRage3": {
+      "name": "Screaming Essence of Rage",
+      "path": "Assets/Crafting/Currency/6ad4ad28406cb6bb629e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Rage5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "7347d600ae723c022fa102525965366c94b13ccfb497ae1f356d610b5eb3c2f3"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceRage4": {
+      "name": "Shrieking Essence of Rage",
+      "path": "Assets/Crafting/Currency/7c8b8d9983b3a20ed06d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Rage6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "fff8a6dc051384f35e18219fa78b2fd2254df64073b68a4a92958574a3be4d33"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceRage5": {
+      "name": "Deafening Essence of Rage",
+      "path": "Assets/Crafting/Currency/2702de3b25f78b0ca631.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Rage7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "ee555d04e6c9bbef5582c3cfbfb0e94d34d46d29dc77746acbfe20c77ca65e8c"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceScorn1": {
+      "name": "Screaming Essence of Scorn",
+      "path": "Assets/Crafting/Currency/4a58c0237db21d184804.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Scorn5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "71ccb40a9ada5015a9b0a26f0e2f112608a76e08794aff9a987a7297023286f5"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceScorn2": {
+      "name": "Shrieking Essence of Scorn",
+      "path": "Assets/Crafting/Currency/e2f8a28f2d3f8f7b43a8.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Scorn6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "fe017f580a51709a7cd0cb1f4f49c2f70de26f36d3a9722a523c181a43f6d670"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceScorn3": {
+      "name": "Deafening Essence of Scorn",
+      "path": "Assets/Crafting/Currency/e7efbab88cfeee570b01.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Scorn7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c2e0a06cf55e3235be7ae432129f3b1b44e150e80cf712b1c992e46295e2728e"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSorrow1": {
+      "name": "Muttering Essence of Sorrow",
+      "path": "Assets/Crafting/Currency/0f6f5ac34d39773f4bab.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Sorrow2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c3c9acc534b46d96dee8fa0d6dcec6d1f2b6dd4ca3b34788c76a7359df4394af"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSorrow2": {
+      "name": "Weeping Essence of Sorrow",
+      "path": "Assets/Crafting/Currency/45abd6555b8da3bdadd8.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Sorrow3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "ced8c56f82895fb21369d139bb19979a27bffdddddbbe6cd2e0c82f4e0510e4f"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSorrow3": {
+      "name": "Wailing Essence of Sorrow",
+      "path": "Assets/Crafting/Currency/8f27296084671b19f01e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Sorrow4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f419cf8ec498e849b6e2b131c9669bfedb0fbe8babedef5cc852446ace2327a6"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSorrow4": {
+      "name": "Screaming Essence of Sorrow",
+      "path": "Assets/Crafting/Currency/47fe970baf8471c43833.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Sorrow5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "cf5e5750782a860bd8b26ff398e0f4104b23d6c97f252ed06000e35867274042"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSorrow5": {
+      "name": "Shrieking Essence of Sorrow",
+      "path": "Assets/Crafting/Currency/e8b972322045a7ca24db.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Sorrow6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e779090dfa89a419293d18cce8ffbe8fe6d1474970263f422ca35f54ab445d6e"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSorrow6": {
+      "name": "Deafening Essence of Sorrow",
+      "path": "Assets/Crafting/Currency/a0e943255f4391c0fd3f.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Sorrow7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "26ee6ea2365e764824c60d13d69ad0ba0180ad3b7dd6bc5fd393ab85b771b8a7"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSpite1": {
+      "name": "Wailing Essence of Spite",
+      "path": "Assets/Crafting/Currency/19283e699272e9ef9831.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Spite4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "fe6a1634ec1d7644369b036cd78a35e41275ba302c6eeacfd52c18a4b7cac2ed"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSpite2": {
+      "name": "Screaming Essence of Spite",
+      "path": "Assets/Crafting/Currency/f228ff061753a0fd0af1.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Spite5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "df8b1b301940c08a296d3881f4ab3f64980ebc03902099aa4536875ee228fca0"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSpite3": {
+      "name": "Shrieking Essence of Spite",
+      "path": "Assets/Crafting/Currency/e51ae01fccd7d4190606.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Spite6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1148deb056e89ae46caf421899a8ae26c15967e8feed2516e6735f3c69efb09f"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSpite4": {
+      "name": "Deafening Essence of Spite",
+      "path": "Assets/Crafting/Currency/61eeca42aee2713f00e9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Spite7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "7a0661c77adb83c647324b4a0b2b7f7be6ae7d92e520cd43a2c0d7a38f884299"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSuffering1": {
+      "name": "Weeping Essence of Suffering",
+      "path": "Assets/Crafting/Currency/ae9e9218bd6854d4b602.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Suffering3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d8764e5f476473778ba6a29d7a0ec06507e14a55bd2269ed630ef97885595a2b"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSuffering2": {
+      "name": "Wailing Essence of Suffering",
+      "path": "Assets/Crafting/Currency/539032bd7ceb2be251cb.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Suffering4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "990453a6008683616cff35b9dd56fde025aaa0483f8e2be686bfc78cb19b18fa"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSuffering3": {
+      "name": "Screaming Essence of Suffering",
+      "path": "Assets/Crafting/Currency/2313193f963beabaa5ae.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Suffering5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "56bbc681aec829b0afdf909585254ade87b68106241e4e794839c5a74728a1af"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSuffering4": {
+      "name": "Shrieking Essence of Suffering",
+      "path": "Assets/Crafting/Currency/329fdc705bf683ed70f6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Suffering6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "750983965907d21138a1099f4f820962fc3303ef80f48e696c7c14b73d005553"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceSuffering5": {
+      "name": "Deafening Essence of Suffering",
+      "path": "Assets/Crafting/Currency/78238ee04a7f39b5d4e9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Suffering7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "75ceb6a2e8c28d85f83950ebf9e85b23d60244cab7c6fa08133222618d684ece"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceTorment1": {
+      "name": "Muttering Essence of Torment",
+      "path": "Assets/Crafting/Currency/4026687f72fd1187458d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Torment2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "3a3ee38c7b0329be69419257c1edfe6390c7c69c6b4f6e37419b929490609853"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceTorment2": {
+      "name": "Weeping Essence of Torment",
+      "path": "Assets/Crafting/Currency/84ca6113b666efd98cae.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Torment3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "49076e2767cb35e605d5ba2a1c6daa10bbd9fb31b63e38ab6df0e5d9a2787df8"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceTorment3": {
+      "name": "Wailing Essence of Torment",
+      "path": "Assets/Crafting/Currency/7e6d1f28d32a3f4f610a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Torment4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "57d2cb39d787bc01b436f2b1d44978707f61ff53ec30a5faf1673e3016938f05"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceTorment4": {
+      "name": "Screaming Essence of Torment",
+      "path": "Assets/Crafting/Currency/8139728e70180aed8c2e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Torment5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "4f230ff7ec44034ef17bbde9870c6f4c81f20f38ab88af85b5c5951eb4652f96"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceTorment5": {
+      "name": "Shrieking Essence of Torment",
+      "path": "Assets/Crafting/Currency/329e8fa47a08033b6407.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Torment6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "74d7b2d68956d2b70cd25cfcb1fb8af9dc45feeebbe76b936123d7adc7ca7c2d"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceTorment6": {
+      "name": "Deafening Essence of Torment",
+      "path": "Assets/Crafting/Currency/65e6ceb2884e13330927.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Torment7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "7dc7830fe60a40b434c49108800bc5fdb93e1b6e5116b3fef2cf860e869d7b2a"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWoe1": {
+      "name": "Whispering Essence of Woe",
+      "path": "Assets/Crafting/Currency/d34a63624b521e2304e6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Woe1.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "91bf2848b863a763399e18d547c9ccfd7953d00c1b2ade4ed2679dc6059f4715"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWoe2": {
+      "name": "Muttering Essence of Woe",
+      "path": "Assets/Crafting/Currency/4828414faab06150d54d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Woe2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d159f8e91c62491dfa99b031d967cfa01ff6cce2189984a53a322dc15056beb7"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWoe3": {
+      "name": "Weeping Essence of Woe",
+      "path": "Assets/Crafting/Currency/193b6e9de00d3f55ff31.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Woe3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "a33bd9a9cbb42c18b0abb765016dd51c89cd95b97e7b4fd48997f6abd535d95e"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWoe4": {
+      "name": "Wailing Essence of Woe",
+      "path": "Assets/Crafting/Currency/d0f8f28a5a4619ab1cac.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Woe4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c96e87b521be639f57a1d3f2c90d6ff22253c8fe1cd4045aecfc77287b78da4a"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWoe5": {
+      "name": "Screaming Essence of Woe",
+      "path": "Assets/Crafting/Currency/0da93546f1a7b2add2b4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Woe5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "43c972f0484e697682df2e74b37003bb651d6bd03951d2da69265cc417e6a0af"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWoe6": {
+      "name": "Shrieking Essence of Woe",
+      "path": "Assets/Crafting/Currency/5f893c2854e49ae3bf51.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Woe6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "62c21278d8f853e7804b1b43e1f9d539f6b1c72cc2e71455886cffb732c59464"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWoe7": {
+      "name": "Deafening Essence of Woe",
+      "path": "Assets/Crafting/Currency/0c0d1a2e7d8f29e0d990.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Woe7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "9dbedb7f0dc8908907cc8940d77761bfb78aa652bf908aa51f442c0e74de609f"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWrath1": {
+      "name": "Weeping Essence of Wrath",
+      "path": "Assets/Crafting/Currency/54615b0fe8585d4bf21e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Wrath3.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0a4d054bc1a8759cc1664f10dd481c56cdd703b2a9aaa5c310117a4508aef849"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWrath2": {
+      "name": "Wailing Essence of Wrath",
+      "path": "Assets/Crafting/Currency/23dab06c8c0ba33914d9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Wrath4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "2b05e6daaab86ab4e9be6df4b2f6ae3e13231cee7de40b5b98eb4bc8e33d24c8"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWrath3": {
+      "name": "Screaming Essence of Wrath",
+      "path": "Assets/Crafting/Currency/1dddc837f254687d4047.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Wrath5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "edf9601f6f8eec59354bd8621adb634f543e129dce39707afaf86b08c286db39"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWrath4": {
+      "name": "Shrieking Essence of Wrath",
+      "path": "Assets/Crafting/Currency/b5d8134ed8bcf62b1c2b.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Wrath6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "493ff52a692fd7277b221fba50dd722f37976bb8f73bf37d68bc3c5fc98d660a"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceWrath5": {
+      "name": "Deafening Essence of Wrath",
+      "path": "Assets/Crafting/Currency/089ddfb47ae8ffc91c5b.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Wrath7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "fed2db1515cb4bc4277ae9f183f02aaffa02d791fe0b817d78702c0d8d0d19e6"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceZeal1": {
+      "name": "Wailing Essence of Zeal",
+      "path": "Assets/Crafting/Currency/70675abeecff7c1634ab.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Zeal4.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "9f7f079f9e3cb6729c1e4e8138fc1dda885bc3affbfefceda7c7fe628be0cb82"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceZeal2": {
+      "name": "Screaming Essence of Zeal",
+      "path": "Assets/Crafting/Currency/adf5bf84db6aaeddd9ce.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Zeal5.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "ff77dc3aee480557aae48cdcac57dacd1dcb593ecfc886d56d0655e318f0a086"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceZeal3": {
+      "name": "Shrieking Essence of Zeal",
+      "path": "Assets/Crafting/Currency/3e833248fc97b4df74d9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Zeal6.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "6e8460251d838cc4a8344605ad7d525a1a7ee509069565f4ab4f81c5f67f0fb3"
+    },
+    "Metadata/Items/Currency/CurrencyEssenceZeal4": {
+      "name": "Deafening Essence of Zeal",
+      "path": "Assets/Crafting/Currency/59047a39b2c6f9dc907f.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Essence/Zeal7.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0a7a1cfd884f938f353565bc12d9e1b460f6d1963fe2fad9ef7f0867572a8f16"
+    },
+    "Metadata/Items/Currency/CurrencyFlaskQuality": {
+      "name": "Glassblower's Bauble",
+      "path": "Assets/Crafting/Currency/b40bdebd162835da3f6a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyFlaskQuality.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "2b016c0a8539b7526d87fb5c10661595dd482c7dcca6265e86aca2be2d97cd52"
+    },
+    "Metadata/Items/Currency/CurrencyFractureRare": {
+      "name": "Fracturing Orb",
+      "path": "Assets/Crafting/Currency/412cdfecadffdea3a3da.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/FracturingOrbCombined.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1eafed523ff6595c26a250f69476e6403610342a08c09a68bceaefbe2c33676b"
+    },
+    "Metadata/Items/Currency/CurrencyHellscapeAddModToRare": {
+      "name": "Tainted Exalted Orb",
+      "path": "Assets/Crafting/Currency/4e4db0272ca9764e8206.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Hellscape/HellscapeExaltedOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c0028b7f1a08828c5c752c2a90b08a299f69bb06a1511b9c8bc826516cd7f4ae"
+    },
+    "Metadata/Items/Currency/CurrencyHellscapeArmourQuality": {
+      "name": "Tainted Armourer's Scrap",
+      "path": "Assets/Crafting/Currency/521e4647aae8361d2dbb.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Hellscape/HellscapeArmourersScrap.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "6d4fbb86dbc27270d93ca19242253478cec92741c5586d61666a97a2a877a710"
+    },
+    "Metadata/Items/Currency/CurrencyHellscapeRerollRare": {
+      "name": "Tainted Chaos Orb",
+      "path": "Assets/Crafting/Currency/1a680d4437607acfff39.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Hellscape/HellscapeChaosOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "7d9332969e173a351f5451af455e8993d1e2ca8bcbb2c35c7b34de16045d6c68"
+    },
+    "Metadata/Items/Currency/CurrencyHellscapeRerollSocketColours": {
+      "name": "Tainted Chromatic Orb",
+      "path": "Assets/Crafting/Currency/7cb1f392eadd2d8c3cac.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Hellscape/HellscapeChromaticOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "2f7b6115cb3c138f77bf40737e9f12d5fdc1595920eca545a08f4637edbc1e41"
+    },
+    "Metadata/Items/Currency/CurrencyHellscapeRerollSocketLinks": {
+      "name": "Tainted Orb of Fusing",
+      "path": "Assets/Crafting/Currency/28d89848d48c0ea548a0.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Hellscape/HellscapeOrbOfFusing.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "55d9f5b60d831ccbdf73c1399144693dfbbe71e8a87cfab279fac560f7ee0465"
+    },
+    "Metadata/Items/Currency/CurrencyHellscapeRerollSocketNumbers": {
+      "name": "Tainted Jeweller's Orb",
+      "path": "Assets/Crafting/Currency/c5dfb3e99856e8f16e50.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Hellscape/HellscapeJewellersOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d4fd0f5bfaaac7ffe23942bbdfc8622252e5965826d3f5e7bd2f6f56dc69ce3a"
+    },
+    "Metadata/Items/Currency/CurrencyHellscapeWeaponQuality": {
+      "name": "Tainted Blacksmith's Whetstone",
+      "path": "Assets/Crafting/Currency/36f9fa563b5b3696940d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Hellscape/HellscapeBlacksmithWhetstone.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "072b034345117585d90763e8e19b9b3056393520f215c15fd43ab9efe0792bd2"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityAttack": {
+      "name": "Abrasive Catalyst",
+      "path": "Assets/Crafting/Currency/e6d2b984d6bd3e9da5a6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/AbrasiveCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "31514ab9cd2901fe7286aed66ba02079a6142686e3172892337fdc282f60948d"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityAttribute": {
+      "name": "Intrinsic Catalyst",
+      "path": "Assets/Crafting/Currency/c59f048c87ac41c0c5ef.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/IntrinsicCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "b0a4a17645ba7721c6749d59292b20fc89491e05930ff4af1e0f0057bab6ddc3"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityCaster": {
+      "name": "Imbued Catalyst",
+      "path": "Assets/Crafting/Currency/2a7650462c89b1660842.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/ImbuedCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d2c64b10b7347bc81a203e356ec27154a2c71834dd7f3cace463a72292ea35ff"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityCritical": {
+      "name": "Unstable Catalyst",
+      "path": "Assets/Crafting/Currency/b38b33559437e46121d9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/CriticalModifierCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e2f74d3f10fb7208c759b2c7bd6f81f0de7d08a7e8cd991be6546c57bfb86c2e"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityDefense": {
+      "name": "Tempering Catalyst",
+      "path": "Assets/Crafting/Currency/62cb8625d8a9409c65bd.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/TemperingCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c1c58f86db2227d0a9e1c11d6eb8d0134e39146d8645e300671ea5985976fe41"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityElemental": {
+      "name": "Turbulent Catalyst",
+      "path": "Assets/Crafting/Currency/676476d3063affd79a33.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/TurbulentCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e668095b99f5675b82d20ffeeec8985eee14e6a75a82383b32ffa45f4ae67804"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityPhysicalChaos": {
+      "name": "Noxious Catalyst",
+      "path": "Assets/Crafting/Currency/e2ae159fe5964045ede6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/ChaosPhysicalCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c733eea2e087cb99764fe0cb23074fcfe5ae03c986aab7399daa2e8b7481a451"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityPrefix": {
+      "name": "Sinistral Catalyst",
+      "path": "Assets/Crafting/Currency/bfc2b3db3f22adb9ce5c.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/QualityPrefixCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e3a527dbc02483ea54b3e074a5a16df3970c4a7126cd763f20733c164e0eef81"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityResistance": {
+      "name": "Prismatic Catalyst",
+      "path": "Assets/Crafting/Currency/9f142f62f129bdc8154c.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/PrismaticCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "9dda75fb6f3c21df4354a838b17c8d9779ead9d88f30493a7a3c189d24a55fb4"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityResource": {
+      "name": "Fertile Catalyst",
+      "path": "Assets/Crafting/Currency/521834d1bafa20e71973.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/FertileCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "29cb4d0265d4bb8200d426162100a3730356cd746ee84b96e7ac8036f0cd63d5"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualitySpeed": {
+      "name": "Accelerating Catalyst",
+      "path": "Assets/Crafting/Currency/8ed9d78dcdba1d26b843.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/SpeedModifierCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "996460d6a6873b0dc5eff818a3522e3ee53edcdbad4292191a32bc1d569aa2a2"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualitySuffix": {
+      "name": "Dextral Catalyst",
+      "path": "Assets/Crafting/Currency/992aab1e605332d0d062.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/QualitySuffixCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "8f5141aa51b4da201400a8fe740504a5ec0bcbdf3022af620fd0f510c34bbbf8"
+    },
+    "Metadata/Items/Currency/CurrencyJewelleryQualityVaal": {
+      "name": "Tainted Catalyst",
+      "path": "Assets/Crafting/Currency/9fbb297cdf30584b2de6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Catalysts/TaintedCatalyst.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "90e89415551754ca0e44e34dd83f09d0ea364455bc9041f24d757745a252e295"
+    },
+    "Metadata/Items/Currency/CurrencyModValues": {
+      "name": "Divine Orb",
+      "path": "Assets/Crafting/Currency/8b54e89cb7b58e0fd4f0.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyModValues.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e1a5cd18166b2b38d82b2963db5328d649560c4ee4e0444a76b0f59d4362edad"
+    },
+    "Metadata/Items/Currency/CurrencyMutatedAddModToMagic": {
+      "name": "Foulborn Orb of Augmentation",
+      "path": "Assets/Crafting/Currency/3b95f7e867f695238d61.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Chayula/FoulbornAugmentation.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "cfbeadb3c22a07a84d87e515e7e9c179b5d83741ab8b24dc3a89647eb59f5558"
+    },
+    "Metadata/Items/Currency/CurrencyMutatedAddModToRare": {
+      "name": "Foulborn Exalted Orb",
+      "path": "Assets/Crafting/Currency/54cfd6076b9d891de2bc.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Chayula/FoulbornExalted.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "de0aca3f65bc9df9ee63f76d7053cb57f937ec383e326a32e4cc0b52ea46cb32"
+    },
+    "Metadata/Items/Currency/CurrencyMutatedUpgradeMagicToRare": {
+      "name": "Foulborn Regal Orb",
+      "path": "Assets/Crafting/Currency/ceb3dc49263a357ed9a4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Chayula/FoulbornRegal.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0dc15732af5af2894950c4169a98e717a5c60f958efa0f5200e3ebf4a70526e0"
+    },
+    "Metadata/Items/Currency/CurrencyRemoveMod": {
+      "name": "Orb of Annulment",
+      "path": "Assets/Crafting/Currency/f7aca9acdfa1ea4f7b7f.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/AnnullOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e90220d9a31bcbf535a005e25b62f371429331fd34d9bba95e1a0984d45acd6f"
+    },
+    "Metadata/Items/Currency/CurrencyRemoveZanaInfluence": {
+      "name": "Orb of Unravelling",
+      "path": "Assets/Crafting/Currency/fb4d507692489d82cfe9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/SecretsoftheAtlas/ZanaPinnacleOrb2.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "58d34a919d9527ea075a5c4d46b04a957d14b6d91f1166a66d0a637f118c67ca"
+    },
+    "Metadata/Items/Currency/CurrencyRerollDefences": {
+      "name": "Sacred Orb",
+      "path": "Assets/Crafting/Currency/6e85cb676c70a1106a68.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/SacredOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0066c24f7ada6243c778b37d826d9f67571a15fb31e484b889178e3353265d5e"
+    },
+    "Metadata/Items/Currency/CurrencyRerollImplicit": {
+      "name": "Blessed Orb",
+      "path": "Assets/Crafting/Currency/d1f011dbb49824e413cd.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyImplicitMod.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "8cf415bd6f99c8661b1df1997179a5dc1dd5b5d9769d9cdde588664f0af97428"
+    },
+    "Metadata/Items/Currency/CurrencyRerollMagic": {
+      "name": "Orb of Alteration",
+      "path": "Assets/Crafting/Currency/26cf858a97bb871d4569.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollMagic.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "2034c9522ae9b742b392ac108855a6291954cc2b8cfe565ceaf214b9f27d97ef"
+    },
+    "Metadata/Items/Currency/CurrencyRerollRare": {
+      "name": "Chaos Orb",
+      "path": "Assets/Crafting/Currency/eb2554515713f132f57e.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "d92df17cf7df3cd975a23d53762556a9532333f44e1a261654103478e82f2509"
+    },
+    "Metadata/Items/Currency/CurrencyRerollRareVeiled": {
+      "name": "Veiled Exalted Orb",
+      "path": "Assets/Crafting/Currency/f8c76ee12fa2dee8e7f5.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/VeiledExaltedOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "865e80caa5b0f139e2570efdc921df81a3781756ae0e58c758cd2758df8f9557"
+    },
+    "Metadata/Items/Currency/CurrencyRerollRareVeiledChaos": {
+      "name": "Veiled Chaos Orb",
+      "path": "Assets/Crafting/Currency/29622ddbeb02684955f2.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/VeiledChaosOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "79bb467b007aea7c5507e67fee8d2eff3be3eb31b8750f7fe8cae7f7c6abdade"
+    },
+    "Metadata/Items/Currency/CurrencyRerollSocketColours": {
+      "name": "Chromatic Orb",
+      "path": "Assets/Crafting/Currency/7aee986cbc7496fef7f8.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollSocketColours.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "472e6fd39ab213ee7982847a6c172499d17dba21691b1fc25595fb2a079afac5"
+    },
+    "Metadata/Items/Currency/CurrencyRerollSocketLinks": {
+      "name": "Orb of Fusing",
+      "path": "Assets/Crafting/Currency/8e19a22ae50754388f7f.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollSocketLinks.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "0d4f17a30f2ac818fe22370242a3579320982e4c544061d696a481637fc0bfdf"
+    },
+    "Metadata/Items/Currency/CurrencyRerollSocketNumbers": {
+      "name": "Jeweller's Orb",
+      "path": "Assets/Crafting/Currency/364facf85df92d990fc4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollSocketNumbers.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "e6a9e749feb749ebff43f8a1d05ddbcc748b7610358733f3d9b4beae4680530a"
+    },
+    "Metadata/Items/Currency/CurrencyUpgradeInfluenceMod": {
+      "name": "Orb of Dominance",
+      "path": "Assets/Crafting/Currency/d2d819d54750eb48aad0.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/MavenOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "96eabf39a57d36432b51f87024069ceb1c8a182bb87bb268110183d41c7ae951"
+    },
+    "Metadata/Items/Currency/CurrencyUpgradeMagicToRare": {
+      "name": "Regal Orb",
+      "path": "Assets/Crafting/Currency/26a87bd6b0f33be4097a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyUpgradeMagicToRare.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "a87075c501cb26a5219ee937e4a20ac4180b16fc4e77ee752907592479721f3c"
+    },
+    "Metadata/Items/Currency/CurrencyUpgradeToMagic": {
+      "name": "Orb of Transmutation",
+      "path": "Assets/Crafting/Currency/8ecee509f6853c617ca5.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyUpgradeToMagic.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "2ed5314645466e52e872c6edf022c5fcc7db75463e0783385796993954b68c60"
+    },
+    "Metadata/Items/Currency/CurrencyUpgradeToRare": {
+      "name": "Orb of Alchemy",
+      "path": "Assets/Crafting/Currency/f8d15d52b8aa5ae69454.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyUpgradeToRare.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "015c65199cb547bd4c687076b990bb8f50e069f1628b600bbfc25c3cfa2ceb1e"
+    },
+    "Metadata/Items/Currency/CurrencyUpgradeToRareAndSetSockets": {
+      "name": "Orb of Binding",
+      "path": "Assets/Crafting/Currency/065a1ff396cc3240b70f.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/BindingOrb.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "cf53ed70486242d42c32540d666bf9359e97dfbffa9766211c73a0342205e4d7"
+    },
+    "Metadata/Items/Currency/CurrencyWeaponQuality": {
+      "name": "Blacksmith's Whetstone",
+      "path": "Assets/Crafting/Currency/a298ac15dd6a12866546.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyWeaponQuality.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "8b1caffdd2c892853ac715994a3618eb8119572dcbb9bb43c2b901f4a274b40f"
+    },
+    "Metadata/Items/Currency/HarvestSeedBlue": {
+      "name": "Primal Crystallised Lifeforce",
+      "path": "Assets/Crafting/Currency/181714f214178eef6cfa.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Harvest/PrimalLifeforce.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "62c51f4170d9147fb5ee093ff8475faf2e1a6ddcc34ff9c8d7d02fbaa048c9d0"
+    },
+    "Metadata/Items/Deepwater/DeepwaterAbyssCurrency": {
+      "name": "Merrick's Ducat",
+      "path": "Assets/Crafting/Currency/38bcd1764d64bf1a27d0.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatAbyssal.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "dd422f563e4732619fa617ba4353a9b8b477e5237fdcdb89f8f2f6f417ed274c"
+    },
+    "Metadata/Items/Deepwater/DeepwaterAttributeSwap": {
+      "name": "The Genteel's Ducat",
+      "path": "Assets/Crafting/Currency/1c3dedf1c75c2f10c24d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatAttributeSwap.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "dee1d8942aaa88670dffdec64828eb3d9dee0d1befef938297a14ee36842f7bf"
+    },
+    "Metadata/Items/Deepwater/DeepwaterEldritch": {
+      "name": "Ukatoa's Ducat",
+      "path": "Assets/Crafting/Currency/72bea1587e100b977c2a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatEldritch.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f84711f8b6f44886cabf3371053c67049035d83339a3eb10f63527e9d2c49170"
+    },
+    "Metadata/Items/Deepwater/DeepwaterGhostbuster": {
+      "name": "Tzamoto's Ducat",
+      "path": "Assets/Crafting/Currency/3aead6cd3aad529556d9.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatReducing.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "1a2f66e356eb860b4bc77aa099604baedda5fd3fb8c71c55f0f1cb4520877e1a"
+    },
+    "Metadata/Items/Deepwater/DeepwaterItemSplit": {
+      "name": "Kishara's Ducat",
+      "path": "Assets/Crafting/Currency/6c6a0b9f9944eead10f3.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatSplitting.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "9805b766092a918291a8f620caf434c388810d3eb61f76c6bcf956964a5905e7"
+    },
+    "Metadata/Items/Deepwater/DeepwaterMercenaryCurrency": {
+      "name": "Cyaxan's Ducat",
+      "path": "Assets/Crafting/Currency/7a9f9d83d4f8896a2d3a.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatTrarthan.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "4572ba37fa7532325d6a9ac6accdee859e7a793cd08a1a15d914dc512450cebc"
+    },
+    "Metadata/Items/Deepwater/DeepwaterPantheon": {
+      "name": "Brinehook's Ducat",
+      "path": "Assets/Crafting/Currency/8630f51fdbe1835b6ea2.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatPantheon.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "6c11d2863ed59c30eb505ed5b48a0f8221ce8459e6125c7edad88bee9bf05cb1"
+    },
+    "Metadata/Items/Deepwater/DeepwaterSaboteur": {
+      "name": "Rotmother's Ducat",
+      "path": "Assets/Crafting/Currency/4d6dce272ee87da777e6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatSaboteur.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "34e58ef64c397c260390e70e10bef84ce53647194387e92ea1131eeb2e049a43"
+    },
+    "Metadata/Items/Deepwater/DeepwaterTatttoo": {
+      "name": "Katakohi's Ducat",
+      "path": "Assets/Crafting/Currency/8822ea33a52505d48989.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Deepwater/DucatTattooification.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "a708aba19422fce1edc9556450ed52545aa772b22d0cb6ef49abe41c5c8f3287"
+    },
+    "Metadata/Items/Delve/DelveSocketableCurrencyReroll1": {
+      "name": "Primitive Chaotic Resonator",
+      "path": "Assets/Crafting/Currency/fdfb73de27be38e4c61d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/Reroll1x1A.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f8a217d1a41f56c8ad32b527904e3840c6cf515193ec6484d750c9ac3ece4cec"
+    },
+    "Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll1": {
+      "name": "Primitive Chaotic Resonator",
+      "path": "Assets/Crafting/Currency/fdfb73de27be38e4c61d.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/Reroll1x1A.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f8a217d1a41f56c8ad32b527904e3840c6cf515193ec6484d750c9ac3ece4cec"
+    }
+  },
+  "methods": {
+    "alchemy": "Metadata/Items/Currency/CurrencyUpgradeToRare",
+    "alteration": "Metadata/Items/Currency/CurrencyRerollMagic",
+    "annul": "Metadata/Items/Currency/CurrencyRemoveMod",
+    "augmentation": "Metadata/Items/Currency/CurrencyAddModToMagic",
+    "awakener": "Metadata/Items/AtlasExiles/ApplyInfluence",
+    "binding": "Metadata/Items/Currency/CurrencyUpgradeToRareAndSetSockets",
+    "blessed": "Metadata/Items/Currency/CurrencyRerollImplicit",
+    "catalyst": "Metadata/Items/Currency/CurrencyJewelleryQualityResource",
+    "chaos": "Metadata/Items/Currency/CurrencyRerollRare",
+    "chromatic": "Metadata/Items/Currency/CurrencyRerollSocketColours",
+    "conflict": "Metadata/Items/Currency/CurrencyConflictOrb",
+    "divine": "Metadata/Items/Currency/CurrencyModValues",
+    "dominance": "Metadata/Items/Currency/CurrencyUpgradeInfluenceMod",
+    "ducat_brinehook": "Metadata/Items/Deepwater/DeepwaterPantheon",
+    "ducat_cyaxan": "Metadata/Items/Deepwater/DeepwaterMercenaryCurrency",
+    "ducat_genteel": "Metadata/Items/Deepwater/DeepwaterAttributeSwap",
+    "ducat_katakohi": "Metadata/Items/Deepwater/DeepwaterTatttoo",
+    "ducat_kishara": "Metadata/Items/Deepwater/DeepwaterItemSplit",
+    "ducat_merrick": "Metadata/Items/Deepwater/DeepwaterAbyssCurrency",
+    "ducat_rotmother": "Metadata/Items/Deepwater/DeepwaterSaboteur",
+    "ducat_tzamoto": "Metadata/Items/Deepwater/DeepwaterGhostbuster",
+    "ducat_ukatoa": "Metadata/Items/Deepwater/DeepwaterEldritch",
+    "eldritch_annul": "Metadata/Items/Currency/CurrencyEldritchRemoveMod",
+    "eldritch_chaos": "Metadata/Items/Currency/CurrencyEldritchRerollRare",
+    "eldritch_exalt": "Metadata/Items/Currency/CurrencyEldritchAddModToRare",
+    "eldritch_implicit": "Metadata/Items/Currency/CurrencyEldritchEmber1",
+    "essence": "Metadata/Items/Currency/CurrencyEssenceGreed7",
+    "exalt": "Metadata/Items/Currency/CurrencyAddModToRare",
+    "fossil": "Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll1",
+    "foulborn_augmentation": "Metadata/Items/Currency/CurrencyMutatedAddModToMagic",
+    "foulborn_exalt": "Metadata/Items/Currency/CurrencyMutatedAddModToRare",
+    "foulborn_regal": "Metadata/Items/Currency/CurrencyMutatedUpgradeMagicToRare",
+    "fracture": "Metadata/Items/Currency/CurrencyFractureRare",
+    "fusing": "Metadata/Items/Currency/CurrencyRerollSocketLinks",
+    "harvest_augment": "Metadata/Items/Currency/HarvestSeedBlue",
+    "harvest_reforge": "Metadata/Items/Currency/HarvestSeedBlue",
+    "harvest_resistance": "Metadata/Items/Currency/HarvestSeedBlue",
+    "jeweller": "Metadata/Items/Currency/CurrencyRerollSocketNumbers",
+    "quality": "Metadata/Items/Currency/CurrencyArmourQuality",
+    "regal": "Metadata/Items/Currency/CurrencyUpgradeMagicToRare",
+    "remembrance": "Metadata/Items/Currency/CurrencyAddZanaInfluence",
+    "sacred": "Metadata/Items/Currency/CurrencyRerollDefences",
+    "scour": "Metadata/Items/Currency/CurrencyConvertToNormal",
+    "tainted_catalyst": "Metadata/Items/Currency/CurrencyJewelleryQualityVaal",
+    "tainted_chaos": "Metadata/Items/Currency/CurrencyHellscapeRerollRare",
+    "tainted_chromatic": "Metadata/Items/Currency/CurrencyHellscapeRerollSocketColours",
+    "tainted_exalt": "Metadata/Items/Currency/CurrencyHellscapeAddModToRare",
+    "tainted_fusing": "Metadata/Items/Currency/CurrencyHellscapeRerollSocketLinks",
+    "tainted_jeweller": "Metadata/Items/Currency/CurrencyHellscapeRerollSocketNumbers",
+    "tainted_quality": "Metadata/Items/Currency/CurrencyHellscapeArmourQuality",
+    "transmute": "Metadata/Items/Currency/CurrencyUpgradeToMagic",
+    "unravelling": "Metadata/Items/Currency/CurrencyRemoveZanaInfluence",
+    "vaal": "Metadata/Items/Currency/CurrencyCorrupt",
+    "veiled_chaos": "Metadata/Items/Currency/CurrencyRerollRareVeiledChaos",
+    "veiled_orb": "Metadata/Items/Currency/CurrencyRerollRareVeiled"
+  }
+}

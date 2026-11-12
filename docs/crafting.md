@@ -17,11 +17,11 @@ The item card groups prefixes and suffixes, shows slot usage, and marks fracture
 
 **Item history** previews earlier items and the changes between them; restoring one undoes all subsequent actions. **Before / after** in Settings compares the working item with its recipe starting state. Drag the divider to give more space to the controls or item. Working state, favorites and history survive tool switches and resizing during the session.
 
-In **Targets**, use **Find target modifiers** to search modifier text and tags, filter prefixes/suffixes or implicit types, inspect ranges and add a target without entering an ID.
+In **Targets**, use **Find target modifiers** to browse tiers, item levels, weights, groups and tags. The table explains blocked modifiers and shows conditional draw chances. These describe one ordinary affix draw, rather than the selected currency or a complete recipe. The same explanations are available through AI inspection.
 
 Select an icon in the currency tray, then click the item card or **Apply to item**. The card shows the base artwork, rarity, sockets, defences and modifiers; applied currency counts appear on the tray. Other methods remain in the dropdown, with their choices below it. **Settings** opens recipe controls, donor/fossil configuration and the reproducible random seed. **Configure fossil combination / donor item** accepts up to four fossils or a second item for Awakener and recombination. A Tangled Fossil requires the effect already revealed by the socketed resonator.
 
-**Undo currency** reverses an action; **Reset item** restores the starting state. Veiled Orbs leave an unfinished choice: select **Choose an unveil** and pick an offered modifier before previewing. An imprint belongs to this starting item and can be restored once.
+**Undo currency** reverses an action; **Reset item** restores the starting state. Veiled Exalted Orbs leave an unfinished choice: select **Choose an unveil** and pick an offered modifier before previewing. An imprint belongs to this starting item and can be restored once.
 
 The engine covers core currencies, bench modifiers, essences, fossils, Harvest tag crafts and resistance swaps, fractures, influence slams, Awakener, Dominance, veiled choices, Bestiary, Eldritch crafting, quality, catalysts, selected Ducats, corruption and selected tainted currencies. Jewels, flasks and tinctures have their own affix limits; flasks and tinctures remain magic. Cluster jewels need a known small-passive skill.
 
@@ -43,7 +43,7 @@ For recipes, Allflame prefers the outcome matching the most captured target grou
 
 ## Set targets
 
-Add a modifier on **Targets**. Separate groups require all groups by default; **Add alternative** makes an OR choice within the last group. **Target counts, rolls and item properties** edits the last group and final conditions:
+Add a modifier on **Targets**. **Edit target groups** manages required groups (AND) and alternatives within each group (OR). Select a group to edit its counts, rolls and conditions; **Item properties** controls the final item:
 
 - Required or excluded modifiers, matching counts and minimum roll percentages.
 - Explicit or implicit modifiers, and how many groups must match.
@@ -57,15 +57,21 @@ Roll percentage means the position within a modifier's native range. For several
 
 Set trials and the action budget. **Simulate action** repeats the action until its conditions match or the budget ends. **Keep actions as recipe** retains the emulator sequence. **Recipe routes** edits attempts and success/failure destinations, including bounded loops. **Simulate saved recipe** uses its captured initial state.
 
+**Flow graph** displays the recipe as currency cards. Drag a success (**S**) or failure (**F**) port onto a step or Finish. Undo/Redo restores route edits; **Edit selected step** opens its detailed conditions. Keep the recipe in its editor to persist changes.
+
 Jobs run in the background. **Cancel crafting job** stops them. Results include success frequency, a 95% Wilson sampling interval, currency uses, failed transitions and missing prices. **Results / distribution** shows action counts, spending percentiles, route visits and final modifier frequencies. Up to ten successful items are retained for a separate build preview. Successful-trial percentiles exclude failures; all-trial spending includes them. Trials stopped by the budget are reported separately.
 
 The price field applies to the selected action. The starting-item cost field adds the base cost to every trial in the same currency. MCP can supply prices for each action or fossil/resonator component in one currency. Spending divided by observed successes is not a guaranteed in-game cost. Zero successes does not establish impossibility.
+
+**Explore charts** shows cumulative success by actions or supplied spending, and distributions of completed-trial actions/spending. Hover to inspect, click to pin, or copy the data as CSV. **Compare recipes → Compare charts** overlays captured routes. Failed and capped trials stay in the denominator; unpriced routes are omitted from spending charts.
 
 **Calculate action odds** enumerates supported finite outcomes, including next-affix draws, Talisman fractures and Allflame selection. Item properties, partial group counts, other supported actions and roll thresholds use bounded sampling with a confidence interval. Results state which method was used. **Compare subsets of the configured fossils** samples all combinations from the configured candidates and current state; it is not a global optimizer.
 
 ## Keep a project
 
 Use **Keep working craft** to checkpoint the working item, undo history, targets, seed and settings, then save the build. Reopening that project resumes the checkpoint. Experiments do not spend your recorded resources; use [Journey](journey.md) to track actual holdings, spending and gear reservations.
+
+**Keep item** stores a named snapshot in the build's **Item inventory**. Browse item cards, rename/remove snapshots, undo a removal, compare with the working item, or resume a snapshot as a separate working craft. Full simulated states survive, including fractures, imprints and pending unveils. Inventory travels with saved builds and planning bundles and has no item-count cap; the existing metadata size guard still applies. Use normal **Save** to persist changes.
 
 Keeping a recipe marks the build unsaved. Use normal build **Save** to persist it. There is no project-count limit: keep plans for every gear slot and alternatives for each piece. Crafting metadata retains a 2 MiB total size limit and per-field validation. Projects and recipes live in AI Edition XML; other editions may discard them on re-save. AI Edition preserves unreadable or newer metadata unchanged.
 

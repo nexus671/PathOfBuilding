@@ -43,6 +43,25 @@ test('accepts typed Atlas stages, strategy inputs and explicit failure recovery 
   request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.recipe,recipe);
   assert.throws(()=>f.call('simulate_crafting',{baseRevision:f.state.revision,itemText:'Iron Hat',recipe:{...recipe,steps:[{method:'alchemy',onFailureAction:'sell-for-profit'}]}}),/arguments/);
 });
+
+test('queues portable tiers, local modules, whole-filter styles and saved Atlas intentions', t => {
+  const f=fixture(t);const rule={id:'chaos',title:'Chaos',text:'Show\n BaseType == "Chaos Orb"'};
+  const profile={id:'maps',title:'Maps',preset:'early_maps',strictness:2,rules:[],tiers:[{id:'tier',title:'High currency',text:rule.text,items:['Chaos Orb']}],modules:[{id:'module',title:'Shared rules',rules:[rule]}],appearance:{textColor:[255,220,120,255],alertId:6,alertVolume:0,effectColor:'Purple',disableIcons:true}};
+  f.call('propose_loot_filters',{title:'Local filter tools',baseRevision:f.state.revision,filters:{schemaVersion:1,activeId:'maps',profiles:[profile]}});
+  let request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.proposal.operations[0].filters.profiles[0],profile);fs.rmSync(path.join(f.dir,'AI-build-request.json'));
+  assert.throws(()=>f.call('test_loot_filter',{baseRevision:f.state.revision,profile:{...profile,appearance:{textColor:[255,0,0] }},sample:{}}),/arguments/);
+  const plan={id:'atlas',title:'Saved intentions',version:'3.30.0-preview',budget:150,nodes:[],desired:[123],avoided:[456]};
+  f.call('propose_atlas_plan',{baseRevision:f.state.revision,plan});request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.proposal.operations[0].plan,plan);
+});
+
+test('queues full crafting inventory snapshots without imposing a count limit', t => {
+  const f=fixture(t);const raw='Rarity: NORMAL\nIron Hat\nItem Level: 86';
+  const inventory=Array.from({length:12},(_,i)=>({id:`item-${i}`,title:`Helmet ${i}`,slot:'Helmet',baseItem:raw,at:1700000000,state:{rarity:'NORMAL',affixes:[],quality:0,sockets:[{color:'R',group:0}]}}));
+  const project={id:'helmet',title:'Helmet',slot:'Helmet',startingItem:raw,goals:[],steps:[],inventory};
+  f.call('propose_crafting_plan',{baseRevision:f.state.revision,project});const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.proposal.operations[0].project.inventory,inventory);
+  fs.rmSync(path.join(f.dir,'AI-build-request.json'));
+  assert.throws(()=>f.call('propose_crafting_plan',{baseRevision:f.state.revision,project:{...project,inventory:[{...inventory[0],state:{rarity:'INVENTED',affixes:[]}}]}}),/arguments/);
+});
 test('reads journey resources and queues a reviewed replacement without applying', t => {
   const f=fixture(t);
   const journey={schemaVersion:1,milestones:[{id:'links',title:'Get links',kind:'gems',dependencies:[]}],wishlist:[],resources:[],ledger:[],stages:[]};

@@ -1,9 +1,9 @@
 -- Saved working state, distinct from a recipe and from recorded real spending.
 local simulator=require("Modules.CraftingSimulator")
 local M={}
-function M.validate(raw,run)
+function M.validate(raw,run,models)
 	assert(type(run)=="table" and run.schemaVersion==1,"Unsupported crafting checkpoint")
-	local models={}
+	models=models or {}
 	local function state(value)
 		assert(type(value)=="table","Missing checkpoint item")
 		local base=value.baseItem or raw;local model=models[base]

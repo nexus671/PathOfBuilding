@@ -39,6 +39,7 @@ function M.validate(project)
 		assert(valid,"Unknown starting currency");result.preferredMethod=project.preferredMethod
 	end
 	if project.run then result.run=require("Modules.CraftingCheckpoint").validate(result.startingItem,project.run) end
+	if project.inventory~=nil then result.inventory=require("Modules.CraftingInventory").validate(project.inventory) end
 	if project.estimate then
 		local quote = project.estimate
 		result.estimate = {amount=number(quote.amount,0,1e12,"estimated cost"),currency=text(quote.currency,24,"currency"),source=text(quote.source,240,"price source"),quotedAt=number(quote.quotedAt,0,4102444800,"quote time")}
@@ -80,6 +81,9 @@ function M.new(build)
 		assert(build.itemsTab.slots[entry.slot],"Unknown project equipment slot")
 		local start=M.item(entry.startingItem)
 		assert(build.itemsTab:IsItemValidForSlot(start,entry.slot),"Starting item cannot use this slot")
+		for _,item in ipairs(entry.inventory or {}) do
+			assert(build.itemsTab.slots[item.slot] and build.itemsTab:IsItemValidForSlot(M.item(item.state.baseItem or item.baseItem),item.slot),"Inventory item cannot use its equipment slot")
+		end
 		if entry.targetItem and entry.targetItem ~= "" then
 			local target=M.item(entry.targetItem)
 			assert(target.type == start.type and build.itemsTab:IsItemValidForSlot(target,entry.slot),"Crafting target must use the same item class and equipment slot")
@@ -88,6 +92,7 @@ function M.new(build)
 		local found=false
 		for index,existing in ipairs(replacement) do if existing.id == entry.id then
 			if not entry.run and existing.run and entry.startingItem==existing.startingItem then entry.run=copyTable(existing.run) end
+			if project.inventory==nil and existing.inventory then entry.inventory=copyTable(existing.inventory) end
 			replacement[index]=entry; found=true; break
 		end end
 		if not found then replacement[#replacement+1]=entry end

@@ -8,7 +8,8 @@ function M.box(x,y,w,h,color) SetDrawColor(color);DrawImage(nil,x,y,w,h) end
 function M.text(x,y,size,value,color,width)
 	SetDrawColor(color or "^xDCE4EC");DrawString(x,y,"LEFT",size,"VAR",width and ui.fit(value,width,size) or value)
 end
-function M.floor(x,y,w,h)
+function M.floor(x,y,w,h,background)
+	if background=="Dark" or background=="Light" then M.box(x,y,w,h,background=="Dark" and "^x080A10" or "^x60666A");return end
 	M.box(x,y,w,h,"^x111719")
 	for row=0,math.ceil(h/46)-1 do for col=0,math.ceil(w/94)-1 do
 		local left=x+col*94;local top=y+row*46;local shade=((row*17+col*31)%7)/500
@@ -18,6 +19,28 @@ function M.floor(x,y,w,h)
 		if edge>0 and y+h-top>3 then SetDrawColor(0.14+shade,0.16+shade,0.16+shade);DrawImage(nil,left+4,top+3,edge,1) end
 	end end
 	M.box(x,y,w,2,"^x536065");M.box(x,y+h-2,w,2,"^x273338")
+end
+-- All twelve client shape names. Geometry is a native preview, not a game texture.
+function M.icon(shape,cx,cy,r)
+	if shape=="Moon" then
+		for i=0,15 do local a=-math.pi/2+i*math.pi/16;local b=-math.pi/2+(i+1)*math.pi/16
+			DrawImageQuad(nil,cx-math.cos(a)*r,cy+math.sin(a)*r,cx-math.cos(b)*r,cy+math.sin(b)*r,cx-math.cos(b)*r*0.38,cy+math.sin(b)*r,cx-math.cos(a)*r*0.38,cy+math.sin(a)*r)
+		end;return true
+	end
+	local points
+	if shape=="Square" then points={{-1,-1},{1,-1},{1,1},{-1,1}}
+	elseif shape=="Diamond" then points={{0,-1},{1,0},{0,1},{-1,0}}
+	elseif shape=="Cross" then points={{-.32,-1},{.32,-1},{.32,-.32},{1,-.32},{1,.32},{.32,.32},{.32,1},{-.32,1},{-.32,.32},{-1,.32},{-1,-.32},{-.32,-.32}}
+	elseif shape=="Kite" then points={{0,-1},{.75,-.2},{0,1.2},{-.75,-.2}}
+	elseif shape=="Raindrop" then points={{0,-1.2},{.6,-.35},{.85,.3},{.6,.8},{0,1},{-.6,.8},{-.85,.3},{-.6,-.35}}
+	elseif shape=="UpsideDownHouse" then points={{-1,-1},{1,-1},{1,.2},{0,1},{-1,.2}}
+	else
+		local count=({Circle=20,Hexagon=6,Pentagon=5,Triangle=3,Star=10})[shape]
+		if not count then return false end;points={}
+		for i=1,count do local radius=shape=="Star" and i%2==0 and 0.42 or 1;local angle=(i-1)*math.pi*2/count-math.pi/2;points[i]={math.cos(angle)*radius,math.sin(angle)*radius} end
+	end
+	for i=1,#points do local a,b=points[i],points[i%#points+1];DrawImageQuad(nil,cx,cy,cx+a[1]*r,cy+a[2]*r,cx+b[1]*r,cy+b[2]*r,cx+b[1]*r,cy+b[2]*r) end
+	return true
 end
 function M.chip(x,y,w,h,item,result,selected)
 	local styles=result and result.styles or {};local hidden=result and result.action=="Hide";local unknown=result and (result.status=="unknown" or result.status=="invalid")
@@ -35,12 +58,7 @@ function M.chip(x,y,w,h,item,result,selected)
 	if unknown then M.text(x+w-20,y+2,14,"?","^xE5B66A") end
 	local icon=styles.MinimapIcon;if icon and tonumber(icon[1]) and tonumber(icon[1])>=0 and not hidden then
 		local color=M.colors[icon[2]] or M.colors.White;SetDrawColor(unpack(color));local cx,cy=left+width-3,top-10
-		if icon[3]=="Square" then DrawImage(nil,cx-4,cy-4,8,8)
-		elseif icon[3]=="Triangle" then DrawImageQuad(nil,cx,cy-5,cx+5,cy+4,cx-5,cy+4,cx-5,cy+4)
-		elseif icon[3]=="Circle" or icon[3]=="Star" then
-			local count=icon[3]=="Star" and 10 or 12;local points={};for i=1,count do local radius=icon[3]=="Star" and i%2==0 and 2 or 5;local angle=(i-1)*math.pi*2/count-math.pi/2;points[i]={cx+math.cos(angle)*radius,cy+math.sin(angle)*radius} end
-			for i=1,count do local a,b=points[i],points[i%count+1];DrawImageQuad(nil,cx,cy,a[1],a[2],b[1],b[2],b[1],b[2]) end
-		else DrawImageQuad(nil,cx,cy-4,cx+4,cy,cx,cy+4,cx-4,cy) end
+		if M.icon(icon[3],cx,cy,({7,5,3.5})[tonumber(icon[1])+1] or 5)==false then M.text(cx-4,cy-7,12,"?","^xE5B66A") end
 	end
 end
 function M.tile(control,entry,selected)

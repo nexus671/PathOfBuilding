@@ -36,16 +36,7 @@ function M.validate(data)
 		assert(entry.theme=="default" or entry.theme=="contrast","Unknown filter theme")
 		assert(entry.mode=="Normal" or entry.mode=="Ruthless","Unknown filter mode")
 		if p.appearance~=nil then
-			assert(type(p.appearance)=="table" and p.appearance~=json.null,"Invalid global appearance")
-			entry.appearance={}
-			for _,key in ipairs({"minimumFontSize","alertVolume"}) do
-				local value=p.appearance[key]
-				if value~=nil then local low,high=key=="minimumFontSize" and 1 or 0,key=="minimumFontSize" and 45 or 300
-					assert(type(value)=="number" and value==math.floor(value) and value>=low and value<=high,"Invalid "..key);entry.appearance[key]=value
-				end
-			end
-			assert(p.appearance.disableEffects==nil or type(p.appearance.disableEffects)=="boolean","Invalid effect setting")
-			entry.appearance.disableEffects=p.appearance.disableEffects
+			entry.appearance=require("Modules.LootFilterAppearanceSettings").validate(p.appearance)
 		end
 		entry.baseCommit=p.baseCommit and text(p.baseCommit,40,"template revision") or M.source().commit
 		if p.template then entry.template=text(p.template,M.limit,"imported filter");assert(#parser.parse(p.template).rules>0,"Imported filter has no rules") end
@@ -59,6 +50,8 @@ function M.validate(data)
 			entry.rules[#entry.rules+1]=r
 		end
 		result.profiles[#result.profiles+1]=entry
+		if p.tiers~=nil then entry.tiers=require("Modules.LootFilterEditing").validateTiers(p.tiers) end
+		if p.modules~=nil then entry.modules=require("Modules.LootFilterEditing").validateModules(p.modules) end
 	end
 	assert(result.activeId=="" or ids[result.activeId],"Active loot filter is missing")
 	assert(#json.encode(result)<=M.limit,"Loot-filter metadata exceeds 2 MiB");return result
@@ -148,6 +141,8 @@ function M.compile(profile)
 	local output={"# Path of Building AI Edition | "..checked.title,"# PoE 3.30 | NeverSink base "..checked.baseCommit,"# NeverSink templates: MIT. Personal rules precede the base filter."}
 	output[#output+1]="# "..read("LICENSE-NeverSink.txt"):gsub("\r\n","\n"):gsub("\n","\n# ")
 	for _,r in ipairs(checked.rules) do if r.enabled then output[#output+1]="\n# PoB rule: "..r.title..(r.origin and " ["..r.origin.."]" or "");output[#output+1]=r.text end end
+	for _,tier in ipairs(checked.tiers or {}) do local rule=require("Modules.LootFilterEditing").rule(tier);if rule then output[#output+1]="\n# PoB rule: Tier / "..rule.title;output[#output+1]=rule.text end end
+	for _,module in ipairs(checked.modules or {}) do if module.enabled then for _,rule in ipairs(module.rules) do if rule.enabled then output[#output+1]="\n# PoB rule: "..module.title.." / "..rule.title;output[#output+1]=rule.text end end end end
 	-- New league items are shown until a later pinned base can tier them.
 	local patch=M.patch();local classes={};for class in pairs(patch.added) do classes[#classes+1]=class end;table.sort(classes)
 	for _,class in ipairs(classes) do local values={};for _,name in ipairs(patch.added[class]) do values[#values+1]=quote(name) end
@@ -157,7 +152,9 @@ function M.compile(profile)
 	local raw=require("Modules.LootFilterDecorators").apply(table.concat(output,"\n"),checked.appearance);assert(#raw<=M.limit,"Compiled filter exceeds 2 MiB")
 	if checked.mode=="Ruthless" then raw=raw:gsub("\n([ \t]*)Hide(%f[%W])","\n%1Minimal%2") end
 	local parsed=parser.parse(raw)
+	for _,diagnostic in ipairs(require("Modules.LootFilterDiagnostics").shadowing(parsed)) do parsed.diagnostics[#parsed.diagnostics+1]=diagnostic end
 	if checked.mode=="Normal" then for _,rule in ipairs(parsed.rules) do if rule.action=="Minimal" then parsed.diagnostics[#parsed.diagnostics+1]={line=rule.line,error="Minimal blocks require Ruthless mode"} end end end
+	if checked.mode=="Ruthless" then for _,rule in ipairs(parsed.rules) do local text=rule.styles.SetTextColor;if text and tonumber(text[4]) and tonumber(text[4])<80 then parsed.diagnostics[#parsed.diagnostics+1]={line=rule.line,error="Ruthless text opacity must be at least 80"} end end end
 	return raw,{changes=changes,diagnostics=parsed.diagnostics,imports=parsed.imports,rules=#parsed.rules,baseCommit=checked.baseCommit,currentCommit=M.source().commit,imported=checked.template~=nil}
 end
 function M.variants(profile)

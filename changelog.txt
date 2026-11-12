@@ -1,6 +1,11 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Added editable item tiers, reusable filter modules, clipboard samples, change review and local draft recovery.
+* Added full filter colour/alert/icon controls, priority-conflict diagnostics and links to changed build targets.
+* Added crafting modifier tables, target-group editing, draggable recipe routes, item inventory and budget charts.
+* Added saved Atlas targets/exclusions, cooperative route previews, investment summaries and comparison overlays.
+* Improved planning typography, unavailable-action explanations and preservation of drafts across linked tools.
 * Added reversible whole-filter font, alert and beam settings, plus batch export of all seven strictnesses.
 * Crafting recipes can target exact socket colours, including a single linked group.
 * Action odds and fossil comparisons now honor item-property goals and partial target-group counts.

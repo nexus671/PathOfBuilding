@@ -59,6 +59,11 @@ function M.Open(title,entries,options)
 	local function choose() if selected and options.choose then options.choose(selected);if options.closeOnChoose~=false then main:ClosePopup() end end end
 	button("choose",16,height-48,180,options.action or "Select",choose)
 	controls.choose.shown=options.choose~=nil;controls.choose.enabled=function() return selected~=nil end
+	if options.secondary then
+		assert(not options.favorites,"Choose either a secondary action or a favorite toggle")
+		button("secondary",208,height-48,180,options.secondary.label,function() if selected then options.secondary.run(selected) end end)
+		controls.secondary.enabled=function() return selected~=nil end
+	end
 	if options.favorites then
 		button("favorite",208,height-48,180,"Toggle favorite",function() if selected then options.favorites[selected.id]=not options.favorites[selected.id] or nil;refresh() end end)
 		controls.favorite.enabled=function() return selected~=nil end

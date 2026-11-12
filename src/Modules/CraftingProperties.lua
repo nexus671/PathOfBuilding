@@ -2,7 +2,7 @@
 local P={}
 local catalysts={"Abrasive","Accelerating","Dextral","Fertile","Imbued","Intrinsic","Noxious","Prismatic","Sinistral","Tempering","Turbulent","Unstable"}
 function P.extend(M,A,api)
-	local actions={quality="Armour / weapon quality",catalyst="Catalyst",tainted_quality="Tainted armour / weapon quality",tainted_catalyst="Tainted Catalyst",conflict="Orb of Conflict"}
+	local actions={quality="Item quality",catalyst="Catalyst",tainted_quality="Tainted armour / weapon quality",tainted_catalyst="Tainted Catalyst",conflict="Orb of Conflict"}
 	for method,label in pairs(actions) do M.methods[#M.methods+1]=method;M.labels[method]=label end
 	table.sort(M.methods)
 	local originalModel,originalAction,originalDecorate,originalValidate,originalOptions=M.model,M.action,M.decorateItem,M.validateState,M.actionOptions

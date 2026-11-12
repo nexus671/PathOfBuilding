@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.offline1" />
+	<Version number="2.67.2-ai.preview2" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="f7017a83cd7d8f1e7e7d1bd62709cde4144435df" />
+	<File name="changelog.txt" part="default" sha1="2db442c10debb146c81f9cf0943cb08f808f8470" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -165,7 +165,7 @@
 	<File name="z.dll" part="runtime" sha1="08517c87f5b9e8791ee5d471429be7fbfa5ddd0b" platform="win32" />
 	<File name="zlib1.dll" part="runtime" sha1="49f1ccf17328fca0a831555a35b8eacb1e845ae0" platform="win32" />
 	<File name="zstd.dll" part="runtime" sha1="2a20ae088f2398af5dfd5db2ccc2155eeac8e94d" platform="win32" />
-	<File name="AI/BuildProtocol.cjs" part="program" sha1="5facc3bb663ad83e7ca1256bf4ca97c2aa925fda" />
+	<File name="AI/BuildProtocol.cjs" part="program" sha1="8d40c10b025637e43acedf946f93e0be231df520" />
 	<File name="AI/McpServer.cjs" part="program" sha1="29ff0c8f35eacb9ae56f60f528a1a16016bdb39d" />
 	<File name="Assets/Atlas/3.27.0/atlas-background-3.jpg" part="program" sha1="4db9c28ea7c03108f89785c65bc3b17ef7b64d5e" />
 	<File name="Assets/Atlas/3.27.0/atlas-frame-3.png" part="program" sha1="479b9fa4e1e821905313d42fbc6c1cbd4a672d3b" />
@@ -195,6 +195,216 @@
 	<File name="Assets/Atlas/3.30.0-preview/atlas-skills-4.webp" part="program" sha1="53ca87505f1d45e9dc6f4aac0d53d95d471ae09e" />
 	<File name="Assets/Atlas/3.30.0-preview/atlas-skills-disabled-4.webp" part="program" sha1="9d7f4cddc986908ae97794ff3b66ee862854664f" />
 	<File name="Assets/Atlas/3.30.0-preview/manifest.json" part="program" sha1="08de7572ee6e1ae85c220d1d9759b9e5e918ef08" />
+	<File name="Assets/Crafting/Currency/03fd8ecb579cf9c46ea7.png" part="program" sha1="2523d8e8367361e15e884bf0a2c6aab03db06b74" />
+	<File name="Assets/Crafting/Currency/04b01b4d96d7701f854f.png" part="program" sha1="413dc92cc620736d4d97184131056e2fa640886e" />
+	<File name="Assets/Crafting/Currency/0550e7e48a4d7775c826.png" part="program" sha1="e9fe7324e1970ca1a05deee821d9938d53e1188b" />
+	<File name="Assets/Crafting/Currency/065a1ff396cc3240b70f.png" part="program" sha1="a641bb0d6da2413406648bb1e916f72880cfaf83" />
+	<File name="Assets/Crafting/Currency/065b5b8ec6fa2d78af24.png" part="program" sha1="7c468a2a48705b8da709b76edd5213e339da3db7" />
+	<File name="Assets/Crafting/Currency/068a8e5a2bf21ce45483.png" part="program" sha1="2e60747d9e4b1a76c3e571f36903e0bc915bd68d" />
+	<File name="Assets/Crafting/Currency/07886598bb4d4ef3232c.png" part="program" sha1="e0d00fb7d366a1358f70be667909c9cc77c0417f" />
+	<File name="Assets/Crafting/Currency/07d0766633e11be4cb43.png" part="program" sha1="bebd5686620b37d9feb25e82a0f831c5cde3748a" />
+	<File name="Assets/Crafting/Currency/089ddfb47ae8ffc91c5b.png" part="program" sha1="354443a4016355aeffe6961c96264a1ed5874d94" />
+	<File name="Assets/Crafting/Currency/0c0d1a2e7d8f29e0d990.png" part="program" sha1="8750fe2ff9732d5adc9558d534235fddcdd19a9e" />
+	<File name="Assets/Crafting/Currency/0da93546f1a7b2add2b4.png" part="program" sha1="0d88c1223d6937a4bc24d7f7aa77c45fb04ad584" />
+	<File name="Assets/Crafting/Currency/0f6f5ac34d39773f4bab.png" part="program" sha1="ad6044abf6ccc1e96f732e3d00fef666a454ba74" />
+	<File name="Assets/Crafting/Currency/11705e1928ecbf83b380.png" part="program" sha1="c62b80df18f383932e02c15c6245234cfef2617f" />
+	<File name="Assets/Crafting/Currency/11ddfa7d4a41b3184596.png" part="program" sha1="fad416087255184d9f22f2723bb7d45aee00dae7" />
+	<File name="Assets/Crafting/Currency/141b8801937fdb05c570.png" part="program" sha1="1edd53f43ce44f4c78f911490731ff57f801c3a8" />
+	<File name="Assets/Crafting/Currency/14e538b0ba4144c5c160.png" part="program" sha1="21f6036c7ab6d9eb18a129062fb4352ff08481df" />
+	<File name="Assets/Crafting/Currency/156c6b9d758faa5dddb3.png" part="program" sha1="5263ba95b70adfbfe109d8464d92cf15f367af0c" />
+	<File name="Assets/Crafting/Currency/159983290f7dcd751602.png" part="program" sha1="73497c697d647a370b6c3b07d30e93fd3ea189c0" />
+	<File name="Assets/Crafting/Currency/15c2649f7e948bb9d2e5.png" part="program" sha1="5fcd19d203859a65f3fb3fd961b739ea9a77a155" />
+	<File name="Assets/Crafting/Currency/16aafda65ca0fc6831c0.png" part="program" sha1="26eda5e1d606dffef2e573f25cdcf67da6b655af" />
+	<File name="Assets/Crafting/Currency/181714f214178eef6cfa.png" part="program" sha1="cfe4c98dcd9c9cfb214790ef24450c44de33fc0f" />
+	<File name="Assets/Crafting/Currency/19283e699272e9ef9831.png" part="program" sha1="b8a21673494d580497d827066172735ad379d266" />
+	<File name="Assets/Crafting/Currency/193b6e9de00d3f55ff31.png" part="program" sha1="51a64dc8eab035cb02095ea3a70f77db5cfbc9af" />
+	<File name="Assets/Crafting/Currency/199a46d91cc6b3fd1a4a.png" part="program" sha1="462e030fa7864494673137567627d404c04a3e4d" />
+	<File name="Assets/Crafting/Currency/1a680d4437607acfff39.png" part="program" sha1="207f7c67ab03ad2c1bd8440fcf97d484662c24f0" />
+	<File name="Assets/Crafting/Currency/1a69c260f10957431e9c.png" part="program" sha1="a78192cc404d1043b2edf97433284c4235b1d99b" />
+	<File name="Assets/Crafting/Currency/1b314d199728d5afd846.png" part="program" sha1="bfcbbe290c2fca7bad566bd844ceeb86888f959c" />
+	<File name="Assets/Crafting/Currency/1c3dedf1c75c2f10c24d.png" part="program" sha1="e21545f3c88c7f59000fc71f399dc615e9501ebc" />
+	<File name="Assets/Crafting/Currency/1dddc837f254687d4047.png" part="program" sha1="b672284213954587e8b49dd03eedbec140b23c9c" />
+	<File name="Assets/Crafting/Currency/22593df1e690dd3fd88f.png" part="program" sha1="4b766032e2fd3bede6450b4acad3007684f440d5" />
+	<File name="Assets/Crafting/Currency/2313193f963beabaa5ae.png" part="program" sha1="ebb96e1355e2233a6f92b260c22c1c5f835b9b5d" />
+	<File name="Assets/Crafting/Currency/23dab06c8c0ba33914d9.png" part="program" sha1="47e914a2ddd343d248ec0eade4f3966113f36c07" />
+	<File name="Assets/Crafting/Currency/26a87bd6b0f33be4097a.png" part="program" sha1="ef0544c325a5d46bc38cb06eb2a4e5b26954c387" />
+	<File name="Assets/Crafting/Currency/26cf858a97bb871d4569.png" part="program" sha1="1f39561d4b38a02bd02d0487083163dc35b7183a" />
+	<File name="Assets/Crafting/Currency/2702de3b25f78b0ca631.png" part="program" sha1="373de8e9d970929d14dec753573caa80504c8506" />
+	<File name="Assets/Crafting/Currency/28d89848d48c0ea548a0.png" part="program" sha1="ec873c771df6842f910cbeb9b11fcb5021d55747" />
+	<File name="Assets/Crafting/Currency/29622ddbeb02684955f2.png" part="program" sha1="75289367109285fcb15debf584fdac7d6fb2c04d" />
+	<File name="Assets/Crafting/Currency/2a23e6d111139d61ae9e.png" part="program" sha1="488291f9886f890787c31c77875e072420f78148" />
+	<File name="Assets/Crafting/Currency/2a7650462c89b1660842.png" part="program" sha1="d9a308e1932069dcc9cb3ae5498240377a067a48" />
+	<File name="Assets/Crafting/Currency/2b646b3f9d49e270fe2a.png" part="program" sha1="6cd85e180eb28b4f0b10c955c3e26a2143f06100" />
+	<File name="Assets/Crafting/Currency/2c30d6b21417e5be6fff.png" part="program" sha1="c80e696df06ba3d5eea5db8097e01c12c9614c35" />
+	<File name="Assets/Crafting/Currency/2e917b6fe5bd59f23b15.png" part="program" sha1="c28ad863edd39c176a4239e7a53632c9d0892590" />
+	<File name="Assets/Crafting/Currency/329e8fa47a08033b6407.png" part="program" sha1="5aa79f14230537901e6f0486c7176aa1bde5026d" />
+	<File name="Assets/Crafting/Currency/329fdc705bf683ed70f6.png" part="program" sha1="76995c487b2572ffbd1d0bd24e340a441c60ad37" />
+	<File name="Assets/Crafting/Currency/333c4046999d8dd1b21e.png" part="program" sha1="1a9690579cd2a919db289ec57c81f9faf009e8bc" />
+	<File name="Assets/Crafting/Currency/364facf85df92d990fc4.png" part="program" sha1="182409d96b2d3512a37a9ce98b977853975c22e4" />
+	<File name="Assets/Crafting/Currency/36e39e7f82dcb03db47d.png" part="program" sha1="eec0c63994d8278652f6884911706a7a5db1c08b" />
+	<File name="Assets/Crafting/Currency/36f9fa563b5b3696940d.png" part="program" sha1="072282b69f53a1134bde5005cd07ec8198431f7f" />
+	<File name="Assets/Crafting/Currency/376b6d41c3f11cafb131.png" part="program" sha1="728161bf1ee98f4d2c7ea2fd169217df65261add" />
+	<File name="Assets/Crafting/Currency/37f23035a036dfc1db67.png" part="program" sha1="fb065c138825c4b3a615c5d24812718bba3867a4" />
+	<File name="Assets/Crafting/Currency/38bcd1764d64bf1a27d0.png" part="program" sha1="114c02dfa5685b58480b59ed299c5a564dab637d" />
+	<File name="Assets/Crafting/Currency/394d7ef3c223fea515c9.png" part="program" sha1="06cc29cad14e3b233e5b399a8d3b3f0a8532be03" />
+	<File name="Assets/Crafting/Currency/3ae6bed19180fe18556e.png" part="program" sha1="4834d5ba84edf5265643ab755efb28ee18cb979c" />
+	<File name="Assets/Crafting/Currency/3aead6cd3aad529556d9.png" part="program" sha1="230de5e1321b5f4dbe6ea093c4c769297547e5a5" />
+	<File name="Assets/Crafting/Currency/3b95f7e867f695238d61.png" part="program" sha1="0ec4265567f90942bb606aa84f57cb0b061378de" />
+	<File name="Assets/Crafting/Currency/3d163ba216bb05fc54a6.png" part="program" sha1="fef6be0253823e5fb7579559135338c015a5c306" />
+	<File name="Assets/Crafting/Currency/3e833248fc97b4df74d9.png" part="program" sha1="c3c140c5c202dc9128ba6249ac32a2d8fdd95981" />
+	<File name="Assets/Crafting/Currency/3f604cf37da8ee776f3c.png" part="program" sha1="6925584866274dc004de4f6c3d09565cb1c1d113" />
+	<File name="Assets/Crafting/Currency/4026687f72fd1187458d.png" part="program" sha1="060a1a8902b1fe4f698ffa6b2e45f04cc4a216b2" />
+	<File name="Assets/Crafting/Currency/405e57c7da23d2115fba.png" part="program" sha1="f44897ab26c58564ae9b905a5ff67e5680780cd0" />
+	<File name="Assets/Crafting/Currency/40a7327ce0a886a3ca7b.png" part="program" sha1="b91adb36af52a9c231dc54184ee40f9bc502612f" />
+	<File name="Assets/Crafting/Currency/412cdfecadffdea3a3da.png" part="program" sha1="68b9f013ecec5099e59737bd228f460ba597ee57" />
+	<File name="Assets/Crafting/Currency/41505440145a60258c41.png" part="program" sha1="a0e53dd3d71911019a38420b2695e9c4a3a3dc5f" />
+	<File name="Assets/Crafting/Currency/43f334fc4a06b6f70010.png" part="program" sha1="fca4e1eb689db8115b05d597f599d11fc6082bc8" />
+	<File name="Assets/Crafting/Currency/444ff468aabb1cf397ef.png" part="program" sha1="46f3d2f11539a7839293f509ceb83474cd78e7ff" />
+	<File name="Assets/Crafting/Currency/44fb0bfc79cf2d1149c4.png" part="program" sha1="7168ba8863a68a063ef0217428164555529f4642" />
+	<File name="Assets/Crafting/Currency/45abd6555b8da3bdadd8.png" part="program" sha1="b75b0336cc34275240d3dcfaf50969c89e54fe54" />
+	<File name="Assets/Crafting/Currency/46fca3015c14bb1cb406.png" part="program" sha1="af2b32555f039bc2da31f425205f874f02d326cd" />
+	<File name="Assets/Crafting/Currency/47fe970baf8471c43833.png" part="program" sha1="88329c4af3b8947b3c77f142b42740f98df41961" />
+	<File name="Assets/Crafting/Currency/4828414faab06150d54d.png" part="program" sha1="368edecf280ca4d8f9d500938e3ae47290cb6e31" />
+	<File name="Assets/Crafting/Currency/489b9eae4d0248f312f2.png" part="program" sha1="fdabc4b6a871953aea6a9262b0c87e2585df14d5" />
+	<File name="Assets/Crafting/Currency/49dd0d4bea0712ecb23a.png" part="program" sha1="32aa1e922855a8b08714407f826193268c155e06" />
+	<File name="Assets/Crafting/Currency/4a58c0237db21d184804.png" part="program" sha1="c487030fcbde134ed8cc2002e37d80e9e54f90fc" />
+	<File name="Assets/Crafting/Currency/4a9fbde723378b6c471a.png" part="program" sha1="b11e9d27886ece1a6c82a23f9fc610b66dd18012" />
+	<File name="Assets/Crafting/Currency/4b29ecb59d581c2b8eb8.png" part="program" sha1="d667882ca90234a584f8be40d2a9ec7c0eb60dd9" />
+	<File name="Assets/Crafting/Currency/4d6dce272ee87da777e6.png" part="program" sha1="562e181397365d06e24b182d67b8c08408567b70" />
+	<File name="Assets/Crafting/Currency/4e37c06ecc5eed415d94.png" part="program" sha1="3d0aa737c5dfca5121404ee8f4a1287ba96e5f70" />
+	<File name="Assets/Crafting/Currency/4e4db0272ca9764e8206.png" part="program" sha1="e658dbd8c6566f5404f1e35b21ce3ebb6fefb9f7" />
+	<File name="Assets/Crafting/Currency/521834d1bafa20e71973.png" part="program" sha1="cb1b6775981fe87b87add85a79396c205dc6f103" />
+	<File name="Assets/Crafting/Currency/521e4647aae8361d2dbb.png" part="program" sha1="78eef8ca309786d31ef68aa9ef00e172c620d2b5" />
+	<File name="Assets/Crafting/Currency/52aae293118054dd6889.png" part="program" sha1="e9159c56c6e94d873475f7022dbbb55254ceecd9" />
+	<File name="Assets/Crafting/Currency/539032bd7ceb2be251cb.png" part="program" sha1="e2c43fee1424031d188003ced6e594382169823c" />
+	<File name="Assets/Crafting/Currency/53cfb301559b7cdc4525.png" part="program" sha1="a87cc9c419e9ffe81d62a312d80030a1487845f1" />
+	<File name="Assets/Crafting/Currency/53da7dadc15bb561d084.png" part="program" sha1="227f19dddb4ac8d5a8227a036a84d26218d85db2" />
+	<File name="Assets/Crafting/Currency/54615b0fe8585d4bf21e.png" part="program" sha1="76775ad11bc4f50de7e935e3c4434c8c503e5df0" />
+	<File name="Assets/Crafting/Currency/54cfd6076b9d891de2bc.png" part="program" sha1="ebfd1b26b1fd30c12cf88ad672331ef59d0a8219" />
+	<File name="Assets/Crafting/Currency/55fd7b63f6e51cc07298.png" part="program" sha1="6d78aae3eba99ab4cdeacd5be94918b615c83df9" />
+	<File name="Assets/Crafting/Currency/59047a39b2c6f9dc907f.png" part="program" sha1="35b9c36e1f7fe8e5f11b861e94209ffb49893eb3" />
+	<File name="Assets/Crafting/Currency/594b14393a6a24c80255.png" part="program" sha1="bab8e1831d969f6b23764786d3ab6a7517564a69" />
+	<File name="Assets/Crafting/Currency/5972d2d48b4e49b7eb8a.png" part="program" sha1="be330fb170731ef155d20414f3f434dc7e9f4ce3" />
+	<File name="Assets/Crafting/Currency/5e9f73f32b8b8054fb5a.png" part="program" sha1="b208ed0edd11274258d08a40c966afc2a38c72de" />
+	<File name="Assets/Crafting/Currency/5f893c2854e49ae3bf51.png" part="program" sha1="587148e900901b00584eb12b98a224d1f3dca0c6" />
+	<File name="Assets/Crafting/Currency/6013d17f42d65837fa58.png" part="program" sha1="012096bd7d84e1541b7e56cbf2957d0d5eebdc0f" />
+	<File name="Assets/Crafting/Currency/61eeca42aee2713f00e9.png" part="program" sha1="95aaf1187816695cfd98d709e3ae32e9414e22ea" />
+	<File name="Assets/Crafting/Currency/62cb8625d8a9409c65bd.png" part="program" sha1="33eae5e9f29600cbca122f7e88009cbcd23e874e" />
+	<File name="Assets/Crafting/Currency/657f6cf648c2cb40b442.png" part="program" sha1="934a100cc0fd76e12a2c9273387fe35517ebf4ad" />
+	<File name="Assets/Crafting/Currency/65e6ceb2884e13330927.png" part="program" sha1="c4a9c5441f3a613640c62083abf20861718ce9e5" />
+	<File name="Assets/Crafting/Currency/676476d3063affd79a33.png" part="program" sha1="295c2bb21ead8aae5a3123e2bdd1493f9e98a6b4" />
+	<File name="Assets/Crafting/Currency/6ad4ad28406cb6bb629e.png" part="program" sha1="c77672cf211eff555b1ac6779790c3d6e0d78efb" />
+	<File name="Assets/Crafting/Currency/6c5f3bc3ccc0f78171d1.png" part="program" sha1="c07f22389d2168393d9911df0342605d4f360222" />
+	<File name="Assets/Crafting/Currency/6c6a0b9f9944eead10f3.png" part="program" sha1="8bc7fb9c86a1ab738238dacb7f444e7f951e2a1d" />
+	<File name="Assets/Crafting/Currency/6d28a2c8ff63de8b030d.png" part="program" sha1="d250c91e45565ac95c2c7ebcd6745507ef8afab7" />
+	<File name="Assets/Crafting/Currency/6e85cb676c70a1106a68.png" part="program" sha1="4a30703ae20f50b2b412f93e4a7e26ba75b64891" />
+	<File name="Assets/Crafting/Currency/6f75c3426b3aa69110d2.png" part="program" sha1="caec96d10f3141babd8b4b5a7d7e1ce6514bfdc7" />
+	<File name="Assets/Crafting/Currency/70675abeecff7c1634ab.png" part="program" sha1="beb33d4d368556c7688a6502914962389afe1de3" />
+	<File name="Assets/Crafting/Currency/72bea1587e100b977c2a.png" part="program" sha1="34a109264d49b9a25d0258f9a1a23e41135c60c9" />
+	<File name="Assets/Crafting/Currency/75e5de5fb98aab01cccf.png" part="program" sha1="d472a4f43b6c87799c21e84d7a59e232f033364e" />
+	<File name="Assets/Crafting/Currency/75ebfae9ef24db534311.png" part="program" sha1="5a1b4c7a5626bdfa38fc754cd806323702edbcb2" />
+	<File name="Assets/Crafting/Currency/77d4009fabf67bd467df.png" part="program" sha1="e1f17c80bdcc9ac8e8288b0f28b83369f970ca6d" />
+	<File name="Assets/Crafting/Currency/78238ee04a7f39b5d4e9.png" part="program" sha1="8a71aea77f94b06c550e27ff4c5d328724f0f24e" />
+	<File name="Assets/Crafting/Currency/78368157235a7a4c495b.png" part="program" sha1="932184fd6cc90869fbe1d531efa7e3dda492525a" />
+	<File name="Assets/Crafting/Currency/7a9f9d83d4f8896a2d3a.png" part="program" sha1="5908418a1056ed45641136ac3d67b433215d5a71" />
+	<File name="Assets/Crafting/Currency/7aee986cbc7496fef7f8.png" part="program" sha1="c65147abeda9078be099f83445f68a25504794fb" />
+	<File name="Assets/Crafting/Currency/7b01efe98d235b13c8e0.png" part="program" sha1="23dfde810427222d01fd95f5c3faad184278eaf8" />
+	<File name="Assets/Crafting/Currency/7c8b8d9983b3a20ed06d.png" part="program" sha1="17b1945b977b7c30a47260ccd722e13f0671dad5" />
+	<File name="Assets/Crafting/Currency/7cb1f392eadd2d8c3cac.png" part="program" sha1="eb489e8568e40a8b36ba5edc9ac5a63fe8a33942" />
+	<File name="Assets/Crafting/Currency/7e6d1f28d32a3f4f610a.png" part="program" sha1="19537daa3df8df06b8c130152649c6b3e3b54f48" />
+	<File name="Assets/Crafting/Currency/80d9bcbb47c94e07a09e.png" part="program" sha1="87f600f8311203cc510a1c27a926791cdfac7a71" />
+	<File name="Assets/Crafting/Currency/812d4a13e5417b40223c.png" part="program" sha1="dcedb6c54b4897e035eb26739a21af02ed0978d6" />
+	<File name="Assets/Crafting/Currency/81315de97d4c6af04db2.png" part="program" sha1="4ecf3cfa015c845edc12668224e091bc7f2f65a9" />
+	<File name="Assets/Crafting/Currency/8139728e70180aed8c2e.png" part="program" sha1="b11bc226a9dca244d4e9054a6a29aab5a8dd5046" />
+	<File name="Assets/Crafting/Currency/83c3cf51fd376fa150b1.png" part="program" sha1="31e5a64cd87cc751b4a8de880c470d3f14214774" />
+	<File name="Assets/Crafting/Currency/84ca6113b666efd98cae.png" part="program" sha1="f6aaccd8071e3696bc55a01ffde7d0f860f5f918" />
+	<File name="Assets/Crafting/Currency/85359301c9588dee4658.png" part="program" sha1="dab5b4cedad06d972ddeb3d4ba09982282dbc8e3" />
+	<File name="Assets/Crafting/Currency/8630f51fdbe1835b6ea2.png" part="program" sha1="262aa339fb1ffeba72223543b9a91d9957e24bbd" />
+	<File name="Assets/Crafting/Currency/87a573020897feb808b0.png" part="program" sha1="c7d57c411df20e8404a0a38fb9fd3d2bd8b84027" />
+	<File name="Assets/Crafting/Currency/87ce44672c2fc126b114.png" part="program" sha1="28cac1dadb9e5fd9c9c8c51cca26f77a9198134d" />
+	<File name="Assets/Crafting/Currency/8822ea33a52505d48989.png" part="program" sha1="de8513c75a92ed7fe07111d7484625e3d496e3f3" />
+	<File name="Assets/Crafting/Currency/8b54e89cb7b58e0fd4f0.png" part="program" sha1="95cbd20c0a5611f89bb6fb757b3123393f447fb3" />
+	<File name="Assets/Crafting/Currency/8b705559f6101a538bd9.png" part="program" sha1="c160f4a4e3e93311399994c5ed4d6889c5eb896e" />
+	<File name="Assets/Crafting/Currency/8ca773ab4f1b746dae8b.png" part="program" sha1="221d1e8c04bdb0a7d5563a29af6f21baa73eed6b" />
+	<File name="Assets/Crafting/Currency/8d2f6f777cacf9a49169.png" part="program" sha1="4b11706d615e6599781bb805ea1dd6c029988ef4" />
+	<File name="Assets/Crafting/Currency/8e19a22ae50754388f7f.png" part="program" sha1="c58408925e75acc3b3f56f659b6d8b18d65e422a" />
+	<File name="Assets/Crafting/Currency/8ecee509f6853c617ca5.png" part="program" sha1="caaf85b07884b8d497f070d0b57daa2cda70079d" />
+	<File name="Assets/Crafting/Currency/8ed9d78dcdba1d26b843.png" part="program" sha1="e1d42f650ccfcd46b95289cf407981430540f8c4" />
+	<File name="Assets/Crafting/Currency/8f0af703addedb1daa2a.png" part="program" sha1="170628f4f34971ed3f3f2ccdca6ea42e82e0ecf6" />
+	<File name="Assets/Crafting/Currency/8f27296084671b19f01e.png" part="program" sha1="a7b98a15e5e72dfe126811d81f1932c3bc3650e7" />
+	<File name="Assets/Crafting/Currency/8f493d6aafa92713c9f7.png" part="program" sha1="3d8e5f3a5f3304aa0cf4739bc751151c2b096c38" />
+	<File name="Assets/Crafting/Currency/8fa36762c9b8ce6c7324.png" part="program" sha1="49860eeba9234528f218c2f506804f73f8a3ad1f" />
+	<File name="Assets/Crafting/Currency/972ec31d27573e573568.png" part="program" sha1="3d6ac97dc32833b65427eece39921130be3f4cf0" />
+	<File name="Assets/Crafting/Currency/98fcb9e19b0311d02b45.png" part="program" sha1="537607afa053dc8413318899d8caf204ad889c5d" />
+	<File name="Assets/Crafting/Currency/992aab1e605332d0d062.png" part="program" sha1="7eec669942262e1091c94c4e6a5c1e9427f45503" />
+	<File name="Assets/Crafting/Currency/9bad0edc4e2cdf1f7cd5.png" part="program" sha1="5f93697a1871db7c54e72f99b975a8cb3b4f86ba" />
+	<File name="Assets/Crafting/Currency/9bfd52c8bc5b35fb1154.png" part="program" sha1="9d503848110b58a3fafab8fdc6613d25cfe51ace" />
+	<File name="Assets/Crafting/Currency/9c9c26c1ce3613e20f02.png" part="program" sha1="f371eaebe41b0969b2252a8e19bd36d2797acdc5" />
+	<File name="Assets/Crafting/Currency/9eaaaa94c73c46c61dc3.png" part="program" sha1="71661ced4e93ab5fd0d01d1ea31b5b3b9a60b134" />
+	<File name="Assets/Crafting/Currency/9f142f62f129bdc8154c.png" part="program" sha1="30a7572a7b620dc4f860015c8054270320a1f754" />
+	<File name="Assets/Crafting/Currency/9f93369cec342eec0be3.png" part="program" sha1="5826634fffb7b9fdde7f616e538a92acd4c95b34" />
+	<File name="Assets/Crafting/Currency/9fbb297cdf30584b2de6.png" part="program" sha1="2bc9558388987f7112aef8b2fe5bdc709abbb02d" />
+	<File name="Assets/Crafting/Currency/a0e943255f4391c0fd3f.png" part="program" sha1="a30b8e77423c7c63cb9200408e442a9566836a52" />
+	<File name="Assets/Crafting/Currency/a298ac15dd6a12866546.png" part="program" sha1="4e79857a108b4583cff6920f367dd420b38398f2" />
+	<File name="Assets/Crafting/Currency/a3d9f08cd1df56627ee8.png" part="program" sha1="e6b6eb8ce430ee80cd12c4e5a760209b2ebb57e3" />
+	<File name="Assets/Crafting/Currency/adf5bf84db6aaeddd9ce.png" part="program" sha1="fa5cc64f7a6b860e46a679205f1843ae267f5eba" />
+	<File name="Assets/Crafting/Currency/ae9e9218bd6854d4b602.png" part="program" sha1="ff97f747013f4a5e526d4de8bd31489cb5c4ea22" />
+	<File name="Assets/Crafting/Currency/aebe2cc05122791be2f6.png" part="program" sha1="1ee0005f1190be41ff393d99e8393dabdaa072bf" />
+	<File name="Assets/Crafting/Currency/af0ce1760e120ef86ef0.png" part="program" sha1="3e20c9751197fa2ccecf37aa151bee8593c19e37" />
+	<File name="Assets/Crafting/Currency/af9c66f31be9dbfde672.png" part="program" sha1="34d9c18085374c059fb80726a80c2c82e682b86a" />
+	<File name="Assets/Crafting/Currency/b0fd148eb09e7d26b4d3.png" part="program" sha1="b3213e3fe8b7a8a24aa6b349eb1e7c4a2f8c6882" />
+	<File name="Assets/Crafting/Currency/b19ab641e3059ecdfb72.png" part="program" sha1="3e4c984ae63233e9ae9b818d43bbe94cc49097e9" />
+	<File name="Assets/Crafting/Currency/b38b33559437e46121d9.png" part="program" sha1="a684f1d080f42c985838f518c1d137e1eb544b45" />
+	<File name="Assets/Crafting/Currency/b40bdebd162835da3f6a.png" part="program" sha1="e61b389746620970ab35a180f1c472b025308860" />
+	<File name="Assets/Crafting/Currency/b4be4bb540bd80e1f052.png" part="program" sha1="f4d57baf449c3d70e3b7696be14595cb4d769eb0" />
+	<File name="Assets/Crafting/Currency/b5d8134ed8bcf62b1c2b.png" part="program" sha1="2fec3d9c2c8b7cbc046903eb5bbc536bf54cdc2a" />
+	<File name="Assets/Crafting/Currency/b5e845f59b4e3692d8c7.png" part="program" sha1="eb260bb86a24dc99094361f5c3381f25ffb13dac" />
+	<File name="Assets/Crafting/Currency/b6df87cb82aafc7fdda9.png" part="program" sha1="eab8a2c84b5b744fdca04c17f2e6b3eda08c53d7" />
+	<File name="Assets/Crafting/Currency/b93f90e2c4e934c78091.png" part="program" sha1="bf80416c890a55c6031dd02b474c199470bb1748" />
+	<File name="Assets/Crafting/Currency/bb2a311f35a11a7287a4.png" part="program" sha1="de02e4fc5b63d8ab35b427bb039dd61a5db01652" />
+	<File name="Assets/Crafting/Currency/bb90a00bbefbd65685b8.png" part="program" sha1="efc79060de21a19b256238237483023a9e14add6" />
+	<File name="Assets/Crafting/Currency/bf3248fa4aaf9e440ccf.png" part="program" sha1="35c2885d4d9606a3d7a82c47cf7db3b7f15ab2fe" />
+	<File name="Assets/Crafting/Currency/bfc2b3db3f22adb9ce5c.png" part="program" sha1="cde7d0dd5580e995c92be99404a3103b04763290" />
+	<File name="Assets/Crafting/Currency/c59f048c87ac41c0c5ef.png" part="program" sha1="6abc673f093cc7b243731b1a11eb786cbc9ba460" />
+	<File name="Assets/Crafting/Currency/c5dfb3e99856e8f16e50.png" part="program" sha1="08994ab57653676a3504766b4c146e5f1a4fb9b1" />
+	<File name="Assets/Crafting/Currency/c760ea190f551c7a74ba.png" part="program" sha1="3b597608cef45f7bec8f36c9dc7845d2ffe90fdf" />
+	<File name="Assets/Crafting/Currency/c90514dcd69f3297c0a2.png" part="program" sha1="414e2ba9d9b29c2ea98401b254f13181321709cc" />
+	<File name="Assets/Crafting/Currency/ca33e9096afd7445a97c.png" part="program" sha1="5559fa4539030a81f2e91725c02bcc850080ccb5" />
+	<File name="Assets/Crafting/Currency/ceb3dc49263a357ed9a4.png" part="program" sha1="128917c29f33380dce69ad51d44894a165cd2c4b" />
+	<File name="Assets/Crafting/Currency/d0f8f28a5a4619ab1cac.png" part="program" sha1="78597d7af94de6d8896056ecfc5689b24b259f3b" />
+	<File name="Assets/Crafting/Currency/d1f011dbb49824e413cd.png" part="program" sha1="995e58e14bc56d551af658644685ded309e48914" />
+	<File name="Assets/Crafting/Currency/d2d819d54750eb48aad0.png" part="program" sha1="a4bda8cdad78bfef3f12dfb78a1cd368ffff6e98" />
+	<File name="Assets/Crafting/Currency/d34a63624b521e2304e6.png" part="program" sha1="89f40aea23847dac1b24489e2d0dea71acb9d28d" />
+	<File name="Assets/Crafting/Currency/d393ee87d05ed0234714.png" part="program" sha1="e5f8d865ccefaf5e5d431ab47a5d40d496ab0edb" />
+	<File name="Assets/Crafting/Currency/d6198548f11f07fcd5d7.png" part="program" sha1="163582ebef303be13312482a453b42b136b2d025" />
+	<File name="Assets/Crafting/Currency/d7a6183680deab3cbfb4.png" part="program" sha1="5da6e544b0c16622bb3909f5dd58d9a6ba50210d" />
+	<File name="Assets/Crafting/Currency/da42119c9980b2d86d6b.png" part="program" sha1="79cefe918e549787b7b0e5dfdda0e43df0ec9bbe" />
+	<File name="Assets/Crafting/Currency/e141dac63e09059ca7a2.png" part="program" sha1="d2f4a3fc32b3ccbe476c991fc9bb4b56934d76cf" />
+	<File name="Assets/Crafting/Currency/e157623163d21650f956.png" part="program" sha1="3e306b1d3779a4e53d34e97faf98ed50d31300b0" />
+	<File name="Assets/Crafting/Currency/e2ae159fe5964045ede6.png" part="program" sha1="b896816017ebe088d5cbb550219690f52d100b58" />
+	<File name="Assets/Crafting/Currency/e2f8a28f2d3f8f7b43a8.png" part="program" sha1="8fa99d7ab88f66ed71ffcd014d73a719f1baeb95" />
+	<File name="Assets/Crafting/Currency/e51ae01fccd7d4190606.png" part="program" sha1="dd38ed78f42e09ad3d60b5f95c7ffb87981d09cf" />
+	<File name="Assets/Crafting/Currency/e67d016e45bfaa0d975a.png" part="program" sha1="ebd9a5bb63b270bc502b631a00213d5be0c70b0a" />
+	<File name="Assets/Crafting/Currency/e6d2b984d6bd3e9da5a6.png" part="program" sha1="ce6102e8ae29b2fc4cc9aea7281bb44d3b849a07" />
+	<File name="Assets/Crafting/Currency/e7efbab88cfeee570b01.png" part="program" sha1="7629fb3e7a4911ee5735d268ef3bd2af3593059c" />
+	<File name="Assets/Crafting/Currency/e8b972322045a7ca24db.png" part="program" sha1="31fb8af078c1e33c30729b5be35e1be1ff9fa349" />
+	<File name="Assets/Crafting/Currency/e9fd9382550a777dffb4.png" part="program" sha1="275e4dafe3277368665e24873d29b32a70c95e11" />
+	<File name="Assets/Crafting/Currency/eb2554515713f132f57e.png" part="program" sha1="a4229f0f90cecb80efe7f98bbf68c21663f385ac" />
+	<File name="Assets/Crafting/Currency/edf647a288da0aaa8d6f.png" part="program" sha1="3cce9df8cdb6c32936cc024db2e6da98235a509f" />
+	<File name="Assets/Crafting/Currency/f200d8604bff3a424ba3.png" part="program" sha1="d36c69e1826c463e2ddad7ee5f1c2c2dac4fff8d" />
+	<File name="Assets/Crafting/Currency/f228ff061753a0fd0af1.png" part="program" sha1="b2159b62beb1b0619411f07704c7f5a759b9a350" />
+	<File name="Assets/Crafting/Currency/f29d4438a5f4ef5a42d4.png" part="program" sha1="103ac9572d8f486b7d435d3a1e5856b1472bec08" />
+	<File name="Assets/Crafting/Currency/f2a1ab7adc8c68a229dc.png" part="program" sha1="103582977db2482dd11fcc466830caef4e2418be" />
+	<File name="Assets/Crafting/Currency/f3bee36504af7453ea82.png" part="program" sha1="a7dcd499a1abdc9cd5e69ec2e07d6abea5aff857" />
+	<File name="Assets/Crafting/Currency/f7aca9acdfa1ea4f7b7f.png" part="program" sha1="c05ce51fc9fc89e0b23feb1e8ffcdb317bbeb061" />
+	<File name="Assets/Crafting/Currency/f8c76ee12fa2dee8e7f5.png" part="program" sha1="e55872c37d37a3ca17aed847bad3ed20eee70889" />
+	<File name="Assets/Crafting/Currency/f8d15d52b8aa5ae69454.png" part="program" sha1="71ccee05ad7cda4a0e268975eaa74c77dd4ce4b3" />
+	<File name="Assets/Crafting/Currency/faa408b06ba3f9bfdb9a.png" part="program" sha1="c970686ed423f9690107b42b2889deaebf28f458" />
+	<File name="Assets/Crafting/Currency/fb4d507692489d82cfe9.png" part="program" sha1="364f005f55669e18414315864f4ad5982e863d3b" />
+	<File name="Assets/Crafting/Currency/fcd9b533fa59a96f7fcf.png" part="program" sha1="8655024ddad482a2500678acf5460d684d1579b1" />
+	<File name="Assets/Crafting/Currency/fdfb73de27be38e4c61d.png" part="program" sha1="0238335508f1453ce182a46785ac3b5e60ca486d" />
+	<File name="Assets/Crafting/Currency/fe86082218b7110ff841.png" part="program" sha1="0457aa10993a02d203cab87363b40be836b1dbad" />
+	<File name="Assets/Crafting/Currency/ff8cbce0beec64c31b97.png" part="program" sha1="ce9cbf078e87f9d92baa977e6f1dc15a675373d0" />
 	<File name="Assets/Crafting/Items/00bd06b040fa097a879c.png" part="program" sha1="1bf793c3b4c84bfe23429df7422865df59f57757" />
 	<File name="Assets/Crafting/Items/00d828ed2900e04357db.png" part="program" sha1="06b2faee45f238dc54218942e5d1df9cab370789" />
 	<File name="Assets/Crafting/Items/00fbb987e8e2b0913699.png" part="program" sha1="37c6708c1845e9e4a808fd2508a07e6c8b85a11c" />
@@ -757,6 +967,7 @@
 	<File name="Assets/Crafting/augmentation.png" part="program" sha1="fad416087255184d9f22f2723bb7d45aee00dae7" />
 	<File name="Assets/Crafting/chaos.png" part="program" sha1="e7a21347961c7dce1a423a74872354c61a46be25" />
 	<File name="Assets/Crafting/chromatic.png" part="program" sha1="d5b9ad7b631880f9bb0476688e4792ace6f89486" />
+	<File name="Assets/Crafting/currencies.json" part="program" sha1="772918c9aa05f74abd270021b61df264dbbe599e" />
 	<File name="Assets/Crafting/divine.png" part="program" sha1="fd658ddb8a7003ba6481863f018e0fbff1058d8e" />
 	<File name="Assets/Crafting/exalt.png" part="program" sha1="eab8a2c84b5b744fdca04c17f2e6b3eda08c53d7" />
 	<File name="Assets/Crafting/items.json" part="program" sha1="90074bb1d9669a26033f2e74a27b3f40f908baca" />
@@ -894,8 +1105,9 @@
 	<File name="Assets/veiledicon.png" part="program" sha1="035479a7ee7847969ef50ff428e3bee897fba671" />
 	<File name="Assets/vestigialicon.png" part="program" sha1="ecb5dd4b9aed1cac0c1a677b18838ae9c62744d7" />
 	<File name="Assets/warlordicon.png" part="program" sha1="cca050c84884f5c0bb1380ece51d3c4b32be4900" />
-	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="6986eb4e298d2c02dcbcd05622f14a73efb27f5f" />
+	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="9c790cc994a75dd9f61331b0c2f93ddf212f1c00" />
 	<File name="Classes/AtlasPlanningControl.lua" part="program" sha1="99244d293bcefb2ce050ae4189f0f2be80a08746" />
+	<File name="Classes/AtlasTargetsControl.lua" part="program" sha1="e925a2ea5e9069b388163afe363c9e07c76a64d1" />
 	<File name="Classes/BuildJourneyControl.lua" part="program" sha1="3429fb9b3ce4463a96838e127e3863814d47f976" />
 	<File name="Classes/BuildListControl.lua" part="program" sha1="f60f0d7f6aecbe851db896913cd1aa707c7fb304" />
 	<File name="Classes/BuildProposalControl.lua" part="program" sha1="561317a52ca3a02a51e0cd871ffa0236496bb9cc" />
@@ -913,18 +1125,24 @@
 	<File name="Classes/ConfigTab.lua" part="program" sha1="7fa82e4b88866735497ba758d1e0da779a19ed86" />
 	<File name="Classes/Control.lua" part="program" sha1="00217659e9d711d7c3d8e97d42a19ae9c78c6f8f" />
 	<File name="Classes/ControlHost.lua" part="program" sha1="e2bbba0d34995d363dd11ab0e989c8e84fd1717c" />
-	<File name="Classes/CraftingCompareControl.lua" part="program" sha1="bf4463566c80450adf3d3118ee35c76c086d033a" />
+	<File name="Classes/CraftingChartsControl.lua" part="program" sha1="5d60e7e8aa72779bdc0b99e168625b5080601fac" />
+	<File name="Classes/CraftingCompareControl.lua" part="program" sha1="337bccb4e7528c1e659d948226013608649ed33e" />
 	<File name="Classes/CraftingHistoryControl.lua" part="program" sha1="e5d93860b1f0b56531e3c581c95713d4ce1c9ad0" />
+	<File name="Classes/CraftingInventoryControl.lua" part="program" sha1="48206da8a612bfaaaedd362f7322824d98f4a0a6" />
+	<File name="Classes/CraftingItemComparisonControl.lua" part="program" sha1="b12c89833be47944fe94110f8e9ef22cbad6fd99" />
 	<File name="Classes/CraftingItemEditorControl.lua" part="program" sha1="61b2149357d4d32f9b69831e555978216f87a9df" />
-	<File name="Classes/CraftingProjectControl.lua" part="program" sha1="a463182d3f2b1ed394d47d129581ee823b52a12f" />
+	<File name="Classes/CraftingModifierControl.lua" part="program" sha1="cb7143a0283c367bd9e92cc59803a7fd1d57a9a7" />
+	<File name="Classes/CraftingProjectControl.lua" part="program" sha1="7d8fa38075d224d32bee9ddefc2e55371e83a895" />
 	<File name="Classes/CraftingProjectWizard.lua" part="program" sha1="4ce02a7213b08e05fea2b59c9438e12d480a9d70" />
-	<File name="Classes/CraftingRecipeControl.lua" part="program" sha1="408be9ab1556464e1f7f996dc05f1b581a10d7c1" />
+	<File name="Classes/CraftingRecipeControl.lua" part="program" sha1="a4cf8ebffaeb7bba3ae431a21ea7e926a9b9e658" />
+	<File name="Classes/CraftingRecipeGraphControl.lua" part="program" sha1="48f536d650b220c56f9d2b7cbdc6c79bb0a7dbc2" />
 	<File name="Classes/CraftingRecoveryControl.lua" part="program" sha1="6bdf797c867f14c6a1b5338bfc6f6dcea18cd1f1" />
-	<File name="Classes/CraftingSimulatorControl.lua" part="program" sha1="a8f7ad9e3128a254eface2865bd6408134cc083d" />
-	<File name="Classes/CraftingTargetControl.lua" part="program" sha1="88c5593c9fdb4f46ffa968ffb87d7415c12a5016" />
+	<File name="Classes/CraftingSimulatorControl.lua" part="program" sha1="0ac24ae3ce8fea35ccea6ac4bb1b5f6432713e1a" />
+	<File name="Classes/CraftingTargetControl.lua" part="program" sha1="d605adbf5c56d6a4fb8401f1bf65e16389d82511" />
+	<File name="Classes/CraftingTargetGroupsControl.lua" part="program" sha1="62e25cea684f9892f87d01c13edc90d9dd294361" />
 	<File name="Classes/DraggerControl.lua" part="program" sha1="99b86b751df018a33714b000c9eed240a7101b8e" />
-	<File name="Classes/DropDownControl.lua" part="program" sha1="561772a235df007136255f6a6e24440ec2e2bd76" />
-	<File name="Classes/EditControl.lua" part="program" sha1="b551d57d4addbd7e409644b42c29acea3659fae4" />
+	<File name="Classes/DropDownControl.lua" part="program" sha1="92876494cc3228d3c10f1f71442e4ebe34729e1f" />
+	<File name="Classes/EditControl.lua" part="program" sha1="e37d2450fa2e019eeef31cc3deee91f4f4086a2b" />
 	<File name="Classes/EncounterWorkspaceControl.lua" part="program" sha1="cfee7dc84c2be58d5625b66b48d26b2116e6f9d7" />
 	<File name="Classes/ExtBuildListControl.lua" part="program" sha1="2a8ac205bbbcff1a413554131d6cfff0ece379af" />
 	<File name="Classes/ExtBuildListProvider.lua" part="program" sha1="8bc44f4b0096876a078b12e4bf6dce09104b683d" />
@@ -943,10 +1161,14 @@
 	<File name="Classes/JourneyViews.lua" part="program" sha1="b89da0fb5e79ca13c8b4c8111f46b4fbe348c6a8" />
 	<File name="Classes/LabelControl.lua" part="program" sha1="7a8f38d225087ba6941537444b0ea0ec0ac150cd" />
 	<File name="Classes/ListControl.lua" part="program" sha1="9223f7e90e7fa3f67ad0cf8224e1266e59b9681f" />
-	<File name="Classes/LootFilterAppearance.lua" part="program" sha1="1a885868d43009f618c29d901f5df02affcafdd6" />
-	<File name="Classes/LootFilterControl.lua" part="program" sha1="8af98de07e64fbd7104b622bcbceebe3abfbf487" />
-	<File name="Classes/LootFilterGlobalControl.lua" part="program" sha1="92c659e279a492d93e82a1cc0ae1335568b6ed99" />
-	<File name="Classes/LootFilterWorkspace.lua" part="program" sha1="5638b2d52da0aa5670d3d50b900c4ab1c93d6740" />
+	<File name="Classes/LootFilterAppearance.lua" part="program" sha1="c707dc7c16867458a374da335930c27154ff3bb6" />
+	<File name="Classes/LootFilterControl.lua" part="program" sha1="2b879331fa78e4a409c573f85ceb02b48ec3ca5b" />
+	<File name="Classes/LootFilterEffectsControl.lua" part="program" sha1="dc4d640e9b3668eedbb361621e478cba684c82f0" />
+	<File name="Classes/LootFilterGlobalControl.lua" part="program" sha1="f1994ea6fea92a2f10b97a49b5e2c97dd1ef10ea" />
+	<File name="Classes/LootFilterModuleControl.lua" part="program" sha1="0a2bd48b6c521e73ab0231e7cfbd8701e366d445" />
+	<File name="Classes/LootFilterSceneControl.lua" part="program" sha1="1bc33be06c10aa0659eb9448fe517848cd6cbf75" />
+	<File name="Classes/LootFilterTierControl.lua" part="program" sha1="5642eaf6dbf40145b87797069c14d4b578023014" />
+	<File name="Classes/LootFilterWorkspace.lua" part="program" sha1="084c40b5d79ae8dce0dd602d39625ea181b0ceab" />
 	<File name="Classes/MinionListControl.lua" part="program" sha1="655a6ddb06ba75011e51d5a6130db8cf7a9f3895" />
 	<File name="Classes/MinionSearchListControl.lua" part="program" sha1="cfff5d76e380c7bdcbdac229325cefb1599af36c" />
 	<File name="Classes/ModDB.lua" part="program" sha1="1327beebeba14dc8320d137a3dede673b74942af" />
@@ -961,8 +1183,8 @@
 	<File name="Classes/PassiveTree.lua" part="program" sha1="8404aecfad5bd10625f2438d12fc0f9f56726993" />
 	<File name="Classes/PassiveTreeView.lua" part="program" sha1="b2526722216d42c8ca38d57154af22b13fde9b63" />
 	<File name="Classes/PathControl.lua" part="program" sha1="868c38fd9095317b6721f6932cf06590bd616f13" />
-	<File name="Classes/PlanningBrowserControl.lua" part="program" sha1="5122fc9d7d2ed2d6d93d6a3d0e59c613da26d876" />
-	<File name="Classes/PlanningToolsControl.lua" part="program" sha1="269f7d2fe0fbb967631ebaa9d1de4611a0e110a5" />
+	<File name="Classes/PlanningBrowserControl.lua" part="program" sha1="1bec9219dca64d62bc6916b102809a218cd3f612" />
+	<File name="Classes/PlanningToolsControl.lua" part="program" sha1="b9e051fd9af5b48ae82e894cfe15546b2e4a9a81" />
 	<File name="Classes/PoBArchivesProvider.lua" part="program" sha1="acf68b7718782ce267df01614b497af246389ca5" />
 	<File name="Classes/PoEAPI.lua" part="program" sha1="197f3091ba9b511b923ca95e5952933a3ffd0f21" />
 	<File name="Classes/PopupDialog.lua" part="program" sha1="1e2334c463bfbb9bac16f2abe4409cf3cece9947" />
@@ -1039,7 +1261,7 @@
 	<File name="Data/FlavourText.lua" part="program" sha1="c73a96f6d0aa7b0cebe2a4b6fc0f1eedc188bd0f" />
 	<File name="Data/Gems.lua" part="program" sha1="4e36e80d2f531ba5fe6950aa2a80189a782036c6" />
 	<File name="Data/Global.lua" part="program" sha1="72bff7e953555cf3045880b0ff0dc0c37f43056e" />
-	<File name="Data/HeadlessImageSizes.json" part="program" sha1="795b332149bf8b837be35aa516d7db92855f5326" />
+	<File name="Data/HeadlessImageSizes.json" part="program" sha1="887597289f51d790c265d7b8fc3893747b90abfd" />
 	<File name="Data/IncursionDropOnly.lua" part="program" sha1="1fa5c24b1bf897e781c54b3ce7a7fcd7d23fd645" />
 	<File name="Data/LootFilters/0.filter" part="program" sha1="7df469ee3b02e659ca340e02e5bd95cf98dbba47" />
 	<File name="Data/LootFilters/1.filter" part="program" sha1="99c89d8a728ad170c3af8e9c8ac1a33bb5da4289" />
@@ -1197,8 +1419,9 @@
 	<File name="LaunchServer.lua" part="program" sha1="f15bdfbedaf887e19556490dce49b720f8365379" />
 	<File name="Modules/AddImplicitPopup.lua" part="program" sha1="f68d391d10b95c0feef70b7e8e82326a745dcb3b" />
 	<File name="Modules/AtlasArt.lua" part="program" sha1="1d3d01aa76eb489f2f5fa6f6852d0860b5429c84" />
-	<File name="Modules/AtlasPlanner.lua" part="program" sha1="07553f75fc1a03f8bff1234aba0536685296052f" />
-	<File name="Modules/AtlasStrategy.lua" part="program" sha1="b58cfb3302a30c789ac602241af82ca35047bd3c" />
+	<File name="Modules/AtlasPlanner.lua" part="program" sha1="09410eed5feb9df8f7af8a34cc0c0cf8047e3496" />
+	<File name="Modules/AtlasStrategy.lua" part="program" sha1="f671d6c64944239684a2d175ec187f927d4880fd" />
+	<File name="Modules/AtlasTargets.lua" part="program" sha1="8a33ed81ad0a42266e442ba8bc1be549b77be50b" />
 	<File name="Modules/Build.lua" part="program" sha1="b1c1ac17549a379842f2d0c59008ee3a8d36d3a0" />
 	<File name="Modules/BuildDisplayStats.lua" part="program" sha1="ffc4da3b13c3d50f3580b452622429f0bd7e70ab" />
 	<File name="Modules/BuildInsights.lua" part="program" sha1="dfe8965fb289e08a1b2ecb72c62860844212bcd3" />
@@ -1225,29 +1448,34 @@
 	<File name="Modules/ConfigModBrowser.lua" part="program" sha1="6c32488700943decebee20dc939d8a2bde291bb0" />
 	<File name="Modules/ConfigOptions.lua" part="program" sha1="38842f6494a6b8a9404300e28cd51cbac552a56f" />
 	<File name="Modules/ConfigVisibility.lua" part="program" sha1="ad4a825bfe36dc94dca1ac7033d815110fd46d3c" />
-	<File name="Modules/CraftingAdvanced.lua" part="program" sha1="4abfe6c41fbceae34cbc49be8aad2e655821ac46" />
+	<File name="Modules/CraftingAdvanced.lua" part="program" sha1="568a2051de37673b7c21420675b14b95f011b441" />
 	<File name="Modules/CraftingAllflame.lua" part="program" sha1="249227ae246832e88c656bd496876cd518609bfd" />
+	<File name="Modules/CraftingAvailability.lua" part="program" sha1="68c5adf44272dbbd0e2ff40e6b0498bec03e6911" />
 	<File name="Modules/CraftingCalculator.lua" part="program" sha1="0bb66664579cae53837554582b4e0c014fb9e728" />
-	<File name="Modules/CraftingCheckpoint.lua" part="program" sha1="0debde668821e58449b4e2665db6e7a49ad2f32c" />
+	<File name="Modules/CraftingChartData.lua" part="program" sha1="70ee57951600872b667cc51bb46566430b81eafc" />
+	<File name="Modules/CraftingCheckpoint.lua" part="program" sha1="9c57e86638595679b362100fb1341357d143008b" />
 	<File name="Modules/CraftingCorruption.lua" part="program" sha1="3c0bbeec05e451cbe33457d041a6e7fceebbef0a" />
 	<File name="Modules/CraftingImport.lua" part="program" sha1="0cacacdddeb46b8d1e370d5666aefaa7276ab7e6" />
 	<File name="Modules/CraftingInspection.lua" part="program" sha1="a0cda32bce1a776358e04ff6c5469528aa711979" />
+	<File name="Modules/CraftingInventory.lua" part="program" sha1="d273ecaae81f4d7a81d65a91ad8e6619a13c0795" />
 	<File name="Modules/CraftingLeague.lua" part="program" sha1="947365404de9f6008b564714a88967a3a2f3de5d" />
 	<File name="Modules/CraftingMemory.lua" part="program" sha1="8ab3834321d09601f90453d1ad22a595abb61008" />
+	<File name="Modules/CraftingModifiers.lua" part="program" sha1="8fc844c23a3ca9cc63193207403d2f0391d3bf79" />
 	<File name="Modules/CraftingPalette.lua" part="program" sha1="edd27dc9231769e2c5035238bc2e6aa1a5df5de6" />
 	<File name="Modules/CraftingPredictable.lua" part="program" sha1="a61b47112670167522a2c6da8f76a23dfc39ccde" />
-	<File name="Modules/CraftingProjects.lua" part="program" sha1="d2bc20137f563bb52ccaa1e1e0740af5e34943d5" />
-	<File name="Modules/CraftingProperties.lua" part="program" sha1="36d221ff71af904bd564e5152f6daea41a675675" />
+	<File name="Modules/CraftingProjects.lua" part="program" sha1="a898be3bcfcaf1f9bcae79a779b0f8ef1f6ce08f" />
+	<File name="Modules/CraftingProperties.lua" part="program" sha1="ae12f7c969947c17178f08a1876b227acfaa5371" />
 	<File name="Modules/CraftingRecombination.lua" part="program" sha1="e1ae6cd63866f00dcfa407cf796c1dd564f3bb6e" />
-	<File name="Modules/CraftingSimulator.lua" part="program" sha1="661720feec254c55a6f8d8f173ea6d0f7ec7e48d" />
+	<File name="Modules/CraftingRoutes.lua" part="program" sha1="77750a8613d4fa082657f708066d33fb70fbd635" />
+	<File name="Modules/CraftingSimulator.lua" part="program" sha1="286b69bd46f65a5a359a5f14b747b335ac6d46ce" />
 	<File name="Modules/CraftingSockets.lua" part="program" sha1="2c972a6078fb0082ef070cb5c2de589454c20cc1" />
 	<File name="Modules/CraftingTasks.lua" part="program" sha1="4cf20e586cf547c310d4bb5c715a817d13099fa3" />
-	<File name="Modules/CraftingWorkbench.lua" part="program" sha1="63820da380d92c107e9611fae62b37ba3a5b4316" />
+	<File name="Modules/CraftingWorkbench.lua" part="program" sha1="7b0f88b3a33a5f8cec4e092f38c3bc09a9cb51b1" />
 	<File name="Modules/Data.lua" part="program" sha1="d8bd104ed0cb90c311238b2c2f4bc62dfaa7d69e" />
 	<File name="Modules/DataAbyssJewelLookUpTableHelper.lua" part="program" sha1="c95c4e8af0e9ab9c2abec801e5a279952754cf05" />
 	<File name="Modules/DataJewelFileLoader.lua" part="program" sha1="7f437192153f03eb1fecb4ea00283ead108fbde8" />
 	<File name="Modules/DataLegionLookUpTableHelper.lua" part="program" sha1="ece92c4b6062f627f98ba2454531366b4628abfc" />
-	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="f1447d17267598423a926b9200e774393f0e3ead" />
+	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="e0239f61a5748c6d316529f7ef13f724252e47ff" />
 	<File name="Modules/EncounterReport.lua" part="program" sha1="710dc78939bfbc8282f295cf626bcde9c9b7d8e5" />
 	<File name="Modules/HeadlessCompression.lua" part="program" sha1="16a42bf407eb777602f9b03b5c8466188a04ee58" />
 	<File name="Modules/HeadlessUI.lua" part="program" sha1="c5f0e526542005122fd2ca868365cee33fcbbcfa" />
@@ -1255,22 +1483,30 @@
 	<File name="Modules/ItemTools.lua" part="program" sha1="17a804109e872fa03c0450cdd10927fd23b5aa1d" />
 	<File name="Modules/JourneyUpgrades.lua" part="program" sha1="bb121d8115f693518ae9431fefff305fdb46878f" />
 	<File name="Modules/LootFilterAccount.lua" part="program" sha1="8d3b431416c28b60eebf246a105e980a2913b05f" />
+	<File name="Modules/LootFilterAppearanceSettings.lua" part="program" sha1="be7bf559a03fe11f61e13450a8ef1d9b0c610ebd" />
 	<File name="Modules/LootFilterAudio.lua" part="program" sha1="492d64c2ec148944b3d548c3c84ada8021497387" />
-	<File name="Modules/LootFilterDecorators.lua" part="program" sha1="b82907d4528dd54bec9759f09b5b47dfcf2e460c" />
-	<File name="Modules/LootFilterLibrary.lua" part="program" sha1="27ed5ba6247643b8c845a3088fc2e9adf0ad3b3e" />
-	<File name="Modules/LootFilterParser.lua" part="program" sha1="731abf087de0ab6c7f326b39e793ca1cd89d177b" />
-	<File name="Modules/LootFilterVisuals.lua" part="program" sha1="7b50b45e2aa9df7a69d4e79782fa63196c3d4601" />
-	<File name="Modules/LootFilters.lua" part="program" sha1="e046209c805621f84826fe0eb52ee38f8337ec3c" />
+	<File name="Modules/LootFilterClipboard.lua" part="program" sha1="ff92e0adc60ee6a96b3e4486d36f6b152a1c7fab" />
+	<File name="Modules/LootFilterDecorators.lua" part="program" sha1="4075a1b08e0cf3efae225758ac8dc1cfc3f4e0bd" />
+	<File name="Modules/LootFilterDependencies.lua" part="program" sha1="47da6debb89d9d6815b8c07b165e9d0fc19b7000" />
+	<File name="Modules/LootFilterDiagnostics.lua" part="program" sha1="78899585b42082a38cefd3f281513880bd719a8f" />
+	<File name="Modules/LootFilterEditing.lua" part="program" sha1="17d49abc95af87b487765a6a11e5ffc12e9f5af4" />
+	<File name="Modules/LootFilterLibrary.lua" part="program" sha1="62fa1f32ff7532633271226a9badd0d95c4889b3" />
+	<File name="Modules/LootFilterParser.lua" part="program" sha1="e0c18442cd866e14cad691e94df53c543efbf19c" />
+	<File name="Modules/LootFilterVisuals.lua" part="program" sha1="d1f3bb8447607f8d50fcae4896ffa26e4b3ce255" />
+	<File name="Modules/LootFilters.lua" part="program" sha1="9836df52cdf974856af238130bb3dc0645eddb59" />
 	<File name="Modules/Main.lua" part="program" sha1="6a77993392e839506b9594e8e0802b13d6bed530" />
 	<File name="Modules/ModParser.lua" part="program" sha1="460cd22503a0a7a79a4d11dba165725a61dd918a" />
 	<File name="Modules/ModTools.lua" part="program" sha1="c987491da4021b5bdc4744b5eec84fb5995284cf" />
 	<File name="Modules/PantheonTools.lua" part="program" sha1="ebe91a7d8f8444a6061acf4758da0e775cc8c314" />
-	<File name="Modules/PlanningBundle.lua" part="program" sha1="56a8ada17beb1fc0f5e13cee86c191031508097f" />
+	<File name="Modules/PlanningBundle.lua" part="program" sha1="d92c0ff1dec21ac0d042d6ff268be9e8aa91a610" />
+	<File name="Modules/PlanningData.lua" part="program" sha1="32607a77951c43bb3d586b310caaef985c8ac554" />
+	<File name="Modules/PlanningHistory.lua" part="program" sha1="46165d8b5a518970153e8cc0345054ef30db62fe" />
 	<File name="Modules/PlanningPerformance.lua" part="program" sha1="0be53fc34487b96cdf7a81896764731ab5bde94a" />
+	<File name="Modules/PlanningRecovery.lua" part="program" sha1="7baa581ed378b953b55d3bdc988e8d309c1f3646" />
 	<File name="Modules/PlanningRevision.lua" part="program" sha1="f68afda18a3c9768fbc71a72c6dd67bfebfea316" />
-	<File name="Modules/PlanningUI.lua" part="program" sha1="0ecdd9d5ecf45b02331e51ed312d62530434a59e" />
+	<File name="Modules/PlanningUI.lua" part="program" sha1="b36b2357030872acbceb68d4d555c9968ee448af" />
 	<File name="Modules/PlanningWorker.lua" part="program" sha1="cfa18e6b4626a7a834906bc0df0e992b386e68f2" />
-	<File name="Modules/PlanningWorkspace.lua" part="program" sha1="4f3789b296d4afe98cd3c1120b020d5259c9b2fc" />
+	<File name="Modules/PlanningWorkspace.lua" part="program" sha1="51ddb6f4b7ba178a7c4c02159c14bf5afde1aa09" />
 	<File name="Modules/RecoveryTasks.lua" part="program" sha1="99bdef734b4030782fda58f36e3863f0d25f50ac" />
 	<File name="Modules/StatDescriber.lua" part="program" sha1="db58472a9bf736f2a1fe5fbe2dec9cf224f36a0f" />
 	<File name="Modules/ToastNotification.lua" part="program" sha1="87abe18f2c81a8df77e7e79248730e81ca5e03c5" />

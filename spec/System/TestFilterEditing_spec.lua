@@ -1,0 +1,73 @@
+describe("Local filter editing",function()
+	local filters=require("Modules.LootFilters")
+	local editing=require("Modules.LootFilterEditing")
+	local parser=require("Modules.LootFilterParser")
+	local function profile()
+		local p=filters.profile("test","Test");p.template='Show\n BaseType == "Chaos Orb"\n SetFontSize 20\nShow\n BaseType == "Divine Orb"\n SetFontSize 45'
+		return p
+	end
+	before_each(function() newBuild();main.popups={} end)
+	after_each(function() main.popups={} end)
+	it("moves exact items between tiers while retaining conditions and pinned source",function()
+		local p=profile();p.tiers={editing.newTier("low","Low",'Show\n Class == "Stackable Currency"\n BaseType == "Chaos Orb"\n StackSize >= 2\n SetFontSize 30\n Continue'),editing.newTier("high","High",'Show\n BaseType == "Divine Orb"\n SetFontSize 45')}
+		local source=p.template;local next=editing.assign(p,"low","Chaos Orb");assert.equal(0,#p.tiers[1].items)
+		next=editing.assign(next,"high","Chaos Orb");assert.equal(0,#next.tiers[1].items);assert.same({"Chaos Orb"},next.tiers[2].items);assert.equal(source,next.template)
+		assert.same({"45"},filters.simulate(next,{BaseType="Chaos Orb"}).styles.SetFontSize)
+		local rule=editing.rule(editing.assign(p,"low","Chaos Orb").tiers[1]);local block=parser.parse(rule.text).rules[1]
+		assert.equal("StackSize",block.conditions[3].keyword);assert.is_true(block.continue)
+	end)
+	it("preserves personal priority and permits empty or disabled tiers",function()
+		local p=profile();p.tiers={editing.newTier("high","High")};local before=filters.compile(p)
+		p.tiers[1].enabled=false;p.tiers[1].items={"Chaos Orb"};assert.equal(before,filters.compile(p))
+		p.tiers[1].enabled=true;p.rules={filters.rule("personal","Personal",{'BaseType == "Chaos Orb"'})}
+		assert.is_truthy(filters.simulate(p,{BaseType="Chaos Orb"}).ruleTitle:find("Personal",1,true))
+	end)
+	it("rejects ambiguous tier lists and invalid module payloads",function()
+		for _,text in ipairs({'Show\n BaseType "Orb"','Show\n Class == "Currency"','Show\n BaseType == "A"\n BaseType == "B"'}) do assert.is_false(pcall(editing.items,text)) end
+		local tier=editing.newTier("tier","Tier");tier.items={"Chaos Orb","Chaos Orb"};assert.is_false(pcall(editing.validateTiers,{tier}))
+		assert.is_false(pcall(editing.import,'{"schemaVersion":2}'));assert.is_false(pcall(editing.validateModules,{{id="bad",title="Bad",rules={{id="x",title="X",text="Import bad.filter"}}}}))
+	end)
+	it("explains incompatible exact item classes before moving or removing an item",function()
+		local p=profile();p.tiers={editing.newTier("currency","Currency"),editing.newTier("equipment","Equipment",'Show\n Class == "Helmets"\n BaseType == "Iron Hat"')};p.tiers[1].items={"Chaos Orb"}
+		assert.is_truthy(editing.assignmentIssue(p,"equipment","Chaos Orb"));assert.has_error(function() editing.assign(p,"equipment","Chaos Orb") end);assert.same({"Chaos Orb"},p.tiers[1].items)
+		assert.is_nil(editing.assignmentIssue(p,"currency","Chaos Orb"));assert.equal(1,#editing.assign(p,"currency","Chaos Orb").tiers[1].items)
+	end)
+	it("decorates declared styles without adding inherited styles or changing conditions",function()
+		local raw='Show\n BaseType == "Iron Hat"\n SetTextColor 100 120 140\n CustomAlertSoundOptional "folder/my tone.wav"\n MinimapIcon 1 Cyan Diamond\n PlayEffect Green Temp\n Continue\nShow\n Rarity Rare'
+		local transformed=require("Modules.LootFilterDecorators").apply(raw,{textColor={255,210,120,200},alertId=6,alertVolume=0,effectColor="Purple",disableIcons=true})
+		local p=parser.parse(transformed);assert.same({"255","210","120","200"},p.rules[1].styles.SetTextColor);assert.same({"6","0"},p.rules[1].styles.PlayAlertSound)
+		assert.same({"Purple","Temp"},p.rules[1].styles.PlayEffect);assert.same({"-1"},p.rules[1].styles.MinimapIcon);assert.is_true(p.rules[1].continue);assert.is_nil(p.rules[2].styles.SetTextColor);assert.equal("BaseType",p.rules[1].conditions[1].keyword)
+		local settings=require("Modules.LootFilterAppearanceSettings");assert.same({255,0,128,255},settings.fromHex("#FF0080"));assert.is_nil(settings.fromHex("GG0080"));assert.has_error(function() settings.validate({textColor={255,0,128}}) end)
+	end)
+	it("previews distinct supported minimap geometry without substituting unknown shapes",function()
+		local visual=require("Modules.LootFilterVisuals");for _,shape in ipairs(require("Modules.LootFilterAppearanceSettings").shapes) do assert.is_true(visual.icon(shape,20,20,6),shape) end;assert.is_false(visual.icon("Unknown",20,20,6))
+	end)
+	it("reports only provable shadowing and validates supported effect syntax",function()
+		local diagnostic=require("Modules.LootFilterDiagnostics")
+		local raw='Show\n Class == "Helmets"\n BaseType == "Iron Hat"\nHide\n BaseType == "Iron Hat"\n Class == "Helmets"'
+		local warnings=diagnostic.shadowing(parser.parse(raw));assert.equal(1,#warnings);assert.equal(1,warnings[1].shadowedBy)
+		assert.equal(0,#diagnostic.shadowing(parser.parse(raw:gsub("\nHide","\n Continue\nHide"))))
+		assert.equal(0,#diagnostic.shadowing(parser.parse('Show\n BaseType == "Iron Hat"\nHide\n BaseType == "Wool Shoes"')))
+		assert.equal(1,#diagnostic.shadowing(parser.parse('Show\nHide\n BaseType == "Iron Hat"')))
+		for _,text in ipairs({'Show\n MinimapIcon 3 Cyan Diamond','Show\n MinimapIcon 0 Cyan Unknown','Show\n PlayEffect Cyan Forever'}) do assert.is_truthy(parser.parse(text).diagnostics[1].error) end
+		assert.equal(0,#parser.parse('Show\n MinimapIcon -1\n PlayEffect Purple Temp').diagnostics)
+	end)
+	it("shares frozen modules between profiles and updates snapshots explicitly",function()
+		local source=profile();source.rules={filters.rule("hat","Crafting base",{'BaseType == "Iron Hat"'},"craft:test")}
+		local module=editing.module(source,"bases","Bases");assert.is_nil(module.rules[1].origin)
+		local imported=editing.import(editing.share(module));local target=editing.install(profile(),imported)
+		assert.equal("Show",filters.simulate(target,{BaseType="Iron Hat"}).action)
+		module.title="Updated";assert.equal("Bases",target.modules[1].title)
+		target=editing.install(target,module);assert.equal(1,#target.modules);assert.equal("Updated",target.modules[1].title)
+		local checked=filters.validate({schemaVersion=1,activeId=target.id,profiles={target}});assert.same(target.modules,checked.profiles[1].modules)
+	end)
+	it("records stable history, restores redo, and invalidates redo after a fresh edit",function()
+		local history=require("Modules.PlanningHistory").new({a=1,b=2});assert.is_false(history:record({b=2,a=1}))
+		history:record({a=3,b=2});assert.same({a=1,b=2},history:step(true));assert.same({a=3,b=2},history:step(false))
+		history:step(true);history:record({a=4,b=2});assert.equal(0,#history.redo);assert.is_false(pcall(history.step,history,false))
+	end)
+	it("reports changes against kept profiles without mutating them",function()
+		local before={schemaVersion=1,activeId="test",profiles={profile()}};local after=copyTable(before);after.profiles[1].tiers={editing.newTier("tier","Tier")}
+		local changes=editing.review(before,after);assert.equal(1,#changes);assert.is_truthy(table.concat(changes[1].details,"\n"):find("Added tiers",1,true));assert.is_nil(before.profiles[1].tiers)
+	end)
+end)

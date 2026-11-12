@@ -31,20 +31,22 @@ end
 -- Keep imagery honest: unknown bases use PoB's equipment silhouette, rather
 -- than showing a different base's artwork.
 local slots={Helmet="helmet",["Body Armour"]="body_armour",Gloves="gloves",Boots="boots",Shield="shield",Ring="ring_left",Amulet="amulet",Belt="belt",Quiver="quiver",Bow="bow"}
+function M.itemArt(item)
+	if not artwork then
+		local file=assert(io.open("Assets/Crafting/items.json","r"));artwork=assert(require("dkjson").decode(file:read("*a"))).bases;file:close()
+	end
+	local entry=artwork[item.baseName] or artwork[item.baseName:gsub(" %b()$","")]
+	if entry and entry.path then return entry.path,entry.width,entry.height end
+	return "Assets/icon_"..(slots[item.type] or "weapon")..".png",84,84
+end
 function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 	options=options or {};local header=options.header or 180;local artSize=options.artSize or 84;local propertyX=artSize+26
-	if not artwork then
-		local file=assert(io.open("Assets/Crafting/items.json","r"))
-		artwork=assert(require("dkjson").decode(file:read("*a"))).bases;file:close()
-	end
 	local art,artWidth,artHeight,artPath
 	local function setArt(item)
-		local entry=artwork[item.baseName] or artwork[item.baseName:gsub(" %b()$","")]
-		if entry and not entry.path then entry=nil end
-		local path=entry and entry.path or "Assets/icon_"..(slots[item.type] or "weapon")..".png"
+		local path,width,height=M.itemArt(item)
 		if path ~= artPath then art=image(path);artPath=path end
-		local scale=artSize/math.max(entry and entry.width or 84,entry and entry.height or 84)
-		artWidth,artHeight=(entry and entry.width or 84)*scale,(entry and entry.height or 84)*scale
+		local scale=artSize/math.max(width,height)
+		artWidth,artHeight=width*scale,height*scale
 	end
 	setArt(model.item)
 	local card=new("ButtonControl"):ButtonControl(anchor,{x,y,w,header},"",onClick or function() end)
@@ -156,23 +158,27 @@ local currencies={
 	{"exalt","Exalted"},{"annul","Annul"},{"scour","Scour"},{"divine","Divine"},{"vaal","Vaal"},{"chromatic","Chromatic"},
 }
 local descriptions={transmute="Add magic modifiers to a normal item.",alteration="Reroll the modifiers on a magic item.",augmentation="Add a modifier to a magic item.",regal="Upgrade a magic item and add a modifier.",alchemy="Turn a normal item into a rare item.",chaos="Reroll the modifiers on a rare item.",exalt="Add a modifier to a rare item.",annul="Remove a random modifier.",scour="Remove the item's modifiers.",divine="Reroll the values of existing modifiers.",vaal="Corrupt the item. Outcomes can be destructive.",chromatic="Reroll socket colours."}
-function M.icon(method) return descriptions[method] and "Assets/Crafting/"..method..".png" or nil end
-function M.available(method,state,model)
-	if state.destroyed then return false,"Undo or reset the destroyed item." end
-	if not descriptions[method] then return true end
-	if state.corrupted then return false,"This currency needs an uncorrupted item." end
-	if state.veil then return false,"Finish the pending unveil first." end
-	local rarity=state.rarity
-	if (method=="transmute" or method=="alchemy") and rarity~="NORMAL" then return false,"Requires a normal item." end
-	if (method=="alteration" or method=="augmentation" or method=="regal") and rarity~="MAGIC" then return false,"Requires a magic item." end
-	if (method=="chaos" or method=="exalt") and rarity~="RARE" then return false,"Requires a rare item." end
-	if (method=="annul" or method=="divine" or method=="scour") and #state.affixes==0 then return false,"Requires an item with modifiers." end
-	if method=="chromatic" and #(state.sockets or model.item.sockets or {})==0 then return false,"Add sockets before changing their colours." end
-	if method=="exalt" or method=="augmentation" then
-		local caps=simulator.capacities(model,state)
-		if #state.affixes>=caps.Prefix+caps.Suffix then return false,"There is no open modifier slot." end
+local currencyArt,currencyNames
+function M.icon(method,action,model)
+	if not currencyArt then
+		local file=assert(io.open("Assets/Crafting/currencies.json","rb"));currencyArt=assert(require("dkjson").decode(file:read("*a")));file:close();currencyNames={}
+		for _,entry in pairs(currencyArt.items) do currencyNames[entry.name]=entry.path end
 	end
-	return true
+	action=action or {};local id=currencyArt.methods[method];local name
+	if method=="essence" and action.essenceId then local entry=data.essences[action.essenceId];name=entry and entry.name
+	elseif method=="catalyst" and action.catalyst then local entry=({"Abrasive","Accelerating","Dextral","Fertile","Imbued","Intrinsic","Noxious","Prismatic","Sinistral","Tempering","Turbulent","Unstable"})[action.catalyst];name=entry and entry.." Catalyst"
+	elseif method=="fossil" and action.fossils then local prefix=({"Primitive","Potent","Powerful","Prime"})[#action.fossils];name=prefix and prefix.." Chaotic Resonator"
+	elseif method=="eldritch_implicit" and action.tier then local prefix=({"Lesser","Greater","Grand","Exceptional"})[action.tier];name=prefix and prefix.." Eldritch "..(action.side=="Eater" and "Ichor" or "Ember")
+	elseif method=="influence_exalt" then local prefix=({shaper="Shaper",elder="Elder",adjudicator="Warlord",basilisk="Hunter",crusader="Crusader",eyrie="Redeemer"})[action.influence];name=prefix and prefix.."'s Exalted Orb"
+	elseif method=="quality" or method=="tainted_quality" then
+		if not model then return end;local kind=model.item.type
+		if kind=="Flask" or kind=="Tincture" then if method=="tainted_quality" then return end;name="Glassblower's Bauble"
+		else name=(method=="tainted_quality" and "Tainted " or "")..(data.weaponTypeInfo[kind] and "Blacksmith's Whetstone" or "Armourer's Scrap") end
+	elseif method:find("harvest",1,true) then return end
+	return name and currencyNames[name] or id and currencyArt.items[id].path or descriptions[method] and "Assets/Crafting/"..method..".png" or nil
+end
+function M.available(method,state,model)
+	return require("Modules.CraftingAvailability").check(method,state,model)
 end
 function M.hint(method,state,model)
 	local available,reason=M.available(method,state,model)

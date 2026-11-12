@@ -74,6 +74,11 @@ function M.validate(plan)
 		end
 	end
 	local set=nodeSet(tree,plan.nodes); set[tree.start]=true
+	local desired=nodeSet(tree,plan.desired or {});local avoided=nodeSet(tree,plan.avoided or {})
+	for id in pairs(desired) do assert(id~=tree.start,"The Atlas start is already free");assert(not avoided[id],"An Atlas node cannot be both desired and avoided") end
+	for id in pairs(avoided) do assert(id~=tree.start and not set[id],"Cannot avoid an allocated Atlas node") end
+	if plan.desired~=nil then result.desired=sorted(desired) end
+	if plan.avoided~=nil then result.avoided=sorted(avoided) end
 	local connected=reachable(tree,set)
 	local used,bonus=0,0
 	for id in pairs(set) do
@@ -97,21 +102,26 @@ function M.search(version,query,limit)
 	return {version=version,total=#all,matches=matches,source=tree.source}
 end
 -- Greedy shortest connections, deterministic in caller target order. Not a global optimizer.
-function M.connect(plan,targets,avoid)
+function M.exclusions(plan,extra)
+	local tree=M.tree(plan.version);local set=nodeSet(tree,plan.avoided or {})
+	for id in pairs(nodeSet(tree,extra or {})) do set[id]=true end;return sorted(set)
+end
+function M.connect(plan,targets,avoid,checkpoint)
 	plan=M.validate(plan)
 	local tree=M.tree(plan.version)
 	local set=nodeSet(tree,plan.nodes); set[tree.start]=true
-	local blocked=nodeSet(tree,avoid or {})
+	local exclusions=M.exclusions(plan,avoid);local blocked=nodeSet(tree,exclusions)
 	for id in pairs(blocked) do assert(not set[id],"Cannot avoid an allocated Atlas node") end
-	array(targets,30,"Atlas targets")
+	array(targets,300,"Atlas targets")
 	local additions={}
-	for _,target in ipairs(targets) do
+	for targetIndex,target in ipairs(targets) do
 		integer(target,1,65535,"Atlas target")
 		assert(tree.nodes[target] and not blocked[target],"Unknown or avoided Atlas target")
 		local previous,queue={},sorted(set)
 		for _,id in ipairs(queue) do previous[id]=false end
 		local index=1
 		while previous[target] == nil and index <= #queue do
+			if checkpoint and index%128==0 then checkpoint({target=targetIndex,targets=#targets}) end
 			local current=queue[index]; index=index+1
 			for _,id in ipairs(tree.nodes[current].links) do
 				if previous[id] == nil and not blocked[id] then previous[id]=current; queue[#queue+1]=id end
@@ -120,29 +130,31 @@ function M.connect(plan,targets,avoid)
 		assert(previous[target] ~= nil,"Atlas target cannot be reached with these avoided nodes")
 		local cursor=target
 		while not set[cursor] do set[cursor]=true; additions[#additions+1]=cursor; cursor=previous[cursor] end
+		if checkpoint then checkpoint({target=targetIndex,targets=#targets}) end
 	end
 	set[tree.start]=nil; plan.nodes=sorted(set)
+	if plan.avoided~=nil or #exclusions>0 then plan.avoided=exclusions end
 	return M.validate(plan),additions
 end
 -- Bounded order search, retaining every existing allocation. This is a heuristic,
 -- not a Steiner-tree solver. An invalid baseline must not prevent a valid reorder.
-function M.connectOptimized(plan,targets,avoid)
-	plan=M.validate(plan);array(targets,30,"Atlas targets")
-	local tree=M.tree(plan.version);local blocked=nodeSet(tree,avoid or {})
+function M.connectOptimized(plan,targets,avoid,options)
+	options=options or {};plan=M.validate(plan);array(targets,300,"Atlas targets")
+	local tree=M.tree(plan.version);local blocked=nodeSet(tree,M.exclusions(plan,avoid))
 	local allocated=nodeSet(tree,plan.nodes);allocated[tree.start]=true
 	for id in pairs(blocked) do assert(not allocated[id],"Cannot avoid an allocated Atlas node") end
 	for _,id in ipairs(targets) do integer(id,1,65535,"Atlas target");assert(tree.nodes[id] and not blocked[id],"Unknown or avoided Atlas target") end
 	local best,additions,baseline;local attempts=0;local seen={}
 	local function try(order)
 		local signature=table.concat(order,",");if seen[signature] then return end;seen[signature]=true;attempts=attempts+1
-		local ok,value,added=pcall(M.connect,plan,order,avoid)
+		local ok,value,added=pcall(M.connect,plan,order,avoid,options.checkpoint and function(progress) progress.order=attempts;progress.orders=math.min(#targets+1,32);options.checkpoint(progress) end)
 		if attempts==1 and ok then baseline=#added end
 		if ok and (not best or #added<#additions) then best,additions=value,added end
 	end
 	try(targets)
 	local reversed={};for i=#targets,1,-1 do reversed[#reversed+1]=targets[i] end;try(reversed)
-	-- Every cyclic order offers each target the first connection once.
-	for offset=1,#targets-1 do local order={};for i=1,#targets do order[i]=targets[(i+offset-1)%#targets+1] end;try(order) end
+	-- Bound order exploration; distribute rotations across larger desired sets.
+	for trial=1,math.min(#targets-1,30) do local offset=math.floor(trial*#targets/math.min(#targets,31));local order={};for i=1,#targets do order[i]=targets[(i+offset-1)%#targets+1] end;try(order) end
 	assert(best,"Atlas targets cannot be connected within this budget and exclusions")
 	return best,additions,{attempts=attempts,originalCost=baseline,cost=#additions,saved=baseline and baseline-#additions or nil,heuristic=true}
 end

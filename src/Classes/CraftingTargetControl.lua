@@ -1,7 +1,7 @@
 -- cspell:ignore RRBG
 local sim=require("Modules.CraftingSimulator")
 local Panel={}
-function Panel.Open(targets,requirements,requiredGroups,onKeep)
+function Panel.Open(targets,requirements,requiredGroups,onKeep,groupIndex)
 	local groups=copyTable(targets);local conditions=copyTable(requirements or {});local controls={}
 	local function edit(key,x,y,value,prompt)
 		controls[key.."Label"]=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,0,14},prompt)
@@ -12,8 +12,10 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep)
 			local ok,message=pcall(callback);if not ok then main:OpenMessagePopup("Crafting targets",tostring(message):match("^[^\n]+")) end
 		end)
 	end
-	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,0,14},"Edit the last target group. Blank property fields impose no condition.")
-	local group=groups[#groups]
+	groupIndex=groupIndex or #groups
+	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,0,14},"Edit group "..groupIndex..". Blank item-property fields impose no condition.")
+	local group=groups[groupIndex]
+	if not group then controls.info.label="Set item properties. Blank fields impose no condition." end
 	edit("count",16,64,group and group.atLeast or 1,"Matching mods in group")
 	edit("roll",212,64,group and group.minRoll and group.minRoll*100 or nil,"Minimum roll % (0-100)")
 	controls.mode=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{408,80,200,24},{"Require group","Exclude group"})
@@ -49,6 +51,8 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep)
 		onKeep(groups,result,required);main:ClosePopup()
 	end)
 	button("close",492,506,116,"Close",function() main:ClosePopup() end)
+	if not group then for _,key in ipairs({"count","roll","mode","scope","fractured","crafted"}) do controls[key].enabled=false end end
+	require("Modules.PlanningUI").style(controls,{keep=true})
 	main:OpenPopup(624,554,"Crafting target conditions",controls,nil,nil,"close")
 	return controls
 end

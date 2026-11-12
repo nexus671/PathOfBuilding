@@ -120,14 +120,14 @@ function M.Account(profile,import)
 end
 function M.EditSample(item,save)
 	local c={};local w,h=math.min(820,main.screenW-40),math.min(560,main.screenH-60)
-	local fields={"BaseType","Class","Rarity","ItemLevel","AreaLevel","UnidentifiedItemTier","SocketGroup","Sockets","LinkedSockets","StackSize","GemLevel","MapTier","Quality","Fated","Identified","Corrupted","FracturedItem","HasInfluence"}
-	for i,key in ipairs(fields) do local x=16+((i-1)%2)*(w/2);local y=28+math.floor((i-1)/2)*46;ui.label(c,key.."Label",x,y,key,14)
+	local fields={"BaseType","Class","Rarity","ItemLevel","AreaLevel","UnidentifiedItemTier","SocketGroup","Sockets","SocketColours","LinkedSockets","StackSize","GemLevel","MapTier","Quality","Fated","Identified","Corrupted","FracturedItem","HasInfluence"}
+	for i,key in ipairs(fields) do local x=16+((i-1)%3)*(w/3);local y=28+math.floor((i-1)/3)*56;ui.label(c,key.."Label",x,y,key:gsub("(%l)(%u)","%1 %2"),14)
 		local value=item[key];if type(value)=="table" then value=table.concat(value," ") end
-		c[key]=new("EditControl"):EditControl(ui.anchor,{x,y+18,w/2-32,24},tostring(value==nil and "" or value),nil,nil,240)
+		c[key]=new("EditControl"):EditControl(ui.anchor,{x,y+18,w/3-32,24},tostring(value==nil and "" or value),nil,nil,240)
 	end
 	button(c,"useSample",16,h-48,140,"Test drop",function() attempt(function()
 		local nextItem=copyTable(item);for _,key in ipairs(fields) do local v=c[key].buf
-			if parser.numeric[key] then nextItem[key]=v~="" and assert(tonumber(v),"Enter a number for "..key) or nil
+			if parser.numeric[key] then local n=v~="" and tonumber(v);assert(v=="" or n and n==n and math.abs(n)<1e9,"Enter a finite number for "..key);nextItem[key]=n or nil
 			elseif parser.booleans[key] then assert(v=="true" or v=="false" or v=="","Use true or false for "..key);if v=="" then nextItem[key]=nil else nextItem[key]=v=="true" end
 			elseif key=="HasInfluence" then nextItem[key]=parser.tokens(v)
 			else nextItem[key]=v~="" and v or nil end

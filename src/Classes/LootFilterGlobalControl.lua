@@ -1,12 +1,14 @@
 -- Reversible, build-owned settings applied to the complete compiled filter.
+-- cspell:ignore RRGGBB RRGGBBAA
 local ui=require("Modules.PlanningUI")
 local filters=require("Modules.LootFilters")
 local parser=require("Modules.LootFilterParser")
 local visual=require("Modules.LootFilterVisuals")
+local appearance=require("Modules.LootFilterAppearanceSettings")
 local M={}
 function M.Open(profile,onKeep)
 	local c={};local settings=copyTable(profile.appearance or {})
-	ui.description(c,"help",16,24,588,48,{"Change labels and alerts across personal rules and the base preset. Only declared sizes change; inherited sizes stay intact. Pickup conditions and tier colours are preserved."},14)
+	ui.description(c,"help",16,24,588,48,{"Change declared styles across personal rules and the base preset. Blank colours keep the original palette. Continue inheritance and pickup conditions are preserved."},14)
 	local function setting(key,y,title,entries)
 		local present=false;for _,entry in ipairs(entries) do if entry.val==settings[key] then present=true end end
 		if settings[key]~=nil and not present then entries[#entries+1]={label="Custom: "..tostring(settings[key]),val=settings[key]} end
@@ -18,17 +20,31 @@ function M.Open(profile,onKeep)
 	setting("minimumFontSize",92,"Label size",fonts)
 	local volumes={{label="Keep original volumes",val=false},{label="Mute filter alerts",val=0}};for _,v in ipairs({50,100,200,300}) do volumes[#volumes+1]={label="Alert volume "..v,val=v} end
 	setting("alertVolume",134,"Alert sounds",volumes)
-	setting("disableEffects",176,"Drop beams",{{label="Keep original beams",val=false},{label="Disable beams",val=true}})
-	c.preview=new("Control"):Control(ui.anchor,{16,212,588,74})
+	local beams={{label="Keep original beams",val=false},{label="Disable beams",val=true}};for _,color in ipairs(appearance.colors) do beams[#beams+1]={label=color.." beams",val=color} end
+	setting("disableEffects",176,"Drop beams",beams);c.disableEffects:SelByValue(settings.disableEffects or settings.effectColor or false,"val")
+	c.disableEffects.selFunc=function(_,entry) settings.disableEffects=entry.val==true and true or nil;settings.effectColor=type(entry.val)=="string" and entry.val or nil end
+	local alerts={{label="Keep original alerts",val=false}};for i=1,16 do alerts[#alerts+1]={label="Use alert "..i,val=i} end
+	setting("alertId",218,"Alert identity",alerts)
+	setting("disableIcons",260,"Minimap icons",{{label="Keep original icons",val=false},{label="Disable icons",val=true}})
+	local colorKeys={"textColor","borderColor","backgroundColor"}
+	for i,key in ipairs(colorKeys) do
+		local y=302+(i-1)*42;ui.label(c,key.."Label",16,y,({"Text colour","Border colour","Background colour"})[i],14)
+		c[key]=new("EditControl"):EditControl(ui.anchor,{268,y-4,336,28},appearance.hex(settings[key]),nil,nil,9,function(value) if value=="" then settings[key]=nil else local color=appearance.fromHex(value);if color then settings[key]=color end end end);c[key].placeholder="Keep original / hex RGBA"
+	end
+	ui.label(c,"colourHint",16,414,"Hex: RRGGBB or RRGGBBAA; FF is opaque. Overrides replace tier colours.",12)
+	c.preview=new("Control"):Control(ui.anchor,{16,440,588,64})
 	function c.preview:Draw()
 		local example=filters.rule("example","Example",{'BaseType == "Iron Hat"'},nil,profile.theme)
 		local styles=parser.parse(require("Modules.LootFilterDecorators").apply(example.text,settings)).rules[1].styles
-		local x,y=self:GetPos();visual.floor(x,y,588,74);visual.chip(x,y,588,74,{BaseType="Crafting base"},{action="Show",styles=styles})
+		local x,y=self:GetPos();visual.floor(x,y,588,64);visual.chip(x,y,588,64,{BaseType="Crafting base"},{action="Show",styles=styles})
 	end
-	c.keep=new("ButtonControl"):ButtonControl(ui.anchor,{16,306,220,28},"Keep appearance",function() local next=copyTable(profile);next.appearance=settings;filters.compile(next);onKeep(next);main:ClosePopup() end)
-	c.reset=new("ButtonControl"):ButtonControl(ui.anchor,{252,306,180,28},"Restore original",function() local next=copyTable(profile);next.appearance=nil;onKeep(next);main:ClosePopup() end)
-	c.close=new("ButtonControl"):ButtonControl(ui.anchor,{448,306,156,28},"Cancel",function() main:ClosePopup() end)
-	ui.style(c,{keep=true});main:OpenPopup(620,354,"Whole-filter appearance",c,nil,nil,"close")
+	c.keep=new("ButtonControl"):ButtonControl(ui.anchor,{16,526,220,28},"Keep appearance",function()
+		for _,key in ipairs(colorKeys) do assert(c[key].buf=="" or appearance.fromHex(c[key].buf),"Enter a valid hex colour") end
+		local next=copyTable(profile);next.appearance=settings;local _,report=filters.compile(next);for _,d in ipairs(report.diagnostics) do assert(not d.error,d.error) end;onKeep(next);main:ClosePopup()
+	end)
+	c.reset=new("ButtonControl"):ButtonControl(ui.anchor,{252,526,180,28},"Restore original",function() local next=copyTable(profile);next.appearance=nil;onKeep(next);main:ClosePopup() end)
+	c.close=new("ButtonControl"):ButtonControl(ui.anchor,{448,526,156,28},"Cancel",function() main:ClosePopup() end)
+	ui.style(c,{keep=true});main:OpenPopup(620,574,"Whole-filter appearance",c,nil,nil,"close")
 	for _,control in pairs(c) do if control.anchor then control.anchor.other=main.popups[1] end end
 end
 return M

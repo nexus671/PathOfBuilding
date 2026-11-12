@@ -5,7 +5,7 @@ local tasks=require("Modules.CraftingTasks")
 local M={}
 function M.Open(build,raw,state,targets,requirements,requiredGroups,current,saved,settings)
 	local controls={};local width=math.min(960,main.screenW-40);local height=math.min(660,main.screenH-60)
-	local model=sim.model(raw);local entries={};local recipes={}
+	local model=sim.model(raw);local entries={};local recipes={};local chartResults
 	local function add(label,recipe,priceKey) recipes[#recipes+1]={label=label,recipe=recipe,priceKey=priceKey};entries[#entries+1]={label=label,val=#recipes} end
 	local selected=copyTable(current);selected.maxAttempts=math.min(200,settings.budget);selected.untilTargets=copyTable(targets);selected.untilRequirements=requirements and copyTable(requirements)
 	add("Selected action",{steps={selected},targets=copyTable(targets),requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups},sim.priceKey(selected))
@@ -40,6 +40,7 @@ function M.Open(build,raw,state,targets,requirements,requiredGroups,current,save
 			end
 			return results
 		end,function(results)
+			chartResults=results
 			local lines={"Same starting item and encounter-independent crafting model."}
 			for _,route in ipairs(results) do
 				lines[#lines+1]="";lines[#lines+1]=route.label
@@ -54,6 +55,8 @@ function M.Open(build,raw,state,targets,requirements,requiredGroups,current,save
 		job.owner=controls
 	end)
 	controls.run.enabled=function() return not tasks.job end
+	controls.charts=new("ButtonControl"):ButtonControl(ui.anchor,{400,height-48,180,28},"Compare charts",function() require("Classes.CraftingChartsControl").Open(chartResults) end)
+	controls.charts.enabled=function() return chartResults~=nil end
 	controls.cancel=new("ButtonControl"):ButtonControl(ui.anchor,{208,height-48,180,28},"Cancel comparison",function() if tasks.job and tasks.job.owner==controls then tasks.cancel() end end);controls.cancel.enabled=function() return tasks.job and tasks.job.owner==controls end
 	controls.close=new("ButtonControl"):ButtonControl(ui.anchor,{width-132,height-48,116,28},"Close",function() if tasks.job and tasks.job.owner==controls then tasks.cancel() end;main:ClosePopup() end)
 	ui.style(controls,{run=true});for _,control in pairs(controls) do control.layoutAudit="crafting-comparison" end;main:OpenPopup(width,height,"Compare crafting recipes",controls,nil,nil,"close")

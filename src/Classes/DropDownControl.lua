@@ -215,6 +215,8 @@ function DropDownClass:Draw(viewPort, noTooltip)
 	local enabled = self:IsEnabled()
 	local scrollBar = self.controls.scrollBar
 	local lineHeight = height - 4
+	local textHeight = m_min(lineHeight,self.planningTextSize or lineHeight)
+	local textOffset = m_floor((lineHeight-textHeight)/2)
 	self.dropHeight = lineHeight * m_min(#self.list, 20)
 	scrollBar.y = height + 1
 	if y + height + self.dropHeight + 4 <= viewPort.y + viewPort.height then
@@ -321,10 +323,10 @@ function DropDownClass:Draw(viewPort, noTooltip)
 			selLabel = selItem
 		end
 	end
-	SetViewport(x + 2, y + 2, width - height, lineHeight)
-	DrawString(0, 0, "LEFT", lineHeight, "VAR", selLabel or "")
+	SetViewport(x + 2, y + 2 + textOffset, width - height, textHeight)
+	DrawString(0, 0, "LEFT", textHeight, "VAR", selLabel or "")
 	if selDetail ~= nil then
-		local dx = DrawStringWidth(lineHeight, "VAR", selDetail)
+		local dx = DrawStringWidth(textHeight, "VAR", selDetail)
 		if not enabled or self.dropped then
 			SetDrawColor(0, 0, 0)
 		elseif mOver then
@@ -338,7 +340,7 @@ function DropDownClass:Draw(viewPort, noTooltip)
 		else
 			SetDrawColor(0.66, 0.66, 0.66)
 		end
-		DrawString(width - dx - 22, 0, "LEFT", lineHeight, "VAR", selDetail)
+		DrawString(width - dx - 22, 0, "LEFT", textHeight, "VAR", selDetail)
 	end
 	SetViewport()
 
@@ -394,10 +396,10 @@ function DropDownClass:Draw(viewPort, noTooltip)
 				else 
 					label = listVal
 				end
-				DrawString(0, y, "LEFT", lineHeight, "VAR", label)
+				DrawString(0, y + textOffset, "LEFT", textHeight, "VAR", label)
 				if detail ~= nil then
 					local detail = listVal.detail
-					local dx = DrawStringWidth(lineHeight, "VAR", detail)
+					local dx = DrawStringWidth(textHeight, "VAR", detail)
 					if index == self.hoverSel then
 						SetDrawColor(0.33, 0.33, 0.33)
 					else
@@ -410,14 +412,14 @@ function DropDownClass:Draw(viewPort, noTooltip)
 					else
 						SetDrawColor(0.66, 0.66, 0.66)
 					end
-					DrawString(width - dx - 4 - 22, y, "LEFT", lineHeight, "VAR", detail)
+					DrawString(width - dx - 4 - 22, y + textOffset, "LEFT", textHeight, "VAR", detail)
 				end
-				self:DrawSearchHighlights(label, searchInfo, 0, y, width - 4, lineHeight)
+				self:DrawSearchHighlights(label, searchInfo, 0, y + textOffset, width - 4, textHeight)
 			end
 		end
 		SetDrawColor(1, 1, 1)
 		if self:IsSearchActive() and self:GetMatchCount() == 0 then
-			DrawString(0, 0 , "LEFT", lineHeight, "VAR", "<No matches>")
+			DrawString(0, 0 , "LEFT", textHeight, "VAR", "<No matches>")
 		end
 		SetViewport()
 		SetDrawLayer(nil, 0)

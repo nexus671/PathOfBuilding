@@ -133,6 +133,10 @@ function M.styleButton(control,kind)
 end
 function M.style(controls,primary,skip)
 	for key,control in pairs(controls) do
+		if control.buf~=nil or control.selIndex then control.planningTextSize=M.size(16) end
+		if control.label and not control.Click and not control.planningLabelDraw then
+			local draw=control.Draw;function control:Draw(...) SetDrawColor("^xC2CDD9");draw(self,...) end;control.planningLabelDraw=true
+		end
 		if control.buf~=nil or control.selIndex or control.planningFocusable then
 			control.planningFocusable=true
 			if not control.planningFocusDraw then

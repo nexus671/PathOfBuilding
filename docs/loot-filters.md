@@ -2,14 +2,16 @@
 
 Open **AI builds**, **Atlas**, or **Crafting**, then choose **Loot filter**. **Alt+5** opens it from any planning page.
 
-The workspace has four pages:
+The workspace has six pages:
 
 - **Overview:** choose a profile and strictness, auto-adjust from the build, and preview a collection of drops.
 - **Customize:** browse personal pickups or the complete base preset by category. Search for an item, then edit its colours, size, sound and icon. Editing a base rule creates a personal override. **Advanced conditions** opens its matching criteria.
+- **Tiers:** copy a preset tier or create your own, then drag exact item names between custom tiers. Move tiers up/down to change priority. Existing class and stack conditions stay attached; incompatible exact classes cannot be mixed by dragging. Delete an override to return to the base preset.
 - **Simulate:** generate example loot, select drops to inspect their results, configure an item, and show or hide hidden drops. These are deterministic examples, not a model of drop rates.
-- **Style:** choose the palette used for new generated targets and explicitly restyle existing personal pickups. **Whole-filter appearance** raises declared label sizes to a selected minimum and controls alert volume (including mute) and beam visibility across personal pickups and the base preset. Blocks without a font directive retain inherited/default sizes, preserving `Continue` behaviour. Tier colours and pickup conditions stay intact; **Restore original** removes these settings. Imported `Import` files remain unresolved, so their external contents cannot be restyled.
+- **Style:** choose generated-target palettes or restyle personal pickups. **Whole-filter appearance** controls declared font sizes, colour overrides, alerts, minimap visibility and beams across the compiled filter. Blank colours preserve tier palettes. Undeclared styles retain `Continue` inheritance; **Restore original** removes these settings. External `Import` contents remain unresolved.
+- **Modules:** create a named snapshot of personal rules and tiers, copy it between profiles, or copy/paste a shared module. **Update copies in this build** explicitly refreshes matching snapshots. Modules follow personal rules and custom tiers in priority.
 
-**Profile tools** contains creation, duplication, import, account filters, audit/update and deletion. Keep profiles in the build before using normal **Save**. The [FilterBlade comparison](filterblade-comparison.md) records the reviewed feature set and remaining gaps.
+**Profile tools** includes profile management, **Review changes** and **Linked build targets**. Review compares the draft with kept profiles; Undo/Redo restores edits. Linked targets flag changed sources and open their craft, gear, resource or Atlas plan. **Tools → Recover local drafts** restores interrupted edits without applying them. Keep profiles before using normal **Save**.
 
 Create campaign, early mapping and endgame profiles for Normal or Ruthless. In Ruthless mode, Hide blocks become Minimal blocks, matching the game format. Choose a NeverSink strictness and a style for newly generated rules. **Auto-adjust for this build** adds pickup rules from saved crafting starting items, planned gear bases, active gems and links, recognised budget resources and saved Atlas strategies. Generation replaces its previous generated rules while keeping personal rules. These are snapshots: regenerate after changing your build or plans. Gear-base rules do not identify hidden modifiers or distinguish unique variants sharing a base.
 
@@ -26,6 +28,8 @@ The drop preview shows the label, border and beam, and explains the deciding rul
 **Account filters** supports listing/importing filters and explicit publication with server validation. The **Log in** action requests `account:item_filter` in addition to normal PoB scopes. GGG must permit that scope for the registered OAuth client; ordinary character-import authentication is not sufficient. If permission is unavailable, use local export. A second review names the destination before creating a private filter or replacing a selected filter. No account changes occur through MCP. Pending processing, validation errors and uncertain write outcomes are reported without automatic retries. Live account sync has not been verified with a filter-authorised account.
 
 ## AI tools
+
+On **Simulate**, **Paste item** reads visible properties from a game clipboard copy. **Scene settings** controls shared area/item levels and background; **History** revisits tested samples. **Matched rules** opens the deciding blocks for inspection and editing. **More sound, icon and beam options** includes all twelve icon shapes, colours, sizes, positional/custom alerts and temporary beams. Native previews approximate their geometry; custom audio files must accompany the exported filter.
 
 - **get_loot_filters:** read kept profiles.
 - **generate_loot_filter:** derive a separate draft from build plans.

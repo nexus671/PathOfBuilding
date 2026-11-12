@@ -37,10 +37,22 @@ function M.Bundle(build)
 	button(c,"close",w-156,h-48,140,"Close",function() main:ClosePopup() end)
 	ui.style(c,{review=true});main:OpenPopup(w,h,"Portable planning bundle",c,nil,"export","close")
 end
+function M.Recovery(build)
+	local recovery=require("Modules.PlanningRecovery");local entries={}
+	for _,kind in ipairs({"filters","atlas","crafting"}) do local record=recovery.load(build,kind)
+		if record and not recovery.isCurrent(build,kind,record.entry) then entries[#entries+1]={id=kind,label=({filters="Loot-filter draft",atlas="Atlas draft",crafting="Working craft"})[kind],details={"Saved locally: "..os.date("%Y-%m-%d %H:%M",record.at),"Restore opens a working draft. Review it, then Keep and Save.","An earlier-session draft is preserved until you restore or discard it."},record=record} end
+	end
+	if recovery.lastError then entries[#entries+1]={id="error",label="Draft recovery needs attention",details={recovery.lastError,"Keep your working project and save the build."}} end
+	require("Classes.PlanningBrowserControl").Open("Recover local drafts",entries,{action="Restore draft",closeOnChoose=false,choose=function(entry)
+		assert(entry.record,"Choose a valid draft");local clean=recovery.clean(entry.id,entry.record.entry)
+		main:ClosePopup();recovery.acknowledge(build,entry.id);build.planningWorkspace.cache[entry.id]=nil;build.planningWorkspace.drafts[entry.id]=clean;build.planningWorkspace:Show(entry.id,clean.plan)
+	end,secondary={label="Discard draft",run=function(entry) if entry and entry.record then recovery.clear(build,entry.id);main:ClosePopup();M.Recovery(build) end end}})
+end
 function M.Open(build)
 	require("Classes.PlanningBrowserControl").Open("Planning tools",{
 		{id="performance",label="Performance diagnostics",details={"See observed calculation and background-slice times. Refresh, copy or reset the session measurements."}},
 		{id="bundle",label="Export / import complete bundle",details={"Carry the character, crafting guides, working checkpoints, Atlas stages and Journey plans together.","Imports open through native review as a new build."}},
-	},{action="Open",closeOnChoose=false,choose=function(entry) main:ClosePopup();if entry.id=="performance" then M.Performance(build) else M.Bundle(build) end end})
+		{id="recovery",label="Recover local drafts",details={"Resume an interrupted filter, Atlas or crafting draft.","Earlier-session drafts are preserved until reviewed."}},
+	},{action="Open",closeOnChoose=false,choose=function(entry) main:ClosePopup();if entry.id=="performance" then M.Performance(build) elseif entry.id=="recovery" then M.Recovery(build) else M.Bundle(build) end end})
 end
 return M

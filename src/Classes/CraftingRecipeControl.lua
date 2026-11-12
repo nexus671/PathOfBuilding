@@ -9,11 +9,11 @@ end
 local function edit(x,y,w,value,prompt,limit)
 	return new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},tostring(value or ""),prompt,nil,limit)
 end
-function Panel.Open(recipe,currentAction,onKeep)
+function Panel.Open(recipe,currentAction,onKeep,model)
 	local draft=copyTable(recipe or {steps={},targets={}})
 	local controls={};local selected=1
 	local ui=require("Modules.PlanningUI")
-	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,0,14},"Capture actions in the emulator, then connect success and failure routes here.")
+	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,0,14},"Select a step card, or connect routes in the flow graph.")
 	controls.graph=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,62,828,264},nil,{})
 	controls.step=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,350,828,24},{})
 	controls.attempts=edit(16,400,180,"1","Attempts per visit",3)
@@ -44,6 +44,9 @@ function Panel.Open(recipe,currentAction,onKeep)
 		controls.success:SetList(routes);controls.failure:SetList(copyTable(routes));loadStep()
 	end
 	controls.step.selFunc=function(_,entry) selected=entry.val;loadStep() end
+	button(controls,"flowGraph",664,24,180,"Flow graph",function()
+		require("Classes.CraftingRecipeGraphControl").Open(draft,{model=model,change=function(next) draft=next;refresh() end,edit=function(index) selected=index;refresh();main:ClosePopup();main.popups[1]:SelectControl(controls.attempts) end})
+	end)
 	ui.selectable(controls.graph,function(row) return row.step end,function(row) selected=row.step;controls.step:SelByValue(selected,"val");loadStep() end)
 	button(controls,"add",16,514,256,"Append current emulator action",function()
 		assert(#draft.steps < 20,"Use up to twenty steps")

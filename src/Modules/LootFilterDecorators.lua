@@ -3,6 +3,7 @@ local parser=require("Modules.LootFilterParser")
 local M={}
 function M.apply(raw,settings)
 	if not settings or not next(settings) then return raw end
+	settings=require("Modules.LootFilterAppearanceSettings").validate(settings)
 	local output={};local block=false
 	for line in (raw.."\n"):gmatch("([^\n]*)\n") do
 		local ok,tokens=pcall(parser.tokens,line);local key=ok and tokens[1]
@@ -11,10 +12,16 @@ function M.apply(raw,settings)
 		elseif block and key=="SetFontSize" and settings.minimumFontSize and #tokens==2 and tonumber(tokens[2]) and tonumber(tokens[2])>=1 and tonumber(tokens[2])<=45 and tonumber(tokens[2])==math.floor(tonumber(tokens[2])) then
 			-- Do not inject a size into blocks that inherit styling through Continue.
 			line="    SetFontSize "..math.max(tonumber(tokens[2]),settings.minimumFontSize)
-		elseif block and settings.alertVolume~=nil and (key=="PlayAlertSound" or key=="PlayAlertSoundPositional" or key=="CustomAlertSound" or key=="CustomAlertSoundOptional") and tokens[2] then
+		elseif block and (settings.alertVolume~=nil or settings.alertId) and (key=="PlayAlertSound" or key=="PlayAlertSoundPositional" or key=="CustomAlertSound" or key=="CustomAlertSoundOptional") and tokens[2] then
 			local sound=key:find("Custom",1,true) and '"'..tokens[2]..'"' or tokens[2]
-			line="    "..key.." "..sound.." "..settings.alertVolume
-		elseif block and settings.disableEffects and key=="PlayEffect" then line="    PlayEffect None" end
+			line="    "..(settings.alertId and (key=="PlayAlertSoundPositional" and key or "PlayAlertSound") or key).." "..(settings.alertId or sound).." "..(settings.alertVolume or tokens[3] or "300")
+		elseif block and key=="PlayEffect" then
+			if settings.disableEffects then line="    PlayEffect None" elseif settings.effectColor and tokens[2] and tokens[2]~="None" then line="    PlayEffect "..settings.effectColor..(tokens[3]=="Temp" and " Temp" or "") end
+		elseif block and key=="MinimapIcon" and settings.disableIcons then line="    MinimapIcon -1"
+		elseif block then
+			local color=({SetTextColor=settings.textColor,SetBorderColor=settings.borderColor,SetBackgroundColor=settings.backgroundColor})[key]
+			if color then line="    "..key.." "..table.concat(color," ") end
+		end
 		output[#output+1]=line
 	end
 	return table.concat(output,"\n")

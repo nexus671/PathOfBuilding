@@ -88,7 +88,8 @@ function Panel.Open(build,project,layout)
 		controls.targetSummary.list=rows(lines)
 		if extra and controls.resultSummary then controls.resultSummary.list=rows(extra) end
 		local craftingPage=not controls.page or controls.page:GetSelValue()=="Emulate item"
-		controls.intro.label="^7"..(craftingPage and inspectedId and "Modifier details. Your working item stays in view." or craftingPage and paletteOpen and "Find an action without leaving your working item." or extra and extra[1] or controls.page and pageHints[controls.page:GetSelValue()] or "Select a currency, then click your item to craft.")
+		local message=craftingPage and inspectedId and "Modifier details. Your working item stays in view." or craftingPage and paletteOpen and "Find an action without leaving your working item." or extra and extra[1] or controls.page and pageHints[controls.page:GetSelValue()] or "Select a currency, then click your item to craft."
+		controls.intro.label="^7"..ui.fit(message,leftWidth,14)
 		if controls.actionHint and controls.actionHint.list then controls.actionHint.list=ui.rows({workbench.hint(controls.method:GetSelValueByKey("val"),state,model)},leftWidth-30,14) end
 	end
 	label(controls,"methodLabel",16,64,"Crafting action")
@@ -126,7 +127,7 @@ function Panel.Open(build,project,layout)
 	end
 	local function pickTarget(id)
 		assert(#targets<6,"Use up to six target groups")
-		local kind=model.byId[id].type;targets[#targets+1]={anyOf={id},scope=(kind=="Exarch" or kind=="Eater" or kind=="Corrupted") and "implicit" or "explicit"};refresh()
+		local kind=simulator.context(model,state).byId[id].type;targets[#targets+1]={anyOf={id},scope=(kind=="Exarch" or kind=="Eater" or kind=="Corrupted") and "implicit" or "explicit"};refresh()
 	end
 	populateAffix=function(id)
 		local found;for _,entry in ipairs(state.affixes) do if entry.id==id then found=entry end end
@@ -268,9 +269,13 @@ function Panel.Open(build,project,layout)
 	for id in pairs(model.special) do local mod=model.byId[id]; if mod.type == "Prefix" or mod.type == "Suffix" or mod.type == "Corrupted" or mod.type == "Exarch" or mod.type == "Eater" then mods[#mods+1]={label=mod.type.." | "..table.concat(mod," / "),val=id} end end
 	controls.target=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,282,416,24},mods)
 	button(controls,"targetPicker",16,188,416,"Find target modifiers",function()
-		local entries={};local seen={}
-		for _,entry in ipairs(mods) do if not seen[entry.val] then local id=entry.val;seen[id]=true;local mod=model.byId[id];entries[#entries+1]={id=id,label=table.concat(mod," / "),category=mod.type,search=table.concat(mod.tags or {}," "),details=function() return inspect.modDetails(model,id) end} end end
-		browser.Open("Find target modifiers",entries,{action="Add target",choose=function(entry) pickTarget(entry.id) end})
+		require("Classes.CraftingModifierControl").Open(model,copyTable(state),{choose=pickTarget,canAlternative=function() return #targets>0 end,alternative=function(id)
+			local group=assert(targets[#targets],"Add a target group first");assert(require("Modules.CraftingModifiers").scope(simulator.context(model,state).byId[id])==(group.scope or "explicit"),"Choose the same explicit/implicit scope, or create a separate group");for _,value in ipairs(group.anyOf) do if value==id then return end end;assert(#group.anyOf<30,"Use up to thirty alternatives per group");group.anyOf[#group.anyOf+1]=id;refresh()
+		end,present=function(id)
+			assert(not state.destroyed and not state.veil,"Reset destruction or finish the unveil first")
+			local next=copyTable(state);if next.rarity=="NORMAL" then next.rarity="RARE" end
+			next.affixes[#next.affixes+1]={id=id,range=0.5,crafted=false};state=simulator.validateState(model,next);initial=copyTable(state);history={};actions={};lastSimulation=nil;changedAffixes={};ui.draft(build,"workingCraft");updateOptions();refresh({"Modifier staged on a hypothetical item. Working actions reset."})
+		end})
 	end)
 	button(controls,"addTarget",16,310,132,"Add target",function()
 		assert(#targets < 6,"Use up to six target groups")
@@ -331,10 +336,14 @@ function Panel.Open(build,project,layout)
 	end)
 	button(controls,"editRecipe",16,574,200,"Recipe routes",function()
 		local recipe=draft.nativeRecipe or {steps=copyTable(actions),targets=copyTable(targets),requirements=(requirements and copyTable(requirements) or nil),requiredGroups=requiredGroups,initialState=copyTable(initial)}
-		require("Classes.CraftingRecipeControl").Open(recipe,action(),function(result) draft.nativeRecipe=result;build.savers.CraftingProjects:Upsert(draft);refresh({"Recipe kept. Use build Save to persist."}) end)
+		require("Classes.CraftingRecipeControl").Open(recipe,action(),function(result) draft.nativeRecipe=result;build.savers.CraftingProjects:Upsert(draft);refresh({"Recipe kept. Use build Save to persist."}) end,simulator.context(model,state))
 	end)
 	button(controls,"targetConditions",16,650,416,"Target counts, rolls and item properties",function()
 		require("Classes.CraftingTargetControl").Open(targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;refresh() end)
+	end)
+	controls.targetConditions.width=200;controls.targetConditions.label="Item properties"
+	button(controls,"targetGroups",232,226,200,"Edit target groups",function()
+		require("Classes.CraftingTargetGroupsControl").Open(model,state,targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;refresh() end)
 	end)
 	button(controls,"optimize",16,618,416,"Compare subsets of the configured fossils",function()
 		local selected=action();assert(selected.method == "fossil" and selected.fossils,"Configure a fossil combination first")
@@ -415,6 +424,7 @@ function Panel.Open(build,project,layout)
 			button(c,"close",w-156,h-48,140,"Back to results",function() main:ClosePopup() end);ui.style(c);main:OpenPopup(w,h,"Sampled crafting outcome",c,nil,nil,"close")
 		end)
 		popup.sample.enabled=result.sampleItem~=nil
+		button(popup,"charts",484,resultHeight-42,220,"Explore charts",function() require("Classes.CraftingChartsControl").Open({{label=draft.title,result=result}}) end)
 		button(popup,"moreTrials",16,resultHeight-42,220,"Run more trials",function()
 			local budget=math.max(1,tonumber(controls.budget.buf) or 1);controls.trials:SetText(tostring(math.min(2000,math.floor(20000/budget),math.max(32,result.trials*4))));main:ClosePopup();controls.simulate:Click()
 		end)
@@ -471,7 +481,7 @@ function Panel.Open(build,project,layout)
 	local pages={
 		["Craft settings"]={methodLabel=96,method=116,configure=160,keepRecipe=198,reset=198,exact=238,compareItem=238,seedLabel=278,seed=298,inspectItem=338,allflame=378,manual=418},
 		["Emulate item"]={selectedAction=230,actionHint=264,optionLabel=310,option=330,apply=370,undo=370,settings=414,history=414},
-		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetPicker=188,targetConditions=226,targetSummary=270},
+		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetPicker=188,targetConditions=226,targetGroups=226,targetSummary=270},
 		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354,compareRecipes=354,resultSummary=398},
 	}
 	for page,layout in pairs(pages) do for key,y in pairs(layout) do
@@ -504,6 +514,17 @@ function Panel.Open(build,project,layout)
 		while #title>0 and DrawStringWidth(18,"VAR",title)>width-leftWidth-64 do title=title:sub(1,-2) end
 		return "^7"..title
 	end
+	local function inventoryChanged(project) if project.id==draft.id then draft.inventory=copyTable(project.inventory) end end
+	button(controls,"inventory",leftWidth+32,54,math.floor((width-leftWidth-60)/2),"Item inventory",function()
+		require("Classes.CraftingInventoryControl").Open(build,{current={baseItem=draft.startingItem,state=copyTable(state),title="Working item"},change=inventoryChanged,resume=function(project)
+			if layout then layout.openWorkbench(project) else Panel.Open(build,project) end
+		end})
+	end)
+	button(controls,"keepItem",leftWidth+44+math.floor((width-leftWidth-60)/2),54,math.floor((width-leftWidth-60)/2),"Keep item",function()
+		local project=copyTable(draft);for _,saved in ipairs(build.savers.CraftingProjects.projects) do if saved.id==draft.id then project=copyTable(saved);break end end
+		project.inventory=project.inventory or {};project.inventory[#project.inventory+1]=require("Modules.CraftingInventory").capture(draft,state,draft.title:sub(1,104).." / "..(#project.inventory+1))
+		inventoryChanged(build.savers.CraftingProjects:Upsert(project));refresh({"Item snapshot kept in this build. Open Item inventory to compare or resume it; use build Save to persist."})
+	end)
 	controls.stage=new("Control"):Control(ui.anchor,{leftWidth+32,84,width-leftWidth-48,height-148})
 	function controls.stage:Draw()
 		local x,y=self:GetPos();local w,h=self:GetSize()

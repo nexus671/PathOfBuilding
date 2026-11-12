@@ -6,14 +6,16 @@ Open **Atlas** beside **AI builds**, or switch to **Atlas** in the full-width pl
 2. Enter a name and the number of Atlas points you have earned. The initial budget is the tree's maximum; it does not read account progression.
 3. Filter a mechanic directly in the inspector, or search names and stat text. Matching nodes highlight and preview a result without moving the camera. Choose a result or press **Go** to center it. Result labels show added point costs. Use **Connect +N** to add the previewed shortest connection.
 4. Use the mouse wheel to zoom and drag empty space to pan. **Fit tree** resets the view. The canvas uses the official background, node icons, frames and mechanic emblems. Allocated paths are gold; avoided nodes have red frames. Hover for modifier descriptions. Double click a node to connect it, or remove it if allocated.
-5. **Avoid selected** excludes a node from future paths. Avoided nodes are session preferences, cleared by importing or opening another plan. **Remove branch** also removes nodes that lose their connection to the start. **Undo** and **Redo** restore allocations and exclusions. Press Enter after editing a budget to include it in history.
+5. **Avoid selected** excludes a node from future paths. Desired and avoided preferences are saved with the plan and portable JSON. **Remove branch** also removes disconnected allocations. **Undo** and **Redo** restore allocations and preferences. Press Enter after editing a budget to include it in history.
 6. Open **Notes & sharing** for farming notes and import/export. Choose **Keep plan** to keep the draft in this build. This changes unsaved metadata. Use the normal build **Save** to persist it. Saved plans have a total metadata size guard, with no eight-plan count limit; **Saved plans** opens or deletes them.
 
 **Find nodes** opens a searchable list with mechanic filters and added point costs. Choosing a result highlights its mechanic on the tree. The minimap moves the camera without changing allocations. Drag the divider beside the inspector to resize it.
 
+**Targets** collects desired nodes; Shift-click marks them directly on the tree. Toggle a mechanic's notables together, then preview a route retaining existing allocations or rebuilding from the start. Recalculation runs in short background slices, with pause/cancel controls. Review added/refunded points, connected targets and keystone effects, then **Use preview**. Changed plans require recalculation. The optimizer compares a bounded set of target orders; it does not claim a global optimum.
+
 **Routes** compares the shortest connection with available alternatives. In **Plan tools**, mark a selected node as a preferred waypoint, open editable mechanic starting routes, compare the draft with a saved plan, or restore an earlier history state. Starting routes compare target orders and connect up to three nearby notables from the bundled graph; they do not predict farming income. Route comparisons honor the current budget and exclusions.
 
-**Allocated stats** opens searchable bonuses grouped by mechanic. Counts are not effective totals: increased effect, conditional modifiers, blocking and keystone interactions are not simulated. Atlas allocations do not change character DPS, EHP or encounter assumptions.
+**Allocated stats** opens an investment overview, mechanic counts, keystone tradeoffs and searchable raw bonuses. Saved-plan comparison can overlay added paths in green and removed paths in red. Counts are not effective map odds: increased effect, conditions and keystone interactions are not simulated. Atlas allocations do not change character DPS or EHP.
 
 ## Sharing
 

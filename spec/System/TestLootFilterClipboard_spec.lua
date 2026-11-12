@@ -1,0 +1,22 @@
+-- cspell:ignore RGBW
+describe("Copied loot-filter items",function()
+	local clipboard=require("Modules.LootFilterClipboard")
+	local parser=require("Modules.LootFilterParser")
+	it("reads visible equipment properties without inventing hidden modifier identities",function()
+		local item=clipboard.parse("Item Class: Helmets\nRarity: Rare\nFoe Visage\nIron Hat\n--------\nQuality: +20% (augmented)\nSockets: R-G-B W\nItem Level: 86\n--------\nUnidentified\nCorrupted",72)
+		assert.equal("Iron Hat",item.BaseType);assert.equal("Helmets",item.Class);assert.equal(20,item.Quality);assert.equal(4,item.Sockets);assert.equal("RGBW",item.SocketColours);assert.equal(3,item.LinkedSockets);assert.equal(72,item.AreaLevel)
+		assert.is_false(item.Identified);assert.is_true(item.Corrupted);assert.is_nil(item.HasExplicitMod);assert.is_nil(item.FracturedItem)
+		local numeric=parser.parse("Show\n Sockets >= 4").rules[1].conditions[1];local colors=parser.parse("Show\n Sockets RGB").rules[1].conditions[1]
+		assert.is_true(parser.condition(numeric,item));assert.is_true(parser.condition(colors,item))
+	end)
+	it("accepts currency stacks and rejects unrelated clipboard text",function()
+		local item=clipboard.parse("Item Class: Stackable Currency\nRarity: Currency\nChaos Orb\n--------\nStack Size: 7/20",83)
+		assert.equal("Chaos Orb",item.BaseType);assert.equal(7,item.StackSize);assert.equal("Normal",item.Rarity)
+		assert.is_false(pcall(clipboard.parse,"some other clipboard text"));assert.is_false(pcall(clipboard.parse,"Rarity: Magic\nImaginary Unknown Base\n--------"))
+	end)
+	it("requires whole-line state markers and rejects non-finite visible numbers",function()
+		local raw="Item Class: Helmets\nRarity: Normal\nIron Hat\n--------\nItem Level: 86\nCorrupted Blood cannot be inflicted on you"
+		assert.is_false(clipboard.parse(raw).Corrupted)
+		assert.is_false(pcall(clipboard.parse,raw:gsub("Item Level: 86","Item Level: "..string.rep("9",400))))
+	end)
+end)

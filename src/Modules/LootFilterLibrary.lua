@@ -2,10 +2,17 @@
 local filters=require("Modules.LootFilters")
 local parser=require("Modules.LootFilterParser")
 local sha1=require("sha1")
-local M={categories={"All items","Build targets","Currency","Equipment","Maps & fragments","Gems","League items","Other"}}
+local M={categories={"All items","Build targets","Currency","Special currency","Equipment","Unique items","Flasks","Tinctures","Jewels","Divination cards","Maps & fragments","Gems","Recipes","League items","Other"}}
 function M.category(rule)
 	if rule.origin then return "Build targets" end
 	local text=(rule.text or ""):lower()
+	if text:find("divination cards",1,true) or text:find("%$type%-%>cards") then return "Divination cards" end
+	if text:find("tinctures",1,true) then return "Tinctures" end
+	if text:find("flasks",1,true) then return "Flasks" end
+	if text:find("jewels",1,true) then return "Jewels" end
+	if text:find("%$type%-%>recipes") or text:find("%$type%-%>recipe") then return "Recipes" end
+	if text:find("%$type%-%>currency") and (text:find("fossil",1,true) or text:find("essence",1,true) or text:find("resonator",1,true) or text:find("catalyst",1,true)) then return "Special currency" end
+	if text:find("%$type%-%>uniques") or text:find("rarity == unique",1,true) or text:find("rarity unique",1,true) then return "Unique items" end
 	if text:find("%$type%-%>currency") or text:find("stackable currency",1,true) then return "Currency" end
 	if text:find("%$type%-%>maps") or text:find("%$type%-%>fragments") or text:find("%$type%-%>scarab") or text:find('"maps"',1,true) or text:find("map fragments",1,true) then return "Maps & fragments" end
 	if text:find("%$type%-%>gems") or text:find("skill gems",1,true) or text:find("support gems",1,true) then return "Gems" end
@@ -77,12 +84,13 @@ local examples={
 	{"Iron Hat","Helmets","Rare"},{"Vaal Regalia","Body Armours","Rare"},{"Leather Belt","Belts","Unique"},{"Iron Ring","Rings","Magic"},
 	{"Arcane Link","Skill Gems"},{"Orb of Fusing","Stackable Currency"},{"Scroll of Wisdom","Stackable Currency"},{"Chromatic Orb","Stackable Currency"},
 }
-function M.scene(profile,build,kind,seed,area)
+function M.scene(profile,build,kind,seed,area,itemLevel)
 	local list={}
 	if kind=="Build targets" then for _,rule in ipairs(filters.generate(build,profile)) do list[#list+1]=M.sample(rule) end end
 	for i=1,#examples do local example=examples[(i+(seed or 0)-1)%#examples+1];local item=M.sample();item.BaseType=example[1];item.Class=example[2];item.Rarity=example[3] or "Normal";item.AreaLevel=area or 83
 		if kind~="Currency" or item.Class=="Stackable Currency" then list[#list+1]=item end
 	end
+	for _,item in ipairs(list) do item.AreaLevel=area or 83;item.ItemLevel=itemLevel or 86 end
 	return list
 end
 return M
