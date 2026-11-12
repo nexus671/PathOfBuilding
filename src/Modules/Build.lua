@@ -80,6 +80,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	self.spectreList = { }
 	self.timelessData = { jewelType = { }, conquerorType = { }, devotionVariant1 = 1, devotionVariant2 = 1, jewelSocket = { }, fallbackWeightMode = { }, searchList = "", searchListFallback = "", searchResults = { }, sharedResults = { } }
 	self.viewMode = "TREE"
+	self.planningWorkspace = nil
 	self.characterLevel = m_min(m_max(main.defaultCharLevel or 1, 1), 100)
 	self.targetVersion = liveTargetVersion
 	self.bandit = "None"
@@ -476,10 +477,20 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		self.viewMode = "COMPARE"
 	end)
 	self.controls.modeCompare.locked = function() return self.viewMode == "COMPARE" end
-	self.controls.aiBuild = new("ButtonControl"):ButtonControl({"LEFT",self.controls.modeCompare,"RIGHT"},{4,0,148,20},function()
-		return require("Modules.DesktopBuildBridge").prepared and "AI: Review proposal" or "AI builds"
-	end,function() require("Classes.BuildProposalControl").Open(self) end)
-	self.controls.atlas = new("ButtonControl"):ButtonControl({"LEFT",self.controls.aiBuild,"RIGHT"},{4,0,72,20},"Atlas",function() require("Classes.AtlasPlannerControl").Open(self) end)
+	self.controls.aiBuild = new("ButtonControl"):ButtonControl({"LEFT",self.controls.modeCompare,"RIGHT"},{4,0,72,20},function()
+		return require("Modules.DesktopBuildBridge").prepared and "AI: Review" or "AI builds"
+	end,function()
+		self:SelectControl(nil);self.viewMode="PLANNER"
+		self.planningWorkspace=self.planningWorkspace or require("Modules.PlanningWorkspace").new(self)
+		self.planningWorkspace:Show("ai")
+	end)
+	self.controls.aiBuild.locked=function() return self.viewMode=="PLANNER" and self.planningWorkspace and self.planningWorkspace.page=="ai" end
+	self.controls.atlas = new("ButtonControl"):ButtonControl({"LEFT",self.controls.aiBuild,"RIGHT"},{4,0,72,20},"Atlas",function()
+		self:SelectControl(nil);self.viewMode="PLANNER"
+		self.planningWorkspace=self.planningWorkspace or require("Modules.PlanningWorkspace").new(self)
+		self.planningWorkspace:Show("atlas")
+	end)
+	self.controls.atlas.locked=function() return self.viewMode=="PLANNER" and self.planningWorkspace and self.planningWorkspace.page=="atlas" end
 	-- Skills
 	self.controls.mainSkillLabel = new("LabelControl"):LabelControl({"TOPLEFT",self.anchorSideBar,"TOPLEFT"}, {0, 80, 300, 16}, "^7Main Skill:")
 	self.controls.mainSocketGroup = new("DropDownControl"):DropDownControl({"TOPLEFT",self.controls.mainSkillLabel,"BOTTOMLEFT"}, {0, 2, 300, 18}, nil, function(index, value)
@@ -1221,41 +1232,44 @@ function buildMode:OnFrame(inputEvents)
 	local breakdown = self.calcsTab.controls.breakdown
 	local overlayBreakdown = self.calcsTab.displayPinned and self.calcsTab.displayData
 		and self.calcsTab.displayData.calcSection and self.calcsTab.displayData.calcSection.isOverlay
-	for i = #inputEvents, 1, -1 do
-		local event = inputEvents[i]
-		if not event then break end
-		if event.type == "KeyDown" and event.key:match("BUTTON") then
-			for paneIndex = #self.overlayPanes, 1, -1 do
-				local pane = self.overlayPanes[paneIndex]
-				if pane.isOverlay and pane:IsMouseInOverlay(cursorX, cursorY) then
-					pane:HandleOverlayClick(event.key, cursorX, cursorY)
+	if self.viewMode~="PLANNER" then
+		for i = #inputEvents, 1, -1 do
+			local event = inputEvents[i]
+			if not event then break end
+			if event.type == "KeyDown" and event.key:match("BUTTON") then
+				for paneIndex = #self.overlayPanes, 1, -1 do
+					local pane = self.overlayPanes[paneIndex]
+					if pane.isOverlay and pane:IsMouseInOverlay(cursorX, cursorY) then
+						pane:HandleOverlayClick(event.key, cursorX, cursorY)
+						inputEvents[i] = nil
+						break
+					end
+				end
+				if inputEvents[i] and overlayBreakdown and breakdown:IsMouseOver() then
+					self.overlayBreakdownControl = breakdown:OnKeyDown(event.key, event.doubleClick)
 					inputEvents[i] = nil
-					break
 				end
-			end
-			if inputEvents[i] and overlayBreakdown and breakdown:IsMouseOver() then
-				self.overlayBreakdownControl = breakdown:OnKeyDown(event.key, event.doubleClick)
+			elseif event.type == "KeyUp" and event.key:match("BUTTON") then
+				for _, pane in ipairs(self.overlayPanes) do
+					if pane.isOverlay then
+						pane:HandleOverlayRelease(event.key)
+					end
+				end
+				if self.overlayBreakdownControl then
+					self.overlayBreakdownControl:OnKeyUp(event.key)
+					self.overlayBreakdownControl = nil
+					inputEvents[i] = nil
+				end
+			elseif event.type == "KeyUp" and overlayBreakdown and breakdown:IsMouseOver()
+				and (breakdown.controls.scrollBar:IsScrollDownKey(event.key) or breakdown.controls.scrollBar:IsScrollUpKey(event.key)) then
+				breakdown:OnKeyUp(event.key)
 				inputEvents[i] = nil
 			end
-		elseif event.type == "KeyUp" and event.key:match("BUTTON") then
-			for _, pane in ipairs(self.overlayPanes) do
-				if pane.isOverlay then
-					pane:HandleOverlayRelease(event.key)
-				end
-			end
-			if self.overlayBreakdownControl then
-				self.overlayBreakdownControl:OnKeyUp(event.key)
-				self.overlayBreakdownControl = nil
-				inputEvents[i] = nil
-			end
-		elseif event.type == "KeyUp" and overlayBreakdown and breakdown:IsMouseOver()
-			and (breakdown.controls.scrollBar:IsScrollDownKey(event.key) or breakdown.controls.scrollBar:IsScrollUpKey(event.key)) then
-			breakdown:OnKeyUp(event.key)
-			inputEvents[i] = nil
 		end
+	
 	end
 
-	self:ProcessControlsInput(inputEvents, main.viewPort)
+	if self.viewMode~="PLANNER" or cursorX<312 or cursorY<32 then self:ProcessControlsInput(inputEvents, main.viewPort) end
 
 	self.controls.classDrop:SelByValue(self.spec.curClassId, "classId")
 	self.controls.ascendDrop.list = self.controls.classDrop:GetSelValueByKey("ascendancies")
@@ -1333,11 +1347,14 @@ function buildMode:OnFrame(inputEvents)
 		self.calcsTab:Draw(tabViewPort, inputEvents)
 	elseif self.viewMode == "COMPARE" then
 		self.compareTab:Draw(tabViewPort, inputEvents)
+	elseif self.viewMode == "PLANNER" then
+		self.planningWorkspace=self.planningWorkspace or require("Modules.PlanningWorkspace").new(self)
+		self.planningWorkspace:Draw(tabViewPort,inputEvents)
 	end
 
 	-- Draw overlay panes on top of all tab content (last = topmost)
 	for _, pane in ipairs(self.overlayPanes) do
-		if pane.isOverlay then
+		if pane.isOverlay and self.viewMode~="PLANNER" then
 			pane:DrawOverlay(main.viewPort, inputEvents)
 		end
 	end

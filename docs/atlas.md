@@ -1,15 +1,15 @@
 # Atlas planner
 
-Open **Atlas** beside **AI builds**, or choose **AI builds → Atlas planner**.
+Open **Atlas** beside **AI builds**, or switch to **Atlas** in the planning workspace.
 
 1. Choose the exact tree version. We bundle the official **Standard 3.27.0 and 3.29.1** graphs. League variants and Ruthless are not included.
 2. Enter a name and the number of Atlas points you have earned. The initial budget is the tree's maximum; it does not read account progression.
-3. Search names or stat text. Select a result, or click a node on the graph, then **Connect selected**. The planner adds a shortest connecting path.
-4. Use the mouse wheel to zoom and drag empty space to pan. **Fit tree** resets the view. Gold nodes are allocated, purple nodes are keystones, and red nodes are avoided.
+3. Search names or stat text. Select a result, or click a node on the graph, then **Connect path**. The planner adds a shortest connecting path.
+4. Use the mouse wheel to zoom and drag empty space to pan. **Fit tree** resets the view. The canvas uses the official background, node icons, frames and mechanic emblems. Allocated paths are gold; avoided nodes have red frames. Hover for modifier descriptions. Double click a node to connect it, or remove it if allocated.
 5. **Avoid selected** excludes a node from future paths. Avoided nodes are session preferences, cleared by importing or opening another plan. **Remove branch** also removes nodes that lose their connection to the start. **Undo** restores the previous allocation draft.
-6. Add farming notes, then **Keep plan in build**. This changes unsaved metadata. Use the normal build **Save** to persist it. Up to eight named plans can be kept with each build; **Saved plans** opens or deletes them.
+6. Open **Notes & sharing** for farming notes and import/export. Choose **Keep plan** to keep the draft in this build. This changes unsaved metadata. Use the normal build **Save** to persist it. Up to eight named plans can be kept with each build; **Saved plans** opens or deletes them.
 
-**Stats** lists selected modifier text, repeated-line counts, notables and keystones. Counts are not effective totals: increased effect, conditional modifiers, blocking and keystone interactions are not simulated. Atlas allocations do not change character DPS, EHP or encounter assumptions.
+**Allocated stats** lists selected modifier text, repeated-line counts, notables and keystones. Counts are not effective totals: increased effect, conditional modifiers, blocking and keystone interactions are not simulated. Atlas allocations do not change character DPS, EHP or encounter assumptions.
 
 ## Sharing
 
@@ -36,7 +36,7 @@ This first version does not fetch character Atlas completion, scrape community t
 
 ## Sources and maintenance
 
-Node names, stats, links, positions, point limits and granted points come from [GGG's official Atlas export](https://github.com/grindinggear/atlastree-export). Each bundled graph records its immutable source URL, commit and SHA-256. Decorative mastery icons are excluded from allocation. No third-party planner code or artwork is bundled.
+Node names, stats, links, positions, point limits, granted points and artwork come from [GGG's official Atlas export](https://github.com/grindinggear/atlastree-export). Each bundled graph records its immutable source URL, commit and SHA-256. Decorative mastery icons are excluded from allocation. Artwork is bundled from the same pinned official export; planning works offline. No third-party planner code or artwork is bundled.
 
 `python tools/update_atlas_data.py` regenerates the graphs from pinned official exports. Updating versions also requires changing the native and MCP version allowlists, testing changed rules and budgets, and publishing the new files in the updater manifest. There is no silent network update of saved plans.
 

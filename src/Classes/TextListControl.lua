@@ -48,9 +48,9 @@ function TextListClass:Draw(viewPort)
 			if lineInfo[colIndex] then
 				local textX = lineInfo.x or colInfo.x
 				local align = lineInfo.align or colInfo.align
-				DrawString(textX, lineY, align, lineInfo.height, lineInfo.font or "VAR", lineInfo[colIndex])
+				DrawString(textX, lineY, align, lineInfo.textSize or lineInfo.height, lineInfo.font or "VAR", lineInfo[colIndex])
 				if lineInfo.underline and lineInfo.underline[colIndex] then
-					local width = DrawStringWidth(lineInfo.height, "VAR", StripEscapes(lineInfo[colIndex]))
+					local width = DrawStringWidth(lineInfo.textSize or lineInfo.height, "VAR", StripEscapes(lineInfo[colIndex]))
 					-- note: not fully handled. this is currently only used for
 					-- the side bar stats
 					if align == "RIGHT_X" then

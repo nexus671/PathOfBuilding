@@ -2,6 +2,7 @@
 import hashlib
 import json
 import math
+import re
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -19,16 +20,17 @@ for version, commit in VERSIONS.items():
     data = json.loads(raw)
     assert data["tree"] == "Atlas"
     nodes = {}
+    decorations = []
     start = int(data["nodes"]["root"]["out"][0])
     for key, node in data["nodes"].items():
-        if key == "root" or node.get("isMastery"):
+        if key == "root":
             continue
         group = data["groups"][str(node["group"])]
         count = data["constants"]["skillsPerOrbit"][node["orbit"]]
         index = node["orbitIndex"]
         angle = math.radians(ANGLES[index] if count == 16 else 360 * index / count)
         radius = data["constants"]["orbitRadii"][node["orbit"]]
-        nodes[key] = {
+        entry = {
             "id": int(key), "name": node["name"] or "Atlas start", "stats": node["stats"],
             "x": round(group["x"] + math.sin(angle) * radius, 2),
             "y": round(group["y"] - math.cos(angle) * radius, 2),
@@ -37,15 +39,40 @@ for version, commit in VERSIONS.items():
             "kind": "keystone" if node.get("isKeystone") else "notable" if node.get("isNotable")
                     else "gateway" if node.get("isWormhole") else "small",
             "grantedPoints": node.get("grantedPassivePoints", 0),
+            "icon": node.get("icon"),
         }
+        if node.get("isMastery"):
+            decorations.append(entry)
+        else:
+            nodes[key] = entry
     result = {
         "version": version, "mode": "standard", "source": source, "commit": commit,
         "sha256": hashlib.sha256(raw).hexdigest(), "start": start,
         "maxPoints": data["points"]["totalPoints"], "nodes": nodes,
+        "decorations": decorations, "bounds": [data[k] for k in ("min_x", "min_y", "max_x", "max_y")],
+        "groups": [{"x": group["x"], "y": group["y"], "background": group["background"]["image"]}
+                   for group in data["groups"].values() if group.get("background")],
     }
     DESTINATION.mkdir(parents=True, exist_ok=True)
     # Preserve the game's spelling in generated data, as with other GGG exports.
     encoded = '{"_comment":"Generated official GGG data. cspell:disable",\n' + json.dumps(
         result, ensure_ascii=False, separators=(",", ":"))[1:]
     (DESTINATION / f"{version}.json").write_text(encoded, encoding="utf-8")
+    artwork = {"_comment": "Generated official GGG artwork. cspell:disable", "source": source, "sprites": {}}
+    asset_root = DESTINATION.parents[1] / "Assets" / "Atlas" / version
+    asset_root.mkdir(parents=True, exist_ok=True)
+    for category, levels in data["sprites"].items():
+        if category in ("background", "masteryOverlay", "line"):
+            continue
+        sheet = levels.get("0.5") or list(levels.values())[-1]
+        filename = sheet["filename"].split("/")[-1].split("?")[0]
+        assert re.fullmatch(r"[a-zA-Z0-9_.-]+", filename)
+        asset_source = f"https://raw.githubusercontent.com/grindinggear/atlastree-export/{commit}/assets/{filename}"
+        path = asset_root / filename
+        if not path.exists():
+            with urlopen(asset_source, timeout=60) as response:
+                path.write_bytes(response.read())
+        artwork["sprites"][category] = {**sheet, "filename": f"Assets/Atlas/{version}/{filename}",
+                                         "source": asset_source, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    (asset_root / "manifest.json").write_text(json.dumps(artwork, indent=2) + "\n", encoding="utf-8")
     print(f"{version}: {len(nodes)} allocatable nodes; source {result['sha256']}")

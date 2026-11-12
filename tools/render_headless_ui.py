@@ -45,6 +45,14 @@ def contrast(first, second):
     return (b + 0.05) / (a + 0.05)
 
 
+@functools.lru_cache(maxsize=4096)
+def texture_region(path, uv):
+    texture = Image.open(path).convert("RGBA")
+    if uv:
+        texture = texture.crop(tuple(round(v * (texture.width if i % 2 == 0 else texture.height)) for i, v in enumerate(uv)))
+    return texture
+
+
 def render(frame):
     canvas = Image.new("RGBA", (frame["width"], frame["height"]), (18, 18, 18, 255))
     audit = {"lowContrast": [], "horizontalClipping": [], "controlClipping": [], "texturedPlaceholders": 0,
@@ -67,7 +75,7 @@ def render(frame):
                 asset = (ROOT / "src" / command["asset"]).resolve()
                 if not asset.is_relative_to((ROOT / "src/Assets").resolve()):
                     raise ValueError("Texture outside bundled assets")
-                texture = Image.open(asset).convert("RGBA")
+                texture = texture_region(str(asset), tuple(command["uv"]) if command.get("uv") else None)
                 texture = texture.resize((max(1, round(rect[2])), max(1, round(rect[3]))), Image.Resampling.LANCZOS)
                 texture = ImageChops.multiply(texture, Image.new("RGBA", texture.size, rgba(command["color"])))
                 layer = Image.new("RGBA", canvas.size)
@@ -90,7 +98,10 @@ def render(frame):
                           and contains([c["x"], c["y"], c["width"], c["height"]], center_x, center_y)]
             if containers:
                 control = min(containers, key=lambda c: c["width"] * c["height"])
-                if x < control["x"] - 1 or x + command["width"] > control["x"] + control["width"] + 1:
+                intentional_clip = (clip[0] >= control["x"] and clip[1] >= control["y"]
+                                    and clip[0] + clip[2] <= control["x"] + control["width"]
+                                    and clip[1] + clip[3] <= control["y"] + control["height"])
+                if not intentional_clip and (x < control["x"] - 1 or x + command["width"] > control["x"] + control["width"] + 1):
                     audit["controlClipping"].append({"control": control["key"], "text": command["text"]})
             checked_colors = set()
             while index < len(command["text"]):

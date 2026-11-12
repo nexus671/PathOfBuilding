@@ -23,7 +23,7 @@ local function wrap(list,value,color,width)
 		local length=#value
 		while length > 1 and DrawStringWidth(16,"VAR",value:sub(1,length)) > width do length=length-1 end
 		if length < #value then length=value:sub(1,length):match("^.*()%s") or length end
-		list[#list+1]={height=19,(color or "^x8888FF")..value:sub(1,length)}
+		list[#list+1]={height=19,textSize=16,(color or "^x8888FF")..value:sub(1,length)}
 		value=value:sub(length+1):gsub("^%s+","")
 	end
 end

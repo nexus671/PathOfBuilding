@@ -30,7 +30,7 @@ def main():
     (directory / "controls.log").write_text(result.stdout)
     assert result.returncode == 0, result.stdout
     paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 30, f"Expected thirty UI frames, found {len(paths)}"
+    assert len(paths) == 94, f"Expected ninety-four UI frames, found {len(paths)}"
     failures = []
     for path in paths:
         image, audit = render(json.loads(path.read_text()))
@@ -51,6 +51,7 @@ def main():
     sources = list((ROOT / "src/Classes").glob("*.lua")) + list((ROOT / "src/Modules").glob("*.lua"))
     sources += list((ROOT / "runtime/SimpleGraphic/Fonts").glob("*"))
     sources += list((ROOT / "src/Assets/Crafting").rglob("*"))
+    sources += list((ROOT / "src/Assets/Atlas").rglob("*"))
     sources += [ROOT / "src/Data/Global.lua", Path(__file__), ROOT / "tools/render_headless_ui.py", ROOT / "tools/test_headless_ui.lua"]
     hashes = {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(sources) if path.is_file()}
     (directory / "report.json").write_text(json.dumps({"revision": revision, "workingTreeChanges": dirty,

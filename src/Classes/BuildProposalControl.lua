@@ -4,19 +4,9 @@ local report = require("Modules.EncounterReport")
 local insights = require("Modules.BuildInsights")
 local Panel = { }
 
-local function wrapRows(lines)
-	local rows = { }
-	for _,line in ipairs(lines) do
-		line = StripEscapes(tostring(line))
-		while #line > 100 do
-			local cut = line:sub(1,100):match("^.*() ") or 100
-			if cut < 50 then cut=100 end
-			rows[#rows+1] = {height=18,line:sub(1,cut)}; line=line:sub(cut+1)
-		end
-		rows[#rows+1] = {height=18,line}
-	end
-	return rows
-end
+local ui=require("Modules.PlanningUI")
+local function goalName(goal) return goal:gsub("_"," "):gsub("^%l",string.upper) end
+local function wrapRows(lines,width) return ui.rows(lines,width or 818) end
 local function button(x,y,width,label,callback)
 	return new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,width,24},label,callback)
 end
@@ -29,52 +19,56 @@ end
 function Panel.Review()
 	local prepared = bridge.prepared
 	if not prepared then main:OpenMessagePopup("Build proposal","No calculated proposal is waiting for review."); return end
-	local rows = { }
-	local function add(line)
-		rows[#rows+1] = {height=18,StripEscapes(line)}
-	end
-	add((prepared.mode == "new" and "New build: " or "Edit current build: ")..prepared.title)
-	add("Calculated separately. Applying opens the candidate unsaved; saving remains your choice.")
-	add("Undo retains up to five earlier builds in memory. Later manual edits block undo.")
-	add("")
-	add("Current desktop -> Proposed (native calculations; configuration changes can affect these results)")
-
-	for key,value in pairsSortByKey(prepared.after) do
-		add(string.format("%s: %.2f -> %.2f (%+.2f)",insights.labels[key] or key,prepared.before[key] or 0,value,prepared.delta[key] or 0))
-	end
-	add("")
-	add("Native warnings")
-	for _,warning in ipairs(prepared.warnings) do add(warning) end
-	if #prepared.warnings == 0 then add("No native warnings captured. This is not a guarantee of build viability.") end
-	add("")
-	add("Changes")
-	for _,line in ipairs(prepared.changes) do add(line) end
-	add("")
-	local evaluation = bridge.evaluate(prepared)
-	add("Goal: "..evaluation.goal.." | score: "..(evaluation.score and string.format("%+.2f",evaluation.score) or "unavailable").." | "..(evaluation.eligible and "within constraints" or "outside constraints"))
-	add(evaluation.method)
-	if evaluation.quote then add(string.format("Quoted total: %.2f %s | source: %s | age: %.0fh",evaluation.quote.amount,evaluation.quote.currency,evaluation.quote.source,evaluation.priceAgeSeconds/3600)) end
-	for _,issue in ipairs(evaluation.issues) do add(issue) end
-	add("")
-	add("New dependency issues")
-	for _,entry in ipairs(prepared.audit.introduced or { }) do add(entry.text) end
-	add("All dependency checks")
-	for _,entry in ipairs(prepared.audit.dependencies) do add(entry.text) end
-	add("Assumptions to verify")
-	for _,entry in ipairs(prepared.audit.assumptions) do add(entry.text) end
-	local lines = { }
-	for _,row in ipairs(rows) do lines[#lines+1] = row[1] end
-	rows = wrapRows(lines)
+	local evaluation=bridge.evaluate(prepared)
 	local controls = { }
 	local height = math.min(680,main.screenH-60)
-	controls.details = new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,24,848,height-92},nil,rows)
-	controls.apply = button(16,height-52,160,"Apply proposed build",function() safely(function()
+	local cardWidth=272
+	local function metric(key) local value=prepared.after[key] or 0;return string.format(value<100 and "%.2f" or "%.0f",value) end
+	local function previous(key) local value=prepared.before[key] or 0;return string.format("Current %s (%+.2f)",string.format(value<100 and "%.2f" or "%.0f",value),prepared.delta[key] or 0) end
+	ui.card(controls,"damageCard",16,24,cardWidth,"DAMAGE PER SECOND",metric("CombinedDPS"),previous("CombinedDPS"))
+	ui.card(controls,"defenceCard",304,24,cardWidth,"EFFECTIVE HIT POOL",metric("TotalEHP"),previous("TotalEHP"))
+	ui.card(controls,"lifeCard",592,24,cardWidth,"UNRESERVED LIFE",metric("LifeUnreserved"),previous("LifeUnreserved"))
+	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{16,136,260,26},{"Summary","Changes","Checks"})
+	ui.label(controls,"candidateTitle",304,142,prepared.title:sub(1,60),14)
+	ui.label(controls,"goal",16,170,"Goal: "..goalName(evaluation.goal).." | "..(evaluation.eligible and "Within constraints" or "Constraints need attention"),14)
+	local metricRows={{height=26,textSize=16,"^7Metric","^7Current","^7Proposed","^7Change"}}
+	for key in pairsSortByKey(prepared.after) do
+		if prepared.after[key] then metricRows[#metricRows+1]={height=24,textSize=16,"^7"..(insights.labels[key] or key),"^7"..string.format("%.2f",prepared.before[key] or 0),"^7"..string.format("%.2f",prepared.after[key]),"^7"..string.format("%+.2f",prepared.delta[key] or 0)} end
+	end
+	if evaluation.quote then metricRows[#metricRows+1]={height=24,textSize=16,"^7Quoted cost","","^7"..string.format("%.2f %s",evaluation.quote.amount,evaluation.quote.currency),""} end
+	if evaluation.configurationChanged then metricRows[#metricRows+1]={height=24,textSize=16,"^7Configuration changed","","^7Yes",""} end
+	controls.metrics=new("TextListControl"):TextListControl(ui.anchor,{16,198,848,height-292},{{x=8,align="LEFT"},{x=330,align="LEFT"},{x=490,align="LEFT"},{x=650,align="LEFT"}},metricRows)
+	controls.metrics.shown=function() return controls.page:GetSelValue()=="Summary" end
+	controls.details = new("TextListControl"):TextListControl(ui.anchor,{16,198,848,height-292},nil,{})
+	controls.details.shown=function() return controls.page:GetSelValue()~="Summary" end
+	controls.page.selFunc=function()
+		if controls.page:GetSelValue()=="Changes" then controls.details.list=wrapRows(prepared.changes)
+		else
+			local checks={"Native warnings"}
+			for _,warning in ipairs(prepared.warnings) do checks[#checks+1]=warning end
+			if #prepared.warnings==0 then checks[#checks+1]="No native warnings captured." end
+			checks[#checks+1]="";checks[#checks+1]="Goal constraints"
+			for _,issue in ipairs(evaluation.issues) do checks[#checks+1]=issue end
+			checks[#checks+1]="";checks[#checks+1]="Evaluation"
+			checks[#checks+1]=evaluation.method
+			if evaluation.quote then checks[#checks+1]=string.format("Quote: %.2f %s | %s | %.0f hours old",evaluation.quote.amount,evaluation.quote.currency,evaluation.quote.source,evaluation.priceAgeSeconds/3600) end
+			checks[#checks+1]="";checks[#checks+1]="New dependency issues"
+			for _,entry in ipairs(prepared.audit.introduced or {}) do checks[#checks+1]=entry.text end
+			checks[#checks+1]="";checks[#checks+1]="Dependencies"
+			for _,entry in ipairs(prepared.audit.dependencies) do checks[#checks+1]=entry.text end
+			checks[#checks+1]="";checks[#checks+1]="Assumptions to verify"
+			for _,entry in ipairs(prepared.audit.assumptions) do checks[#checks+1]=entry.text end
+			controls.details.list=wrapRows(checks)
+		end
+	end
+	ui.label(controls,"reviewNote",16,height-80,"Applying opens the candidate unsaved. Save the build when you want to keep it.",14)
+	controls.apply = button(16,height-52,160,"Apply build",function() safely(function()
 		local candidate = bridge.apply(prepared)
 		if bridge.status then bridge.status.status = "applied" end
 		bridge.refresh(candidate)
 		main.popups = { }
 	end) end)
-	controls.reject = button(192,height-52,120,"Reject proposal",function() bridge.reject(); main:ClosePopup() end)
+	controls.reject = button(192,height-52,120,"Reject",function() bridge.reject(); main:ClosePopup() end)
 	controls.close = button(748,height-52,116,"Back",function() main:ClosePopup() end)
 	main:OpenPopup(880,height,"Review AI build proposal",controls,nil,nil,"close")
 end
@@ -89,23 +83,23 @@ end
 
 function Panel.Goals(build)
 	local controls = { }
-	controls.info = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,0,14},"Rank candidates by goal. Prices use supplied quotes, with no automatic trade lookup.")
-	controls.goal = new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,58,260,24},insights.goals)
-	controls.goal:SelByValue(bridge.plan.goal)
+	controls.info = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,0,14},"^7Set a goal and optional limits for candidate comparisons.")
+	controls.goal = new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,58,260,24},(function() local goals={};for _,goal in ipairs(insights.goals) do goals[#goals+1]={label=goalName(goal),val=goal} end;return goals end)())
+	controls.goal:SelByValue(bridge.plan.goal,"val")
 	for _,label in ipairs({{16,88,"Budget (optional)"},{172,88,"Currency"},{16,136,"Minimum Life"},{172,136,"Minimum DPS"}}) do
-		controls["label"..label[1]..label[2]] = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{label[1],label[2],0,14},label[3])
+		controls["label"..label[1]..label[2]] = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{label[1],label[2],0,14},"^7"..label[3])
 	end
-	controls.budget = new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{16,106,140,24},bridge.plan.budget and tostring(bridge.plan.budget) or "","Budget (optional)","0-9%.",16)
-	controls.currency = new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{172,106,140,24},bridge.plan.currency or "chaos","Currency",nil,24)
-	controls.minimumLife = new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{16,154,140,24},bridge.plan.minimums and bridge.plan.minimums.LifeUnreserved or "","Minimum Life","0-9%.",12)
-	controls.minimumDPS = new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{172,154,140,24},bridge.plan.minimums and bridge.plan.minimums.CombinedDPS or "","Minimum DPS","0-9%.",16)
-	controls.note = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,204,0,14},"AI can set other minimum stats through set_build_goals. Reviews show unmet constraints.")
+	controls.budget = new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{16,106,140,24},bridge.plan.budget and tostring(bridge.plan.budget) or "","","^0-9%.",16)
+	controls.currency = new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{172,106,140,24},bridge.plan.currency or "chaos","",nil,24)
+	controls.minimumLife = new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{16,154,140,24},bridge.plan.minimums and bridge.plan.minimums.LifeUnreserved or "","","^0-9%.",12)
+	controls.minimumDPS = new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{172,154,140,24},bridge.plan.minimums and bridge.plan.minimums.CombinedDPS or "","","^0-9%.",16)
+	controls.note = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,204,0,14},"^7Reviews show constraints the candidate does not meet.")
 	controls.save = button(16,246,140,"Set goals",function() safely(function()
 		local budget = controls.budget.buf ~= "" and assert(tonumber(controls.budget.buf),"Invalid budget") or nil
 		local minimums = copyTable(bridge.plan.minimums or { })
 		minimums.LifeUnreserved = controls.minimumLife.buf ~= "" and assert(tonumber(controls.minimumLife.buf),"Invalid minimum Life") or nil
 		minimums.CombinedDPS = controls.minimumDPS.buf ~= "" and assert(tonumber(controls.minimumDPS.buf),"Invalid minimum DPS") or nil
-		bridge.configure({goal=controls.goal:GetSelValue(),budget=budget,currency=controls.currency.buf,minimums=minimums,notes=bridge.plan.notes})
+		bridge.configure({goal=controls.goal:GetSelValueByKey("val"),budget=budget,currency=controls.currency.buf,minimums=minimums,notes=bridge.plan.notes})
 		if bridge.enabled then bridge.refresh(build) end
 		main:ClosePopup()
 	end) end)
@@ -179,33 +173,49 @@ function Panel.Diagnostics()
 		"1. Open a build and wait for calculations to finish.","2. Enable build proposals in AI builds.","3. Copy the MCP configuration into a local stdio MCP client, then reconnect it.","4. Ask the client to call get_build_connection and get_build_context.","5. Review a pending proposal before submitting another request.","Disable the connection when finished. Candidates and undo are session-only; save builds explicitly."})
 end
 
-function Panel.Open(build)
-	local controls = { }
-	controls.status = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,30,0,16},function()
-		return (bridge.enabled and "Desktop bridge ready" or "Desktop bridge disabled").." | "..(bridge.status and bridge.status.status or "No proposal").." | Goal: "..bridge.plan.goal
-	end)
-	controls.info = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,64,0,14},"Plan with AI, compare native results, then review and apply an unsaved candidate.")
-	controls.enable = button(16,100,210,function() return bridge.enabled and "Disable connection" or "Enable build proposals" end,function() safely(function()
+function Panel.Open(build,layout)
+	local controls={}
+	local width=layout and layout.width or math.min(960,main.screenW-40)
+	local height=layout and layout.height or math.min(720,main.screenH-60)
+	ui.label(controls,"heading",16,20,"Plan this build",24)
+	ui.label(controls,"info",16,56,"Set goals, compare calculated options, then review what changes.",14)
+	local cardWidth=math.floor((width-64)/3)
+	ui.card(controls,"goalCard",16,88,cardWidth,"BUILD GOAL",function() return goalName(bridge.plan.goal) end,"Set goals and a budget below")
+	ui.card(controls,"connectionCard",32+cardWidth,88,cardWidth,"LOCAL BRIDGE",function() return bridge.enabled and "Enabled" or "Disabled" end,"Manage in Connection")
+	ui.card(controls,"proposalCard",48+cardWidth*2,88,cardWidth,"PROPOSAL",function() return bridge.prepared and "Ready for review" or "None pending" end,"You choose what to apply")
+	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{16,202,240,26},{"Plan & review","Connection"})
+	local buttonWidth=math.min(240,math.floor((width-48)/2))
+	local function action(key,y,title,description,callback)
+		controls[key]=button(16,y,buttonWidth,title,callback)
+		ui.label(controls,key.."Hint",32+buttonWidth,y+4,description,14)
+	end
+	action("goals",250,"Goals and budget","Define your priorities and constraints.",function() Panel.Goals(build) end)
+	action("review",302,"Review proposal","Compare current and proposed results.",Panel.Review)
+	controls.review.enabled=function() return bridge.prepared~=nil end
+	action("candidates",354,"Candidates and leveling","Compare upgrades and progression.",Panel.Candidates)
+	action("analysis",406,"Build checks","Inspect requirements and encounter evidence.",function() Panel.Analysis(build) end)
+	action("restore",458,"Undo applied build","Restore the previous reviewed version.",function() safely(function() bridge.restore();main.popups={} end) end)
+	controls.restore.enabled=function() return bridge.previous~=nil and bridge.build==main.modes.BUILD end
+	action("enable",250,function() return bridge.enabled and "Disable connection" or "Enable proposals" end,"Allow your local AI client to propose builds.",function() safely(function()
 		if bridge.enabled then bridge.disable(bridge.build) else bridge.enable(build) end
 	end) end)
-	controls.enable.enabled = function() return not build.buildFlag end
-	controls.setup = button(242,100,210,"Copy MCP configuration",function() Copy(report.mcpConfig(GetScriptPath().."/AI/McpServer.cjs",main.userPath.."AI-encounter.json")) end)
-	controls.goals = button(468,100,210,"Goals and budget",function() Panel.Goals(build) end)
-	controls.review = button(16,142,210,"Review pending proposal",Panel.Review)
-	controls.review.enabled = function() return bridge.prepared ~= nil end
-	controls.candidates = button(242,142,210,"Candidates and leveling",Panel.Candidates)
-	controls.restore = button(468,142,210,"Undo applied candidate",function() safely(function() bridge.restore(); main.popups={} end) end)
-	controls.restore.enabled = function() return bridge.previous ~= nil and bridge.build == main.modes.BUILD end
-	controls.analysis = button(16,184,210,"Checks and death analysis",function() Panel.Analysis(build) end)
-	controls.diagnostics = button(242,184,210,"Connection diagnostics",Panel.Diagnostics)
-	controls.crafting = button(468,184,210,"Crafting projects",function() safely(function() require("Classes.CraftingProjectControl").Open(build) end) end)
-	controls.atlas = button(16,222,210,"Atlas planner",function() safely(function() require("Classes.AtlasPlannerControl").Open(build) end) end)
-	controls.detail = new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,262,0,14},function()
-		local text = bridge.lastError or bridge.status and bridge.status.title or "Enable the bridge, connect your MCP client, then ask it to plan or compare builds."
-		return #text > 100 and text:sub(1,97).."..." or text
-	end)
-	controls.close = button(562,302,116,"Close",function() main:ClosePopup() end)
-	main:OpenPopup(698,346,"AI build planner",controls,nil,nil,"close")
+	controls.enable.enabled=function() return not build.buildFlag end
+	action("setup",302,"Copy MCP configuration","Connect a local MCP client to this build.",function() Copy(report.mcpConfig(GetScriptPath().."/AI/McpServer.cjs",main.userPath.."AI-encounter.json")) end)
+	action("diagnostics",354,"Connection details","Check requests, errors and connection setup.",Panel.Diagnostics)
+	controls.status=ui.label(controls,"status",16,height-86,"",14)
+	controls.status.label=function() return "^7"..(bridge.lastError and "Connection needs attention. Open Connection details." or bridge.prepared and "A calculated proposal is ready for your review." or "Your current build stays in place until you apply a proposal.") end
+	for _,key in ipairs({"goals","review","candidates","analysis","restore"}) do
+		controls[key].shown=function() return controls.page:GetSelValue()=="Plan & review" end
+		controls[key.."Hint"].shown=controls[key].shown
+	end
+	for _,key in ipairs({"enable","setup","diagnostics"}) do
+		controls[key].shown=function() return controls.page:GetSelValue()=="Connection" end
+		controls[key.."Hint"].shown=controls[key].shown
+	end
+	controls.close=button(width-132,height-48,116,"Close",function() main:ClosePopup() end)
+	if layout then controls.close.shown=false;layout.mount(width,height,"AI build planner",controls)
+	else main:OpenPopup(width,height,"AI build planner",controls,nil,nil,"close") end
+	return controls
 end
 
 return Panel

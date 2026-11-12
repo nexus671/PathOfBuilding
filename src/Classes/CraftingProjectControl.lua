@@ -28,11 +28,11 @@ local function rows(lines,width)
 	return result
 end
 local function editor(controls,key,x,y,w,h,value,prompt,limit)
-	controls[key]=new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,h},value or "",prompt,nil,limit,nil,h > 24 and 16 or nil)
+	controls[key]=new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,h},value or "",nil,h>24 and "^%C\t\n" or nil,limit,nil,h > 24 and 16 or nil)
 	return controls[key]
 end
 local function label(controls,key,x,y,text)
-	controls[key]=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,0,14},text)
+	controls[key]=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,0,14},colorCodes.NORMAL..text)
 end
 local function textDialog(title,initial,callback)
 	local controls={ }
@@ -62,7 +62,7 @@ function Panel.Preview(build,project)
 	require("Classes.BuildProposalControl").Review()
 end
 
-function Panel.Edit(build,source,initialItem,initialSlot)
+function Panel.Edit(build,source,initialItem,initialSlot,layout)
 	local draft=source and copyTable(source) or {id="craft-"..require("sha1")(tostring({})..os.time()):sub(1,16),title="New crafting plan",slot=initialSlot or "Helmet",startingItem=initialItem or "",targetItem="",goals={},steps={}}
 	local controls,slots={},{ }
 	for name in pairs(build.itemsTab.slots) do slots[#slots+1]=name end
@@ -105,17 +105,18 @@ function Panel.Edit(build,source,initialItem,initialSlot)
 		else draft.estimate=nil end
 		return projects.validate(draft)
 	end
-	controls.save=button(16,596,180,"Keep project in build",function() build.savers.CraftingProjects:Upsert(readDraft()); main.popups={}; Panel.Open(build) end)
+	controls.save=button(16,596,180,"Keep project in build",function() build.savers.CraftingProjects:Upsert(readDraft()); main.popups={}; Panel.Open(build,nil,nil,layout) end)
 	controls.preview=button(212,596,180,"Preview target stats",function() Panel.Preview(build,readDraft()) end)
 	controls.close=button(748,596,116,"Cancel",function() main:ClosePopup() end)
 	main:OpenPopup(880,644,"Edit crafting project",controls,nil,"title","close")
 end
 
-function Panel.Open(build,displayItem,displaySlot)
+function Panel.Open(build,displayItem,displaySlot,layout)
 	local controls,list={},{ }
 	local store=build.savers.CraftingProjects
 	for index,project in ipairs(store.projects) do list[#list+1]={label=project.title,val=index} end
-	local height=math.min(720,main.screenH-60)
+	local height=layout and layout.height or math.min(720,main.screenH-60)
+	local width=layout and layout.width or 880
 	local function selected() return assert(store.projects[controls.projects:GetSelValueByKey("val")],"Create or select a project first") end
 	local function refresh()
 		local lines={"Crafting plans, targets and estimates are kept with this build. Save the build explicitly.","Native crafting runs locally. External Craft of Exile results remain separate supplied evidence."}
@@ -124,18 +125,18 @@ function Panel.Open(build,displayItem,displaySlot)
 			for _,line in ipairs(projects.lines(selected())) do lines[#lines+1]=line end
 			for _,warning in ipairs(projects.handoff(selected().startingItem).warnings) do lines[#lines+1]=warning end
 		else lines[#lines+1]="Create a project from the selected item, or paste starting-item text and write a plan. AI can propose one through MCP." end
-		controls.details.list=rows(lines)
+		controls.details.list=rows(lines,width-60)
 	end
 	controls.projects=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,650,24},list,function() refresh() end)
-	controls.edit=button(682,28,182,"Edit selected project",function() Panel.Edit(build,selected()) end)
+	controls.edit=button(682,28,182,"Edit selected project",function() Panel.Edit(build,selected(),nil,nil,layout) end)
 	controls.edit.enabled=#list > 0
 	controls.details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,68,848,height-224},nil,{})
 	refresh()
-	controls.new=button(16,height-138,160,"New project",function() Panel.Edit(build,nil,displayItem and displayItem.raw,displaySlot) end)
+	controls.new=button(16,height-138,160,"New project",function() Panel.Edit(build,nil,displayItem and displayItem.raw,displaySlot,layout) end)
 	controls.copy=button(192,height-138,160,"Copy plan",function() Copy(json.encode(selected(),{indent=true})) end)
 	controls.import=button(368,height-138,160,"Paste plan",function()
 		local project=assert(json.decode(Paste()),"Clipboard needs a crafting project JSON object")
-		store:Upsert(project); main.popups={}; Panel.Open(build)
+		store:Upsert(project); main.popups={}; Panel.Open(build,nil,nil,layout)
 	end)
 	controls.native=button(544,height-138,160,"Native crafting",function() require("Classes.CraftingSimulatorControl").Open(build,selected()) end)
 	controls.coe=button(16,height-48,220,"Craft of Exile (optional)",function() OpenURL(projects.handoff(selected().startingItem).url) end)
@@ -165,6 +166,18 @@ function Panel.Open(build,displayItem,displaySlot)
 	end)
 	for _,name in ipairs({"copy","coe","native","preview","inspect","attach","copyExport","done","undoStep"}) do controls[name].enabled=#list > 0 end
 	controls.close=button(748,height-48,116,"Close",function() main:ClosePopup() end)
-	main:OpenPopup(880,height,"Crafting projects",controls,nil,nil,"close")
+	if layout then
+		controls.projects.width=width-214;controls.edit.x=width-198
+		controls.details.width=width-32;controls.details.height=height-258
+		local keys={"new","native","preview","copy","import","inspect","done","undoStep","attach","copyExport","coe"}
+		local columns=3;local gap=12;local buttonWidth=math.floor((width-32-gap*(columns-1))/columns)
+		for index,key in ipairs(keys) do
+			local control=controls[key];control.x=16+(index-1)%columns*(buttonWidth+gap);control.y=height-174+math.floor((index-1)/columns)*36;control.width=buttonWidth
+		end
+		controls.native.label="Open workbench";controls.coe.label="Craft of Exile";controls.edit.label="Edit project"
+		controls.close.shown=false
+		layout.mount(width,height,"Crafting projects",controls)
+	else main:OpenPopup(880,height,"Crafting projects",controls,nil,nil,"close") end
+	return controls
 end
 return Panel

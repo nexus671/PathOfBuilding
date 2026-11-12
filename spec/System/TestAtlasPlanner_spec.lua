@@ -123,10 +123,10 @@ describe("Native Atlas planner", function()
 		local imported=plan("3.29.1"); imported.notes="Imported strategy notes"
 		local environment=getfenv(panel.Open); local paste=environment.Paste
 		environment.Paste=function() return atlas.export(imported) end
-		controls.import:Click(); environment.Paste=paste
+		controls.page:SelByValue("Notes & sharing");controls.import:Click(); environment.Paste=paste
 		assert.are.equal(imported.notes,controls.notes.buf)
 		assert.are.equal("3.29.1",controls.canvas.tree.version)
-		controls.undo:Click(); controls.canvas:Draw()
+		controls.page:SelByValue("Tree");controls.undo:Click(); controls.canvas:Draw()
 		assert.are.equal("3.27.0",controls.canvas.tree.version)
 		assert.are.equal("Map sustain first",controls.notes.buf)
 	end)

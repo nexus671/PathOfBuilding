@@ -38,7 +38,7 @@ function M.install(options)
 		return best,family
 	end
 	local function measure(height, name, text)
-		text=text:gsub("[\194-\244][\128-\191]*","?")
+		text=tostring(text):gsub("[\194-\244][\128-\191]*","?")
 		local data=font(height,name);local width,maximum,index=0,0,1
 		while index<=#text do
 			local _,length=escape(text:sub(index))
@@ -81,15 +81,15 @@ function M.install(options)
 	replace("SetViewport",function(x,y,w,h) viewport=x and {x,y,w,h} or {0,0,ui.width,ui.height} end)
 	replace("SetDrawLayer",function(value,sub) layer=value or layer;sublayer=sub or 0 end)
 	replace("GetDrawLayer",function() return layer end)
-	replace("DrawImage",function(handle,x,y,w,h)
-		record({kind="rect",x=x+viewport[1],y=y+viewport[2],width=w,height=h,textured=handle~=nil,asset=images[handle]})
+	replace("DrawImage",function(handle,x,y,w,h,left,top,right,bottom)
+		record({kind="rect",x=x+viewport[1],y=y+viewport[2],width=w,height=h,textured=handle~=nil,asset=images[handle],uv=left and {left,top,right,bottom} or nil})
 	end)
 	replace("DrawImageQuad",function(handle,...)
 		local points={...};for i=1,8,2 do points[i]=points[i]+viewport[1];points[i+1]=points[i+1]+viewport[2] end
 		record({kind="polygon",points=points,textured=handle~=nil})
 	end)
 	replace("DrawString",function(x,y,align,height,name,text)
-		text=text:gsub("[\194-\244][\128-\191]*","?")
+		text=tostring(text):gsub("[\194-\244][\128-\191]*","?")
 		local width=measure(height,name,text)
 		if align=="CENTER" then x=math.floor((viewport[3]-width)/2+x)
 		elseif align=="RIGHT" then x=math.floor(viewport[3]-width-x)
@@ -103,51 +103,89 @@ function M.install(options)
 	end)
 	main.screenW,main.screenH=ui.width,ui.height
 	main.viewPort={x=0,y=0,width=ui.width,height=ui.height}
+	function ui:bind(host) self.boundHost=host;return self end
+	function ui:resize(width,height)
+		self.width,self.height=width,height;main.screenW,main.screenH=width,height
+		main.viewPort={x=0,y=0,width=width,height=height}
+		return self
+	end
+	function ui:activeHost()
+		if main.popups[1] then return main.popups[1] end
+		if self.boundHost and self.boundHost.OnFrame then return main.modes.BUILD end
+		return assert(self.boundHost,"No popup or bound UI host")
+	end
+	local function controlsFor(host)
+		local controls={}
+		for key,control in pairs(host.controls or {}) do controls[key]=control end
+		if host.viewMode=="PLANNER" and host.planningWorkspace then
+			for key,control in pairs(host.planningWorkspace.controls) do controls[key]=control end
+		end
+		return controls
+	end
+	function ui:dispatch(host,events)
+		if host.OnFrame then host:OnFrame(events) else host:ProcessControlsInput(events,main.viewPort) end
+	end
 	function ui:frame(host)
 		self.commands={};color={1,1,1,1};viewport={0,0,self.width,self.height};layer,sublayer=0,0
 		self.clock=self.clock+16
-		host=host or assert(main.popups[1],"No popup to render")
-		if type(host)=="function" then host(main.viewPort);host={} else host:Draw(main.viewPort,{}) end
+		host=host or self:activeHost()
+		if type(host)=="function" then host(main.viewPort);host={} elseif host.OnFrame then host:OnFrame({}) else host:Draw(main.viewPort,{}) end
 		self.controls={};self.regions={}
-		for key,control in pairs(host.controls or {}) do if control:IsShown() then
+		for key,control in pairs(controlsFor(host)) do if control:IsShown() then
 			local x,y=control:GetPos();local w,h=control:GetSize()
 			if control.columns and control.list then self.regions[#self.regions+1]={x,y,w,h} end
 			self.controls[#self.controls+1]={key=key,x=x,y=y,width=w,height=h,enabled=control:IsEnabled() and true or false}
 		end end
-		table.sort(self.controls,function(a,b) return a.key<b.key end)
+		table.sort(self.controls,function(a,b) return tostring(a.key)<tostring(b.key) end)
 		return self
 	end
 	function ui:click(key)
-		local host=assert(main.popups[1],"No popup");local control=assert(host.controls[key],"Unknown control "..key)
+		local host=self:activeHost();local control=assert(controlsFor(host)[key],"Unknown control "..key)
 		assert(control:IsShown() and control:IsEnabled(),"Control is hidden or disabled: "..key)
 		local x,y=control:GetPos();local w,h=control:GetSize()
 		assert(x>=0 and y>=0 and x+w<=self.width and y+h<=self.height,"Control is outside the window: "..key)
 		self.cursorX,self.cursorY=x+w/2,y+h/2
-		host:ProcessControlsInput({{type="KeyDown",key="LEFTBUTTON"}},main.viewPort)
-		host:ProcessControlsInput({{type="KeyUp",key="LEFTBUTTON"}},main.viewPort)
+		self:dispatch(host,{{type="KeyDown",key="LEFTBUTTON"}},main.viewPort)
+		self:dispatch(host,{{type="KeyUp",key="LEFTBUTTON"}},main.viewPort)
 		return self
 	end
 	function ui:key(key)
-		local host=assert(main.popups[1],"No popup")
-		host:ProcessControlsInput({{type="KeyDown",key=key}},main.viewPort)
-		host:ProcessControlsInput({{type="KeyUp",key=key}},main.viewPort)
+		local host=self:activeHost()
+		self:dispatch(host,{{type="KeyDown",key=key}},main.viewPort)
+		self:dispatch(host,{{type="KeyUp",key=key}},main.viewPort)
+		return self
+	end
+	function ui:clickAt(x,y,doubleClick)
+		self.cursorX,self.cursorY=x,y;self:frame()
+		local host=self:activeHost()
+		self:dispatch(host,{{type="KeyDown",key="LEFTBUTTON",doubleClick=doubleClick}})
+		self:dispatch(host,{{type="KeyUp",key="LEFTBUTTON"}})
+		return self
+	end
+	function ui:dragAt(x,y,dx,dy)
+		self.cursorX,self.cursorY=x,y;self:frame()
+		local host=self:activeHost()
+		self:dispatch(host,{{type="KeyDown",key="RIGHTBUTTON"}})
+		self.cursorX,self.cursorY=x+dx,y+dy;self:frame()
+		self:dispatch(host,{{type="KeyUp",key="RIGHTBUTTON"}})
 		return self
 	end
 	function ui:choose(key,value,member)
-		local host=assert(main.popups[1]);local control=assert(host.controls[key]);local target
+		local host=self:activeHost();local control=assert(controlsFor(host)[key]);local target
 		for i,entry in ipairs(control.list) do if (member and entry[member] or entry)==value then target=i;break end end
 		assert(target,"Dropdown choice not found: "..tostring(value));self:click(key)
 		local attempts=0
 		while control.selIndex~=target do
 			attempts=attempts+1;assert(attempts<=#control.list+1,"Dropdown selection did not advance")
 			self:key(control.selIndex<target and "DOWN" or "UP")
+			if self:activeHost()~=host then return self end
 		end
 		self:key("ESCAPE");return self
 	end
 	function ui:text(key,text)
 		self:click(key);self.keys.CTRL=true;self:key("a");self.keys.CTRL=nil
-		local host=assert(main.popups[1])
-		for char in text:gmatch("[\1-\127\194-\244][\128-\191]*") do host:ProcessControlsInput({{type="Char",key=char}},main.viewPort) end
+		local host=self:activeHost()
+		for char in text:gmatch("[\1-\127\194-\244][\128-\191]*") do self:dispatch(host,{{type="Char",key=char}},main.viewPort) end
 		return self
 	end
 	function ui:write(path)

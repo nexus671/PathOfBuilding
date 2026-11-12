@@ -9,7 +9,7 @@ local function button(controls,key,x,y,w,label,callback)
 	end)
 end
 local function edit(controls,key,x,y,w,h,value,prompt,limit)
-	controls[key]=new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,h},value or "",prompt,nil,limit,nil,h > 24 and 16 or nil)
+	controls[key]=new("EditControl"):EditControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,h},value or "",prompt,h>24 and "^%C\t\n" or nil,limit,nil,h > 24 and 16 or nil)
 end
 local function rows(lines,width)
 	width=width or 388
@@ -30,7 +30,7 @@ local function rows(lines,width)
 	return result
 end
 local function label(controls,key,x,y,text)
-	controls[key]=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,0,14},text)
+	controls[key]=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,0,14},colorCodes.NORMAL..text)
 end
 
 function Panel.Open(build,project)
@@ -62,6 +62,7 @@ function Panel.Open(build,project)
 		end
 		for key,value in pairsSortByKey(requirements or {}) do lines[#lines+1]=key:gsub("(%l)(%u)","%1 %2")..": "..tostring(value) end
 		controls.targetSummary.list=rows(lines)
+		if extra and controls.resultSummary then controls.resultSummary.list=rows(extra) end
 		controls.intro.label=extra and extra[1] or "Select a currency, then click your item to craft."
 	end
 	label(controls,"methodLabel",16,64,"Crafting action")
@@ -239,7 +240,7 @@ function Panel.Open(build,project)
 		refresh({"Simulation queued. You can cancel it below."})
 	end
 	button(controls,"simulate",16,486,200,"Simulate action",function()
-		local a=action(); a.maxAttempts=math.min(200,assert(tonumber(controls.budget.buf),"Invalid budget")); a.untilTargets=#targets > 0 and copyTable(targets) or nil;a.untilRequirements=(requirements and copyTable(requirements) or nil)
+		local a=action();local attempts=assert(tonumber(controls.budget.buf),"Invalid budget");a.maxAttempts=math.min(200,attempts); a.untilTargets=#targets > 0 and copyTable(targets) or nil;a.untilRequirements=(requirements and copyTable(requirements) or nil)
 		showSimulation({steps={a},targets=copyTable(targets),requirements=(requirements and copyTable(requirements) or nil),requiredGroups=requiredGroups},false)
 	end)
 	button(controls,"runRecipe",232,486,200,"Simulate saved recipe",function() assert(draft.nativeRecipe,"This project has no saved native recipe"); showSimulation(draft.nativeRecipe,true) end)
@@ -305,7 +306,7 @@ function Panel.Open(build,project)
 		for i,route in pairsSortByKey(result.routeCounts) do lines[#lines+1]={height=24,string.format("Step %d: %d visits, %d actions, %d success routes, %d failure routes",i,route.visits,route.executed,route.success,route.failure)} end
 		local popup={}
 		local resultHeight=math.max(420,math.min(650,main.screenH-60))
-		for _,line in ipairs(lines) do line[1]=colorCodes.NORMAL..line[1] end
+		local display={};for _,line in ipairs(lines) do for _,row in ipairs(require("Modules.PlanningUI").rows({line[1]},798)) do display[#display+1]=row end end;lines=display
 		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,828,resultHeight-130},nil,lines)
 		local kept={};for i,entry in ipairs(result.retainedSuccesses or {}) do kept[#kept+1]={label="Successful item "..i.." (trial "..entry.trial..")",val=i} end
 		popup.item=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,resultHeight-84,540,24},kept)
@@ -314,6 +315,7 @@ function Panel.Open(build,project)
 			local entry=copyTable(draft);entry.targetItem=result.retainedSuccesses[index].itemText
 			require("Classes.CraftingProjectControl").Preview(build,entry)
 		end)
+		popup.item.enabled=#kept>0;popup.preview.enabled=#kept>0
 		button(popup,"close",728,resultHeight-42,116,"Close",function() main:ClosePopup() end)
 		main:OpenPopup(860,resultHeight,"Crafting simulation results",popup,nil,nil,"close")
 	end)
@@ -337,6 +339,19 @@ function Panel.Open(build,project)
 		main:OpenPopup(860,coverageHeight,"Crafting coverage and assumptions",popup,nil,nil,"close")
 	end)
 	button(controls,"close",748,height-48,116,"Close",function() main:ClosePopup() end)
+	controls.resultSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,398,416,height-464},nil,rows({"Run an action or a recipe to inspect its results."}))
+	controls.undo.enabled=function() return #history>0 end
+	controls.simulate.enabled=function() return #targets>0 or requirements and next(requirements)~=nil end
+	controls.simulate.tooltipText="Choose target modifiers or item conditions, then simulate the selected action."
+	controls.runRecipe.enabled=function() return draft.nativeRecipe~=nil end
+	controls.keepRecipe.enabled=function() return #actions>0 and not state.destroyed and not state.veil end
+	controls.manual.enabled=function() return not state.destroyed and not state.veil end
+	controls.optimize.enabled=function() local craft=configured.fossil;return controls.method:GetSelValueByKey("val")=="fossil" and craft and craft.fossils~=nil end
+	controls.distribution.enabled=function() return lastSimulation~=nil end
+	controls.cancelJob.enabled=function() return require("Modules.CraftingTasks").job~=nil end
+	controls.apply.enabled=function() return not state.destroyed end
+	controls.preview.enabled=function() return not state.destroyed and not state.veil end
+	controls.configure.enabled=function() local method=controls.method:GetSelValueByKey("val");return method=="fossil" or method=="awakener" or method=="recombine" or method=="recombine_predictable" end
 	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,52,416,24},{"Emulate item","Target conditions","Simulate recipe","Craft settings"})
 	button(controls,"settings",16,380,416,"More crafting options",function() controls.page:SelByValue("Craft settings") end)
 	controls.item.enabled=function() return controls.page:GetSelValue() == "Emulate item" and not state.destroyed end
@@ -345,7 +360,7 @@ function Panel.Open(build,project)
 		["Craft settings"]={configure=116,keepRecipe=154,reset=154,exact=194,seedLabel=234,seed=254},
 		["Emulate item"]={methodLabel=230,method=248,optionLabel=280,option=298,apply=346,undo=346,settings=380,allflame=414,manual=448},
 		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetConditions=202,targetSummary=244},
-		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354},
+		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,optimize=310,distribution=354,resultSummary=398},
 	}
 	for page,layout in pairs(pages) do for key,y in pairs(layout) do
 		local control=controls[key];control.y=y;control.shown=function() return controls.page:GetSelValue() == page end

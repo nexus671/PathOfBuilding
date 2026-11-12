@@ -24,29 +24,30 @@ Death details show the actual pools before and after a lethal hit. Recovery afte
 
 ### Creating and editing builds with AI
 
-Open **AI builds** in the left sidebar, or **AI tools / MCP → Build proposals**, then **Enable build proposals**. This connects the current unsaved desktop build. Use **Copy MCP configuration** in a client that supports local stdio servers. The same MCP server supplies encounter reports and build tools.
+Open **AI builds** in the left sidebar, or **AI tools / MCP → Build proposals**, then choose **Connection → Enable proposals**. This connects the current unsaved desktop build. Use **Copy MCP configuration** in a client that supports local stdio servers. The same MCP server supplies encounter reports and build tools.
 
 AI can read the current character, equipped items, gems, passives, configuration and calculated stats. It can search native gem, passive, mastery, class and configuration data, then submit a new build or edits with `propose_build`. Operations include character level/class/ascendancy, passive allocation and removal, mastery selection, item equipment, socket groups, configuration and notes. Passive allocation uses native connecting paths; removal also removes dependent nodes. Replacing skills replaces every group in the active skill set. Gear/tree/skill/config edits use their currently active sets; other saved sets remain available.
 
-PoB calculates the candidate separately. **AI: Review proposal** opens the requested changes, calculated before/after stats and native warnings. Only **Apply proposed build** switches to it. The result is unsaved; a new build has no file path, while edits keep the original file destination for an explicit Save. **Reject proposal** leaves the desktop build unchanged. **Undo applied candidate** returns to the previous in-memory version while the candidate remains unedited. Up to five applied versions are retained for this session. Later manual edits block that shortcut so they are not discarded.
+PoB calculates the candidate separately. **Review proposal** opens the requested changes, calculated before/after stats and native warnings. Only **Apply build** switches to it. The result is unsaved; a new build has no file path, while edits keep the original file destination for an explicit Save. **Reject** leaves the desktop build unchanged. **Undo applied build** returns to the previous in-memory version while the candidate remains unedited. Up to five applied versions are retained for this session. Later manual edits block that shortcut so they are not discarded.
 
 The build context updates while the connection is enabled and PoB is running. Proposals are tied to a session and build revision; a stale proposal cannot be applied. Disable the connection when finished. Local `AI-build-*.json` files hold the current context, heartbeat and proposal queue, with bounded candidate summaries and no automatic saves. There is no MCP tool to apply a proposal, save a build, execute code or choose arbitrary file paths.
 
 ### Plan and compare builds
 
-Open **AI builds** for the planning workspace:
+Open **AI builds** for the planning workspace. Use its persistent **AI builds**, **Atlas**, and **Crafting** tabs. Proposal review separates **Summary**, **Changes**, and **Checks**, with current/proposed metrics shown in columns:
+
 
 - **Goals and budget** sets balanced, boss damage, mapping, survival or comfort priorities, with optional budget and minimum Life/DPS. AI can set other supported minimum stats using `set_build_goals`.
 - **Candidates and leveling** compares native damage, defenses and resource sustain. Ask AI to use `compare_build_candidates` for up to five alternatives, or `plan_leveling_build` for up to eight increasing level milestones. Milestone changes accumulate from the current build; supply complete replacement links whenever a stage changes skills. Check native gear/gem requirements and passive budgets at every stage. Start from a reviewed starting build when planning a new character.
 - **Review pending proposal** shows actual resolved gear, gem, connecting passive and configuration changes, native stat deltas, new dependency issues and assumptions. Every candidate still needs desktop Apply.
-- **Checks and death analysis** exposes active conditions, flask assumptions, resistance gaps, native item/gem requirements, reservation and attack affordability. It shows the selected encounter's terminal event and resource evidence, with suggested paired tests. This does not establish that an upgrade prevents death.
-- **Connection diagnostics** shows context refresh, requests, errors and undo depth. AI can call `get_build_connection` even when the desktop connection is stale or disabled. A ready heartbeat does not prove a particular AI client is connected.
+- **Build checks** exposes active conditions, flask assumptions, resistance gaps, native item/gem requirements, reservation and attack affordability. It shows the selected encounter's terminal event and resource evidence, with suggested paired tests. This does not establish that an upgrade prevents death.
+- **Connection → Connection details** shows context refresh, requests, errors and undo depth. AI can call `get_build_connection` even when the desktop connection is stale or disabled. A ready heartbeat does not prove a particular AI client is connected.
 
 Price quotes are supplied estimates: include the total incremental cost, currency, source and capture time. There is no automatic trade lookup or currency conversion. Candidates without matching quotes or above budget are excluded from the goal ranking; quotes over 24 hours old are flagged for verification. Zero-cost quotes have no value-per-currency score.
 
 Goal scores are weighted percentage changes against the same desktop base. Missing or zero baseline metrics are disclosed and excluded. Scores are planning heuristics. Candidates changing configuration are excluded from ranking so changed assumptions are not counted as gear improvements. Native checks are useful evidence, not a complete validation of every game interaction.
 
-The last eight calculated candidates remain in memory. Choose one in **Candidates and leveling** to review it again while its original base remains current and unchanged. **Undo applied candidate** supports five applied versions and refuses to discard subsequent manual edits. History and undo end when another build is opened or PoB closes. Save builds explicitly to keep them.
+The last eight calculated candidates remain in memory. Choose one in **Candidates and leveling** to review it again while its original base remains current and unchanged. **Undo applied build** supports five applied versions and refuses to discard subsequent manual edits. History and undo end when another build is opened or PoB closes. Save builds explicitly to keep them.
 
 AI clients use `get_build_analysis` for current checks/death evidence and `get_build_history` for candidate summaries. Reconnect the client after updating PoB to discover new tools. No API key or model is bundled; the connected AI client supplies reasoning and proposals.
 
