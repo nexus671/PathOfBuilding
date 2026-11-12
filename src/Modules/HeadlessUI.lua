@@ -134,7 +134,7 @@ function M.install(options)
 		for key,control in pairs(controlsFor(host)) do if control:IsShown() then
 			local x,y=control:GetPos();local w,h=control:GetSize()
 			if control.columns and control.list then self.regions[#self.regions+1]={x,y,w,h} end
-			self.controls[#self.controls+1]={key=key,x=x,y=y,width=w,height=h,enabled=control:IsEnabled() and true or false}
+			self.controls[#self.controls+1]={key=key,x=x,y=y,width=w,height=h,group=control.layoutAudit,enabled=control:IsEnabled() and true or false}
 		end end
 		table.sort(self.controls,function(a,b) return tostring(a.key)<tostring(b.key) end)
 		return self

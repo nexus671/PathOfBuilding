@@ -55,8 +55,21 @@ def texture_region(path, uv):
 
 def render(frame):
     canvas = Image.new("RGBA", (frame["width"], frame["height"]), (18, 18, 18, 255))
-    audit = {"lowContrast": [], "horizontalClipping": [], "controlClipping": [], "texturedPlaceholders": 0,
+    audit = {"lowContrast": [], "horizontalClipping": [], "controlClipping": [], "controlOverlaps": [], "texturedPlaceholders": 0,
              "limitations": frame.get("limitations", [])}
+    controls = frame.get("controls", [])
+    for i, first in enumerate(controls):
+        if not first.get("group"):
+            continue
+        for second in controls[i+1:]:
+            if first["group"] != second.get("group"):
+                continue
+            overlap_x = min(first["x"]+first["width"], second["x"]+second["width"]) - max(first["x"], second["x"])
+            overlap_y = min(first["y"]+first["height"], second["y"]+second["height"]) - max(first["y"], second["y"])
+            contained = any(a["x"] <= b["x"] and a["y"] <= b["y"] and a["x"]+a["width"] >= b["x"]+b["width"]
+                            and a["y"]+a["height"] >= b["y"]+b["height"] for a, b in ((first, second), (second, first)))
+            if overlap_x > 1 and overlap_y > 1 and not contained:
+                audit["controlOverlaps"].append([first["key"], second["key"]])
     background = []
     commands = sorted(frame["commands"], key=lambda c: (c["layer"], c["sublayer"], c["order"]))
     for command in commands:
@@ -161,8 +174,8 @@ def main():
         image, audit = render(frame)
         image.save(args.output / (path.stem + ".png"))
         (args.output / (path.stem + ".audit.json")).write_text(json.dumps(audit, indent=2))
-        failures += len(audit["lowContrast"]) + len(audit["horizontalClipping"]) + len(audit["controlClipping"])
-        print(path.name, "draws", len(frame["commands"]), "contrast", len(audit["lowContrast"]), "clipping", len(audit["horizontalClipping"]), "controls", len(audit["controlClipping"]))
+        failures += len(audit["lowContrast"]) + len(audit["horizontalClipping"]) + len(audit["controlClipping"]) + len(audit["controlOverlaps"])
+        print(path.name, "draws", len(frame["commands"]), "contrast", len(audit["lowContrast"]), "clipping", len(audit["horizontalClipping"]), "controls", len(audit["controlClipping"]) + len(audit["controlOverlaps"]))
     if args.check and failures:
         raise SystemExit(1)
 

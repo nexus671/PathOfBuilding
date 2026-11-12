@@ -36,12 +36,12 @@ def main():
         image, audit = render(json.loads(path.read_text()))
         image.save(directory / (path.stem + ".png"))
         (directory / (path.stem + ".audit.json")).write_text(json.dumps(audit, indent=2))
-        if any(audit[key] for key in ("lowContrast", "horizontalClipping", "controlClipping")):
+        if any(audit[key] for key in ("lowContrast", "horizontalClipping", "controlClipping", "controlOverlaps")):
             failures.append({"frame": path.name, "audit": audit})
     negative = json.loads((directory / "expected-audit-failures.json").read_text())
     image, audit = render(negative)
     image.save(directory / "expected-audit-failures.png")
-    assert audit["lowContrast"] and audit["horizontalClipping"], "UI audits failed to detect the deliberate bad fixture"
+    assert audit["lowContrast"] and audit["horizontalClipping"] and audit["controlOverlaps"], "UI audits failed to detect the deliberate bad fixture"
     try:
         revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
         dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).splitlines()

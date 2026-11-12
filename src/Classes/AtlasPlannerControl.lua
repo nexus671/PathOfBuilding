@@ -53,7 +53,8 @@ function Canvas:Draw()
 	end
 	for _,group in ipairs(self.tree.groups or {}) do
 		local a,b=self:Position(group)
-		if a > -200 and b > -200 and a < self.width+200 and b < self.height+200 then
+		local rect=self.art.sprites.groupBackground.coords[group.background]
+		if rect and a+rect.w*self.scale>=0 and b+rect.h*self.scale>=0 and a-rect.w*self.scale<=self.width and b-rect.h*self.scale<=self.height then
 			SetDrawColor(0.8,0.8,0.8);self.art:draw("groupBackground",group.background,a,b,self.scale*2)
 		end
 	end
@@ -74,13 +75,14 @@ function Canvas:Draw()
 			end
 		end end
 	end
-	self.hover=nil; local distance=81
+	self.hover=nil; local distance=math.huge
+	local margin=160*self.scale+4
 	for id,node in pairs(self.tree.nodes) do
 		local a,b=self:Position(node)
 		local r=node.kind == "keystone" and 5 or node.kind == "notable" and 4 or 2
 		if avoided[id] then SetDrawColor(1,0.25,0.25) elseif allocated[id] then SetDrawColor(1,0.78,0.3) elseif node.kind == "keystone" then SetDrawColor(0.65,0.44,0.9) else SetDrawColor(0.45,0.56,0.7) end
 		if self.focus == id then SetDrawColor(0.3,1,0.85); r=r+2 end
-		if a > -40 and b > -40 and a < self.width+40 and b < self.height+40 then
+		if a > -margin and b > -margin and a < self.width+margin and b < self.height+margin then
 			local kind=node.kind == "gateway" and "wormhole" or node.kind == "small" and "normal" or node.kind
 			local frame=node.kind == "gateway" and "WormholeFrame" or node.kind == "keystone" and "KeystoneFrame" or node.kind == "notable" and "NotableFrame" or "PSSkillFrame"
 			local active=allocated[id]
@@ -92,7 +94,8 @@ function Canvas:Draw()
 			if id==self.tree.start then self.art:draw("startNode","AtlasPassiveSkillScreenStart",a,b,self.scale*2) end
 		end
 		local dist=(cursorX-x-a)^2+(cursorY-y-b)^2
-		if self:IsMouseOver() and dist < distance then self.hover=id; distance=dist end
+		local radius=math.max(8,(node.kind=="keystone" and 68 or node.kind=="gateway" and 86 or node.kind=="notable" and 49 or 34)*self.scale)
+		if self:IsMouseOver() and dist<=radius*radius and dist < distance then self.hover=id; distance=dist end
 	end
 	SetViewport()
 	if self.hover then
@@ -185,7 +188,7 @@ function Panel.Open(build,source,layout)
 	controls.remove=button(side+136,height-188,124,"Remove branch",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.remove(current(),controls.canvas.focus)) end)
 	controls.undo=button(16,height-86,90,"Undo",function() assert(#undo > 0,"No changes to undo"); draft=table.remove(undo); syncEditors(); refresh() end)
 	controls.fit=button(118,height-86,90,"Fit tree",function() controls.canvas:Fit() end)
-	controls.help=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,height-114,0,14},"^7Wheel: zoom | Drag: pan | Double click: connect")
+	controls.help=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,height-106,0,14},"^7Wheel: zoom | Drag: pan | Double click: connect")
 	controls.avoid=button(side,height-156,124,"Avoid selected",function()
 		local id=assert(controls.canvas.focus,"Select a node first"); local tree=atlas.tree(draft.version)
 		assert(id ~= tree.start,"Cannot avoid the start")
@@ -237,6 +240,7 @@ function Panel.Open(build,source,layout)
 		controls.canvas.centerX,controls.canvas.centerY,controls.canvas.scale,controls.canvas.focus=view.centerX,view.centerY,view.scale,view.focus
 		controls.page:SelByValue(view.page);avoided=view.avoided;undo=view.undo
 	end
+	for _,control in pairs(controls) do control.layoutAudit="atlas" end
 	refresh()
 	if layout then layout.mount(width,height,"Atlas planner",controls) else main:OpenPopup(width,height,"Atlas planner",controls,nil,nil,"close") end
 	return controls

@@ -36,10 +36,9 @@ The build context updates while the connection is enabled and PoB is running. Pr
 
 Open **AI builds** for the planning workspace. Use its persistent **AI builds**, **Atlas**, and **Crafting** tabs. Proposal review separates **Summary**, **Changes**, and **Checks**, with current/proposed metrics shown in columns:
 
-
 - **Goals and budget** sets balanced, boss damage, mapping, survival or comfort priorities, with optional budget and minimum Life/DPS. AI can set other supported minimum stats using `set_build_goals`.
 - **Candidates and leveling** compares native damage, defenses and resource sustain. Ask AI to use `compare_build_candidates` for up to five alternatives, or `plan_leveling_build` for up to eight increasing level milestones. Milestone changes accumulate from the current build; supply complete replacement links whenever a stage changes skills. Check native gear/gem requirements and passive budgets at every stage. Start from a reviewed starting build when planning a new character.
-- **Review pending proposal** shows actual resolved gear, gem, connecting passive and configuration changes, native stat deltas, new dependency issues and assumptions. Every candidate still needs desktop Apply.
+- **Review proposal** shows actual resolved gear, gem, connecting passive and configuration changes, native stat deltas, new dependency issues and assumptions. Every candidate still needs desktop Apply.
 - **Build checks** exposes active conditions, flask assumptions, resistance gaps, native item/gem requirements, reservation and attack affordability. It shows the selected encounter's terminal event and resource evidence, with suggested paired tests. This does not establish that an upgrade prevents death.
 - **Connection → Connection details** shows context refresh, requests, errors and undo depth. AI can call `get_build_connection` even when the desktop connection is stale or disabled. A ready heartbeat does not prove a particular AI client is connected.
 

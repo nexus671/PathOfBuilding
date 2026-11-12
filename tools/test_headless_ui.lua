@@ -151,6 +151,10 @@ end
 local ui=UI.install({width=1024,height=768})
 main:OpenPopup(600,200,"Audit controls",{details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,560,120},nil,
 	{{height=18,"Unreadable regression fixture"},{height=18,colorCodes.NORMAL..string.rep("Oversized ",20)}})})
+for i=1,2 do
+	local control=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{16+(i-1)*90,156,140,24},"Overlap fixture",function() end)
+	control.layoutAudit="negative-fixture";control.anchor.other=main.popups[1];main.popups[1].controls["overlap"..i]=control
+end
 ui:frame():write(directory.."/../expected-audit-failures.json")
 ui:restore();main.popups={}
 print("HEADLESS_UI_OK",frames)
