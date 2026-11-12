@@ -59,6 +59,7 @@ describe("Build-owned loot filters",function()
 			local profile=filters.profile("test","Test");profile.strictness=strictness
 			local raw,report=filters.compile(profile)
 			assert.is_true(#raw>10000);assert.equal(filters.source().commit,report.baseCommit)
+			assert.is_truthy(raw:find("# Copyright (c) 2026 NeverSink",1,true));assert.is_truthy(raw:find("# Permission is hereby granted",1,true))
 			assert.equal("Show",filters.simulate(profile,{BaseType="Frayed Thread"}).action)
 			for _,diagnostic in ipairs(report.diagnostics) do assert.is_nil(diagnostic.error,diagnostic.error) end
 		end

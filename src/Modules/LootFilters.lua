@@ -134,6 +134,7 @@ end
 function M.compile(profile)
 	local checked=M.validate({schemaVersion=1,activeId=profile.id,profiles={profile}}).profiles[1]
 	local output={"# Path of Building AI Edition | "..checked.title,"# PoE 3.30 | NeverSink base "..checked.baseCommit,"# NeverSink templates: MIT. Personal rules precede the base filter."}
+	output[#output+1]="# "..read("LICENSE-NeverSink.txt"):gsub("\r\n","\n"):gsub("\n","\n# ")
 	for _,r in ipairs(checked.rules) do if r.enabled then output[#output+1]="\n# PoB rule: "..r.title..(r.origin and " ["..r.origin.."]" or "");output[#output+1]=r.text end end
 	-- New league items are shown until a later pinned base can tier them.
 	local patch=M.patch();local classes={};for class in pairs(patch.added) do classes[#classes+1]=class end;table.sort(classes)
