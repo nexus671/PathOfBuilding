@@ -8,7 +8,7 @@ M.numeric={AreaLevel=true,ItemLevel=true,DropLevel=true,Quality=true,LinkedSocke
 	BaseArmour=true,BaseEvasion=true,BaseEnergyShield=true,BaseWard=true,BaseDefencePercentile=true,EnchantmentPassiveNum=true,CorruptedMods=true,
 	HasEaterOfWorldsImplicit=true,HasSearingExarchImplicit=true,UnidentifiedItemTier=true,MemoryStrands=true}
 M.booleans={Identified=true,Corrupted=true,Mirrored=true,FracturedItem=true,SynthesisedItem=true,ShaperItem=true,ElderItem=true,ShapedMap=true,ElderMap=true,
-	BlightedMap=true,UberBlightedMap=true,Replica=true,Scourged=true,HasImplicitMod=true,AnyEnchantment=true,HasCruciblePassiveTree=true,Foulborn=true,Fated=true,Exceptional=true,TransfiguredGem=true,AlternateQuality=true}
+	BlightedMap=true,UberBlightedMap=true,Replica=true,Scourged=true,HasImplicitMod=true,AnyEnchantment=true,HasCruciblePassiveTree=true,Foulborn=true,Fated=true,Exceptional=true,TransfiguredGem=true,AlternateQuality=true,Imbued=true,Vestigial=true,ZanaMemory=true,MirageMap=true}
 M.strings={Class=true,BaseType=true,HasInfluence=true,HasExplicitMod=true,HasEnchantment=true,EnchantmentPassiveNode=true,Prophecy=true,ArchnemesisMod=true,GemQualityType=true}
 local rarity={Normal=0,Magic=1,Rare=2,Unique=3}
 function M.tokens(line)
@@ -55,7 +55,7 @@ function M.parse(raw)
 					current.conditions[#current.conditions+1]={keyword=key,operator=op,values=t,known=known,line=lineNo}
 					if #t==0 or not known then result.diagnostics[#result.diagnostics+1]={line=lineNo,warning="Simulator cannot resolve "..key.."; original text is preserved"} end
 					if not ({["="]=true,["=="]=true,["!="]=true,["!"]=true,[">="]=true,["<="]=true,[">"]=true,["<"]=true})[op] then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid operator "..op} end
-					if M.booleans[key] and (t[1]~="True" and t[1]~="False" or op~="=" and op~="==" and op~="!" and op~="!=") then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid boolean "..key} end
+					if M.booleans[key] and key~="TransfiguredGem" and (t[1]~="True" and t[1]~="False" or op~="=" and op~="==" and op~="!" and op~="!=") then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid boolean "..key} end
 					if key=="UnidentifiedItemTier" then local n=tonumber(t[1]);if not n or n<0 or n>5 or n~=math.floor(n) then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="UnidentifiedItemTier must be 0 to 5"} end end
 					if M.numeric[key] and key~="Sockets" then for _,value in ipairs(t) do local n=tonumber(value);if not n or n~=n or math.abs(n)==math.huge then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid numeric value for "..key};break end end end
 				end
@@ -94,6 +94,12 @@ function M.condition(c,item)
 		end
 		return negative
 	elseif M.booleans[c.keyword] then
+		if c.keyword=="TransfiguredGem" then
+			if values[1]=="True" or values[1]=="False" then return compare(value==true or type(value)=="string" and value~="",values[1]=="True",op) end
+			if value==false then return op=="!" or op=="!=" end
+			if type(value)~="string" then return nil,"Supply the base name for TransfiguredGem" end
+			local found=false;for _,name in ipairs(values) do if value==name then found=true end end;return (op=="!" or op=="!=") and not found or op~="!" and op~="!=" and found
+		end
 		if type(value)~="boolean" or (values[1]~="True" and values[1]~="False") then return nil,"Invalid boolean "..c.keyword end
 		return compare(value,values[1]=="True",op)
 	else
