@@ -4,10 +4,15 @@ function C.extend(M,A,api)
 	for method,label in pairs(labels) do M.methods[#M.methods+1]=method;M.labels[method]=label end;table.sort(M.methods)
 	local originalModel,originalAction,originalDecorate,originalValidate,originalItem=M.model,M.action,M.decorateItem,M.validateState,M.toItem
 	local originalMatches=M.matches
-	function M.matches(state,targets,rarity,model,...)
-		if model and model.unresolvedCorruption and not state.destroyed and not state.veil and not state.corruptedImplicits then
-			for _,group in ipairs(targets) do assert(group.scope~="implicit","Imported implicit identities are ambiguous or unsupported; use a structured corruption state before checking implicit targets") end
+	function M.implicitTargetReason(model,state,targets)
+		if model and (model.unresolvedCorruption or model.unresolvedEldritch) and not state.destroyed and not state.veil and not state.corruptedImplicits and not state.implicits then
+			for _,group in ipairs(targets) do
+				if group.scope=="implicit" then return "The imported implicit modifiers could not be identified uniquely. Paste advanced item text with modifier ranges, or choose another starting item." end
+			end
 		end
+	end
+	function M.matches(state,targets,rarity,model,...)
+		local reason=M.implicitTargetReason(model,state,targets);assert(not reason,reason)
 		return originalMatches(state,targets,rarity,model,...)
 	end
 	function M.toItem(model,state) assert(not state.destroyed,"The hypothetical item was destroyed");return originalItem(model,state) end

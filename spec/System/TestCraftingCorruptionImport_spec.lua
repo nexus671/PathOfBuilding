@@ -49,9 +49,37 @@ describe("Imported corruption identities",function()
 	end)
 	it("explains unresolved implicit targets while allowing explicit checks and resolved overrides",function()
 		local model={unresolvedCorruption="unresolved"};local state={rarity="NORMAL",affixes={}}
-		assert.has_error(function() sim.matches(state,{{anyOf={"one"},scope="implicit"}},nil,model) end,"Imported implicit identities are ambiguous or unsupported; use a structured corruption state before checking implicit targets")
+		assert.has_error(function() sim.matches(state,{{anyOf={"one"},scope="implicit"}},nil,model) end,"The imported implicit modifiers could not be identified uniquely. Paste advanced item text with modifier ranges, or choose another starting item.")
 		assert.is_true(sim.matches(state,{},nil,model));state.corruptedImplicits={{id="one",range=0.5}}
 		assert.is_true(sim.matches(state,{{anyOf={"one"},scope="implicit"}},nil,model))
+	end)
+	it("explains unavailable calculations before starting a job",function()
+		local text=raw.."\nImplicits: 1\n31% increased Movement Speed\nCorrupted"
+		local target={anyOf={"V2ColdDamageLifeLeechPermyriadCorrupted_"},scope="implicit"}
+		assert.is_truthy(sim.model(text).unresolvedCorruption)
+		local p={id="unknown-implicit",title="Unknown implicit",slot="Helmet",startingItem=text,goals={},steps={},preferredMethod="tainted_chromatic",nativeRecipe={steps={{method="tainted_chromatic"}},targets={target}}}
+		local c=require("Classes.CraftingSimulatorControl").Open(build,p)
+		for _,key in ipairs({"simulate","runRecipe","exact","compareRecipes","optimize"}) do
+			assert.is_false(c[key]:IsEnabled(),key);assert.is_truthy(c[key]:GetProperty("tooltipText"):find("could not be identified uniquely",1,true),key)
+		end
+		c.simulate:Click();c.runRecipe:Click();assert.is_nil(require("Modules.CraftingTasks").job)
+	end)
+	it("accepts an explicit valid Eldritch state despite ambiguous source text",function()
+		local generated=sim.perform(raw,{method="eldritch_implicit",side="Exarch",tier=1},1).state
+		local model=sim.model(raw.."\nImplicits: 1\n31% increased Movement Speed\nCorrupted")
+		local state=copyTable(model.initial);state.implicits=generated.implicits
+		state=sim.validateState(model,state)
+		assert.is_true(sim.matches(state,{{anyOf={state.implicits[1].id},scope="implicit"}},nil,model))
+		assert.is_nil(sim.implicitTargetReason(model,state,{{anyOf={state.implicits[1].id},scope="implicit"}}))
+	end)
+	it("does not infer positive or negated targets from unresolved Eldritch text",function()
+		local model=sim.model(raw.."\nImplicits: 1\n{exarch}31% increased Movement Speed")
+		assert.is_true(model.unresolvedEldritch)
+		local target={anyOf={"AreaOfEffectEldritchImplicit1"},scope="implicit"}
+		for _,negate in ipairs({false,true}) do
+			target.negate=negate;assert.is_false(pcall(sim.matches,model.initial,{target},nil,model))
+			assert.is_truthy(sim.implicitTargetReason(model,model.initial,{target}))
+		end
 	end)
 	it("preserves twice corruption across every tainted equipment method",function()
 		local text=sim.perform(raw,{method="alchemy"},1).itemText.."\nTwice Corrupted"

@@ -57,11 +57,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `50d4de4dc4bc2d4cd453e33ecf40ec4ae8df139c`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43432889733),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43432889735)).
-It passed 1,224 Lua tests, 48 Node tests, the real MCP save/reopen workflow and
-894 source-stable UI states without audit failures. All 2,425 updater file hashes
+The latest verified checkpoint is `d8c8158f980b910761de797e3e9f40ef62708852`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43435297395),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43435297387)).
+It passed 1,232 Lua tests, 48 Node tests, the real MCP save/reopen workflow and
+903 source-stable UI states without audit failures. All 2,426 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 31 preserves the Twice Corrupted marker through native item import,

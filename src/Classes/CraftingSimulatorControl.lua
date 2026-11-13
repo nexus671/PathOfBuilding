@@ -345,7 +345,7 @@ function Panel.Open(build,project,layout)
 	edit(controls,"baseCost",308,438,124,24,"","Base cost",16)
 	local function capturedSettings(request)
 		local options=request.options
-		return "Captured: "..options.maxActions..(options.maxActions==1 and " action/trial" or " actions/trial").." | seed "..options.seed
+		return "Action limit: "..options.maxActions.." per trial | seed "..options.seed
 	end
 	local function showSimulationResult(result,captured)
 		local lines={string.format("Modeled successes: %d / %d (%.2f%%)",result.successes,result.trials,result.successChance),
@@ -556,8 +556,13 @@ function Panel.Open(build,project,layout)
 	end)
 	controls.resultSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,398,416,height-464},nil,rows({"Run an action or a recipe to inspect its results."}))
 	controls.undo.enabled=function() return #history>0 end
-	controls.simulate.enabled=function() return not tasks.job and (#targets>0 or requirements and next(requirements)~=nil) end
-	controls.simulate.tooltipText=function() return "Selected action: "..actionName().."\n"..(tasks.job and "Finish or cancel the running calculation first." or "Simulate from the working item using the chosen target modifiers or item conditions.") end
+	local function targetReason(saved)
+		local recipe=saved and draft.nativeRecipe
+		local current=recipe and (recipe.initialState or model.initial) or state
+		return simulator.implicitTargetReason(simulator.context(model,current),current,recipe and recipe.targets or targets)
+	end
+	controls.simulate.enabled=function() return not tasks.job and not targetReason() and (#targets>0 or requirements and next(requirements)~=nil) end
+	controls.simulate.tooltipText=function() return "Selected action: "..actionName().."\n"..(tasks.job and "Finish or cancel the running calculation first." or targetReason() or "Simulate from the working item using the chosen target modifiers or item conditions.") end
 	controls.resourcePrices.enabled=function() return require("Modules.CraftingTasks").job==nil end
 	controls.currency.enabled=function() return not draft.priceBook or not next(draft.priceBook.values) end
 	controls.currency.showDisabledValue=true
@@ -571,23 +576,25 @@ function Panel.Open(build,project,layout)
 	controls.currency.changeFunc=updateCurrency
 	controls.currency.tooltipText="Saved resource quotes use this common unit. Change it through Resource prices. Changing units clears action overrides and base cost."
 	controls.price.tooltipText=function() return "Optional total price of "..actionName()..". It applies when that action executes, including inside saved recipes." end
-	controls.runRecipe.enabled=function() return not tasks.job and draft.nativeRecipe~=nil end
-	controls.runRecipe.tooltipText=function() return tasks.job and "Finish or cancel the running calculation first." or "Run the project's saved steps from the original starting item, with the saved recipe's targets." end
-	controls.exact.enabled=function() return not tasks.job and (#targets>0 or requirements~=nil and next(requirements)~=nil) and workbench.available(controls.method:GetSelValueByKey("val"),state,model) end
+	controls.runRecipe.enabled=function() return not tasks.job and draft.nativeRecipe~=nil and not targetReason(true) end
+	controls.runRecipe.tooltipText=function() return tasks.job and "Finish or cancel the running calculation first." or draft.nativeRecipe and targetReason(true) or "Run the project's saved steps from the original starting item, with the saved recipe's targets." end
+	controls.exact.enabled=function() return not tasks.job and not targetReason() and (#targets>0 or requirements~=nil and next(requirements)~=nil) and workbench.available(controls.method:GetSelValueByKey("val"),state,model) end
 	controls.exact.tooltipText=function()
 		if tasks.job then return "Finish or cancel the running calculation first." end
 		if #targets==0 and not (requirements and next(requirements)) then return "Choose a target modifier or item condition before calculating." end
+		if targetReason() then return targetReason() end
 		local available,reason=workbench.available(controls.method:GetSelValueByKey("val"),state,model)
 		return available and "Calculate this action from the working item, with captured target conditions." or reason
 	end
-	controls.compareRecipes.enabled=function() return not tasks.job and (#targets>0 or requirements and next(requirements)~=nil) end
+	controls.compareRecipes.enabled=function() return not tasks.job and not targetReason() and (#targets>0 or requirements and next(requirements)~=nil) end
+	controls.compareRecipes.tooltipText=function() return targetReason() or "Compare recipes using the current targets." end
 	controls.keepRecipe.enabled=function() return #actions>0 and not state.destroyed and not state.veil end
 	controls.manual.enabled=function() return not state.destroyed and not state.veil end
 	controls.allflame.enabled=function() return simulator.supportsAllflame(controls.method:GetSelValueByKey("val")) end
 	controls.allflame.tooltipText=function() return controls.allflame:IsEnabled() and "Configure client data or an observed Allflame profile for this currency." or "Allflame is not modeled for this action. Choose a supported itemised currency." end
 	controls.fossilResults.tooltipText="Reopen the captured comparison. Rerun after changing the item, targets or quotes."
 	controls.fossilResults.enabled=function() return lastFossilComparison~=nil and require("Modules.CraftingTasks").job==nil end
-	controls.optimize.tooltipText="Set targets or item properties, then select Fossil resonator. Settings / Configure chooses multiple candidates. Comparisons use ordinary fossil crafts."
+	controls.optimize.tooltipText=function() return targetReason() or "Set targets or item properties, then select Fossil resonator. Settings / Configure chooses multiple candidates. Comparisons use ordinary fossil crafts." end
 	controls.optimize.enabled=function()
 		if controls.method:GetSelValueByKey("val")~="fossil" or not controls.simulate:IsEnabled() then return false end
 		local craft=action();return craft.fossils~=nil and #craft.fossils>0
