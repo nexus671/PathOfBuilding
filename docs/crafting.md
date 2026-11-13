@@ -84,7 +84,12 @@ seed and quotes. Only the trial count increases. Later edits to the working item
 action or form do not change this refinement. Start a new simulation to use those
 edits. The Simulate tab names the selected action; **Simulate saved recipe** uses
 the saved steps and original starting item. Calculation buttons pause while a job
-is running. Closing its crafting view cancels a job started there.
+is running. **Close** or **Back to projects** cancels a job started in that workbench.
+
+Calculations and results survive window resizing, text-size changes and navigation
+between planning tabs. Background fossil comparisons stay available through
+**Fossil results** without opening a popup over another tool. Opening another build
+clears these temporary results and cancels work from the previous build.
 
 **Calculate action odds** enumerates supported finite outcomes, including next-affix draws, Talisman fractures and Allflame selection. Item properties, partial group counts, other supported actions and roll thresholds use bounded sampling with a confidence interval. Results state which method was used.
 

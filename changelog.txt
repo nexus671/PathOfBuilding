@@ -1,6 +1,10 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Preserved crafting calculations and results through window resizing, text-size changes and planning navigation.
+* Kept background fossil comparisons available without interrupting other tools, and retained cancellation after a view rebuild.
+* Cleared temporary analyses and cancelled old crafting work when switching builds; improved asynchronous error messages.
+* Cleared running and completed Atlas route previews when opening another build.
 * Fixed Run more trials switching away from a saved recipe; refinement now retains the captured item, steps, targets, seed, prices and budget.
 * Named the selected simulation action, clarified saved-recipe inputs and prevented duplicate crafting calculations.
 * Retained captured result setups through layout changes and cancelled a workbench's own calculation when closing it.

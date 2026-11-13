@@ -48,6 +48,7 @@ function M.apply(build,current)
 	return copyTable(state.result.plan)
 end
 function M.cancel(build) local state=M.jobs[build];if state then state.thread=nil;state.result=nil;state.status="Cancelled" end end
+function M.reset(build) M.cancel(build);M.jobs[build]=nil end
 function M.summary(plan)
 	plan=atlas.validate(plan);local tree=atlas.tree(plan.version);local groups,blocks={},{}
 	for _,id in ipairs(plan.nodes) do local node=tree.nodes[id];local mechanic=strategy.mechanic(node);local row=groups[mechanic] or {name=mechanic,small=0,notable=0,keystone=0,gateway=0,total=0,content=0};groups[mechanic]=row

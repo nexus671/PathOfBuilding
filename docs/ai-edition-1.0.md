@@ -56,11 +56,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `57bcc0a5ba3e2243de11fcb90e7b6ebc600ae84f`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43404519236),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43404519345)).
-It passed 1,174 Lua tests, 45 Node tests, the real MCP save/reopen workflow and
-780 source-stable UI states without audit failures. All 2,423 updater file hashes
+The latest verified checkpoint is `082bd913283615b08186f887a631c6afd0ab68dc`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43407520764),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43407520807)).
+It passed 1,177 Lua tests, 45 Node tests, the real MCP save/reopen workflow and
+789 source-stable UI states without audit failures. All 2,423 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
@@ -205,13 +205,22 @@ The instrumented full workflow passed with at most 13,054 retained commands,
 versus 5.77 million before the diagnostic run was stopped. This fixes the test
 host; it does not establish sustained desktop performance. Follow-up CI passed.
 
-The current review fixes result refinement switching from a saved recipe to the
+Preview 25 fixes result refinement switching from a saved recipe to the
 currently selected action. Refined runs retain the captured item, recipe, targets,
 seed, quotes and budget while increasing only trials. The simulation header names
 the selected action, and result summaries identify saved recipes. Calculation
 buttons prevent duplicate jobs; closing a workbench cancels its own calculation.
 Captured result setups survive layout changes, while older results without a
 captured setup require a fresh simulation before refinement.
+
+The current review retains simulation, fossil and action-odds results in transient
+build-owned analysis sessions. Rebuilt views reconnect to the running calculation;
+results remain available after navigation discards an old view cache. Background
+fossil comparisons do not interrupt another tool. Asynchronous errors retain raw
+diagnostic details while showing readable messages in the UI. Build initialization
+and shutdown clear analysis state and cancel crafting work because PoB reuses its
+build-mode object across files.
+Running and completed Atlas route previews are also cleared on a build change.
 
 Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies

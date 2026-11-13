@@ -593,6 +593,35 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("targetCalculate");for i=1,500 do ui:frame();if not require("Modules.AtlasTargets").jobs[build].thread then break end end
 	assert(require("Modules.AtlasTargets").jobs[build].result,require("Modules.AtlasTargets").jobs[build].error)
 	frame("atlas-desired-preview");ui:click("targetApply");ui:click("keep");frame("atlas-desired-kept")
+	do
+		local p={id="analysis-lifecycle",title="Resumable calculation",slot="Body Armour",startingItem="Rarity: NORMAL\nPlate Vest\nItem Level: 86",goals={},steps={},preferredMethod="alchemy",nativeRecipe={steps={{method="alchemy"}},targets={},requirements={minAffixes=1}},priceBook={currency="chaos",source="Lifecycle quotes",quotedAt=1700000000,values={["Metadata/Items/Currency/CurrencyUpgradeToRare"]=3}}}
+		build.savers.CraftingProjects:Upsert(p)
+		local w=build.planningWorkspace;w:Show("crafting",{kind="workbench",project=p});ui:frame()
+		ui:click("tab_simulate");ui:text("trials","2");ui:text("budget","1")
+		local function hold(key)
+			local original=jobs.start;local thread
+			jobs.start=function(...)
+				local job=original(...);thread=job.thread;job.thread=coroutine.create(function() while true do coroutine.yield() end end);return job
+			end
+			local ok,message=pcall(ui.click,ui,key);jobs.start=original;assert(ok,message)
+			local job=assert(jobs.job);return job,function() job.thread=thread end
+		end
+		local function finish() for i=1,3000 do if not jobs.job then return end;jobs.tick(build) end;error("Lifecycle calculation did not finish") end
+		local function resize()
+			ui:resize(size[1]==960 and 1024 or 960,640);ui:frame();ui:resize(size[1],size[2]);ui:frame()
+		end
+		local job,release=hold("simulate");resize();assert(job.owner==w.body.controls);frame("crafting-job-remounted")
+		ui:click("nav_atlas");resize();release();finish();assert(#main.popups==0);ui:click("nav_crafting")
+		assert(w.cache.crafting.layout.snapshot().lastSimulation.meanCost==3);frame("crafting-job-returned")
+		job=hold("simulate");resize();ui:click("close");assert(not jobs.job);frame("crafting-job-cancelled-remount")
+		w:Show("crafting",{kind="workbench",project=p});ui:frame();ui:click("tab_simulate")
+		local analysis=require("Modules.CraftingAnalysis").get(build,p)
+		analysis:start("odds",nil,function() error("C:/fixture/Recipe.lua:42: Invalid recipe fixture") end);finish();frame("crafting-async-error")
+		w.controls.method:SelByValue("fossil","val");w.controls.method.selFunc();job,release=hold("optimize")
+		ui:click("nav_atlas");resize();release();finish();assert(#main.popups==0);ui:click("nav_crafting")
+		assert(w.controls.fossilResults:IsEnabled());frame("crafting-fossil-background-return")
+		ui:click("tab_settings");job,release=hold("exact");resize();release();finish();ui:click("tab_simulate");frame("crafting-odds-remounted")
+	end
 
 	ui:restore()
 end

@@ -65,7 +65,7 @@ function M.Open(build,raw,state,targets,requirements,requiredGroups,current,save
 				end
 			end
 			controls.results.list=ui.rows(lines,width-62)
-		end,function(message) controls.results.list=ui.rows({message},width-62) end,function(p) controls.results.list=ui.rows({"Route "..p.route..": trial "..p.trial.." / "..p.trials},width-62) end)
+		end,function(message) controls.results.list=ui.rows({ui.errorText(message)},width-62) end,function(p) controls.results.list=ui.rows({"Route "..p.route..": trial "..p.trial.." / "..p.trials},width-62) end)
 		job.owner=controls
 	end)
 	controls.run.enabled=function() return not tasks.job end

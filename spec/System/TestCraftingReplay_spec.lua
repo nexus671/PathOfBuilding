@@ -56,7 +56,7 @@ describe("Native crafting simulation replay",function()
 		local refined=layout.snapshot().lastSimulation
 		assert.are.equal(32,refined.trials);assert.are.equal(5,refined.meanCost)
 		for i=1,2 do assert.are.same(original.retainedSuccesses[i],refined.retainedSuccesses[i]) end
-		main:ClosePopup();snapshot.lastSimulationRun=nil;layout.workbench=snapshot;c=panel.Open(build,p,layout)
+		main:ClosePopup();newBuild();snapshot.lastSimulationRun=nil;layout.workbench=snapshot;c=panel.Open(build,p,layout)
 		c.distribution:Click();assert.is_false(main.popups[1].controls.moreTrials:IsEnabled())
 	end)
 end)

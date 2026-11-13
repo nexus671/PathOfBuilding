@@ -1,0 +1,100 @@
+describe("Crafting analysis across native workspace rebuilds",function()
+	local tasks=require("Modules.CraftingTasks")
+	local sessions=require("Modules.CraftingAnalysis")
+	local originalStart=tasks.start
+	local ui,large
+	local function project()
+		return {id="analysis",title="Native analysis lifecycle",slot="Body Armour",startingItem="Rarity: NORMAL\nPlate Vest\nItem Level: 86",goals={},steps={},preferredMethod="alchemy",
+			nativeRecipe={steps={{method="alchemy"}},targets={},requirements={minAffixes=1}},
+			priceBook={currency="chaos",source="Lifecycle quotes",quotedAt=1700000000,values={["Metadata/Items/Currency/CurrencyUpgradeToRare"]=3}}}
+	end
+	local function open(p)
+		build.planningWorkspace:Show("crafting",{kind="workbench",project=p or project()});ui:frame()
+		ui:click("tab_simulate");ui:text("trials","2");ui:text("budget","1")
+	end
+	local function heldClick(key)
+		local thread
+		tasks.start=function(...)
+			local job=originalStart(...);thread=job.thread
+			job.thread=coroutine.create(function() while true do coroutine.yield() end end)
+			return job
+		end
+		local ok,message=pcall(ui.click,ui,key);tasks.start=originalStart;assert(ok,message)
+		local job=assert(tasks.job)
+		return job,function() job.thread=thread end
+	end
+	local function finish()
+		for i=1,3000 do if not tasks.job then return end;tasks.tick(build) end
+		error("Analysis did not finish")
+	end
+	local function summary()
+		local lines={};for _,row in ipairs(build.planningWorkspace.controls.resultSummary.list) do lines[#lines+1]=StripEscapes(row[1]) end;return table.concat(lines," ")
+	end
+	before_each(function()
+		tasks.cancel();newBuild();large=main.planningTextLarge
+		ui=require("Modules.HeadlessUI").install({width=1024,height=768});ui:bind(build)
+		build.viewMode="CONFIG";ui:click("aiBuild");open()
+	end)
+	after_each(function() tasks.start=originalStart;tasks.cancel();main.popups={};main.planningTextLarge=large;if ui then ui:restore() end end)
+	it("retains a real simulation and ownership through resize and text-size changes",function()
+		local job,release=heldClick("simulate")
+		ui:resize(960,640);ui:frame();assert.are.equal(build.planningWorkspace.body.controls,job.owner)
+		ui:click("nav_text");assert.are.equal(build.planningWorkspace.body.controls,job.owner)
+		release();finish()
+		local result=build.planningWorkspace.cache.crafting.layout.snapshot()
+		assert.are.equal(2,result.lastSimulation.successes);assert.are.equal(3,result.lastSimulation.meanCost)
+		assert.are.equal(104729,result.lastSimulationRun.options.seed)
+		assert.is_true(build.planningWorkspace.controls.distribution:IsEnabled())
+		assert.is_truthy(summary():find("Mean spent: 3.00 chaos",1,true))
+	end)
+	it("delivers completed results after navigating away and discarding the view cache",function()
+		local job,release=heldClick("simulate")
+		ui:click("nav_atlas");ui:resize(960,640);ui:frame()
+		assert.is_nil(build.planningWorkspace.cache.crafting)
+		release();finish();assert.are.equal(0,#main.popups)
+		ui:click("nav_crafting")
+		assert.is_true(build.planningWorkspace.controls.distribution:IsEnabled())
+		assert.is_truthy(summary():find("Mean spent: 3.00 chaos",1,true))
+	end)
+	it("cancels the same job from its rebuilt view without cancelling foreign work",function()
+		local job=heldClick("simulate");ui:resize(960,640);ui:frame();ui:click("close");assert.is_nil(tasks.job)
+		local foreign=originalStart(build,function() coroutine.yield() end,function() end)
+		-- Keep the foreign worker live across the input frames.
+		foreign.thread=coroutine.create(function() while true do coroutine.yield() end end)
+		open();ui:click("close");assert.are.equal(foreign,tasks.job)
+	end)
+	it("keeps fossil results available without interrupting another planning page",function()
+		local c=build.planningWorkspace.controls;c.method:SelByValue("fossil","val");c.method.selFunc()
+		local job,release=heldClick("optimize");ui:click("nav_atlas");ui:resize(960,640);ui:frame()
+		release();finish();assert.are.equal(0,#main.popups)
+		ui:click("nav_crafting");assert.is_true(build.planningWorkspace.controls.fossilResults:IsEnabled())
+		ui:click("fossilResults");assert.are.equal("Fossil comparison",main.popups[1].title);ui:click("close")
+		local nextJob,nextRelease=heldClick("optimize");nextRelease();finish()
+		assert.are.equal("Fossil comparison",main.popups[1].title)
+	end)
+	it("retains action-odds results across a native resize",function()
+		ui:click("tab_settings");local job,release=heldClick("exact")
+		ui:resize(960,640);ui:frame();assert.are.equal(build.planningWorkspace.body.controls,job.owner)
+		release();finish();assert.is_truthy(summary():find("Target chance under model:",1,true))
+	end)
+	it("keeps raw asynchronous errors for diagnostics and displays readable messages",function()
+		local session=sessions.get(build,project())
+		session:start("odds",nil,function() error("C:/fixture/Modules/Recipe.lua:42: Invalid recipe fixture") end);finish()
+		assert.is_truthy(session.event.message:find("Recipe.lua",1,true))
+		assert.are.equal("Invalid recipe fixture",summary())
+		ui:resize(960,640);ui:frame();assert.are.equal("Invalid recipe fixture",summary())
+	end)
+	it("isolates analyses by build, project and starting item",function()
+		local p=project();local one=sessions.get(build,p);assert.are.equal(one,sessions.get(build,p))
+		local other=copyTable(p);other.id="other";assert.are_not.equal(one,sessions.get(build,other))
+		other=copyTable(p);other.startingItem=other.startingItem.."\nQuality: 10";assert.are_not.equal(one,sessions.get(build,other))
+		assert.are_not.equal(one,sessions.get({},p))
+	end)
+	it("cancels old native and bridge work when the reused build mode loads another build",function()
+		local old=sessions.get(build,project());heldClick("simulate");newBuild()
+		assert.is_nil(tasks.job);assert.is_nil(build.craftingAnalyses)
+		assert.are_not.equal(old,sessions.get(build,project()))
+		local foreign=originalStart(build,function() coroutine.yield() end,function() end);foreign.requestId="old-build-fixture"
+		newBuild();assert.is_nil(tasks.job)
+	end)
+end)

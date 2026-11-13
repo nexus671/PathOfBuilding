@@ -62,6 +62,13 @@ function Panel.Open(build,project,layout)
 		state=restored.state;initial=restored.initial;targets=restored.targets;requirements=restored.requirements;requiredGroups=restored.requiredGroups
 		history=restored.history;actions=restored.actions;configured=restored.configured;sequence=restored.sequence;lastSimulation=restored.lastSimulation;lastSimulationRun=restored.lastSimulationRun;lastFossilComparison=restored.lastFossilComparison
 	end
+	local analysis=require("Modules.CraftingAnalysis").get(build,draft,restored)
+	local function syncAnalysis()
+		local result=analysis.results.simulation
+		lastSimulation=result and result.result;lastSimulationRun=result and result.context
+		lastFossilComparison=analysis.results.fossils and analysis.results.fossils.result
+	end
+	syncAnalysis()
 	local paletteOpen=restored and restored.paletteOpen or false
 	local inspectedId=restored and restored.inspectedId
 	local paletteView
@@ -335,29 +342,26 @@ function Panel.Open(build,project,layout)
 		local options=request.options
 		return "Captured: "..options.maxActions..(options.maxActions==1 and " action/trial" or " actions/trial").." | seed "..options.seed
 	end
+	local function showSimulationResult(result,captured)
+		local lines={string.format("Modeled successes: %d / %d (%.2f%%)",result.successes,result.trials,result.successChance),
+			result.meanCost~=nil and string.format("Mean spent: %.2f %s",result.meanCost,result.costCurrency) or "Cost unavailable: some executed actions have no supplied price.",
+			captured.label,capturedSettings(captured),
+			string.format("95%% sampling interval: %.2f%% to %.2f%%",result.confidenceLow,result.confidenceHigh),string.format("Mean attempted actions: %.2f",result.meanActions)}
+		if result.priceSource then lines[#lines+1]="Quotes: "..result.priceSource.." | "..os.date("%Y-%m-%d",result.priceQuotedAt) end
+		if result.actionPriceOverridesSupplied then
+			lines[#lines+1]=result.actionPriceOverridesApplied>0 and "Includes selected-action price overrides." or "Selected-action override was not used by this recipe."
+		elseif result.priceOverridesSupplied then lines[#lines+1]="Includes resource price overrides." end
+		lines[#lines+1]="Result uses the captured starting state."
+		for key,count in pairsSortByKey(result.currencySpent) do lines[#lines+1]=pricing.describe(key,simulator.context(model,state))..": "..count.." total uses" end
+		for message,count in pairsSortByKey(result.transitionErrors) do lines[#lines+1]="Failed transitions: "..count.." | "..message end
+		refresh(lines)
+	end
 	local function startSimulation(request)
 		local captured=copyTable(request)
 		local options=copyTable(captured.options)
-		local job=tasks.start(build,function(checkpoint)
+		analysis:start("simulation",captured,function(checkpoint)
 			options.checkpoint=checkpoint;return simulator.simulate(captured.raw,copyTable(captured.recipe),options)
-		end,function(result)
-			lastSimulation=result;lastSimulationRun=captured
-			local lines={string.format("Modeled successes: %d / %d (%.2f%%)",result.successes,result.trials,result.successChance),
-				result.meanCost~=nil and string.format("Mean spent: %.2f %s",result.meanCost,result.costCurrency) or "Cost unavailable: some executed actions have no supplied price.",
-				captured.label,
-				capturedSettings(captured),
-				string.format("95%% sampling interval: %.2f%% to %.2f%%",result.confidenceLow,result.confidenceHigh),string.format("Mean attempted actions: %.2f",result.meanActions)}
-			if result.priceSource then lines[#lines+1]="Quotes: "..result.priceSource.." | "..os.date("%Y-%m-%d",result.priceQuotedAt) end
-			if result.actionPriceOverridesSupplied then
-				lines[#lines+1]=result.actionPriceOverridesApplied>0 and "Includes selected-action price overrides." or "Selected-action override was not used by this recipe."
-			elseif result.priceOverridesSupplied then lines[#lines+1]="Includes resource price overrides." end
-			lines[#lines+1]="Result uses the captured starting state."
-			for key,count in pairsSortByKey(result.currencySpent) do lines[#lines+1]=pricing.describe(key,simulator.context(model,state))..": "..count.." total uses" end
-			for message,count in pairsSortByKey(result.transitionErrors) do lines[#lines+1]="Failed transitions: "..count.." | "..message end
-			refresh(lines)
-		end,function(message) refresh({message}) end,function(progress) controls.resultSummary.list=rows({"Simulation running: trial "..progress.trial.." / "..progress.trials}) end)
-		job.owner=controls
-		refresh({"Simulation queued. You can cancel it below."})
+		end)
 	end
 	local function showSimulation(recipe,fromInitial)
 		local budget=assert(tonumber(controls.budget.buf),"Invalid action budget")
@@ -416,25 +420,20 @@ function Panel.Open(build,project,layout)
 		local selected=action();assert(selected.method == "fossil" and selected.fossils,"Configure a fossil combination first")
 		local options={priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf,fossils=copyTable(selected.fossils),initialState=copyTable(state),maxSockets=#selected.fossils,requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups,trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
 		local captured=copyTable(targets)
-		local job=tasks.start(build,function(checkpoint) options.checkpoint=checkpoint;return simulator.optimizeFossils(draft.startingItem,captured,options) end,function(result)
-			lastFossilComparison=result
-			refresh({"Compared "..#result.combinations.." ordinary fossil subsets. Open Fossil results to review captured chances and costs."})
-			showFossilComparison()
-		end,function(message) refresh({message}) end,function(progress) refresh({"Fossil combination "..progress.combination.." / "..progress.combinations}) end)
-		job.owner=controls
+		analysis:start("fossils",nil,function(checkpoint) options.checkpoint=checkpoint;return simulator.optimizeFossils(draft.startingItem,captured,options) end)
 	end)
+	local function showOddsResult(result)
+		local lines={string.format("Target chance under model: %.6f%%",result.successChance),result.exactFor or result.estimateFor}
+		if result.sampled then lines[#lines+1]=string.format("%d trials | 95%% interval %.2f%% to %.2f%%",result.trials,result.confidenceLow,result.confidenceHigh) end
+		for _,entry in ipairs(result.outcomes) do if entry.matches then lines[#lines+1]=string.format("%.6f%% | %s",entry.chance,entry.text or "Finite item outcome") end end
+		refresh(lines)
+	end
 	button(controls,"exact",232,574,200,"Calculate action odds",function()
 		local craft=action();local captured=copyTable(state);local capturedTargets=copyTable(targets)
 		local options={trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf)),requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups}
-		local job=tasks.start(build,function(checkpoint)
+		analysis:start("odds",nil,function(checkpoint)
 			options.checkpoint=checkpoint;return simulator.calculate(draft.startingItem,craft,capturedTargets,captured,options)
-		end,function(result)
-			local lines={string.format("Target chance under model: %.6f%%",result.successChance),result.exactFor or result.estimateFor}
-			if result.sampled then lines[#lines+1]=string.format("%d trials | 95%% interval %.2f%% to %.2f%%",result.trials,result.confidenceLow,result.confidenceHigh) end
-			for _,entry in ipairs(result.outcomes) do if entry.matches then lines[#lines+1]=string.format("%.6f%% | %s",entry.chance,entry.text or "Finite item outcome") end end
-			refresh(lines)
-		end,function(message) refresh({message}) end,function(progress) refresh({"Calculating odds: trial "..progress.trial.." / "..progress.trials}) end)
-		job.owner=controls
+		end)
 	end)
 	button(controls,"distribution",448,height-48,140,"Results / distribution",function()
 		local result=assert(lastSimulation,"Run a simulation first")
@@ -507,7 +506,7 @@ function Panel.Open(build,project,layout)
 	end)
 	button(controls,"manual",16,448,416,"Edit hypothetical item",function()
 		require("Classes.CraftingItemEditorControl").Open(model,state,function(edited)
-			state=edited;initial=copyTable(edited);history={};actions={};lastSimulation=nil;lastSimulationRun=nil;changedAffixes={};ui.draft(build,"workingCraft")
+			state=edited;initial=copyTable(edited);history={};actions={};analysis:clearSimulation();syncAnalysis();changedAffixes={};ui.draft(build,"workingCraft")
 			updateOptions();refresh({"Manual edits set a new recipe starting state."})
 		end)
 	end)
@@ -684,6 +683,28 @@ function Panel.Open(build,project,layout)
 	if inspectedId then populateAffix(inspectedId) end
 	for key,control in pairs(controls) do if key~="stage" then control.layoutAudit="crafting-workbench" end end
 	if layout then layout.mount(width,height,"Crafting workbench",controls) else main:OpenPopup(width,height,"Crafting workbench",controls,nil,nil,"close") end
+	analysis:bind(controls,function(event,announce)
+		syncAnalysis()
+		if event.phase=="error" then refresh({ui.errorText(event.message)})
+		elseif event.phase=="queued" then refresh({"Calculation queued. You can cancel it below."})
+		elseif event.phase=="progress" then
+			local p=event.progress
+			if event.kind=="fossils" and p.combinations then refresh({"Fossil combination "..p.combination.." / "..p.combinations})
+			elseif p.trials then refresh({(event.kind=="simulation" and "Simulation running: trial " or "Calculating odds: trial ")..p.trial.." / "..p.trials})
+			else refresh({"Calculation queued. You can cancel it below."}) end
+		elseif event.kind=="simulation" then showSimulationResult(event.result,event.context)
+		elseif event.kind=="odds" then showOddsResult(event.result)
+		else
+			refresh({"Compared "..#event.result.combinations.." ordinary fossil subsets. Open Fossil results to review captured chances and costs."})
+			if announce then showFossilComparison() end
+		end
+	end,function()
+		if layout then
+			local workspace=build.planningWorkspace
+			return #main.popups==0 and build.viewMode=="PLANNER" and workspace and workspace.body and workspace.body.controls==controls
+		end
+		return main.popups[1] and main.popups[1].controls==controls
+	end)
 	return controls
 end
 return Panel

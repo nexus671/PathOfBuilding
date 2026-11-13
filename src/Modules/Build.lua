@@ -62,6 +62,8 @@ local function matchFlags(reqFlags, notFlags, flags)
 end
 
 function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLink)
+	require("Modules.CraftingAnalysis").reset(self)
+	if package.loaded["Modules.AtlasTargets"] then package.loaded["Modules.AtlasTargets"].reset(self) end
 	self.dbFileName = dbFileName
 	self.buildName = buildName
 	self.importLink = importLink
@@ -989,6 +991,8 @@ end
 
 function buildMode:Shutdown()
 	require("Modules.DesktopBuildBridge").close(self)
+	require("Modules.CraftingAnalysis").reset(self)
+	if package.loaded["Modules.AtlasTargets"] then package.loaded["Modules.AtlasTargets"].reset(self) end
 	if launch.devMode and (not main.disableDevAutoSave) and self.targetVersion and not self.abortSave then
 		if self.dbFileName then
 			self:SaveDBFile()
