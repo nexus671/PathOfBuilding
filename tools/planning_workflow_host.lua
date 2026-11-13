@@ -38,7 +38,7 @@ for line in io.lines() do
 			local file=assert(io.open(directory.."journey.xml","rb"));local xml=file:read("*a");file:close()
 			bridge.disable(build);loadBuildFromXML(xml,"MCP workflow fixture");build=main.modes.BUILD;ui:bind(build)
 			assert(not main.popups[1],"Reload opened a popup: "..tostring(main.popups[1] and main.popups[1].title).." | "..tostring(main.popups[1] and main.popups[1].controls[1] and main.popups[1].controls[1].label))
-			assert(#build.savers.BuildJourney.data.wishlist==2 and #build.savers.CraftingProjects.projects==1,"Saved plans did not reload")
+			assert(#build.savers.BuildJourney.data.wishlist==2 and #build.savers.CraftingProjects.projects==2,"Saved plans did not reload")
 			build.viewMode="CONFIG";ui:click("aiBuild");ui:click("nav_crafting");ui:click("native")
 			assert(build.planningWorkspace.controls.undo:IsEnabled(),"Saved checkpoint did not restore undo")
 			bridge.enable(build)
@@ -47,6 +47,8 @@ for line in io.lines() do
 			assert(bridge.prepared and bridge.prepared.mode=="new","Bundle did not prepare a new build")
 			ui:click("apply");build=main.modes.BUILD;ui:bind(build);runCallback("OnFrame")
 			assert(not build.dbFileName and #build.savers.AtlasPlans.plans==2 and build.savers.CraftingProjects.projects[1].run,"Bundle import lost saved metadata or reused the source file")
+			local body=build.savers.CraftingProjects.projects[2]
+			assert(body and body.id=="body-enchant" and body.nativeRecipe.requirements.harvestEnchant=="LifeBodyEnchant" and body.inventory[1].state.harvestEnchant=="LifeBodyEnchant","Bundle import lost the second gear guide or its enchantment")
 		elseif command.kind=="quit" then bridge.disable(build);return {quit=true}
 		else error("Unknown host command") end
 		return {revision=bridge.revision(build),status=bridge.status and bridge.status.status,life=build.calcsTab.calcsOutput.LifeUnreserved}
