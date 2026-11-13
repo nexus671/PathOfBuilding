@@ -22,7 +22,7 @@ function C.extend(M)
 					outcomes=outcomes,sampleState=outcomes[1].state,sampleItem=M.toItem(model,outcomes[1].state).raw,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
 			end
 		end
-		if (method=="socket_bench" or method=="omen_connections") and not craft.allflame then
+		if (method=="socket_bench" or method=="socket_white_bench" or method=="omen_connections") and not craft.allflame then
 			M.validateRecipe({steps={craft},targets=targets,requirements=options.requirements,requiredGroups=options.requiredGroups})
 			local model=M.model(raw);local result=M.perform(raw,craft,options.seed,initialState)
 			local hit=M.matches(result.state,targets,nil,model,options.requirements,options.requiredGroups)

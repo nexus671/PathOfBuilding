@@ -23,6 +23,8 @@ Search **Find currencies** for **replace quality** to apply a Harvest quality en
 
 **Set sockets and link them** is a combined bench preparation: it sets the requested socket count if necessary, then links those sockets. When the count already matches, estimates charge only the linking cost. Corrupted items include the corresponding Vaal Orb surcharge. Resource estimates use the state before each action.
 
+Search **Find currencies** for **white sockets** to use the 3.30 bench craft. It turns supported sockets white without changing their links, for one Orb of Scouring and, on corrupted items, one Vaal Orb. The rest of the crafting data remains pinned to 3.29.3.6; see **Coverage** for its limits.
+
 Find **Omen of Trichromatism (RGB)** in **Find currencies** to use one Omen and one
 Chromatic Orb together. It guarantees at least one red, green and blue socket on
 an uncorrupted item with at least three ordinary sockets, preserving their links.

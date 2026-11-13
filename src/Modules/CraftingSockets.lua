@@ -3,7 +3,7 @@
 local S={}
 local colours={"R","G","B"}
 function S.extend(M,A,api)
-	local methods={omen_trichromatism="Omen of Trichromatism (RGB)",omen_connections="Orb of Fusing + Omen of Connections",chromatic="Chromatic Orb",socket_colour_bench="Bench: non-white sockets",tainted_chromatic="Tainted Chromatic Orb",tainted_jeweller="Tainted Jeweller's Orb",tainted_fusing="Tainted Orb of Fusing"}
+	local methods={omen_trichromatism="Omen of Trichromatism (RGB)",omen_connections="Orb of Fusing + Omen of Connections",chromatic="Chromatic Orb",socket_colour_bench="Bench: non-white sockets",socket_white_bench="Bench: white sockets (3.30)",tainted_chromatic="Tainted Chromatic Orb",tainted_jeweller="Tainted Jeweller's Orb",tainted_fusing="Tainted Orb of Fusing"}
 	for method,label in pairs(methods) do M.methods[#M.methods+1]=method;M.labels[method]=label end;table.sort(M.methods)
 	local originalAction,originalOptions,originalPrice,originalComponents=M.action,M.actionOptions,M.priceKey,M.components
 	M.methodChecks.omen_connections=function(model,state)
@@ -41,11 +41,13 @@ function S.extend(M,A,api)
 		if not methods[method] then return originalAction(model,input,craft,random) end
 		assert(not input.mirrored and not input.veil,"Cannot modify a mirrored item or unfinished unveil")
 		local tainted=method:find("tainted_",1,true) ~= nil
-		assert(method == "socket_colour_bench" or (input.corrupted or false) == tainted,tainted and "Tainted socket currency requires corruption" or "Use tainted currency or the bench on corrupted items")
+		assert(method == "socket_colour_bench" or method == "socket_white_bench" or (input.corrupted or false) == tainted,tainted and "Tainted socket currency requires corruption" or "Use tainted currency or the bench on corrupted items")
 		local state=copyTable(input);local sockets=state.sockets or {};state.sockets=sockets
 		assert(#sockets > 0,"This item has no sockets")
 		for _,socket in ipairs(sockets) do assert(socket.color ~= "A","Abyssal sockets need a separate socket model") end
-		if method == "omen_connections" then
+		if method == "socket_white_bench" then
+			for _,socket in ipairs(sockets) do socket.color="W" end
+		elseif method == "omen_connections" then
 			for _,socket in ipairs(sockets) do socket.group=0 end
 		elseif method == "tainted_jeweller" then
 			local limit=math.min(model.item.base.socketLimit or 0,model.item.itemLevel >= 50 and 6 or model.item.itemLevel >= 35 and 5 or model.item.itemLevel >= 25 and 4 or model.item.itemLevel >= 2 and 3 or 2)
@@ -89,6 +91,9 @@ function S.extend(M,A,api)
 	end
 	function M.priceKey(action) if action.method == "socket_colour_bench" then return action.method..":"..tostring(action.count) end;return originalPrice(action) end
 	function M.components(action,state,model)
+		if action.method == "socket_white_bench" then
+			local result={["Metadata/Items/Currency/CurrencyConvertToNormal"]=1};if state and state.corrupted then result["Metadata/Items/Currency/CurrencyCorrupt"]=1 end;return result
+		end
 		if action.method == "omen_connections" then return {["Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks"]=1,["Metadata/Items/Currency/CurrencyRerollSocketLinks"]=1} end
 		if action.method == "omen_trichromatism" then return {["Metadata/Items/Currency/AncestralOmenOnChromaticAddWhiteSockets"]=1,["Metadata/Items/Currency/CurrencyRerollSocketColours"]=1} end
 		if action.method == "socket_colour_bench" then
@@ -103,7 +108,7 @@ function S.extend(M,A,api)
 		local state=initialState and M.validateState(model,initialState) or model.initial
 		model=M.context(model,state);query=(query or ""):lower();result.socketCrafts={}
 		local available=require("Modules.CraftingAvailability").check
-		for _,method in ipairs({"socket_bench","omen_connections","omen_trichromatism"}) do
+		for _,method in ipairs({"socket_bench","socket_white_bench","omen_connections","omen_trichromatism"}) do
 			local choices=method=="socket_bench" and M.actionOptions(model,state,method) or {{label=M.labels[method],action={method=method}}}
 			local allowed,reason=available(method,state,model)
 			for _,choice in ipairs(choices) do
@@ -116,6 +121,7 @@ function S.extend(M,A,api)
 		return result
 	end
 	M.limits[#M.limits+1]="Omen of Trichromatism guarantees one red, green and blue socket using one Omen and one Chromatic Orb. Forced positions are sampled uniformly; remaining sockets use the existing colour model. Placement and extra-colour probabilities are model assumptions."
+	M.limits[#M.limits+1]="The white socket bench action uses the announced 3.30 rule. Other crafting data remains pinned to 3.29.3.6; this action does not update other rules or modifier pools."
 
 	M.limits[#M.limits+1]="Socket colours use Siveran's empirical 3.29 model, with attribute bias for ordinary Chromatics and uniform RGB for tainted Chromatics. Tainted socket/link currencies assume 50/50 addition/removal; added sockets are white."
 end

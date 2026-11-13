@@ -1,7 +1,7 @@
 <!-- cspell:ignore Siveran Katakohi Ukatoa -->
 # Crafting coverage and rules
 
-The independent engine targets current PoE 1 using PoB modifiers and an immutable [RePoE export](https://github.com/repoe-fork/repoe-fork.github.io/tree/ae6d85a5c36857e08819852ab8732239294aba59), version **3.29.3.6**. It does not yet provide complete Craft of Exile parity.
+The independent engine uses PoB modifiers and an immutable [RePoE export](https://github.com/repoe-fork/repoe-fork.github.io/tree/ae6d85a5c36857e08819852ab8732239294aba59), version **3.29.3.6**. The explicitly labelled white-socket bench craft uses the announced 3.30 rule. Other 3.30 crafting changes and modifier data are not yet incorporated; it does not yet provide complete Craft of Exile parity.
 
 | Area | Included | Limits |
 | --- | --- | --- |
@@ -14,7 +14,7 @@ The independent engine targets current PoE 1 using PoB modifiers and an immutabl
 | Bestiary | Level 20/30 Aspects, affix conversion, imprint/restore, random metamod, influenced augmentation, one/two-mod Talisman fractures | Talisman fractures sample distinct modifiers uniformly. Unique services remain unsupported. |
 | Eldritch | Ember/Ichor, Conflict through tier 6, dominant-side currencies | Ambiguous imported tiers require structured input. |
 | Properties | Blessed, Sacred, quality, catalysts, tainted quality/catalysts | Some multi-stat precision remains approximate. |
-| Sockets | Bench count/links, Omens of Connections and Trichromatism, Binding, Chromatics, non-white bench, tainted socket currencies | Ordinary random Jeweller/Fusing and Abyssal socket crafting are incomplete. Link targets do not count Abyss sockets, and unsupported socket crafts are disabled. |
+| Sockets | Bench count/links, 3.30 white-socket bench, Omens of Connections and Trichromatism, Binding, Chromatics, non-white bench, tainted socket currencies | Ordinary random Jeweller/Fusing and Abyssal socket crafting are incomplete. Link targets do not count Abyss sockets, and unsupported socket crafts are disabled. |
 | Corruption | Equipment Vaal and Locus branches, paired implicits, terminal destruction, tainted Exalted/Chaos | Brick socket/link rerolls, jewels/flasks and unique transformations are incomplete. Locus excludes special transformation bases, fractures, synthesis and meta modifiers. |
 | Memory | Remembrance observations, tier filtering, consumption, Unravelling, Foulborn Augmentation/Regal/Exalted | Empirical models. Some consumption ceilings and behavior without strands are inferred. Counts are retained in structured state. |
 | Recombination | Either base, item level, count tables, conflicts, exclusivity, fracture host, base eligibility, continued crafting; predictable selections calibrated to an observed success percentage | Experimental models. Exclusive-only side ordering is rejected. Hidden weights, some exclusive families and automatic predictable odds remain unresolved. |

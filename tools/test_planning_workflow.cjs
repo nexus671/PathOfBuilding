@@ -77,6 +77,16 @@ async function main(){
   assert.ok(rgbService.available && !rgbService.deterministic);assert.equal(rgbService.guaranteedColours,'RGB');
   const rgbAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:rgbService.action},'crafted');
   for(const colour of ['R','G','B'])assert.ok(rgbAction.nativeCrafting.state.sockets.some(socket=>socket.color===colour));
+  const whiteInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'white sockets',limit:5},'inspected');
+  const whiteService=whiteInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='socket_white_bench');
+  assert.ok(whiteService.available && whiteService.deterministic);assert.deepEqual(whiteService.components,{'Metadata/Items/Currency/CurrencyConvertToNormal':1});
+  const whitened=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:whiteService.action,initialState:rgbAction.nativeCrafting.state},'crafted');
+  assert.ok(whitened.nativeCrafting.state.sockets.every(socket=>socket.color==='W'));
+  const corruptedWhiteState={...rgbAction.nativeCrafting.state,corrupted:true};
+  const corruptedWhiteInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'white sockets',limit:5,initialState:corruptedWhiteState},'inspected');
+  assert.deepEqual(corruptedWhiteInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='socket_white_bench').components,{'Metadata/Items/Currency/CurrencyConvertToNormal':1,'Metadata/Items/Currency/CurrencyCorrupt':1});
+  const exactWhite=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:whiteService.action,initialState:corruptedWhiteState,targets:[],options:{requirements:{socketColours:'WWWWWW'}}},'crafted');
+  assert.equal(exactWhite.nativeCrafting.successChance,100);assert.equal(exactWhite.nativeCrafting.sampled,false);
   const invalidSockets={rarity:'NORMAL',affixes:[],sockets:[{color:'R',group:0},{color:'G',group:1},{color:'B',group:0}]};
   const rejectedSockets=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:{method:'chromatic'},initialState:invalidSockets,targets:[],options:{requirements:{socketColours:'RB',linkedColours:true},trials:2}},'failed');
   assert.match(rejectedSockets.error,/contiguous group/);
@@ -167,7 +177,7 @@ async function main(){
   assert.equal((await call('get_build_context')).context.revision,context.revision);
 
   await queued('propose_crafting_plan',{baseRevision:context.revision,project},'review');await host('apply');context=(await call('get_build_context')).context;
-  const bodyProject={priceBook:bodyPriceBook,id:'body-enchant',title:'Body armour quality guide',slot:'Body Armour',startingItem:bodyRaw,targetItem:bodySimulation.nativeCrafting.sampleItem,preferredMethod:'harvest_enchant',nativeRecipe:bodyRecipe,goals:['Quality grants maximum Life','Six linked sockets'],steps:[{action:'Apply the Harvest Life quality enchantment',stopWhen:'Life quality enchantment is present'},{action:'Use an Orb of Fusing with Omen of Connections',stopWhen:'All six sockets are linked'}],inventory:[{id:'enchanted-body',title:'Enchanted body armour',slot:'Body Armour',baseItem:bodyRaw,at:1700000000,state:enchanted.nativeCrafting.state}]};
+  const bodyProject={priceBook:bodyPriceBook,id:'body-enchant',title:'Body armour quality guide',slot:'Body Armour',startingItem:bodyRaw,targetItem:bodySimulation.nativeCrafting.sampleItem,preferredMethod:'harvest_enchant',nativeRecipe:{...bodyRecipe,steps:[...bodyRecipe.steps,whiteService.action]},goals:['Quality grants maximum Life','Six linked sockets'],steps:[{action:'Apply the Harvest Life quality enchantment',stopWhen:'Life quality enchantment is present'},{action:'Use an Orb of Fusing with Omen of Connections',stopWhen:'All six sockets are linked'}],inventory:[{id:'enchanted-body',title:'Enchanted body armour',slot:'Body Armour',baseItem:bodyRaw,at:1700000000,state:enchanted.nativeCrafting.state}]};
   await queued('propose_crafting_plan',{baseRevision:context.revision,project:bodyProject},'review');await host('apply');context=(await call('get_build_context')).context;
   const journey={schemaVersion:1,resources:[{id:'chaos',title:'Chaos Orbs'}],ledger:[{id:'holdings',resourceId:'chaos',kind:'add',amount:100,at:1}],wishlist:[{id:'helmet',title:'Next helmet',slot:'Helmet',route:'craft',projectId:'helmet',resourceId:'chaos',estimate:40,reserve:true},{id:'alternative',title:'Alternative helmet',slot:'Helmet',route:'buy',targetItem:item(300),resourceId:'chaos',estimate:90}],milestones:[{id:'craft',title:'Craft the helmet',kind:'craft',projectId:'helmet',wishlistId:'helmet'}],stages:[{id:'maps',title:'Start mapping',level:68,gems:'Keep the main links',gear:'Acquire the planned helmet',transition:'After checking requirements'}]};
   await queued('propose_journey_plan',{title:'Gear roadmap',baseRevision:context.revision,journey},'review');await host('apply');context=(await call('get_build_context')).context;
@@ -197,6 +207,7 @@ async function main(){
   assert.deepEqual(projects.projects[0].priceBook.values,{});assert.equal(projects.projects[0].inventory[0].title,'Reusable helmet base');assert.equal(projects.projects[0].inventory[0].state.rarity,'NORMAL');
   assert.equal(projects.projects.length,2);const savedBody=projects.projects.find(entry=>entry.id==='body-enchant');
   assert.deepEqual(savedBody.priceBook,bodyPriceBook);assert.equal(savedBody.nativeRecipe.steps[1].method,'omen_connections');assert.equal(savedBody.nativeRecipe.requirements.links,6);assert.equal(savedBody.nativeRecipe.steps[0].enchantId,'LifeBodyEnchant');assert.equal(savedBody.nativeRecipe.requirements.harvestEnchant,'LifeBodyEnchant');
+  assert.equal(savedBody.nativeRecipe.steps[2].method,'socket_white_bench');
   assert.equal(savedBody.inventory[0].state.harvestEnchant,'LifeBodyEnchant');assert.equal(savedBody.targetItem,bodySimulation.nativeCrafting.sampleItem);
   const atlasPlans=await call('get_atlas_plans');assert.equal(atlasPlans.plans[1].strategy.setupCost.amount,25);assert.equal(atlasPlans.plans[1].progression.previousId,'starter-atlas');await host('bundle-roundtrip');
   assert.deepEqual((await call('get_crafting_projects')).projects.find(entry=>entry.id==='body-enchant').priceBook,bodyPriceBook);

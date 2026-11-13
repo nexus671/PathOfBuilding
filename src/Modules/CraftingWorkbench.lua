@@ -175,7 +175,8 @@ function M.icon(method,action,model)
 		for _,entry in pairs(currencyArt.items) do currencyNames[entry.name]=entry.path end
 	end
 	action=action or {};local id=currencyArt.methods[method];local name
-	if method=="essence" and action.essenceId then local entry=data.essences[action.essenceId];name=entry and entry.name
+	if method=="socket_white_bench" then name="Orb of Scouring"
+	elseif method=="essence" and action.essenceId then local entry=data.essences[action.essenceId];name=entry and entry.name
 	elseif method=="catalyst" and action.catalyst then local entry=({"Abrasive","Accelerating","Dextral","Fertile","Imbued","Intrinsic","Noxious","Prismatic","Sinistral","Tempering","Turbulent","Unstable"})[action.catalyst];name=entry and entry.." Catalyst"
 	elseif method=="fossil" and action.fossils then local prefix=({"Primitive","Potent","Powerful","Prime"})[#action.fossils];name=prefix and prefix.." Chaotic Resonator"
 	elseif method=="eldritch_implicit" and action.tier then local prefix=({"Lesser","Greater","Grand","Exceptional"})[action.tier];name=prefix and prefix.." Eldritch "..(action.side=="Eater" and "Ichor" or "Ember")
@@ -192,6 +193,7 @@ function M.available(method,state,model)
 end
 function M.hint(method,state,model)
 	local available,reason=M.available(method,state,model)
+	if available and method=="socket_white_bench" then return "3.30 bench: turn sockets white for one Scouring Orb, plus one Vaal Orb on corrupted items." end
 	if available and method=="harvest_enchant" then return "Replace the enchantment with a quality bonus. Options show the Lifeforce cost." end
 	return available and (descriptions[method] or "Choose the craft options, then apply to the item.") or reason
 end

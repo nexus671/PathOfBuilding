@@ -270,6 +270,14 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	end
 
 	do
+		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: R-G B W-W R"
+		require("Classes.CraftingSimulatorControl").Open(build,{id="white-socket-bench-ui",title="White sockets",slot="Body Armour",startingItem=raw,goals={},steps={}})
+		ui:click("settings");ui:text("paletteSearch","white sockets (3.30)");assert(main.popups[1].controls.paletteUse:IsEnabled());frame("crafting-white-socket-bench-selection")
+		ui:click("paletteUse");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Bench: white sockets",1,true),"White socket bench craft was not applied")
+		frame("crafting-white-socket-bench-applied");ui:click("undo");ui:click("close")
+	end
+
+	do
 		local hybridRaw="Rarity: NORMAL\nIron Hat\nItem Level: 86";local m=sim.model(hybridRaw);local state=copyTable(m.initial)
 		state.rarity="RARE";state.affixes={{id="LocalBaseArmourAndLife1",range={0,1}}}
 		require("Classes.CraftingSimulatorControl").Open(build,{id="independent-affix-ui",title="Independent modifier rolls",slot="Helmet",startingItem=sim.toItem(m,state).raw,goals={},steps={}})
