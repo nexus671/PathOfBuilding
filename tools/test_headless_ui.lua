@@ -689,7 +689,9 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("undo");ui:click("redo");ui:click("viewModules");ui:click("moduleCreate");frame("filter-modules");ui:click("moduleCopy");ui:click("modulePaste")
 	filterTool("Review changes");frame("filter-change-review");ui:click("close");ui:click("keep")
 	assert(#build.savers.LootFilters.data.profiles[1].modules==1,"Rule modules were not kept")
-	ui:click("viewSimulate");ui.clipboard="Item Class: Stackable Currency\nRarity: Currency\nChaos Orb\n--------\nStack Size: 7/20";ui:click("pasteDrop");frame("filter-copied-item")
+	ui:click("viewSimulate");ui.clipboard="Item Class: Helmets\nRarity: Rare\nFoe Visage\nIron Hat\n--------\nItem Level: 86\nShaper Item\nElder Item";ui:click("pasteDrop")
+	local pasted=build.planningWorkspace.cache.filters.layout.snapshot().sample;assert(pasted.ShaperItem and pasted.ElderItem and #pasted.HasInfluence==2,"Pasted influences were not retained")
+	ui.clipboard="Item Class: Stackable Currency\nRarity: Currency\nChaos Orb\n--------\nStack Size: 7/20";ui:click("pasteDrop");frame("filter-copied-item")
 	ui:click("sceneSettings");ui:text("areaLevel","72");ui:text("itemLevel","75");ui:choose("background","Dark");frame("filter-scene-settings");ui:click("keepScene")
 	ui:click("sampleHistory");frame("filter-sample-history");ui:click("choose");ui:click("inspectMatch");frame("filter-matched-rules");ui:click("close")
 	local savedArea=build.planningWorkspace.cache.filters.layout.snapshot().sample.AreaLevel

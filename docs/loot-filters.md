@@ -45,7 +45,7 @@ For socket conditions, enter linked groups separately in **SocketGroup** and all
 
 ## AI tools
 
-On **Simulate**, **Paste item** reads visible properties from a game clipboard copy. **Scene settings** controls shared area/item levels and background; **History** revisits tested samples. **Matched rules** opens the deciding blocks for inspection and editing. **More sound, icon and beam options** includes all twelve icon shapes, colours, sizes, positional/custom alerts and temporary beams. Native previews approximate their geometry; custom audio files must accompany the exported filter.
+On **Simulate**, **Paste item** reads visible properties from a game clipboard copy, including influence markers on ordinary equipment. Influence on unique items and maps remains unknown when it cannot be determined reliably. **Scene settings** controls shared area/item levels and background; **History** revisits tested samples. **Matched rules** opens the deciding blocks for inspection and editing. **More sound, icon and beam options** includes all twelve icon shapes, colours, sizes, positional/custom alerts and temporary beams. Native previews approximate their geometry; custom audio files must accompany the exported filter.
 
 - **get_loot_filters:** read kept profiles.
 - **generate_loot_filter:** derive a separate draft from build plans.

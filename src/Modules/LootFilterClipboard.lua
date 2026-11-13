@@ -21,6 +21,18 @@ function M.parse(raw,area)
 	local item={BaseType=base,Class=class,Rarity=assert(mapped[rarity:lower()],"Unsupported clipboard rarity"),AreaLevel=area,
 		Identified=not markers.Unidentified,Corrupted=markers.Corrupted==true or markers["Twice Corrupted"]==true,
 		TwiceCorrupted=markers["Twice Corrupted"]==true,Mirrored=markers.Mirrored==true}
+	-- Ordinary equipment copies list each influence on a separate marker line.
+	-- Unique items and maps can carry special influence effects; do not infer
+	-- their complete influence set from the absence of these markers.
+	local equipment={Helmet=true,["Body Armour"]=true,Gloves=true,Boots=true,Shield=true,Quiver=true,Amulet=true,Ring=true,Belt=true}
+	if ok and native.base and (rarity=="Normal" or rarity=="Magic" or rarity=="Rare") and (equipment[native.type] or data.weaponTypeInfo[native.type]) then
+		item.HasInfluence={}
+		for _,name in ipairs({"Shaper","Elder","Crusader","Hunter","Redeemer","Warlord"}) do
+			if markers[name.." Item"] then item.HasInfluence[#item.HasInfluence+1]=name end
+		end
+		if #item.HasInfluence==0 then item.HasInfluence={"None"} end
+		item.ShaperItem=markers["Shaper Item"]==true;item.ElderItem=markers["Elder Item"]==true
+	end
 	for key,field in pairs({ItemLevel="Item Level",Quality="Quality",StackSize="Stack Size",MapTier="Map Tier"}) do
 		local value=tonumber(raw:match(field..":%s*([%+%-]?%d+)"));assert(not value or value==value and math.abs(value)<=1e9,"Invalid clipboard "..field);item[key]=value
 	end
