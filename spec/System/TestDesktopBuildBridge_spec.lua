@@ -135,6 +135,17 @@ describe("Desktop build proposals", function()
 		main.popups[1]:Draw({x=0,y=0,width=1920,height=1080})
 		main:ClosePopup(); main:ClosePopup()
 	end)
+	it("ignores derived full DPS row values and ordering while retaining real edit guards",function()
+		local output=build.calcsTab.mainOutput;local previous,display=output.SkillDPS,build.displayStats
+		local ok,err=pcall(function()
+			build.displayStats={{stat="SkillDPS"}};output.SkillDPS={{name="Fireball",count=1,dps=100},{name="Ignite",count=1,dps=200}}
+			local before=bridge.revision(build);assert.is_truthy(bridge.serialize(build):find("FullDPSSkill",1,true))
+			output.SkillDPS={output.SkillDPS[2],output.SkillDPS[1]};output.SkillDPS[1].dps=300
+			assert.equal(before,bridge.revision(build));assert.equal(before,bridge.freeze(build).revision)
+			build.notesTab.controls.edit:SetText("A real source edit");assert.is_not.equal(before,bridge.revision(build))
+		end)
+		output.SkillDPS,build.displayStats=previous,display;assert.is_true(ok,err)
+	end)
 
 	it("explains gear, gem requirements and actual connecting passive changes", function()
 		local prepared = bridge.prepare(build,proposal({{type="equip_item",slot="Helmet",text="Rarity: RARE\nInsight Hat\nIron Hat\n+100 to maximum Life"},

@@ -3,6 +3,7 @@ local filters=require("Modules.LootFilters")
 local parser=require("Modules.LootFilterParser")
 local stable=require("Modules.PlanningData")
 local M={}
+local generated=setmetatable({},{__mode="k"})
 function M.report(build,profile)
 	local function collect(rules)
 		local groups={};for _,rule in ipairs(rules) do if rule.origin then
@@ -14,7 +15,13 @@ function M.report(build,profile)
 		for _,group in pairs(groups) do table.sort(group.conditions,function(a,b) return stable.encode(a)<stable.encode(b) end) end
 		return groups
 	end
-	local old,new=collect(profile.rules),collect(filters.generate(build,profile));local result={stale=false,linked=0,entries={}}
+	local revision=require("Modules.PlanningRevision");local stamp=revision.stamp(build);local cached=generated[build]
+	if not cached or not revision.same(cached.stamp,stamp) then cached={stamp=stamp,profiles={}};generated[build]=cached end
+	local key=profile.preset..":"..profile.theme;local new=cached.profiles[key]
+	if not new then
+		local start=os.clock();new=collect(filters.generate(build,profile));cached.profiles[key]=new;require("Modules.PlanningPerformance").record(build,"Filter target refresh",os.clock()-start)
+	end
+	local old=collect(profile.rules);local result={stale=false,linked=0,entries={}}
 	local origins={};for key in pairs(old) do origins[key]=true end;for key in pairs(new) do origins[key]=true end
 	for origin in pairsSortByKey(origins) do
 		local before,after=old[origin],new[origin];local status=not before and "New target" or not after and "Source removed / no longer needed" or stable.encode(before.conditions)~=stable.encode(after.conditions) and "Changed" or "Current"

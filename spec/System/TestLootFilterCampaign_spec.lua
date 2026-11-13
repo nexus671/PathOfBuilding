@@ -1,0 +1,32 @@
+describe("Offline campaign pickup policies",function()
+	local campaign=require("Modules.LootFilterCampaign")
+	local filters=require("Modules.LootFilters")
+	local function profile() local p=filters.profile("campaign","Campaign","campaign");p.template="Hide";p.campaign=campaign.defaults();return p end
+	before_each(function() newBuild();main.popups={} end)
+	it("separates weapon subtypes and all native defence combinations",function()
+		assert.equal("Rune Dagger",campaign.weapon({type="Dagger",subType="Rune Dagger",weapon={}}));assert.equal("Dagger",campaign.weapon({type="Dagger",weapon={}}))
+		assert.equal("Warstaff",campaign.weapon({type="Staff",subType="Warstaff",weapon={}}));assert.equal("Thrusting Sword",campaign.weapon({type="One Handed Sword",subType="Thrusting",weapon={}}))
+		assert.equal("Armour / Energy shield",campaign.defence({type="Helmet",armour={ArmourBaseMin=1,EnergyShieldBaseMin=1}}));assert.equal("Ward",campaign.defence({type="Helmet",armour={WardBaseMin=1}}))
+		assert.is_true(#campaign.families().weapons.Bow>0);assert.is_true(#campaign.families().defences.Ward>0)
+	end)
+	it("shows selected families in progressive area bands and retains personal priority",function()
+		local p=profile();p.campaign.weapons={"Bow"};local name=campaign.families().weapons.Bow[1]
+		local item={BaseType=name,AreaLevel=40,DropLevel=35,Rarity="Normal",LinkedSockets=0}
+		assert.equal("Show",filters.simulate(p,item).action);item.DropLevel=1;assert.equal("Hide",filters.simulate(p,item).action)
+		item.DropLevel=35;item.AreaLevel=71;assert.equal("Hide",filters.simulate(p,item).action)
+		item.AreaLevel=40;p.rules={{id="mine",title="Personal exception",text='Hide\n BaseType == '..filters.quote(name)}};assert.equal("Hide",filters.simulate(p,item).action)
+		p.rules={};p.campaign.enabled=false;assert.equal("Hide",filters.simulate(p,item).action)
+	end)
+	it("keeps recipe pickups independent of base-upgrade thresholds and validates policy bounds",function()
+		local p=profile();p.campaign.recipes={"Three-colour linked equipment"};p.campaign.minDropLevel=90;p.campaign.minLinks=6
+		assert.equal("Show",filters.simulate(p,{BaseType="Iron Hat",AreaLevel=40,Rarity="Normal",SocketGroup="RGB",DropLevel=1,LinkedSockets=3}).action)
+		p.campaign.weapons={"Bow"};p.campaign.upgradeWindow=0;assert.equal(2,#campaign.rules(p.campaign))
+		assert.has_error(function() campaign.validate({weapons={"Imaginary"}}) end);assert.has_error(function() campaign.validate({minAreaLevel=70,maxAreaLevel=1}) end)
+		assert.has_error(function() campaign.validate({weapons={"Bow","Bow"}}) end)
+	end)
+	it("keeps every selectable family within the export budget and round-trips policy metadata",function()
+		local p=profile();p.campaign.weapons=copyTable(campaign.weapons);p.campaign.defences=copyTable(campaign.defences);p.campaign.recipes=copyTable(campaign.recipes)
+		local raw,report=filters.compile(p);assert.is_true(#raw<filters.limit);for _,d in ipairs(report.diagnostics) do assert.is_nil(d.error,d.error) end
+		build.savers.LootFilters:Upsert(p);local xml={};build.savers.LootFilters:Save(xml);local restored=filters.new(build);restored:Load(xml);assert.same(p.campaign,restored.data.profiles[1].campaign)
+	end)
+end)

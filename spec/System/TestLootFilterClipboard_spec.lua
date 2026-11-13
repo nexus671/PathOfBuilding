@@ -19,4 +19,11 @@ describe("Copied loot-filter items",function()
 		assert.is_false(clipboard.parse(raw).Corrupted)
 		assert.is_false(pcall(clipboard.parse,raw:gsub("Item Level: 86","Item Level: "..string.rep("9",400))))
 	end)
+	it("normalizes copied gem classes to the filter language",function()
+		for label,class in pairs({["Active Skill Gems"]="Skill Gems",["Support Skill Gems"]="Support Gems"}) do
+			local item=clipboard.parse("Item Class: "..label.."\nRarity: Gem\nAdded Fire Damage Support\n--------\nLevel: 12\nQuality: +20%",70)
+			assert.equal(class,item.Class);assert.equal(12,item.GemLevel)
+			assert.equal("matched",parser.simulate(parser.parse('Show\n Class == "'..class..'"\n Quality >= 1'),item).status)
+		end
+	end)
 end)

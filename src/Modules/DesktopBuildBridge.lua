@@ -26,7 +26,7 @@ local function revisionXML(build,raw)
 			if node.elem == "TreeView" then table.remove(root,index)
 			elseif node.elem == "Build" then
 				node.attrib.viewMode = nil
-				for i=#node,1,-1 do if type(node[i]) == "table" and (node[i].elem == "PlayerStat" or node[i].elem == "MinionStat") then table.remove(node,i) end end
+				for i=#node,1,-1 do if type(node[i]) == "table" and (node[i].elem == "PlayerStat" or node[i].elem == "MinionStat" or node[i].elem == "FullDPSSkill") then table.remove(node,i) end end
 			end
 		end
 	end

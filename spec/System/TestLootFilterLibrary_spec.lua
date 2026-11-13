@@ -39,4 +39,16 @@ describe("Visual filter catalogue",function()
 		local unresolved=copyTable(first[1]);unresolved.BaseType="Iron Hat";unresolved.Class="Helmets"
 		assert.equal("unknown",filters.simulate(profile,unresolved).status)
 	end)
+	it("builds example properties only when requested and reuses the parsed block",function()
+		local p=filters.profile("test","Test");p.template='Show\n BaseType == "Iron Hat"\n ItemLevel >= 83'
+		local entry=library.catalog(p)[1];assert.is_nil(rawget(entry,"sample"));local sample=entry.sample;assert.equal("Iron Hat",sample.BaseType);assert.equal(83,sample.ItemLevel)
+		assert.equal(sample,entry.sample);assert.same(library.sample(entry.rule),sample)
+	end)
+	it("derives known equipment classes and leaves unfamiliar bases unknown",function()
+		assert.equal("One Hand Swords",library.sample({text='Show\n BaseType == "Rusted Sword"'}).Class)
+		local item=library.sample({text='Show\n BaseType == "Unknown Future Base"'});assert.is_nil(item.Class)
+		assert.equal("unknown",parser.simulate(parser.parse('Hide\n Class == "Stackable Currency"\nShow'),item).status)
+		local p=filters.profile("test","Test");p.template='Hide\nShow\n Continue'
+		local entries=library.catalog(p);assert.equal("Hide remaining items",entries[1].rule.title);assert.equal("Style remaining items",entries[2].rule.title)
+	end)
 end)

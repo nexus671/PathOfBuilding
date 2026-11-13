@@ -46,11 +46,10 @@ function M.Open(build,source,layout,controller)
 	end
 	local function edit() if selectedRule() then controller.EditRule(selectedRule(),keepRule) end end
 	local function inspectMatches()
-		local sources={};local ok,base=pcall(library.catalog,profile);if ok then local offset=#parsed.rules-#base;for i,entry in ipairs(base) do sources[offset+i]=entry.rule end end
-		local index=0;for _,rule in ipairs(profile.rules) do if rule.enabled~=false then index=index+1;sources[index]=rule end end
+		local outline=require("Modules.LootFilterStructure").outline(profile,raw,report,parsed)
 		local wanted={};for _,line in ipairs(result.matches or {}) do wanted[line]=true end;if result.line then wanted[result.line]=true end
 		local entries={};for i,block in ipairs(parsed.rules) do if wanted[block.line] then
-			local rule=sources[i] or {id="match-"..require("sha1")(table.concat(block.rawLines,"\n")):sub(1,20),title=block.title or "Override / "..(item.BaseType or "Drop"),text=table.concat(block.rawLines,"\n"),enabled=true}
+			local rule=outline.entries[i].rule
 			entries[#entries+1]={id=block.line,label=(block.title or rule.title).." | "..block.action,details={"Compiled line "..block.line,"Editing a preset or module match creates a personal override.",table.concat(block.rawLines,"\n")},rule=rule}
 		end end
 		require("Classes.PlanningBrowserControl").Open("Matched filter rules",entries,{action="Edit matched rule",choose=function(entry) main:ClosePopup();controller.EditRule(entry.rule,keepRule) end,closeOnChoose=false})
@@ -99,6 +98,8 @@ function M.Open(build,source,layout,controller)
 			{id="audit",label="Audit and update",details={"Inspect patch migrations, diagnostics and base updates."}},
 			{id="changes",label="Review changes",details={"Compare the working draft with the profiles kept in this build."}},
 			{id="links",label="Linked build targets",details={"Review changed craft, gear, resource, skill and Atlas pickups; open their source plans."}},
+			{id="campaign",label="Campaign and base-family pickups",details={"Choose weapon and armour families, upgrade windows and recipe pickups without changing preset files."}},
+			{id="structure",label="Filter structure and priority",details={"Browse compiled sections, nested item families, Continue blocks, diagnostics and exact source text."}},
 			{id="delete",label="Delete this profile",details={"This changes the working draft. Keep and Save to persist."}},
 		}
 		require("Classes.PlanningBrowserControl").Open("Filter profile tools",choices,{action="Open",choose=function(entry)
@@ -112,6 +113,8 @@ function M.Open(build,source,layout,controller)
 			elseif entry.id=="links" and profile then
 				refreshDependencies();require("Classes.PlanningBrowserControl").Open("Linked filter targets",dependencies.entries,{action="Open source",choose=function(entry) main:ClosePopup();require("Modules.LootFilterDependencies").open(build,layout,entry.origin) end,closeOnChoose=false,
 					secondary={label="Refresh build pickups",run=function() main:ClosePopup();profile.rules=filters.generate(build,profile);draft();reopen() end}})
+			elseif entry.id=="campaign" and profile then require("Classes.LootFilterCampaignControl").Open(build,profile.campaign,function(value) profile.campaign=value;draft();reopen() end)
+			elseif entry.id=="structure" and profile then require("Classes.LootFilterStructureControl").Open(profile,function(rule) controller.EditRule(rule,keepRule) end)
 			elseif entry.id=="delete" and profile then for i,p in ipairs(data.profiles) do if p.id==profile.id then table.remove(data.profiles,i);break end end;profile=data.profiles[1];data.activeId=profile and profile.id or "";draft();reopen() end
 		end,closeOnChoose=false})
 	end)
@@ -147,13 +150,13 @@ function M.Open(build,source,layout,controller)
 	elseif page=="Customize" then
 		local sidebar=152;local listX=184;local listW=math.floor((w-216)*0.51);local detailX=listX+listW+16;local detailW=w-detailX-16
 		local ok,base=pcall(library.catalog,profile);catalog=ok and base or {}
-		local sourceEntries=scope=="Base filter" and catalog or library.personal(profile)
+		local sourceEntries=scope=="Base filter" and catalog or scope=="Policies" and library.campaign(profile) or library.personal(profile)
 		local categoryRows={};for _,name in ipairs(library.categories) do categoryRows[#categoryRows+1]={height=36,textSize=14,"^7"..name,name=name} end
 		c.categories=new("TextListControl"):TextListControl(ui.anchor,{16,120,sidebar,h-180},nil,categoryRows)
-		ui.selectable(c.categories,function(row) return row.name end,function(row) category=row.name;selected=nil;reopen() end)
+		ui.selectable(c.categories,function(row) return row.name end,function(row) category=row.name;if category=="Campaign" then scope="Policies" end;selected=nil;reopen() end)
 		local offset=0;for _,row in ipairs(categoryRows) do row.selected=row.name==category;if row.selected then c.categories.controls.scrollBar.offset=math.max(0,offset-(h-240)) end;offset=offset+row.height end
 		c.search=new("EditControl"):EditControl(ui.anchor,{listX,120,listW-138,26},query,"Find an item or rule",nil,160,function(value) query=value end)
-		c.source=new("DropDownControl"):DropDownControl(ui.anchor,{listX+listW-130,120,130,26},{"My rules","Base filter"},function(_,value) scope=value;selected=nil;query="";reopen() end);c.source:SelByValue(scope)
+		c.source=new("DropDownControl"):DropDownControl(ui.anchor,{listX+listW-130,120,130,26},{"My rules","Base filter","Policies"},function(_,value) scope=value;selected=nil;query="";if scope=="Policies" then category="Campaign" elseif category=="Campaign" then category="All items" end;reopen() end);c.source:SelByValue(scope)
 		c.rules=new("TextListControl"):TextListControl(ui.anchor,{listX,170,listW,h-274},nil,{})
 		ui.label(c,"ruleCount",listX,152,"",12)
 		local function refreshList()
@@ -176,7 +179,10 @@ function M.Open(build,source,layout,controller)
 		ui.selectable(c.rules,function(row) return row.entry and row.entry.rule.id end,function(row) updateSelection(row.entry) end,edit)
 		c.search.changeFunc=function(value) query=value;refreshList() end
 		local bw=math.floor((listW-24)/4)
-		button(c,"add",listX,h-94,bw,"+ Rule",function() controller.EditRule(filters.rule("rule-"..identifier(),"New pickup",{'BaseType == "Iron Hat"'}),keepRule) end)
+		button(c,"add",listX,h-94,bw,scope=="Policies" and "Set policy" or "+ Rule",function()
+			if scope=="Policies" then require("Classes.LootFilterCampaignControl").Open(build,profile.campaign,function(value) profile.campaign=value;draft();reopen() end)
+			else controller.EditRule(filters.rule("rule-"..identifier(),"New pickup",{'BaseType == "Iron Hat"'}),keepRule) end
+		end)
 		button(c,"edit",listX+bw+8,h-94,bw,"Edit",edit)
 		button(c,"toggle",listX+(bw+8)*2,h-94,bw,"On / off",function() if selectedEntry then local rule=copyTable(selectedEntry.rule)
 			if selectedEntry.base then rule.text=rule.text:gsub("^%a+",selectedEntry.block.action=="Show" and (profile.mode=="Ruthless" and "Minimal" or "Hide") or "Show");rule.enabled=true else rule.enabled=not rule.enabled end

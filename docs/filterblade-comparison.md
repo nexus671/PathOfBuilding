@@ -9,16 +9,16 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Guided start page | Campaign, early mapping and endgame cards | More character-specific starter presets |
 | Strictness presets | Seven pinned NeverSink levels | Updated through fork releases |
 | Game modes | Normal and Ruthless | No PoE 2 support; Softcore/Hardcore economy tiers are separate work |
-| Build auto-adjust | Reads saved crafts, planned gear, gems, resources and Atlas plans | Broader weapon/defence-family rules and stage-specific vendor recipes |
-| Campaign weapon selection | Exact target bases and linked socket groups | Full weapon-family and class preset selector |
-| Campaign armour selection | Exact target bases | Armour/evasion/ES family selection |
-| Campaign vendor rares | Base preset rules retained | Stage-by-stage recipe management |
+| Build auto-adjust | Reads saved crafts, planned gear, gems, resources and Atlas plans | More stage-specific vendor recipes |
+| Campaign weapon selection | Eighteen native families, equipped-family selection and progressive base-level windows | More character-specific class presets |
+| Campaign armour selection | Armour/evasion/ES combinations and Ward, with native base art | More starter presets |
+| Campaign vendor rares | Base preset rules plus level-bounded linked-colour, six-socket/link and quality-gem policies | More vendor recipes; no proceeds model |
 | Endgame build adjustment | Exact saved targets and Atlas pickups | Trade/SSF-specific policies |
 | Item overview and colour examples | Live scene using the compiled filter | Explanatory galleries for every item family |
-| Hierarchical customizer | Category sidebar, search, personal/base scope | Deeper subcategories and collapsible sections |
+| Hierarchical customizer | Category sidebar, search, personal/base/policy scope and collapsible compiled sections | Human-edited subcategories |
 | Base-filter rule browsing | Full parsed preset catalogue with styled examples | Human-edited descriptions for every source rule |
-| Category coverage | Fifteen families including cards, flasks, tinctures, jewels, recipes and special currency | Deeper nested sections |
-| Rule editing | Base edits create personal overrides | Explicit management of overlapping base overrides |
+| Category coverage | Sixteen families including cards, flasks, tinctures, jewels, recipes and special currency | Deeper nested sections |
+| Rule editing | Stable override identities across catalogue, matched rules and structure; provable shadowing diagnostics | Broader predicate-overlap analysis |
 | Show/hide toggles | Personal enable/disable; action editor | Per-category inclusion policies |
 | Rule order | Move personal rules up/down; base order preserved | Drag-and-drop ordering UI |
 | Currency tier lists | Custom/preset tier browsing, exact item movement, drag/drop, tier creation/removal/order | Economy-driven automatic reassignment |
@@ -41,7 +41,7 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Global one-click edits | Reversible declared font/colour, alert identity/volume, icon visibility and beam controls | More selective category transformations |
 | Shared modules | Portable named snapshots, cross-profile copy and explicit updates | Public discovery and module dependency graphs |
 | Review changes | Before/after rule and item-list review, priority-conflict diagnostics, undo/redo | Full source-file diff for imported bases |
-| Filter structure | Searchable parsed base rules; raw export inspection | A dedicated structure tree |
+| Filter structure | Dedicated compiled section/family tree, priority conflicts, exact block text and editing | Full source-file diff |
 | Test local filter | Original imported text retained; simulator evaluates it | Resolve external Import files explicitly |
 | Save/resume | Native Save/bundles, page drafts and two-slot local draft recovery | Further crash/restart field testing |
 | Cloud saved filters | Account list/import UI | FilterBlade cloud saves are not connected |
@@ -54,6 +54,6 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Validation | Native parser checks and account-server validation when authorised | Broader syntax coverage and live game validation |
 | Mobile layout | Desktop layouts tested at 960, 1024 and 1280 widths | Native PoB is not a mobile web app |
 
-The remaining offline depth includes family-based campaign policies, nested categories, selective bulk transformations, named sample sets and a source-file structure/diff view. Hosted economy updates remain separate service work. The release checklist tracks implementation and repeated workflow verification.
+The remaining offline depth includes selective bulk transformations, named sample sets, saved palettes and a full source-file diff view. Hosted economy updates remain separate service work. The release checklist tracks implementation and repeated workflow verification.
 
 Reference screenshots were captured outside the repository during the review. Third-party advertising scripts logged browser errors; the main anonymous customizer and simulator remained usable. No login, publication, purchase or subscription was performed.

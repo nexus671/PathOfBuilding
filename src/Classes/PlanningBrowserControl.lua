@@ -5,6 +5,7 @@ function M.Open(title,entries,options)
 	options=options or {}
 	local width=math.min(940,main.screenW-40);local height=math.min(660,main.screenH-60)
 	local left=math.floor((width-48)*0.46);local controls={};local filtered={};local selected;local detailCache={}
+	local page,pageSize=1,150
 	for _,entry in ipairs(entries) do entry.searchText=(entry.label.." "..(entry.search or "")):lower() end
 	local function button(key,x,y,w,label,run)
 		controls[key]=ui.styleButton(new("ButtonControl"):ButtonControl(ui.anchor,{x,y,w,28},label,run))
@@ -42,8 +43,9 @@ function M.Open(title,entries,options)
 				filtered[#filtered+1]=entry
 			end
 		end
-		local keep;for _,entry in ipairs(filtered) do if entry==selected then keep=entry end end;show(keep or filtered[1])
-		for i=1,math.min(150,#filtered) do
+		page=math.max(1,math.min(page,math.ceil(#filtered/pageSize)));local first=(page-1)*pageSize+1;local last=math.min(first+pageSize-1,#filtered)
+		local keep;for i=first,last do if filtered[i]==selected then keep=selected end end;show(keep or filtered[first])
+		for i=first,last do
 				local entry=filtered[i]
 				local color=entry==selected and "^xF3D89D" or "^xD5DEE8"
 				local label=(options.favorites and options.favorites[entry.id] and "* " or "")..entry.label
@@ -52,10 +54,14 @@ function M.Open(title,entries,options)
 				for _,line in ipairs(lines) do line[1]=color..StripEscapes(line[1]);line.entry=entry;list[#list+1]=line end
 				list[#list+1]={height=8,"",entry=entry}
 		end
-		controls.results.list=list;controls.count.label="^7"..#filtered..(#filtered>150 and " matches; first 150 shown. Refine search." or " results | Arrow keys: browse")
+		controls.results.list=list;controls.count.label="^7"..#filtered.." results | Page "..page.." / "..math.max(1,math.ceil(#filtered/pageSize))
 	end
 	controls.results.onClick=function(row) if row then show(row.line.entry);refresh() end end
-	controls.search.changeFunc=refresh;controls.category.selFunc=function() selected=nil;refresh() end
+	local function changed() page=1;selected=nil;controls.results.controls.scrollBar.offset=0;refresh() end
+	controls.search.changeFunc=changed;controls.category.selFunc=changed
+	local function turn(delta) page=page+delta;selected=nil;controls.results.controls.scrollBar.offset=0;refresh() end
+	button("previousPage",width-320,height-86,140,"Previous page",function() turn(-1) end);controls.previousPage.enabled=function() return page>1 end
+	button("nextPage",width-172,height-86,156,"Next page",function() turn(1) end);controls.nextPage.enabled=function() return page*pageSize<#filtered end
 	local function choose() if selected and options.choose then options.choose(selected);if options.closeOnChoose~=false then main:ClosePopup() end end end
 	button("choose",16,height-48,180,options.action or "Select",choose)
 	controls.choose.shown=options.choose~=nil;controls.choose.enabled=function() return selected~=nil end
@@ -74,7 +80,8 @@ function M.Open(title,entries,options)
 	function controls.search:OnKeyDown(key,...)
 		if key=="DOWN" or key=="UP" then
 			local index=1;for i,entry in ipairs(filtered) do if entry==selected then index=i end end
-			show(filtered[math.max(1,math.min(math.min(150,#filtered),index+(key=="DOWN" and 1 or -1)))]);refresh()
+			index=math.max(1,math.min(#filtered,index+(key=="DOWN" and 1 or -1)));local nextPage=math.floor((index-1)/pageSize)+1
+			if nextPage~=page then page=nextPage;controls.results.controls.scrollBar.offset=0 end;show(filtered[index]);refresh()
 			local offset=0;for _,line in ipairs(controls.results.list) do if line.entry==selected then break end;offset=offset+line.height end
 			local scroll=controls.results.controls.scrollBar;local _,h=controls.results:GetSize();if offset<scroll.offset or offset>scroll.offset+h-50 then scroll:SetOffset(math.max(0,offset-30)) end
 			return self

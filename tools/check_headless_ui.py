@@ -1,5 +1,6 @@
 """Exercise native controls and audit rendered frames without opening a window."""
 import argparse
+from concurrent.futures import ProcessPoolExecutor
 import hashlib
 import json
 import os
@@ -13,43 +14,7 @@ from update_crafting_currency_art import check as check_currency_art
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--lua", default="luajit", help="LuaJIT executable; defaults to PATH")
-    parser.add_argument("--output", type=Path, default=ROOT / "artifacts/headless-ui")
-    args = parser.parse_args()
-    check_currency_art()
-    args.output.mkdir(parents=True, exist_ok=True)
-    directory = Path(tempfile.mkdtemp(prefix="run-", dir=args.output.resolve()))
-    frames = directory / "frames"
-    frames.mkdir()
-    environment = dict(os.environ, LUA_PATH="../runtime/lua/?.lua;../runtime/lua/?/init.lua;;")
-    if os.name == "nt":
-        environment["LUA_CPATH"] = str(ROOT / "runtime/?.dll") + ";;"
-        environment["PATH"] = str(ROOT / "runtime") + os.pathsep + environment["PATH"]
-    result = subprocess.run([args.lua, "../tools/test_headless_ui.lua", str(frames)], cwd=ROOT / "src",
-                            env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    (directory / "controls.log").write_text(result.stdout)
-    assert result.returncode == 0, result.stdout
-    paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 561, f"Expected 561 UI frames, found {len(paths)}"
-    failures = []
-    for path in paths:
-        image, audit = render(json.loads(path.read_text()))
-        image.save(directory / (path.stem + ".png"))
-        (directory / (path.stem + ".audit.json")).write_text(json.dumps(audit, indent=2))
-        if any(audit[key] for key in ("lowContrast", "horizontalClipping", "controlClipping", "controlOverlaps")):
-            failures.append({"frame": path.name, "audit": audit})
-    negative = json.loads((directory / "expected-audit-failures.json").read_text())
-    image, audit = render(negative)
-    image.save(directory / "expected-audit-failures.png")
-    assert audit["lowContrast"] and audit["horizontalClipping"] and audit["controlOverlaps"], "UI audits failed to detect the deliberate bad fixture"
-    try:
-        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
-        dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).splitlines()
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        revision = environment.get("GITHUB_SHA")
-        dirty = None
+def source_hashes():
     sources = list((ROOT / "src/Classes").glob("*.lua")) + list((ROOT / "src/Modules").glob("*.lua"))
     sources += list((ROOT / "runtime/SimpleGraphic/Fonts").glob("*"))
     sources += list((ROOT / "src/Assets/Crafting").rglob("*"))
@@ -62,9 +27,56 @@ def main():
     sources += list((ROOT / "src/TreeData/3_30_preview").glob("*"))
     sources += [ROOT / "src/_SimpleGraphic.def.lua", ROOT / "src/GameVersions.lua", ROOT / "src/Data/HeadlessImageSizes.json"]
     sources += [ROOT / "src/HeadlessWrapper.lua", ROOT / "src/Data/Global.lua", Path(__file__), ROOT / "tools/render_headless_ui.py", ROOT / "tools/test_headless_ui.lua", ROOT / "tools/update_crafting_currency_art.py"]
-    hashes = {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(sources) if path.is_file()}
+    return {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(sources) if path.is_file()}
+
+
+def render_frame(path):
+    image, audit = render(json.loads(path.read_text()))
+    image.save(path.parent.parent / (path.stem + ".png"))
+    (path.parent.parent / (path.stem + ".audit.json")).write_text(json.dumps(audit, indent=2))
+    if any(audit[key] for key in ("lowContrast", "horizontalClipping", "controlClipping", "controlOverlaps")):
+        return {"frame": path.name, "audit": audit}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--lua", default="luajit", help="LuaJIT executable; defaults to PATH")
+    parser.add_argument("--output", type=Path, default=ROOT / "artifacts/headless-ui")
+    parser.add_argument("--workers", type=int, default=min(4, os.cpu_count() or 1), help="Parallel render processes (1 to 4)")
+    args = parser.parse_args()
+    assert 1 <= args.workers <= 4, "Use 1 to 4 render workers"
+    check_currency_art()
+    hashes = source_hashes()
+    args.output.mkdir(parents=True, exist_ok=True)
+    directory = Path(tempfile.mkdtemp(prefix="run-", dir=args.output.resolve()))
+    frames = directory / "frames"
+    frames.mkdir()
+    environment = dict(os.environ, LUA_PATH="../runtime/lua/?.lua;../runtime/lua/?/init.lua;;")
+    if os.name == "nt":
+        environment["LUA_CPATH"] = str(ROOT / "runtime/?.dll") + ";;"
+        environment["PATH"] = str(ROOT / "runtime") + os.pathsep + environment["PATH"]
+    result = subprocess.run([args.lua, "../tools/test_headless_ui.lua", str(frames)], cwd=ROOT / "src",
+                            env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    (directory / "controls.log").write_text(result.stdout)
+    assert result.returncode == 0, result.stdout
+    assert source_hashes() == hashes, "Source files changed during UI capture; repeat against stable sources"
+    paths = sorted(frames.glob("*.json"))
+    assert len(paths) == 573, f"Expected 573 UI frames, found {len(paths)}"
+    with ProcessPoolExecutor(max_workers=args.workers) as pool:
+        failures = [failure for failure in pool.map(render_frame, paths) if failure]
+    negative = json.loads((directory / "expected-audit-failures.json").read_text())
+    image, audit = render(negative)
+    image.save(directory / "expected-audit-failures.png")
+    assert audit["lowContrast"] and audit["horizontalClipping"] and audit["controlOverlaps"], "UI audits failed to detect the deliberate bad fixture"
+    try:
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
+        dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).splitlines()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        revision = environment.get("GITHUB_SHA")
+        dirty = None
+    assert source_hashes() == hashes, "Source files changed during UI rendering; repeat against stable sources"
     (directory / "report.json").write_text(json.dumps({"revision": revision, "workingTreeChanges": dirty,
-        "sourceHashes": hashes, "frames": len(paths), "failures": failures, "auditSelfTest": "passed",
+        "sourceHashes": hashes, "sourceStable": True, "frames": len(paths), "failures": failures, "auditSelfTest": "passed",
         "limitations": negative["limitations"]}, indent=2))
     print(f"Headless UI: {len(paths)} frames, {len(failures)} failures. Artifacts: {directory}")
     if failures:

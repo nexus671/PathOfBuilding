@@ -326,6 +326,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("viewSimulate");frame("filter-loot-pile");ui:click("drop2");frame("filter-selected-drop");ui:click("regenerate");ui:click("hidden");frame("filter-hidden-drops")
 	ui:click("viewStyle");ui:click("style2");ui:click("applyStyle");frame("filter-themes");ui:click("globalStyle");ui:choose("minimumFontSize","Minimum size 40","label");ui:choose("alertVolume","Mute filter alerts","label");ui:choose("disableEffects","Disable beams","label");ui:choose("alertId","Use alert 6","label");ui:text("textColor","FFE0A0FF");ui:text("borderColor","C0A060FF");ui:text("backgroundColor","101820FF");frame("filter-global-style");ui:click("keep");ui:click("viewOverview")
 	filterTool("Account filters");frame("filter-account");ui:click("createAccount");frame("filter-account-review");ui:click("cancel");ui:click("close")
+	filterTool("Campaign and base-family");frame("filter-campaign-empty");ui:click("weapons1");ui:click("defences3");ui:click("recipe1");frame("filter-campaign-selected");ui:click("keep")
+	local campaignDraft=build.planningWorkspace.cache.filters.layout.snapshot().data.profiles[1].campaign
+	assert(campaignDraft.weapons[1]=="Bow" and #campaignDraft.defences==1 and #campaignDraft.recipes==1,"Campaign pickup choices were not kept in the draft")
+	filterTool("Filter structure and priority");frame("filter-structure-all");ui:choose("mode","Priority conflicts");frame("filter-structure-conflicts");ui:click("close")
 	ui:click("export");frame("filter-export")
 	ui:text("directory",directory);ui:text("filename","ui-"..size[1]..".filter");ui:click("write");ui:click("close")
 	local exportedPath=directory.."/ui-"..size[1]..".filter";local exportedFile=assert(io.open(exportedPath,"rb"));local exportedText=exportedFile:read("*a");exportedFile:close();assert(exportedText:find("Covens pickup plan",1,true),"Exported filter lost its title")

@@ -1,6 +1,10 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Prevented recalculated full-DPS summaries from falsely invalidating AI proposals.
+* Added campaign base-family pickup policies, progressive upgrade windows and a compiled filter structure browser.
+* Fixed duplicate filter overrides across views, equipment/gem sample classes and repeated catalogue/dependency work.
+* Added full catalogue paging and faster, source-stable headless UI verification.
 * Added editable item tiers, reusable filter modules, clipboard samples, change review and local draft recovery.
 * Added full filter colour/alert/icon controls, priority-conflict diagnostics and links to changed build targets.
 * Added crafting modifier tables, target-group editing, draggable recipe routes, item inventory and budget charts.

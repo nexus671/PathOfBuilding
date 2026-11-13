@@ -9,6 +9,8 @@ The installed application and personal builds are outside this release workspace
 - [x] Reuse and share local rule modules between profiles.
 - [x] Review changes, undo/redo edits and recover interrupted drafts.
 - [x] Organise item families and explain provable rule priority conflicts.
+- [x] Configure campaign weapon/defence families and browse compiled source sections.
+- [x] Reach every shared catalogue result through paging.
 - [x] Test clipboard items, configure scene levels and revisit sample history.
 - [x] Expand shared colour/sound styling and preview every supported icon shape.
 
@@ -45,12 +47,19 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The local passes covered 1,068 Lua tests, 38 Node tests and the real MCP
-save/reopen workflow. The 561-frame UI pass had no layout or contrast failures.
-Final exact-commit CI and release review are still pending. These implementation
-checks do not mark the release complete.
+The current batch passed 1,082 Lua tests, 39 Node tests, the real MCP
+save/reopen workflow and 573 source-stable UI frames without audit failures.
+Mod-cache regeneration matches the committed data. Serial and parallel rendering
+produced identical pixels and audits for representative frames. Exact-commit CI
+and updater verification are required before publishing the checkpoint.
 
-Next: close source-verified socket/corruption/league gaps, add campaign-family
-filter policies and nested structure review, and repeat cross-tool performance,
+A read-only saved-build benchmark confirmed reversible tree edits and exposed a
+false revision change caused by reordered derived full-DPS rows; the regression
+is fixed. Foreground allocation plus recalculation measured 63-179 ms across five
+edits while recovery completed separately. Proposal preparation still takes
+several seconds on that build. These checks do not mark the release complete.
+
+Next: close source-verified socket/corruption/league gaps, add selective category
+styles, named sample sets and saved palettes, and repeat cross-tool performance,
 recovery and layout checks. The coverage guide continues to identify incomplete
 mechanics explicitly.

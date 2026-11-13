@@ -38,6 +38,7 @@ function M.validate(data)
 		if p.appearance~=nil then
 			entry.appearance=require("Modules.LootFilterAppearanceSettings").validate(p.appearance)
 		end
+		if p.campaign~=nil then entry.campaign=require("Modules.LootFilterCampaign").validate(p.campaign) end
 		entry.baseCommit=p.baseCommit and text(p.baseCommit,40,"template revision") or M.source().commit
 		if p.template then entry.template=text(p.template,M.limit,"imported filter");assert(#parser.parse(p.template).rules>0,"Imported filter has no rules") end
 		local seen={}
@@ -143,6 +144,7 @@ function M.compile(profile)
 	for _,r in ipairs(checked.rules) do if r.enabled then output[#output+1]="\n# PoB rule: "..r.title..(r.origin and " ["..r.origin.."]" or "");output[#output+1]=r.text end end
 	for _,tier in ipairs(checked.tiers or {}) do local rule=require("Modules.LootFilterEditing").rule(tier);if rule then output[#output+1]="\n# PoB rule: Tier / "..rule.title;output[#output+1]=rule.text end end
 	for _,module in ipairs(checked.modules or {}) do if module.enabled then for _,rule in ipairs(module.rules) do if rule.enabled then output[#output+1]="\n# PoB rule: "..module.title.." / "..rule.title;output[#output+1]=rule.text end end end end
+	for _,rule in ipairs(require("Modules.LootFilterCampaign").rules(checked.campaign,checked.theme)) do output[#output+1]="\n# PoB rule: Campaign / "..rule.title;output[#output+1]=rule.text end
 	-- New league items are shown until a later pinned base can tier them.
 	local patch=M.patch();local classes={};for class in pairs(patch.added) do classes[#classes+1]=class end;table.sort(classes)
 	for _,class in ipairs(classes) do local values={};for _,name in ipairs(patch.added[class]) do values[#values+1]=quote(name) end

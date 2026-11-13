@@ -14,6 +14,8 @@ function M.parse(raw,area)
 		base=names[#names]
 	end
 	local class=raw:match("Item Class: ([^\n]+)")
+	-- The clipboard's gem labels differ from the filter language's class names.
+	class=({["Active Skill Gems"]="Skill Gems",["Support Skill Gems"]="Support Gems"})[class] or class
 	local markers={};for line in raw:gmatch("[^\n]+") do markers[line]=true end
 	local mapped={normal="Normal",magic="Magic",rare="Rare",unique="Unique",relic="Unique",currency="Normal",gem="Normal",quest="Normal"}
 	local item={BaseType=base,Class=class,Rarity=assert(mapped[rarity:lower()],"Unsupported clipboard rarity"),AreaLevel=area,

@@ -62,6 +62,15 @@ test('queues full crafting inventory snapshots without imposing a count limit', 
   fs.rmSync(path.join(f.dir,'AI-build-request.json'));
   assert.throws(()=>f.call('propose_crafting_plan',{baseRevision:f.state.revision,project:{...project,inventory:[{...inventory[0],state:{rarity:'INVENTED',affixes:[]}}]}}),/arguments/);
 });
+
+test('accepts typed campaign pickup policies and rejects invented families', t => {
+  const f=fixture(t);const profile={id:'campaign',title:'Campaign',preset:'campaign',strictness:1,rules:[],campaign:{weapons:['Bow','Rune Dagger'],defences:['Energy shield'],recipes:['Quality gems'],minAreaLevel:1,maxAreaLevel:70,minLinks:3,upgradeWindow:15}};
+  f.call('export_loot_filter',{baseRevision:f.state.revision,profile});
+  const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.profile.campaign,profile.campaign);
+  for(const campaign of [{weapons:['Invented weapon']},{defences:['All armour']},{recipes:['Guaranteed profit']},{minLinks:7},{upgradeWindow:-1}]) {
+    assert.throws(()=>f.call('export_loot_filter',{baseRevision:f.state.revision,profile:{...profile,campaign}}),/arguments/);
+  }
+});
 test('reads journey resources and queues a reviewed replacement without applying', t => {
   const f=fixture(t);
   const journey={schemaVersion:1,milestones:[{id:'links',title:'Get links',kind:'gems',dependencies:[]}],wishlist:[],resources:[],ledger:[],stages:[]};
