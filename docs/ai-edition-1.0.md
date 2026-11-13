@@ -56,11 +56,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `1d599ac216fd920f23776d768a5cf4c4aa417703`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43381146749),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43381146782)).
-It passed 1,155 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
-711 source-stable UI states without audit failures. All 2,412 updater file hashes
+The latest verified checkpoint is `feef4a55be0690ed077d2895203d208c4f98d6b7`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43389479413),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43389479411)).
+It passed 1,162 Lua tests, 44 Node tests, the real MCP save/reopen workflow and
+732 source-stable UI states without audit failures. All 2,420 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
@@ -136,7 +136,7 @@ Local validation passed 1,155 Lua tests, the full MCP workflow and 711
 source-stable UI states without audit failures. Exact-commit CI passed, and its
 artifact source hashes were verified.
 
-The current review adds a native resource-price editor with searchable currency
+Preview 21 adds a native resource-price editor with searchable currency
 artwork, recipe-resource and quoted-resource views, source/date metadata and
 copying between gear projects. Quotes persist in builds and portable bundles.
 Native simulation, recipe comparison, fossil optimization and MCP use the same
@@ -148,7 +148,21 @@ actions; the editor does not invent ingredient quantities or fetch live prices.
 Local review passed 1,162 Lua tests, 44 Node tests, ModCache regeneration and
 the real MCP workflow. Regression checks cover zero/missing prices, aliases for
 all six influence currencies, overrides, project reuse and empty dictionaries.
-The final source-stable UI pass and exact-commit CI remain required.
+The final local and CI passes covered 732 source-stable UI states without audit
+failures. Exact-commit CI passed, and all artifact source hashes were verified.
+
+The current review checks the recovery worker's time budget before every
+simulation step. Previously it checked only once per eight steps, allowing a
+batch of expensive events to exceed the frame budget. Five paired native
+build edits preserve all recovery outputs, individual trial data and timeline
+data. The worst worker slice fell from 53 ms to 32 ms in that bounded run;
+total work remained similar. Individual events and collection pauses can
+still exceed the budget, and sustained desktop responsiveness remains unproven.
+
+The read-only command `luajit ../tools/benchmark_tree_responsiveness.lua
+path/to/build.xml 5`, run from `src` with the headless Lua environment, reports
+allocation, normal calculation and recovery-worker times. It restores each
+passive edit and checks the original revision without saving the supplied file.
 
 Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies

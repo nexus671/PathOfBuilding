@@ -68,13 +68,17 @@ describe("Finite combat windows", function()
 		options.window = options.window or 10
 		return time.survival(options)
 	end
-	it("preserves recovery results when suspended and resumed within a window",function()
+	it("preserves recovery results and checks the budget between expensive events",function()
+		local events=0
 		local function run(checkpoint)
 			return simulate({window=20,interval=0.1,rates={Life=1},checkpoint=checkpoint,
-				hit=function(p) p.Life=p.Life-0.1;return p end})
+				hit=function(p) events=events+1;p.Life=p.Life-0.1;return p end})
 		end
-		local expected=run();local yields=0;local result
-		local thread=coroutine.create(function() return run(function() yields=yields+1;coroutine.yield() end) end)
+		local expected=run();events=0;local yields=0;local result
+		local thread=coroutine.create(function() return run(function()
+			assert.is_true(events<=1,"Check the frame budget before processing another event")
+			events=0;yields=yields+1;coroutine.yield()
+		end) end)
 		while coroutine.status(thread)~="dead" do local ok,value=coroutine.resume(thread);assert.is_true(ok,tostring(value));result=value end
 		assert.is_true(yields>10);assert.are.same(expected,result)
 	end)

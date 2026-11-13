@@ -339,10 +339,9 @@ function M.survival(config)
 		return { time = at, hits = hits, survived = survived, pools = pools, attacks = attacks, attempts = attempts }
 	end
 	if config.observe then config.observe(0,pools,"Start") end
-	local checkpointSteps = 0
 	while t <= window do
-		checkpointSteps = checkpointSteps + 1
-		if config.checkpoint and checkpointSteps % 8 == 1 then config.checkpoint() end
+		-- A single event can be expensive; do not batch several past the frame budget.
+		if config.checkpoint then config.checkpoint() end
 		-- End ordinary leech at the full-pool boundary before simultaneous costs
 		-- or incoming hits can make the resource appear non-full again.
 		if config.leech then config.leech:rates(t, pools) end

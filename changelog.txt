@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Checked recovery simulation frame budgets between individual steps to reduce long background slices.
 * Added visual saved resource quotes with currency art, source/date metadata and reuse between gear projects, simulations, recipe comparisons and MCP.
 * Kept action price overrides with their selected action and prevented accidental price-unit relabelling.
 * Reduced AI snapshot pauses by avoiding active-item reparses and repeated XML parsing while preserving native save data and revision guards.

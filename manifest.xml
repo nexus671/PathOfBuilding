@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview21" />
+	<Version number="2.67.2-ai.preview22" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="8b130513e9cbc3f6613b3b7193158d441dced99a" />
+	<File name="changelog.txt" part="default" sha1="4651cb7662d5763d45f641e75bb0d271fcef5bd2" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1461,7 +1461,7 @@
 	<File name="Modules/CalcPerform.lua" part="program" sha1="cb878f894895b732d6da7756aa401efa5f3e592a" />
 	<File name="Modules/CalcSections.lua" part="program" sha1="60626e3e9d421098f815134feca6318a5d16df6d" />
 	<File name="Modules/CalcSetup.lua" part="program" sha1="5935f570df5f88a88f0cfe683e1aa96a5cf1153f" />
-	<File name="Modules/CalcTime.lua" part="program" sha1="7579bffb40be5135469fe4565bde3f5d955ffb4b" />
+	<File name="Modules/CalcTime.lua" part="program" sha1="961767bb5c4d11391243b30a35ffc5820896c352" />
 	<File name="Modules/CalcTools.lua" part="program" sha1="6d39e85eef9e3c71a9aa2e11e7031848f4c2fb9f" />
 	<File name="Modules/CalcTriggers.lua" part="program" sha1="34e19cf6f5abb5d95cd78dadf6e512c580e9b020" />
 	<File name="Modules/Calcs.lua" part="program" sha1="8122ed45868c0b2cff7737c1e2db0e49daa7dd6e" />
