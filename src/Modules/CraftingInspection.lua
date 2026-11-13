@@ -15,7 +15,7 @@ function M.modDetails(model,id,entry)
 	if mod.tags and #mod.tags>0 then lines[#lines+1]="Tags: "..table.concat(mod.tags,", ") end
 	if entry then
 		lines[#lines+1]=entry.fractured and "Fractured: protected from ordinary rerolls." or entry.crafted and "Crafted modifier: uses a bench-crafted slot." or "Natural explicit modifier."
-		for _,line in ipairs(mod) do lines[#lines+1]="Current: "..itemLib.applyRange(line,entry.range or 0.5) end
+		for _,line in ipairs(sim.rolledLines(mod,entry.range)) do lines[#lines+1]="Current: "..line end
 	end
 	return lines
 end
@@ -27,7 +27,7 @@ end
 local function values(model,state)
 	local result={}
 	for _,entry in ipairs(state.affixes) do
-		local texts={};for _,line in ipairs(model.byId[entry.id]) do texts[#texts+1]=itemLib.applyRange(line,entry.range or 0.5) end
+		local texts=sim.rolledLines(model.byId[entry.id],entry.range)
 		result[entry.id]=table.concat(texts," / ")..(entry.fractured and " [fractured]" or entry.crafted and " [crafted]" or "")
 	end
 	return result
@@ -45,7 +45,7 @@ end
 function M.category(method)
 	if method:find("harvest",1,true) then return "Harvest" elseif method:find("beast",1,true) or method=="restore_imprint" then return "Bestiary"
 	elseif method:find("eldritch",1,true) then return "Eldritch" elseif method:find("bench",1,true) or method=="remove_crafted" then return "Bench"
-	elseif method:find("socket",1,true) or method=="chromatic" or method=="jeweller" or method=="fusing" then return "Sockets"
+	elseif method:find("socket",1,true) or method=="chromatic" or method=="jeweller" or method=="fusing" or method=="omen_connections" then return "Sockets"
 	elseif method:find("ducat",1,true) or method:find("memory",1,true) or method:find("recombine",1,true) then return "Special mechanics"
 	elseif method=="essence" or method=="fossil" then return "Essences and fossils" else return "Currency" end
 end

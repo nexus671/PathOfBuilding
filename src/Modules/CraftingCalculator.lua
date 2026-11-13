@@ -6,6 +6,14 @@ function C.extend(M)
 	function M.calculate(raw,craft,targets,initialState,options)
 		options=options or {}
 		local method=M.baseCurrency(craft)
+		if (method=="socket_bench" or method=="omen_connections") and not craft.allflame then
+			M.validateRecipe({steps={craft},targets=targets,requirements=options.requirements,requiredGroups=options.requiredGroups})
+			local model=M.model(raw);local result=M.perform(raw,craft,options.seed,initialState)
+			local hit=M.matches(result.state,targets,nil,model,options.requirements,options.requiredGroups)
+			return {exactFor="One deterministic socket craft on the supplied item",sampled=false,successChance=hit and 100 or 0,
+				totalWeight=1,matchingWeight=hit and 1 or 0,sampleState=result.state,sampleItem=result.itemText,
+				outcomes={{chance=100,weight=1,matches=hit,text=M.labels[method],state=result.state}},dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
+		end
 		local sampled=not finite[method] or options.requirements~=nil or options.requiredGroups~=nil
 		for _,list in ipairs({targets,craft.allflame and craft.allflame.preferredTargets or {}}) do
 			for _,group in ipairs(list) do if group.minRoll ~= nil then sampled=true end end

@@ -311,7 +311,7 @@ test('keeps Atlas proposals in the desktop review flow and rejects unsupported v
 
 test('queues advanced crafting states and rejects untyped execution data', t => {
   const f=fixture(t);
-  const args={baseRevision:f.state.revision,itemText:craftingProject().startingItem,action:{method:'fossil',fossils:['Metadata/Items/Currency/CurrencyDelveCraftingLife']},initialState:{rarity:'RARE',affixes:[],influences:[],quality:20,sockets:[{color:'W',group:0}],catalyst:8,catalystQuality:20}};
+  const args={baseRevision:f.state.revision,itemText:craftingProject().startingItem,action:{method:'fossil',fossils:['Metadata/Items/Currency/CurrencyDelveCraftingLife']},initialState:{rarity:'RARE',affixes:[],influences:[],quality:20,sockets:[{color:'W',group:0}],catalyst:8,catalystQuality:20,baseImplicitRanges:[[0,1]]}};
   f.call('apply_crafting_action',args);
   const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
   assert.deepEqual(queued.initialState,args.initialState);

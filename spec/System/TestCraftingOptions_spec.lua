@@ -118,6 +118,11 @@ describe("State-aware crafting choices",function()
 	it("materializes independent implicit ranges without changing their saved rolls",function()
 		local lines=sim.rolledLines({"Adds (1-3) to (4-6) Fire Damage","+(10-20) to maximum Life"},{0,1,0.5})
 		assert.are.same({"Adds 1 to 6 Fire Damage","+15 to maximum Life"},lines)
+		local ring=model("Steel Ring");local blessed=sim.perform(ring.raw,{method="blessed"},1)
+		assert.are.equal("table",type(blessed.state.baseImplicitRanges[1]));assert.is_truthy(sim.toItem(ring,blessed.state).raw)
+		for _,invalid in ipairs({{{-0.1,0.5}},{{0.5,1.1}},{{}},{{"invalid"}}}) do
+			local state=copyTable(blessed.state);state.baseImplicitRanges=invalid;assert.is_false(pcall(sim.validateState,ring,state))
+		end
 		local m=model("Rusted Sword")
 		for _,method in ipairs({"vaal","locus"}) do for seed=1,10 do
 			local result=sim.perform(m.raw,{method=method},seed)

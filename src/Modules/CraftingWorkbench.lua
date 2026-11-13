@@ -138,9 +138,9 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 					groupIndex=groupIndex+1
 				else wrap(lines,marker,entry.fractured and "^xD6B677" or "^xA6B3C6",w-30) end
 				local firstMod=#lines+1
-				for _,line in ipairs(context.byId[entry.id] or {}) do
+				for _,line in ipairs(simulator.rolledLines(context.byId[entry.id] or {},entry.range)) do
 					local first=#lines+1
-					wrap(lines,itemLib.applyRange(line,entry.range or 0.5),entry.fractured and "^xD6B677" or entry.crafted and "^xB4B4FF" or "^x8888FF",w-(options.compact and 98 or 30))
+					wrap(lines,line,entry.fractured and "^xD6B677" or entry.crafted and "^xB4B4FF" or "^x8888FF",w-(options.compact and 98 or 30))
 					for i=first,#lines do lines[i].affixId=entry.id end
 					if options.changedAffixes and options.changedAffixes()[entry.id] then for i=first,#lines do lines[i][1]="^x92D39C"..StripEscapes(lines[i][1]);lines[i].changed=true end end
 				end
@@ -166,7 +166,7 @@ local currencies={
 	{"transmute","Transmute"},{"alteration","Alteration"},{"augmentation","Augment"},{"regal","Regal"},{"alchemy","Alchemy"},{"chaos","Chaos"},
 	{"exalt","Exalted"},{"annul","Annul"},{"scour","Scour"},{"divine","Divine"},{"vaal","Vaal"},{"chromatic","Chromatic"},
 }
-local descriptions={transmute="Add magic modifiers to a normal item.",alteration="Reroll the modifiers on a magic item.",augmentation="Add a modifier to a magic item.",regal="Upgrade a magic item and add a modifier.",alchemy="Turn a normal item into a rare item.",chaos="Reroll the modifiers on a rare item.",exalt="Add a modifier to a rare item.",annul="Remove a random modifier.",scour="Remove the item's modifiers.",divine="Reroll the values of existing modifiers.",vaal="Corrupt the item. Outcomes can be destructive.",chromatic="Reroll socket colours."}
+local descriptions={omen_connections="Fully link existing sockets. Uses one Omen of Connections and one Orb of Fusing.",transmute="Add magic modifiers to a normal item.",alteration="Reroll the modifiers on a magic item.",augmentation="Add a modifier to a magic item.",regal="Upgrade a magic item and add a modifier.",alchemy="Turn a normal item into a rare item.",chaos="Reroll the modifiers on a rare item.",exalt="Add a modifier to a rare item.",annul="Remove a random modifier.",scour="Remove the item's modifiers.",divine="Reroll the values of existing modifiers.",vaal="Corrupt the item. Outcomes can be destructive.",chromatic="Reroll socket colours."}
 local currencyArt,currencyNames
 function M.icon(method,action,model)
 	if not currencyArt then

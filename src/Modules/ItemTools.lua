@@ -428,6 +428,25 @@ function itemLib.applyRange(line, range, valueScalar, baseValueScalar)
 	end
 end
 
+-- Scalars and legacy singleton vectors apply to the whole modifier.
+-- Independent vectors advance across all lines.
+function itemLib.applyModRanges(mod, range)
+	if type(range) == "table" and #range == 1 then range = range[1] end
+	local lines, index = { }, 0
+	for _, line in ipairs(mod) do
+		local values = range
+		if type(range) == "table" then
+			values = { }
+			for _ in line:gmatch("%(%-?%d+%.?%d*%-%-?%d+%.?%d*%)") do
+				index = index + 1
+				values[#values + 1] = range[index] or 0.5
+			end
+		end
+		lines[#lines + 1] = itemLib.applyRange(line, values or 0.5)
+	end
+	return lines
+end
+
 function itemLib.isModLineScalable(line, range, valueScalar)
 	return itemLib.applyRange(line, range, valueScalar, 1) ~= itemLib.applyRange(line, range, valueScalar, 2)
 end

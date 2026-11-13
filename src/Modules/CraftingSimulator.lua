@@ -54,20 +54,8 @@ local function counts(model,state)
 	return result
 end
 
--- A modifier can roll several ranges across several lines. Native mod-line
--- serialization accepts a scalar range only, so materialize each rolled line.
-function M.rolledLines(mod,range)
-	local lines,index={},0
-	for _,line in ipairs(mod) do
-		local values=range
-		if type(range)=="table" then
-			values={}
-			for _ in line:gmatch("%(%-?%d+%.?%d*%-%-?%d+%.?%d*%)") do index=index+1;values[#values+1]=range[index] or 0.5 end
-		end
-		lines[#lines+1]=itemLib.applyRange(line,values or 0.5)
-	end
-	return lines
-end
+-- Use the native renderer so every preview retains the same independent rolls.
+function M.rolledLines(mod,range) return itemLib.applyModRanges(mod,range) end
 
 function M.toItem(model,state)
 	local item=new("Item"):Item(model.raw)
@@ -94,7 +82,7 @@ function M.toItem(model,state)
 		hasBench=true
 		local mod=model.byId[entry.id]
 		item.requirements.level=math.max(item.requirements.level or 0,math.floor((mod.level or 0)*0.8))
-		for _,line in ipairs(mod) do item.explicitModLines[#item.explicitModLines+1]={line=itemLib.applyRange(line,entry.range or 0.5),crafted=true,fractured=entry.fractured,prefix=mod.type == "Prefix",suffix=mod.type == "Suffix"} end
+		for _,line in ipairs(M.rolledLines(mod,entry.range)) do item.explicitModLines[#item.explicitModLines+1]={line=line,crafted=true,fractured=entry.fractured,prefix=mod.type == "Prefix",suffix=mod.type == "Suffix"} end
 	end end
 	if hasBench then
 		for _,list in ipairs({item.prefixes,item.suffixes}) do for _,entry in ipairs(list) do if type(entry.range) == "number" then entry.range={entry.range} end end end

@@ -2132,8 +2132,7 @@ function ItemClass:Craft()
 					self.nameSuffix = self.nameSuffix .. " " .. mod.affix
 				end
 				self.requirements.level = m_max(self.requirements.level or 0, m_floor(mod.level * 0.8))
-				for i, line in ipairs(mod) do
-					line = itemLib.applyRange(line, affix.range or 0.5)
+				for i, line in ipairs(itemLib.applyModRanges(mod, affix.range)) do
 					local order = mod.statOrder[i]
 					if statOrder[order] then
 						-- Combine stats

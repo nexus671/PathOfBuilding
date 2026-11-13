@@ -2,9 +2,19 @@
 -- Current colour model follows Siveran's CC0 calculator (3.29).
 local S={}
 function S.extend(M,A,api)
-	local methods={chromatic="Chromatic Orb",socket_colour_bench="Bench: non-white sockets",tainted_chromatic="Tainted Chromatic Orb",tainted_jeweller="Tainted Jeweller's Orb",tainted_fusing="Tainted Orb of Fusing"}
+	local methods={omen_connections="Orb of Fusing + Omen of Connections",chromatic="Chromatic Orb",socket_colour_bench="Bench: non-white sockets",tainted_chromatic="Tainted Chromatic Orb",tainted_jeweller="Tainted Jeweller's Orb",tainted_fusing="Tainted Orb of Fusing"}
 	for method,label in pairs(methods) do M.methods[#M.methods+1]=method;M.labels[method]=label end;table.sort(M.methods)
 	local originalAction,originalOptions,originalPrice,originalComponents=M.action,M.actionOptions,M.priceKey,M.components
+	M.methodChecks.omen_connections=function(model,state)
+		local sockets=state.sockets or {}
+		if #sockets<2 then return "Add at least two sockets before linking." end
+		local linked=true
+		for _,socket in ipairs(sockets) do
+			if socket.color=="A" then return "Abyssal sockets need a separate socket model." end
+			linked=linked and socket.group==sockets[1].group
+		end
+		if linked then return "The item is already fully linked." end
+	end
 	local function colourWeights(model,tainted)
 		if tainted then return {1/3,1/3,1/3} end
 		local values={model.item.requirements.str or 0,model.item.requirements.dex or 0,model.item.requirements.int or 0}
@@ -30,7 +40,9 @@ function S.extend(M,A,api)
 		local state=copyTable(input);local sockets=state.sockets or {};state.sockets=sockets
 		assert(#sockets > 0,"This item has no sockets")
 		for _,socket in ipairs(sockets) do assert(socket.color ~= "A","Abyssal sockets need a separate socket model") end
-		if method == "tainted_jeweller" then
+		if method == "omen_connections" then
+			for _,socket in ipairs(sockets) do socket.group=0 end
+		elseif method == "tainted_jeweller" then
 			local limit=math.min(model.item.base.socketLimit or 0,model.item.itemLevel >= 50 and 6 or model.item.itemLevel >= 35 and 5 or model.item.itemLevel >= 25 and 4 or model.item.itemLevel >= 2 and 3 or 2)
 			if random() < 0.5 then if #sockets < limit then
 				local free=0;for _,socket in ipairs(sockets) do free=math.max(free,socket.group+1) end
@@ -68,12 +80,32 @@ function S.extend(M,A,api)
 	end
 	function M.priceKey(action) if action.method == "socket_colour_bench" then return action.method..":"..tostring(action.count) end;return originalPrice(action) end
 	function M.components(action,state)
+		if action.method == "omen_connections" then return {["Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks"]=1,["Metadata/Items/Currency/CurrencyRerollSocketLinks"]=1} end
 		if action.method == "socket_colour_bench" then
 			local amount=({[2]=5,[3]=20,[4]=75})[action.count]
 			local result={chromatic=amount};if state and state.corrupted then result["Metadata/Items/Currency/CurrencyCorrupt"]=amount end;return result
 		end
 		return originalComponents(action,state)
 	end
+	local catalog=M.catalog
+	function M.catalog(raw,query,limit,initialState)
+		local result=catalog(raw,query,limit,initialState);local model=M.model(raw)
+		local state=initialState and M.validateState(model,initialState) or model.initial
+		model=M.context(model,state);query=(query or ""):lower();result.socketCrafts={}
+		local available=require("Modules.CraftingAvailability").check
+		for _,method in ipairs({"socket_bench","omen_connections"}) do
+			local choices=method=="socket_bench" and M.actionOptions(model,state,method) or {{label=M.labels[method],action={method=method}}}
+			local allowed,reason=available(method,state,model)
+			for _,choice in ipairs(choices) do
+				if #result.socketCrafts<(limit or 50) and (method.." "..choice.label):lower():find(query,1,true) then
+					result.socketCrafts[#result.socketCrafts+1]={method=method,label=choice.label,action=copyTable(choice.action),
+						available=allowed,unavailableReason=not allowed and reason or nil,deterministic=true,components=M.components(choice.action,state)}
+				end
+			end
+		end
+		return result
+	end
+
 	M.limits[#M.limits+1]="Socket colours use Siveran's empirical 3.29 model, with attribute bias for ordinary Chromatics and uniform RGB for tainted Chromatics. Tainted socket/link currencies assume 50/50 addition/removal; added sockets are white."
 end
 return S

@@ -636,6 +636,14 @@ function A.extend(M,api)
 		if state.veil then assert(type(state.veil.choices) == "table" and #state.veil.choices >= 1 and #state.veil.choices <= 3,"Invalid unveil choices"); for _,id in ipairs(state.veil.choices) do assert(model.special[id] and data.veiledMods[id],"Invalid unveil modifier") end end
 		for _,key in ipairs({"corrupted","mirrored"}) do assert(state[key] == nil or type(state[key]) == "boolean","Invalid item flag") end
 		if state.quality then api.integer(state.quality,0,30,"item quality") end
+		if state.baseImplicitRanges then
+			assert(type(state.baseImplicitRanges)=="table" and #state.baseImplicitRanges>0 and #state.baseImplicitRanges<=#model.item.implicitModLines,"Invalid base implicit range count")
+			for _,value in ipairs(state.baseImplicitRanges) do
+				local ranges=type(value)=="table" and value or {value}
+				assert(#ranges>0 and #ranges<=20,"Invalid base implicit roll count")
+				for _,range in ipairs(ranges) do assert(type(range)=="number" and range>=0 and range<=1,"Invalid base implicit roll") end
+			end
+		end
 		if state.sockets then
 			assert(type(state.sockets) == "table" and #state.sockets <= (model.item.base.socketLimit or 0),"Invalid socket count")
 			for _,socket in ipairs(state.sockets) do assert(contains({"R","G","B","W","A"},socket.color),"Invalid socket colour");api.integer(socket.group,0,6,"socket group") end

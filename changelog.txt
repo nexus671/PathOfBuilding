@@ -1,6 +1,9 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Preserved independent rolls across multi-line affixes in native items, imports, comparisons and crafting previews.
+* Added Omen-assisted linking, exact socket calculations and discoverable socket-service costs through MCP.
+* Accepted and validated independently rolled Blessed Orb values across the native engine and MCP.
 * Fixed item previews for independently rolled corrupted and Eldritch implicits and Blessed Orb ranges.
 * Shared crafting prerequisites between menus and execution for Bestiary, Ducats, memory currencies and Dominance.
 * Matched bench, Essence and Harvest choices to the current item, retained valid selections and exposed availability through MCP.

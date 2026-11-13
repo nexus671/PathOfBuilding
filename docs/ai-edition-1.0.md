@@ -55,11 +55,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `454d4b5e166b5588597e1dcad1d0f2849225b362`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43370121611),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43370121602)).
-It passed 1,140 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
-687 source-stable UI states without audit failures. All 2,411 updater file hashes
+The latest verified checkpoint is `fb26bbe3f85022128980126dd845b5acf11191c6`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43373682281),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43373682094)).
+It passed 1,144 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
+696 source-stable UI states without audit failures. All 2,411 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
@@ -77,7 +77,7 @@ engine, catalogue and native selection tests pass. Full local validation passed
 MCP workflow verifies availability metadata on both normal and rare inputs.
 Exact-commit CI passed for preview 17, and its source hashes were verified.
 
-The next review extends shared prerequisites to Bestiary conversions and meta
+Preview 18 extends shared prerequisites to Bestiary conversions and meta
 crafts, Ducats, memory currencies, Dominance, Binding and Veiled Orbs. The expanded
 seven-base probe previously offered 162 actions that failed engine prerequisites.
 It now applies 340 available actions without errors, excluding crafts that require
@@ -88,14 +88,30 @@ lines now preserve each value without passing a range table to the scalar-only
 serializer; Eldritch and Blessed Orb lines use the same conversion. The corrected
 sweep applied all 3,400 actions without errors. Local validation passed 1,144 Lua
 tests, the real MCP workflow and 696 source-stable UI states without audit
-failures. Exact-commit CI remains required for this change.
+failures. Exact-commit CI passed, and its artifact source hashes were verified.
 
-A read-only saved-build benchmark returned identical synchronous/background
-results in 3.9 seconds each, with a 251 ms snapshot and an 18 ms worst worker
-slice. A separate instrumented run measured 37 ms worst, versus 142-163 ms before
-the added checkpoints. These bounded measurements do not establish sustained
-desktop responsiveness. Snapshot creation and occasional initialization pauses
-still need attention.
+The current review adds Omen of Connections with currency artwork, availability
+checks, undo and two-resource costs. Socket-service metadata lets MCP discover
+the action and costs; the native guide can combine a Harvest enchantment and
+guaranteed linking. Socket bench and Omen calculations return a single exact
+model outcome instead of a sampling interval. The MCP schema also accepts
+multi-value Blessed Orb rolls, with matching native validation. Local validation passed 1,151 Lua tests, 43 Node tests, the full MCP save/reopen
+workflow and 711 source-stable UI states without audit failures. Exact-commit
+CI remains required for this change.
+
+A follow-up modifier audit found that all 44 tested multi-line affixes reused
+the first roll on later lines. Native item crafting, plain import inference,
+bench modifiers and workbench comparisons now share the same range renderer.
+The corrected audit has no mismatches; scalar and legacy singleton rolls retain
+uniform behavior. The regression matrix also verifies native item round trips.
+
+The latest read-only saved-build benchmark returned equivalent synchronous and
+background results in 3.93 and 4.87 seconds, with a 250 ms snapshot and a 38 ms
+worst worker slice. Earlier runs measured about 3.9 seconds each, with 18-37 ms
+worst slices after adding checkpoints, versus 142-163 ms before them. These
+bounded, variable measurements do not establish sustained desktop
+responsiveness or exclude a performance regression. Snapshot creation and
+occasional initialization pauses still need attention.
 
 Complete the current availability regression checks, then repeat cross-tool performance and
 recovery checks. Close source-verified socket, corruption and league gaps without

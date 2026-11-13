@@ -238,6 +238,31 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		frame("crafting-corruption-independent-ranges");ui:click("close")
 	end
 
+	do
+		local socketRaw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: R-G B W-W R"
+		require("Classes.CraftingSimulatorControl").Open(build,{id="omen-links-ui",title="Guaranteed socket links",slot="Body Armour",startingItem=socketRaw,goals={},steps={},nativeRecipe={steps={{method="omen_connections"}},targets={},requirements={links=6}}})
+		ui:click("settings");ui:text("paletteSearch","Omen of Connections");assert(main.popups[1].controls.paletteUse:IsEnabled())
+		frame("crafting-omen-link-selection");ui:click("paletteUse");ui:click("item")
+		assert(main.popups[1].controls.intro.label:find("Applied Orb of Fusing",1,true),"Omen-assisted linking did not apply")
+		assert(not main.popups[1].controls.apply:IsEnabled(),"A fully linked item accepts another linking Omen")
+		frame("crafting-omen-linked");ui:click("undo");assert(main.popups[1].controls.apply:IsEnabled())
+		frame("crafting-omen-link-undone");ui:click("tab_settings");ui:click("exact")
+		local jobs=require("Modules.CraftingTasks");for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
+		assert(not jobs.job,"Guaranteed link calculation did not finish")
+		local lines={};for _,row in ipairs(main.popups[1].controls.resultSummary.list) do lines[#lines+1]=row[1] end
+		assert(table.concat(lines," "):find("deterministic socket craft",1,true),"Guaranteed linking was shown as a sampled estimate")
+		ui:click("tab_simulate");frame("crafting-omen-exact-links");ui:click("close")
+	end
+
+	do
+		local hybridRaw="Rarity: NORMAL\nIron Hat\nItem Level: 86";local m=sim.model(hybridRaw);local state=copyTable(m.initial)
+		state.rarity="RARE";state.affixes={{id="LocalBaseArmourAndLife1",range={0,1}}}
+		require("Classes.CraftingSimulatorControl").Open(build,{id="independent-affix-ui",title="Independent modifier rolls",slot="Helmet",startingItem=sim.toItem(m,state).raw,goals={},steps={}})
+		local found=false;for _,row in ipairs(main.popups[1].controls.itemMods.list) do if row[1]:find("23 to maximum Life",1,true) then found=true end end
+		assert(found,"The item card reused the Armour roll for maximum Life")
+		frame("crafting-independent-affix-lines");ui:click("close")
+	end
+
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

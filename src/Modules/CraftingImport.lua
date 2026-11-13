@@ -21,8 +21,8 @@ function I.resolve(M,model,state)
 	local rows={}
 	for _,line in ipairs(model.item.explicitModLines) do rows[#rows+1]={text=itemLib.applyRange(line.line,line.range or 0.5),crafted=line.crafted or false,fractured=line.fractured or false,prefix=line.prefix,suffix=line.suffix} end
 	local used={}
-	for _,entry in ipairs(state.affixes) do for _,template in ipairs(model.byId[entry.id]) do
-		local text=itemLib.applyRange(template,entry.range or 0.5);local found
+	for _,entry in ipairs(state.affixes) do for _,text in ipairs(M.rolledLines(model.byId[entry.id],entry.range)) do
+		local found
 		for i,row in ipairs(rows) do if not used[i] and row.text == text and row.crafted == (entry.crafted or false) and row.fractured == (entry.fractured or false) then found=i;break end end
 		assert(found,"A native modifier identity does not match the imported values")
 		used[found]=true
@@ -38,13 +38,12 @@ function I.resolve(M,model,state)
 				local already=false;for _,index in ipairs(indices) do if index == i then already=true end end
 				local inferred=not already and I.inferRange(template,row.text)
 				if inferred then
-					local compatible=true;for j,value in ipairs(inferred) do if ranges[j] and math.abs(ranges[j]-value) > 1e-6 then compatible=false end end
-					if compatible then found,values=i,inferred;break end
+					found,values=i,inferred;break
 				end
 			end end
 			if not found then return end
 			indices[#indices+1]=found;fractured=rows[found].fractured
-			for j,value in ipairs(values) do ranges[j]=value end
+			for _,value in ipairs(values) do ranges[#ranges+1]=value end
 		end
 		candidates[#candidates+1]={indices=indices,entry={id=id,range=#ranges == 0 and 0.5 or #ranges == 1 and ranges[1] or ranges,crafted=crafted or nil,fractured=fractured or nil}}
 	end
