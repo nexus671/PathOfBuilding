@@ -347,19 +347,38 @@ function A.extend(M,api)
 		if state.rarity~="RARE" then return {},"Requires a rare item." end
 		local augment=method=="harvest_augment"
 		if augment and baseInfluences(state) then return {},"Harvest augment requires a non-influenced item." end
-		local prepared=copyTable(state);local f=api.flags(model,state)
+		local prepared=copyTable(state);local f=api.flags(model,state);local partial=M.hasPartialLock(model,state)
 		if augment then
 			local removable=false
-			for _,entry in ipairs(state.affixes) do if not api.protected(entry,model.byId[entry.id],f) then removable=true;break end end
+			local function check(candidate)
+				for _,entry in ipairs(candidate.affixes) do if not api.protected(entry,model.byId[entry.id],f) then removable=true;return true end end
+			end
+			if partial then M.eachPartialSelection(model,state,check) else check(state) end
 			if not removable then return {},"Requires an original modifier that can be removed." end
-		else api.clear(model,prepared);prepared.rollBlock={attack=f.attack,caster=f.caster} end
-		local entries=pool(model,prepared);local result={}
-		for tag in pairs(tags) do if not augment or tag~="influence" then
-			local found=false
-			if prepared.memoryActive or prepared.memoryFoulborn then found=#pool(model,prepared,{tag=tag})>0
-			else for _,entry in ipairs(entries) do if hasTag(model,entry.id,tag) then found=true;break end end end
-			if found then result[#result+1]={label=tag,action={method=method,tag=tag}} end
-		end end
+		end
+		local available={}
+		local function collect(candidate)
+			local entries=pool(model,candidate)
+			for tag in pairs(tags) do if not available[tag] and (not augment or tag~="influence") then
+				local found=false
+				if candidate.memoryActive or candidate.memoryFoulborn then found=#pool(model,candidate,{tag=tag})>0
+				else for _,entry in ipairs(entries) do if hasTag(model,entry.id,tag) then found=true;break end end end
+				if found then available[tag]=true end
+			end end
+		end
+		if not augment and partial then
+			local seen={}
+			M.eachPartialSelection(model,state,function(candidate)
+				api.clear(model,candidate);candidate.rollBlock={attack=f.attack,caster=f.caster}
+				local ids={};for _,entry in ipairs(candidate.affixes) do ids[#ids+1]=entry.id end;table.sort(ids)
+				local key=table.concat(ids,"\0")
+				if not seen[key] then seen[key]=true;collect(candidate) end
+			end)
+		else
+			if not augment then api.clear(model,prepared);prepared.rollBlock={attack=f.attack,caster=f.caster} end
+			collect(prepared)
+		end
+		local result={};for tag in pairs(available) do result[#result+1]={label=tag,action={method=method,tag=tag}} end
 		table.sort(result,function(a,b) return a.label<b.label end)
 		return result,#result==0 and "No legal modifier is available for this craft." or nil
 	end
@@ -734,7 +753,9 @@ function A.extend(M,api)
 		for _,method in ipairs({"harvest_reforge","harvest_augment","harvest_resistance"}) do
 			local allowed,reason=available(method,state,model);local choices=allowed and M.actionOptions(model,state,method) or {};local selected={}
 			for i=1,math.max(0,math.min(limit or 50,#choices)) do selected[i]=copyTable(choices[i]);selected[i].priceKey=M.priceKey(selected[i].action) end
-			result.harvestOptions[#result.harvestOptions+1]={method=method,available=allowed,unavailableReason=not allowed and reason or nil,options=selected,total=#choices}
+			local conditional=allowed and (method=="harvest_reforge" or method=="harvest_augment") and M.hasPartialLock(M.context(model,state),state)
+			result.harvestOptions[#result.harvestOptions+1]={method=method,available=allowed,unavailableReason=not allowed and reason or nil,options=selected,total=#choices,
+				selectionNote=conditional and "A tag is offered if a modeled protection selection leaves a legal tagged modifier and removable original when required. Other selections or later rolls can fail." or nil}
 		end
 		if model.unresolvedEldritch then result.importWarning="At least one imported Eldritch implicit has an ambiguous tier; supply a structured implicit state before changing Eldritch implicits or using dominance." end
 		return result

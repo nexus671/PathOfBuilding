@@ -82,6 +82,18 @@ async function main(){
     const harvest=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method,tag:'fire'},initialState:partialSocketed.nativeCrafting.state,seed:19},'crafted');
     assert.ok(harvest.nativeCrafting.state.affixes.some(entry=>entry.id==='LocalAddedChaosDamage1'));assert.equal(harvest.nativeCrafting.warnings[0].code,'partial_lock_model');
   }
+  const harvestHat='Rarity: NORMAL\nIron Hat\nItem Level: 86';
+  const harvestHatStart={rarity:'RARE',affixes:[{id:'AttackerTakesDamage1',range:0.5}]};
+  const harvestHatLock=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:harvestHat,action:{method:'bench',modId:'bench:partial-prefix-1'},initialState:harvestHatStart},'crafted');
+  const harvestHatInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:harvestHat,initialState:harvestHatLock.nativeCrafting.state,limit:100},'inspected');
+  const harvestHatReforge=harvestHatInspection.crafting.nativeEngine.harvestOptions.find(entry=>entry.method==='harvest_reforge');
+  assert.match(harvestHatReforge.selectionNote,/Other selections or later rolls can fail/);const harvestHatOptions=harvestHatReforge.options;
+  assert.ok(harvestHatOptions.some(entry=>entry.label==='life'));assert.ok(!harvestHatOptions.some(entry=>entry.label==='physical'));
+  const multiInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:harvestHat,query:'Can have up to 3 Crafted Modifiers',limit:100},'inspected');
+  const multi=multiInspection.crafting.nativeEngine.bench.find(entry=>entry.text==='Can have up to 3 Crafted Modifiers');assert.ok(multi);
+  const protectedHat={rarity:'RARE',affixes:[{id:'bench:partial-suffix-2',crafted:true,range:0.5},{id:'bench:partial-prefix-1',crafted:true,range:0.5},{id:multi.id,crafted:true,range:0.5}]};
+  const protectedInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:harvestHat,initialState:protectedHat,limit:100},'inspected');
+  const blockedAugment=protectedInspection.crafting.nativeEngine.harvestOptions.find(entry=>entry.method==='harvest_augment');assert.equal(blockedAugment.available,false);assert.match(blockedAugment.unavailableReason,/modifier that can be removed/);
   assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.status,'historical');assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.availableInCore,false);assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.asOfPatch,'3.30');
   const enchantService=bodyInspection.crafting.nativeEngine.harvestEnchants.find(entry=>entry.id==='LifeBodyEnchant');
   assert.ok(bodyInspection.crafting.nativeEngine.nativeStats.Armour>0);

@@ -81,6 +81,18 @@ describe("3.30 partial affix locks",function()
 		assert.is_not_nil(multi)
 		local state={rarity="RARE",affixes={{id="bench:partial-suffix-2",crafted=true,range=0.5},{id="bench:partial-prefix-1",crafted=true,range=0.5},{id=multi,crafted=true,range=0.5}}}
 		assert.is_nil(sim.partialAnnulBranches(model,state))
+		local choices,reason=sim.harvestChoices(model,state,"harvest_augment")
+		assert.are.equal(0,#choices);assert.matches("modifier that can be removed",reason)
+		local allowed=require("Modules.CraftingAvailability").check("harvest_augment",state,model);assert.is_false(allowed)
+	end)
+	it("does not offer a reforge tag blocked in every partial-lock selection",function()
+		local hat="Rarity: NORMAL\nIron Hat\nItem Level: 86";local model=sim.model(hat)
+		local state=sim.validateState(model,{rarity="RARE",affixes={{id="AttackerTakesDamage1",range=0.5}}})
+		local locked=sim.perform(hat,{method="bench",modId=id},1,state).state;local before=copyTable(locked)
+		local choices=sim.harvestChoices(model,locked,"harvest_reforge");local found={}
+		for _,choice in ipairs(choices) do found[choice.label]=true end
+		assert.is_nil(found.physical);assert.is_true(found.life);assert.are.same(before,locked)
+		assert.is_false(pcall(sim.perform,hat,{method="harvest_reforge",tag="physical"},1,locked))
 	end)
 	it("counts failed Harvest transitions as failures even when the input already matches",function()
 		local model=sim.model(raw);local prefix
@@ -104,6 +116,8 @@ describe("3.30 partial affix locks",function()
 		local input={rarity="RARE",affixes={{id=ids[1],range=0.5,fractured=true},{id=ids[2],range=0.5},{id=ids[3],range=0.5}}}
 		local fracturedRaw=sim.toItem(model,input).raw;local fracturedModel=sim.model(fracturedRaw)
 		local locked=sim.perform(fracturedRaw,{method="bench",modId="bench:partial-prefix-2"},1,fracturedModel.initial).state
+		local choices=sim.harvestChoices(fracturedModel,locked,"harvest_reforge");local possible=false
+		for _,choice in ipairs(choices) do if choice.label=="defences" then possible=true end end;assert.is_true(possible)
 		local seed;local encounter=require("Modules.CalcEncounter")
 		for candidate=1,1000 do
 			local value=encounter.seed(candidate,1,31);value=value*16807%2147483647;local first=value/2147483647

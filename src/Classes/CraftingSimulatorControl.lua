@@ -140,7 +140,8 @@ function Panel.Open(build,project,layout)
 			local selected=controls.option and controls.option:GetSelValue()
 			local id=selected and selected.action and selected.action.modId
 			if id and id:match("^bench:partial%-") or simulator.hasPartialLock(simulator.context(model,state),state) and workbench.available(controls.method:GetSelValueByKey("val"),state,model) then
-				hint="Experimental partial lock: random protection is modeled with assumed equal weights."
+				local method=controls.method:GetSelValueByKey("val")
+				hint=(method=="harvest_reforge" or method=="harvest_augment") and "Experimental lock: some protection selections may leave no legal Harvest outcome." or "Experimental partial lock: random protection is modeled with assumed equal weights."
 			end
 			controls.actionHint.list=ui.rows({hint},leftWidth-30,14)
 		end

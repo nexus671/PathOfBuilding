@@ -315,6 +315,23 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		assert(main.popups[1].controls.intro.label:find("Applied Harvest",1,true),"Harvest reforge did not apply")
 		frame("crafting-partial-lock-harvest");ui:click("close")
 	end
+	do
+		local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86";local model=sim.model(raw)
+		local state=sim.validateState(model,{rarity="RARE",affixes={{id="AttackerTakesDamage1",range=0.5}}})
+		state=sim.perform(raw,{method="bench",modId="bench:partial-prefix-1"},1,state).state
+		require("Classes.CraftingSimulatorControl").Open(build,{id="partial-harvest-choices-ui",title="Partial lock Harvest choices",slot="Helmet",startingItem=raw,goals={},steps={},nativeRecipe={initialState=state,steps={},targets={}}})
+		ui:click("settings");ui:text("paletteSearch",sim.labels.harvest_reforge);assert(main.popups[1].controls.paletteUse:IsEnabled());ui:click("paletteUse")
+		local found={};for _,option in ipairs(main.popups[1].controls.option.list) do found[option.label]=true end
+		assert(not found.physical and found.life,"Harvest reforge options ignored protected modifier groups")
+		local explanation={};for _,row in ipairs(main.popups[1].controls.actionHint.list) do explanation[#explanation+1]=StripEscapes(row[1]) end;assert(table.concat(explanation," "):gsub("%s+"," "):find("no legal Harvest outcome",1,true),"Conditional Harvest availability was not explained")
+		frame("crafting-partial-harvest-choices");ui:click("close")
+		local multi;for _,entry in ipairs(model.bench) do if entry.mod[1]=="Can have up to 3 Crafted Modifiers" then multi=entry.id;break end end
+		local protected={rarity="RARE",affixes={{id="bench:partial-suffix-2",crafted=true,range=0.5},{id="bench:partial-prefix-1",crafted=true,range=0.5},{id=assert(multi),crafted=true,range=0.5}}}
+		require("Classes.CraftingSimulatorControl").Open(build,{id="partial-harvest-blocked-ui",title="Protected Harvest item",slot="Helmet",startingItem=raw,goals={},steps={},nativeRecipe={initialState=protected,steps={},targets={}}})
+		ui:click("settings");ui:text("paletteSearch",sim.labels.harvest_augment);assert(not main.popups[1].controls.paletteUse:IsEnabled(),"Fully protected Harvest augment was offered")
+		local hints={};for _,row in ipairs(main.popups[1].controls.paletteHint.list) do hints[#hints+1]=StripEscapes(row[1]) end;assert(table.concat(hints," "):gsub("%s+"," "):find("modifier that can be removed",1,true),"Protected-item reason was not explained")
+		frame("crafting-partial-harvest-unavailable");ui:click("close")
+	end
 
 	do
 		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86";local model=sim.model(raw)

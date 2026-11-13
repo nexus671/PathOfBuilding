@@ -249,34 +249,43 @@ function M.annulCandidates(model,state)
 	for index,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then eligible[#eligible+1]=index end end
 	return eligible
 end
--- Enumerate partial-lock selections using the same selection routine as an
--- action. Return nil if a selection leaves no removable modifier: that case
--- needs the normal transition-error handling rather than a fabricated outcome.
-function M.partialAnnulBranches(model,state)
+-- Visit each possible selection using the same routine as an action. The
+-- protected markers exist only while the callback is running.
+function M.eachPartialSelection(model,state,callback)
 	local f=flags(model,state);local sizes={}
 	for _,side in ipairs({"Prefix","Suffix"}) do if f[side] then
 		local n=0;for _,entry in ipairs(state.affixes) do if model.byId[entry.id].type==side then n=n+1 end end
 		for i=1,math.min(f[side],n) do sizes[#sizes+1]=n-i+1 end
 	end end
-	local result,draws={},{};local invalid=false
+	local draws={}
 	local function visit(depth,probability)
 		if depth<=#sizes then
 			local n=sizes[depth]
-			for i=1,n do draws[depth]=(i-0.5)/n;visit(depth+1,probability/n) end
+			for i=1,n do draws[depth]=(i-0.5)/n;if visit(depth+1,probability/n) then draws[depth]=nil;return true end end
 			draws[depth]=nil;return
 		end
 		local shadow=copyState(state);local cursor=0
 		selectPartialLocks(model,shadow,function() cursor=cursor+1;return assert(draws[cursor],"Missing partial-lock draw") end)
-		local eligible=M.annulCandidates(model,shadow)
+		local ok,stop=pcall(callback,shadow,probability,draws)
 		clearPartialLocks(shadow)
-		if #eligible==0 then invalid=true;return end
+		if not ok then error(stop) end
+		return stop==true
+	end
+	return visit(1,1)
+end
+-- Return nil if any selection leaves no removable modifier: that case needs
+-- transition-error handling rather than a fabricated Annulment outcome.
+function M.partialAnnulBranches(model,state)
+	local result={};local invalid=false
+	M.eachPartialSelection(model,state,function(shadow,probability,draws)
+		local eligible=M.annulCandidates(model,shadow)
+		if #eligible==0 then invalid=true;return true end
 		for i,index in ipairs(eligible) do
 			local branch=result[index]
 			if not branch then branch={index=index,probability=0,draws=copyTable(draws),removalDraw=(i-0.5)/#eligible};result[index]=branch end
 			branch.probability=branch.probability+probability/#eligible
 		end
-	end
-	visit(1,1)
+	end)
 	if invalid then return nil end
 	local ordered={};for _,branch in pairs(result) do ordered[#ordered+1]=branch end
 	table.sort(ordered,function(a,b) return a.index<b.index end);return ordered
