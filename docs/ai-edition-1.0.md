@@ -55,10 +55,10 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,126 Lua tests, 43 Node tests,
+The published preview passed exact-commit CI with 1,132 Lua tests, 43 Node tests,
 the real MCP save/reopen workflow and 672 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `67a4aaa9e8484c0ff58fd20997e95fe7cfb1b8f8`.
+against commit `a184cccb47c2228062d8877e44dbdf34ea0e9f9c`.
 That preview includes the native colour wheel, brightness/opacity controls,
 exact RGBA input and Ruthless validation. Native input tests also exposed and
 fixed campaign fields rejecting numeric entry. It also includes 14
@@ -82,13 +82,16 @@ conditions, the target editor and MCP inspection. A real MCP workflow verifies
 changed native Armour values after a Harvest enchantment and preserves that goal
 through save/reopen and bundle import.
 
-The next review makes XML parsing and candidate initialization cooperative,
+That preview makes XML parsing and candidate initialization cooperative,
 yields between calculation stages and skills, and checks recovery cancellation
 more frequently. It also explains Aspect crafts without a free suffix and Sacred
-Orbs without variable base defences before execution. Focused parsing, recovery,
-proposal and availability checks pass. Full local validation passed 1,132 Lua
-tests, the real MCP workflow and 672 source-stable UI states without audit
-failures; modifier-cache comparison passed. Exact-commit CI remains required.
+Orbs without variable base defences before execution.
+
+The next review separates shared item properties from modifier-group editing.
+The compact form preserves groups, group-count requirements and native stat
+goals. Full local validation passed 1,133 Lua tests and 675 source-stable UI
+states without audit failures. Native input at three sizes verifies both forms.
+Exact-commit CI remains required.
 The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.

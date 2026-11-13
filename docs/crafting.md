@@ -51,7 +51,7 @@ For recipes, Allflame prefers the outcome matching the most captured target grou
 
 ## Set targets
 
-Add a modifier on **Targets**. **Edit target groups** manages required groups (AND) and alternatives within each group (OR). Select a group to edit its counts, rolls and conditions; **Item properties** controls the final item:
+Add a modifier on **Targets**. **Edit target groups** manages required groups (AND) and alternatives within each group (OR). Select a group to edit its counts, rolls and conditions; **Item properties** opens a shorter form for shared final-item conditions and preserves the modifier groups:
 
 - Required or excluded modifiers, matching counts and minimum roll percentages.
 - Explicit or implicit modifiers, and how many groups must match.

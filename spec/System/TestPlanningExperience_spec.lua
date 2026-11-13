@@ -6,6 +6,18 @@ describe("Planning experience queries",function()
 	local function empty(version) return {id="test",title="Strategy",version=version or "3.29.1",budget=138,nodes={},notes=""} end
 	before_each(function() newBuild() end)
 	after_each(function() main.popups={} end)
+	it("edits shared item properties without changing or exposing a modifier group",function()
+		local groups={{anyOf={"example-a"},minRoll=0.75,fractured=true},{anyOf={"example-b"},atLeast=2}}
+		local before=copyTable(groups);local kept,properties,required
+		local c=require("Classes.CraftingTargetControl").Open(groups,{nativeStats={Armour=100}},1,function(a,b,d) kept=a;properties=b;required=d end,0)
+		assert.are.equal("Item properties",main.popups[1].title)
+		assert.is_false(c.fractured:IsShown());assert.is_false(c.count:IsShown());assert.is_false(c.groups:IsShown())
+		assert.is_true(c.minQuality:IsShown());c.minQuality:SetText("20");c.keep:Click()
+		assert.are.same(before,kept);assert.are.same(before,groups);assert.are.equal(1,required)
+		assert.are.equal(20,properties.minQuality);assert.are.equal(100,properties.nativeStats.Armour)
+		c=require("Classes.CraftingTargetControl").Open(groups,properties,required,function() end,2)
+		assert.is_true(c.fractured:IsShown());assert.is_true(c.count:IsShown());assert.are.equal("2",c.count.buf)
+	end)
 	it("shows validation messages without Lua source locations",function()
 		local text=require("Modules.PlanningUI").errorText
 		assert.are.equal("Enter a number",text("./Modules/CraftingSimulator.lua:73: Enter a number\nstack traceback:"))

@@ -60,9 +60,13 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep,groupIndex)
 	button("itemStats",250,552,224,"Weapon and defence goals",function()
 		require("Classes.CraftingItemStatsControl").Open(conditions.nativeStats,function(value) conditions.nativeStats=value end)
 	end)
-	if not group then for _,key in ipairs({"count","roll","mode","scope","fractured","crafted"}) do controls[key].enabled=false end end
+	if not group then
+		for _,key in ipairs({"count","countLabel","roll","rollLabel","mode","scope","groups","groupsLabel","fractured","crafted"}) do controls[key].enabled=false;controls[key].shown=false end
+		for _,control in pairs(controls) do if type(control.y)=="number" and control.y>=214 then control.y=control.y-150 end end
+		controls.keep.label="Keep item properties"
+	end
 	require("Modules.PlanningUI").style(controls,{keep=true})
-	main:OpenPopup(624,600,"Crafting target conditions",controls,nil,nil,"close")
+	main:OpenPopup(624,group and 600 or 450,group and "Crafting target conditions" or "Item properties",controls,nil,nil,"close")
 	return controls
 end
 return Panel

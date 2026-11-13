@@ -343,7 +343,7 @@ function Panel.Open(build,project,layout)
 		require("Classes.CraftingRecipeControl").Open(recipe,action(),function(result) draft.nativeRecipe=result;build.savers.CraftingProjects:Upsert(draft);refresh({"Recipe kept. Use build Save to persist."}) end,simulator.context(model,state))
 	end)
 	button(controls,"targetConditions",16,650,416,"Target counts, rolls and item properties",function()
-		require("Classes.CraftingTargetControl").Open(targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;refresh() end)
+		require("Classes.CraftingTargetControl").Open(targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;refresh() end,0)
 	end)
 	controls.targetConditions.width=200;controls.targetConditions.label="Item properties"
 	button(controls,"targetGroups",232,226,200,"Edit target groups",function()
