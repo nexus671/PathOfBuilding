@@ -5,6 +5,7 @@ local pricing=require("Modules.CraftingPrices")
 local ui=require("Modules.PlanningUI")
 local inspect=require("Modules.CraftingInspection")
 local browser=require("Classes.PlanningBrowserControl")
+local tasks=require("Modules.CraftingTasks")
 local Panel={ }
 local pageHints={["Target conditions"]="Choose the modifiers and item properties you want.",["Simulate recipe"]="Compare modeled chances and costs before keeping a recipe.",["Craft settings"]="Advanced methods, item edits and recipe settings."}
 local function button(controls,key,x,y,w,label,callback)
@@ -50,7 +51,7 @@ function Panel.Open(build,project,layout)
 	local controls,history,actions={},{},{}
 	local configured={}
 	local sequence=0
-	local lastSimulation,lastFossilComparison
+	local lastSimulation,lastSimulationRun,lastFossilComparison
 	local changedAffixes={}
 	local favorites=layout and (layout.favorites or layout.workbench and layout.workbench.favorites) or {}
 	if layout then layout.favorites=favorites end
@@ -59,13 +60,17 @@ function Panel.Open(build,project,layout)
 	if layout then layout.workbench=nil end
 	if restored then
 		state=restored.state;initial=restored.initial;targets=restored.targets;requirements=restored.requirements;requiredGroups=restored.requiredGroups
-		history=restored.history;actions=restored.actions;configured=restored.configured;sequence=restored.sequence;lastSimulation=restored.lastSimulation;lastFossilComparison=restored.lastFossilComparison
+		history=restored.history;actions=restored.actions;configured=restored.configured;sequence=restored.sequence;lastSimulation=restored.lastSimulation;lastSimulationRun=restored.lastSimulationRun;lastFossilComparison=restored.lastFossilComparison
 	end
 	local paletteOpen=restored and restored.paletteOpen or false
 	local inspectedId=restored and restored.inspectedId
 	local paletteView
 	local populateAffix
 	local action,overrideKey
+	local function actionName()
+		local selected=action()
+		return (selected.allflame and "Allflame " or "")..simulator.labels[selected.method]
+	end
 	local priceOverrides=copyTable(restored and restored.priceOverrides or {})
 	local width=layout and layout.width or math.min(1120,main.screenW-40)
 	local height=layout and layout.height or math.max(520,math.min(740,main.screenH-60))
@@ -101,6 +106,7 @@ function Panel.Open(build,project,layout)
 		if extra and controls.resultSummary then controls.resultSummary.list=rows(extra) end
 		local craftingPage=not controls.page or controls.page:GetSelValue()=="Emulate item"
 		local message=craftingPage and inspectedId and "Modifier details. Your working item stays in view." or craftingPage and paletteOpen and "Find an action without leaving your working item." or extra and extra[1] or controls.page and pageHints[controls.page:GetSelValue()] or "Select a currency, then click your item to craft."
+		if controls.page and controls.page:GetSelValue()=="Simulate recipe" then message="Selected action: "..actionName() end
 		controls.intro.label="^7"..ui.fit(message,leftWidth,14)
 		if controls.actionHint and controls.actionHint.list then controls.actionHint.list=ui.rows({workbench.hint(controls.method:GetSelValueByKey("val"),state,model)},leftWidth-30,14) end
 	end
@@ -325,19 +331,21 @@ function Panel.Open(build,project,layout)
 	edit(controls,"price",16,438,130,24,"","Override price",16)
 	edit(controls,"currency",162,438,130,24,"chaos","Unit",24)
 	edit(controls,"baseCost",308,438,124,24,"","Base cost",16)
-	local function showSimulation(recipe,fromInitial)
-		local budget=assert(tonumber(controls.budget.buf),"Invalid action budget")
-		local actionPrices=pricing.actionOverride(simulator.priceKey(action()),
-			controls.price.buf~="" and assert(tonumber(controls.price.buf),"Invalid action price") or nil)
-		local options={retainSuccesses=10,baseCost=controls.baseCost.buf ~= "" and assert(tonumber(controls.baseCost.buf),"Invalid starting item cost") or 0,trials=assert(tonumber(controls.trials.buf),"Invalid trial count"),maxActions=budget,seed=assert(tonumber(controls.seed.buf),"Invalid seed"),
-			initialState=copyTable(fromInitial and initial or state),actionPrices=actionPrices,priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf}
-		local capturedRecipe=copyTable(recipe)
-		require("Modules.CraftingTasks").start(build,function(checkpoint)
-			options.checkpoint=checkpoint;return simulator.simulate(draft.startingItem,capturedRecipe,options)
+	local function capturedSettings(request)
+		local options=request.options
+		return "Captured: "..options.maxActions..(options.maxActions==1 and " action/trial" or " actions/trial").." | seed "..options.seed
+	end
+	local function startSimulation(request)
+		local captured=copyTable(request)
+		local options=copyTable(captured.options)
+		local job=tasks.start(build,function(checkpoint)
+			options.checkpoint=checkpoint;return simulator.simulate(captured.raw,copyTable(captured.recipe),options)
 		end,function(result)
-			lastSimulation=result
+			lastSimulation=result;lastSimulationRun=captured
 			local lines={string.format("Modeled successes: %d / %d (%.2f%%)",result.successes,result.trials,result.successChance),
 				result.meanCost~=nil and string.format("Mean spent: %.2f %s",result.meanCost,result.costCurrency) or "Cost unavailable: some executed actions have no supplied price.",
+				captured.label,
+				capturedSettings(captured),
 				string.format("95%% sampling interval: %.2f%% to %.2f%%",result.confidenceLow,result.confidenceHigh),string.format("Mean attempted actions: %.2f",result.meanActions)}
 			if result.priceSource then lines[#lines+1]="Quotes: "..result.priceSource.." | "..os.date("%Y-%m-%d",result.priceQuotedAt) end
 			if result.actionPriceOverridesSupplied then
@@ -348,7 +356,16 @@ function Panel.Open(build,project,layout)
 			for message,count in pairsSortByKey(result.transitionErrors) do lines[#lines+1]="Failed transitions: "..count.." | "..message end
 			refresh(lines)
 		end,function(message) refresh({message}) end,function(progress) controls.resultSummary.list=rows({"Simulation running: trial "..progress.trial.." / "..progress.trials}) end)
+		job.owner=controls
 		refresh({"Simulation queued. You can cancel it below."})
+	end
+	local function showSimulation(recipe,fromInitial)
+		local budget=assert(tonumber(controls.budget.buf),"Invalid action budget")
+		local actionPrices=pricing.actionOverride(simulator.priceKey(action()),
+			controls.price.buf~="" and assert(tonumber(controls.price.buf),"Invalid action price") or nil)
+		local options={retainSuccesses=10,baseCost=controls.baseCost.buf ~= "" and assert(tonumber(controls.baseCost.buf),"Invalid starting item cost") or 0,trials=assert(tonumber(controls.trials.buf),"Invalid trial count"),maxActions=budget,seed=assert(tonumber(controls.seed.buf),"Invalid seed"),
+			initialState=copyTable(fromInitial and initial or state),actionPrices=actionPrices,priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf}
+		startSimulation({raw=draft.startingItem,recipe=recipe,options=options,label=fromInitial and "Saved recipe | original starting item" or "Selected action: "..actionName()})
 	end
 	button(controls,"simulate",16,486,200,"Simulate action",function()
 		local a=action();local attempts=assert(tonumber(controls.budget.buf),"Invalid budget");a.maxAttempts=math.min(200,attempts); a.untilTargets=#targets > 0 and copyTable(targets) or nil;a.untilRequirements=(requirements and copyTable(requirements) or nil)
@@ -399,16 +416,17 @@ function Panel.Open(build,project,layout)
 		local selected=action();assert(selected.method == "fossil" and selected.fossils,"Configure a fossil combination first")
 		local options={priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf,fossils=copyTable(selected.fossils),initialState=copyTable(state),maxSockets=#selected.fossils,requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups,trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
 		local captured=copyTable(targets)
-		require("Modules.CraftingTasks").start(build,function(checkpoint) options.checkpoint=checkpoint;return simulator.optimizeFossils(draft.startingItem,captured,options) end,function(result)
+		local job=tasks.start(build,function(checkpoint) options.checkpoint=checkpoint;return simulator.optimizeFossils(draft.startingItem,captured,options) end,function(result)
 			lastFossilComparison=result
 			refresh({"Compared "..#result.combinations.." ordinary fossil subsets. Open Fossil results to review captured chances and costs."})
 			showFossilComparison()
 		end,function(message) refresh({message}) end,function(progress) refresh({"Fossil combination "..progress.combination.." / "..progress.combinations}) end)
+		job.owner=controls
 	end)
 	button(controls,"exact",232,574,200,"Calculate action odds",function()
 		local craft=action();local captured=copyTable(state);local capturedTargets=copyTable(targets)
 		local options={trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf)),requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups}
-		require("Modules.CraftingTasks").start(build,function(checkpoint)
+		local job=tasks.start(build,function(checkpoint)
 			options.checkpoint=checkpoint;return simulator.calculate(draft.startingItem,craft,capturedTargets,captured,options)
 		end,function(result)
 			local lines={string.format("Target chance under model: %.6f%%",result.successChance),result.exactFor or result.estimateFor}
@@ -416,9 +434,11 @@ function Panel.Open(build,project,layout)
 			for _,entry in ipairs(result.outcomes) do if entry.matches then lines[#lines+1]=string.format("%.6f%% | %s",entry.chance,entry.text or "Finite item outcome") end end
 			refresh(lines)
 		end,function(message) refresh({message}) end,function(progress) refresh({"Calculating odds: trial "..progress.trial.." / "..progress.trials}) end)
+		job.owner=controls
 	end)
 	button(controls,"distribution",448,height-48,140,"Results / distribution",function()
 		local result=assert(lastSimulation,"Run a simulation first")
+		local request=lastSimulationRun and copyTable(lastSimulationRun)
 		local lines={{height=24,"Attempted actions per trial (all trials, including failures)"}}
 		for _,bucket in ipairs(result.actionDistribution) do
 			lines[#lines+1]={height=20,string.format("%4d | %s %d trials, %d successes",bucket.actions,string.rep("|",math.max(1,math.floor(bucket.trials/result.trials*50))),bucket.trials,bucket.successes)}
@@ -448,7 +468,10 @@ function Panel.Open(build,project,layout)
 		ui.card(popup,"attemptCard",227,28,cardWidth,"MEAN ACTIONS",string.format("%.1f",result.meanActions),"All trials, including failures")
 		ui.card(popup,"costCard",438,28,cardWidth,"MEAN SPENDING",result.meanCost and string.format("%.2f",result.meanCost) or "Not priced",result.meanCost and result.costCurrency or "Unpriced actions")
 		ui.card(popup,"intervalCard",649,28,195,"95% INTERVAL",string.format("%.1f-%.1f%%",result.confidenceLow,result.confidenceHigh),"Sampling uncertainty")
-		ui.description(popup,"precision",16,132,828,32,{(result.trials<100 or result.confidenceHigh-result.confidenceLow>10) and "Imprecise estimate: run more trials before choosing a crafting route." or "Results describe the captured starting item, targets and supplied prices."},15)
+		local precision={}
+		if request then precision[#precision+1]=request.label.." | "..capturedSettings(request) end
+		precision[#precision+1]=(result.trials<100 or result.confidenceHigh-result.confidenceLow>10) and "Imprecise estimate: run more trials before choosing a crafting route." or "Results describe the captured starting item, targets and supplied prices."
+		ui.description(popup,"precision",16,132,828,40,precision,14)
 		for index,entry in ipairs({{"medianSpend","MEDIAN SPEND","p50"},{"unluckySpend","90TH PERCENTILE","p90"},{"veryUnluckySpend","99TH PERCENTILE","p99"}}) do
 			local values=result.spendingQuantiles;local value=values and string.format("%.2f",values[entry[3]]) or "Not priced"
 			ui.card(popup,entry[1],16+(index-1)*282,174,264,entry[2],value,values and result.costCurrency or "Supply every action price")
@@ -473,15 +496,18 @@ function Panel.Open(build,project,layout)
 		popup.sample.enabled=result.sampleItem~=nil
 		button(popup,"charts",484,resultHeight-42,220,"Explore charts",function() require("Classes.CraftingChartsControl").Open({{label=draft.title,result=result}}) end)
 		button(popup,"moreTrials",16,resultHeight-42,220,"Run more trials",function()
-			local budget=math.max(1,tonumber(controls.budget.buf) or 1);controls.trials:SetText(tostring(math.min(2000,math.floor(20000/budget),math.max(32,result.trials*4))));main:ClosePopup();controls.simulate:Click()
+			assert(request,"Run a fresh simulation to capture its setup")
+			request.options.trials=math.min(2000,math.floor(20000/request.options.maxActions),math.max(32,result.trials*4))
+			controls.trials:SetText(tostring(request.options.trials));main:ClosePopup();startSimulation(request)
 		end)
-		popup.moreTrials.enabled=result.trials<math.min(2000,math.floor(20000/math.max(1,tonumber(controls.budget.buf) or 1)))
+		popup.moreTrials.enabled=function() return request~=nil and not tasks.job and result.trials<math.min(2000,math.floor(20000/request.options.maxActions)) end
+		popup.moreTrials.tooltipText=request and "Repeat this captured recipe, item, targets, seed and prices with more trials. Only the trial count changes." or "Run a fresh simulation to capture the setup for this older result."
 		ui.style(popup,{moreTrials=true})
 		main:OpenPopup(860,resultHeight,"Crafting simulation results",popup,nil,nil,"close")
 	end)
 	button(controls,"manual",16,448,416,"Edit hypothetical item",function()
 		require("Classes.CraftingItemEditorControl").Open(model,state,function(edited)
-			state=edited;initial=copyTable(edited);history={};actions={};lastSimulation=nil;changedAffixes={};ui.draft(build,"workingCraft")
+			state=edited;initial=copyTable(edited);history={};actions={};lastSimulation=nil;lastSimulationRun=nil;changedAffixes={};ui.draft(build,"workingCraft")
 			updateOptions();refresh({"Manual edits set a new recipe starting state."})
 		end)
 	end)
@@ -500,11 +526,14 @@ function Panel.Open(build,project,layout)
 	end)
 	controls.coverage.label=function() return "Rules "..tostring(simulator.dataPatch or "bundled") end
 	controls.coverage.tooltipText="View supported crafting methods and assumptions."
-	button(controls,"close",width-164,height-48,148,layout and "Back to projects" or "Close",function() if layout then layout.openProjects() else main:ClosePopup() end end)
+	button(controls,"close",width-164,height-48,148,layout and "Back to projects" or "Close",function()
+		if tasks.job and tasks.job.owner==controls then tasks.cancel("Crafting view closed") end
+		if layout then layout.openProjects() else main:ClosePopup() end
+	end)
 	controls.resultSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,398,416,height-464},nil,rows({"Run an action or a recipe to inspect its results."}))
 	controls.undo.enabled=function() return #history>0 end
-	controls.simulate.enabled=function() return #targets>0 or requirements and next(requirements)~=nil end
-	controls.simulate.tooltipText="Choose target modifiers or item conditions, then simulate the selected action."
+	controls.simulate.enabled=function() return not tasks.job and (#targets>0 or requirements and next(requirements)~=nil) end
+	controls.simulate.tooltipText=function() return "Selected action: "..actionName().."\n"..(tasks.job and "Finish or cancel the running calculation first." or "Simulate from the working item using the chosen target modifiers or item conditions.") end
 	controls.resourcePrices.enabled=function() return require("Modules.CraftingTasks").job==nil end
 	controls.currency.enabled=function() return not draft.priceBook or not next(draft.priceBook.values) end
 	controls.currency.showDisabledValue=true
@@ -516,8 +545,11 @@ function Panel.Open(build,project,layout)
 		end
 	end
 	controls.currency.tooltipText="Saved resource quotes use this common unit. Change it through Resource prices. Changing units clears action overrides and base cost."
-	controls.price.tooltipText="Optional total price of the selected action. This overrides its ingredient prices, not the whole recipe."
-	controls.runRecipe.enabled=function() return draft.nativeRecipe~=nil end
+	controls.price.tooltipText=function() return "Optional total price of "..actionName()..". It applies when that action executes, including inside saved recipes." end
+	controls.runRecipe.enabled=function() return not tasks.job and draft.nativeRecipe~=nil end
+	controls.runRecipe.tooltipText=function() return tasks.job and "Finish or cancel the running calculation first." or "Run the project's saved steps from the original starting item, with the saved recipe's targets." end
+	controls.exact.enabled=function() return not tasks.job end
+	controls.compareRecipes.enabled=function() return not tasks.job and (#targets>0 or requirements and next(requirements)~=nil) end
 	controls.keepRecipe.enabled=function() return #actions>0 and not state.destroyed and not state.veil end
 	controls.manual.enabled=function() return not state.destroyed and not state.veil end
 	controls.fossilResults.tooltipText="Reopen the captured comparison. Rerun after changing the item, targets or quotes."
@@ -527,7 +559,7 @@ function Panel.Open(build,project,layout)
 		if controls.method:GetSelValueByKey("val")~="fossil" or not controls.simulate:IsEnabled() then return false end
 		local craft=action();return craft.fossils~=nil and #craft.fossils>0
 	end
-	controls.distribution.enabled=function() return lastSimulation~=nil end
+	controls.distribution.enabled=function() return not tasks.job and lastSimulation~=nil end
 	controls.cancelJob.enabled=function() return require("Modules.CraftingTasks").job~=nil end
 	controls.apply.enabled=function() return not state.destroyed end
 	controls.preview.enabled=function() return not state.destroyed and not state.veil end
@@ -610,7 +642,7 @@ function Panel.Open(build,project,layout)
 	end
 	if layout then
 		layout.snapshot=function() return copyTable({kind="workbench",priceOverrides=priceOverrides,project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,craftWidth=leftWidth,favorites=favorites,paletteOpen=paletteOpen,palette=paletteView and paletteView.snapshot(),inspectedId=inspectedId,
-			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,lastFossilComparison=lastFossilComparison,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
+			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,lastSimulationRun=lastSimulationRun,lastFossilComparison=lastFossilComparison,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
 	end
 	button(controls,"keepWorking",232,height-48,200,"Keep working craft",function()
 		if overrideKey then priceOverrides[overrideKey]=controls.price.buf end
@@ -645,7 +677,7 @@ function Panel.Open(build,project,layout)
 	end
 	if layout then ui.splitter(controls,"splitter",leftWidth+19,84,height-148,function(delta)
 		layout.workbench=layout.snapshot();layout.craftWidth=math.max(416,math.min(width-400,leftWidth+delta));Panel.Open(build,draft,layout)
-	end) end
+	end);controls.splitter.enabled=function() return not tasks.job end end
 	if restored then controls.method:SelByValue(restored.method or "alchemy","val");controls.resultSummary.list=restored.resultRows or controls.resultSummary.list
 	elseif draft.preferredMethod then controls.method:SelByValue(draft.preferredMethod,"val") end
 	updateOptions();refresh()

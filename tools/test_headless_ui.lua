@@ -338,7 +338,11 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		local function finish() local jobs=require("Modules.CraftingTasks");for i=1,1000 do if not jobs.job then return end;jobs.tick(build) end;error("Action price job did not complete") end
 		local function summary(key) local lines={};for _,row in ipairs(main.popups[1].controls[key].list) do lines[#lines+1]=row[1] end;return table.concat(lines," ") end
 		finish();assert(summary("resultSummary"):find("Mean spent: 1.00 chaos",1,true));assert(summary("resultSummary"):find("override was not used",1,true));frame("crafting-action-override-unused")
-		ui:click("simulate");finish();assert(summary("resultSummary"):find("Mean spent: 7.00 chaos",1,true));frame("crafting-action-override-applied")
+		ui:text("price","99");ui:text("budget","5");ui:click("distribution");frame("crafting-saved-recipe-results");ui:click("moreTrials");finish()
+		assert(summary("resultSummary"):find("Mean spent: 1.00 chaos",1,true));assert(summary("resultSummary"):find("Saved recipe",1,true));assert(main.popups[1].controls.trials.buf=="32");frame("crafting-saved-recipe-refined")
+		ui:text("price","7");ui:text("budget","1");ui:text("trials","2000");ui:click("simulate")
+		assert(not main.popups[1].controls.simulate:IsEnabled() and not main.popups[1].controls.runRecipe:IsEnabled());frame("crafting-simulation-running")
+		finish();assert(summary("resultSummary"):find("Mean spent: 7.00 chaos",1,true));frame("crafting-action-override-applied")
 		ui:click("compareRecipes");ui:text("price1","many");ui:click("run");assert(main.popups[1].title=="Compare recipes");frame("crafting-comparison-invalid-price");ui:click("close")
 		assert(main.popups[1].controls.price1.buf=="many");ui:text("price1","7");ui:click("run");finish()
 		assert(summary("results"):find("Mean spent: 7.00 chaos",1,true) and summary("results"):find("Mean spent: 1.00 chaos",1,true));frame("crafting-property-action-comparison")

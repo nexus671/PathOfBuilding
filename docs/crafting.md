@@ -79,6 +79,13 @@ Crafted-mod removal uses one Orb of Scouring. The supported one-mod and three-mo
 
 **Explore charts** shows cumulative success by actions or supplied spending, and distributions of completed-trial actions/spending. Hover to inspect, click to pin, or copy the data as CSV. **Compare recipes → Compare charts** overlays captured routes. Failed and capped trials stay in the denominator; unpriced routes are omitted from spending charts.
 
+**Run more trials** repeats that result's captured recipe, starting item, targets,
+seed and quotes. Only the trial count increases. Later edits to the working item,
+action or form do not change this refinement. Start a new simulation to use those
+edits. The Simulate tab names the selected action; **Simulate saved recipe** uses
+the saved steps and original starting item. Calculation buttons pause while a job
+is running. Closing its crafting view cancels a job started there.
+
 **Calculate action odds** enumerates supported finite outcomes, including next-affix draws, Talisman fractures and Allflame selection. Item properties, partial group counts, other supported actions and roll thresholds use bounded sampling with a confidence interval. Results state which method was used.
 
 ## Compare fossil subsets

@@ -56,11 +56,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `a61e641f9d564964a3c82972d9f50e69e0e69ed2`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43395931605),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43395931825)).
-It passed 1,169 Lua tests, 44 Node tests, the real MCP save/reopen workflow and
-759 source-stable UI states without audit failures. All 2,423 updater file hashes
+The latest verified checkpoint is `57bcc0a5ba3e2243de11fcb90e7b6ebc600ae84f`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43404519236),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43404519345)).
+It passed 1,174 Lua tests, 45 Node tests, the real MCP save/reopen workflow and
+780 source-stable UI states without audit failures. All 2,423 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
@@ -180,7 +180,7 @@ not assume an unrevealed Tangled outcome. Local review passed 1,168 Lua tests,
 and 759 source-stable UI states, including incomplete saved fossil configuration
 recovery. Updater and artifact source hashes were verified.
 
-The current review isolates action totals from shared resource quotes. The
+Preview 24 isolates action totals from shared resource quotes. The
 reproduced case changed an Alchemy-priced bench craft from 1 to 7 chaos even
 though the recipe never executed Alchemy. The scoped override leaves it at 1;
 an actual Alchemy action uses 7. Global resource-price overrides remain global,
@@ -195,7 +195,7 @@ fossil-subset overrides. Inspection, performed actions and simulation steps
 expose their price keys for MCP clients. Four-fossil Allflame override keys also
 survive checkpoint save/reopen. Local review passed 1,174 Lua tests, 45 Node
 tests, the real MCP workflow and 780 source-stable UI states without audit
-failures. Exact-commit CI remains required.
+failures. Exact-commit follow-up CI passed after the test-host fix below.
 
 The first preview 24 CI run passed the Lua, Node, UI and ModCache checks but
 timed out during the MCP filter test. A Linux reproduction exposed draw commands
@@ -203,7 +203,15 @@ accumulating in the headless test host across polling frames. The host now uses
 the recorder's frame boundary and the workflow rejects unbounded command counts.
 The instrumented full workflow passed with at most 13,054 retained commands,
 versus 5.77 million before the diagnostic run was stopped. This fixes the test
-host; it does not establish sustained desktop performance. Fresh CI is required.
+host; it does not establish sustained desktop performance. Follow-up CI passed.
+
+The current review fixes result refinement switching from a saved recipe to the
+currently selected action. Refined runs retain the captured item, recipe, targets,
+seed, quotes and budget while increasing only trials. The simulation header names
+the selected action, and result summaries identify saved recipes. Calculation
+buttons prevent duplicate jobs; closing a workbench cancels its own calculation.
+Captured result setups survive layout changes, while older results without a
+captured setup require a fresh simulation before refinement.
 
 Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies

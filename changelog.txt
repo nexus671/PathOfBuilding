@@ -1,6 +1,9 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Fixed Run more trials switching away from a saved recipe; refinement now retains the captured item, steps, targets, seed, prices and budget.
+* Named the selected simulation action, clarified saved-recipe inputs and prevented duplicate crafting calculations.
+* Retained captured result setups through layout changes and cancelled a workbench's own calculation when closing it.
 * Isolated selected-action price overrides from shared currency quotes, preserving zero prices and reporting unused overrides through the UI and MCP.
 * Fixed property-only recipe comparisons and retained invalid action prices with clear errors.
 * Added verified ingredients for crafted-mod removal and one/three-modifier bench reforges, and made simulation costs easier to see.
