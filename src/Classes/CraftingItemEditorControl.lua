@@ -7,7 +7,7 @@ function Panel.Open(model,input,onKeep)
 	local state=copyTable(input);local controls={}
 	local function button(key,x,y,w,text,callback)
 		controls[key]=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},text,function()
-			local ok,message=pcall(callback);if not ok then main:OpenMessagePopup("Edit hypothetical item",tostring(message):match("^[^\n]+")) end
+			local ok,message=pcall(callback);if not ok then main:OpenMessagePopup("Edit hypothetical item",require("Modules.PlanningUI").errorText(message)) end
 		end)
 	end
 	local function edit(key,x,y,w,value,prompt)

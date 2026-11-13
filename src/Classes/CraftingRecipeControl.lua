@@ -3,7 +3,7 @@ local sim=require("Modules.CraftingSimulator")
 local Panel={}
 local function button(controls,key,x,y,w,label,callback)
 	controls[key]=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function()
-		local ok,message=pcall(callback);if not ok then main:OpenMessagePopup("Crafting recipe",tostring(message):match("^[^\n]+")) end
+		local ok,message=pcall(callback);if not ok then main:OpenMessagePopup("Crafting recipe",require("Modules.PlanningUI").errorText(message)) end
 	end)
 end
 local function edit(x,y,w,value,prompt,limit)

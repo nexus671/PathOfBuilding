@@ -4,7 +4,12 @@ local atlas=require("Modules.AtlasPlanner")
 local M={}
 function M.Open(build,plan,keep)
 	local draft=copyTable(plan);local c={};local w,h=math.min(920,main.screenW-40),math.min(680,main.screenH-48)
-	local function button(key,x,y,width,label,run) c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,width,28},label,run) end
+	local function button(key,x,y,width,label,run)
+		c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,width,28},label,function()
+			local ok,result=pcall(run)
+			if not ok then main:OpenMessagePopup("Atlas strategy",ui.errorText(result)) else return result end
+		end)
+	end
 	c.page=new("DropDownControl"):DropDownControl(ui.anchor,{16,24,220,28},{"Progression","Strategy"})
 	ui.tabs(c,c.page,{{"progressionTab","Progression","Progression"},{"strategyTab","Strategy","Strategy requirements"}},16,24,w-32)
 	ui.label(c,"stageLabel",16,76,"Stage")

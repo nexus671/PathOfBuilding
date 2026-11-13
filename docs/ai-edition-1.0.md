@@ -41,6 +41,7 @@ The installed application and personal builds are outside this release workspace
 
 - [ ] Consistent typography, buttons, spacing, navigation and empty states.
 - [ ] Explain unavailable actions and conflicting choices before execution.
+- [x] Keep invalid forms editable and explain validation errors without source paths.
 - [x] Show stale dependencies after gear, craft or Atlas targets change.
 - [x] Keep linked character, crafting, filter and farming plans easy to navigate.
 - [x] Complete repeated native navigation at 960, 1024 and 1280 widths.
@@ -54,9 +55,9 @@ placeholder that pretends to provide those results offline.
 ## Remaining release work
 
 The published preview passed exact-commit CI with 1,116 Lua tests, 42 Node tests,
-the real MCP save/reopen workflow and 642 source-stable UI frames without audit
+the real MCP save/reopen workflow and 654 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `5945883dd103ceecde7e171a09f9b9dac1527572`.
+against commit `d6ff864fa4a6b5e0399cee4ccd14594b686547cd`.
 
 That preview includes the native colour wheel, brightness/opacity controls,
 exact RGBA input and Ruthless validation. Native input tests also exposed and
@@ -69,11 +70,12 @@ visible Rules button are included. The real MCP workflow now discovers and
 applies a Harvest enchantment, prices its recipe, reviews two gear guides and
 preserves them through save/reopen and portable bundle import.
 
-The next review adds native weapon properties and Ward to item cards and
-comparisons, including the selected equipment slot. Local validation passed
-1,116 Lua tests and 654 source-stable UI states without audit failures, including
-the weapon quality tradeoff and Ward at all three sizes. Exact-commit CI remains
-required for that display change.
+That preview also shows native weapon properties and Ward in item cards and
+comparisons, including the selected equipment slot. The next review catches
+invalid Atlas setup costs, keeps edited values in place and removes Lua source
+locations from validation messages. Local validation passed 1,119 Lua tests and
+660 source-stable UI states. The later wording improvement also passed six
+focused invalid-entry and correction states. Exact-commit CI remains required.
 The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.

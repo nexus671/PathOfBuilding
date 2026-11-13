@@ -9,7 +9,7 @@ function M.Open(build,options)
 	options=options or {};local store=build.savers.CraftingProjects;local c={};local w,h=math.min(1080,main.screenW-40),math.min(720,main.screenH-60)
 	local left=math.floor((w-48)*0.46);local right=left+32;local selected,entries,removed;local thumbs={}
 	local function button(key,x,y,width,label,run)
-		c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,width,28},label,function() local ok,err=pcall(run);if not ok then main:OpenMessagePopup("Crafting inventory",tostring(err):match("^[^\n]+")) end end)
+		c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,width,28},label,function() local ok,err=pcall(run);if not ok then main:OpenMessagePopup("Crafting inventory",require("Modules.PlanningUI").errorText(err)) end end)
 	end
 	local function save(project)
 		local kept=store:Upsert(project);if options.change then options.change(kept) end;return kept

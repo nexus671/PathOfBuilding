@@ -9,7 +9,7 @@ local pageHints={["Target conditions"]="Choose the modifiers and item properties
 local function button(controls,key,x,y,w,label,callback)
 	controls[key]=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function()
 		local ok,err=pcall(callback)
-		if not ok then main:OpenMessagePopup("Native crafting",tostring(err):match("^[^\n]+")) else return err end
+		if not ok then main:OpenMessagePopup("Native crafting",require("Modules.PlanningUI").errorText(err)) else return err end
 	end)
 	ui.styleButton(controls[key])
 end

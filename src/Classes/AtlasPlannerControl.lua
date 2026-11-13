@@ -5,7 +5,7 @@ local browser=require("Classes.PlanningBrowserControl")
 local Panel={}
 local function safely(callback)
 	local ok,err=pcall(callback)
-	if not ok then main:OpenMessagePopup("Atlas planner",tostring(err):match("^[^\n]+")) end
+	if not ok then main:OpenMessagePopup("Atlas planner",require("Modules.PlanningUI").errorText(err)) end
 end
 local function button(x,y,w,label,callback)
 	return new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},label,function() safely(callback) end)

@@ -9,7 +9,7 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep,groupIndex)
 	end
 	local function button(key,x,y,w,text,callback)
 		controls[key]=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{x,y,w,24},text,function()
-			local ok,message=pcall(callback);if not ok then main:OpenMessagePopup("Crafting targets",tostring(message):match("^[^\n]+")) end
+			local ok,message=pcall(callback);if not ok then main:OpenMessagePopup("Crafting targets",require("Modules.PlanningUI").errorText(message)) end
 		end)
 	end
 	groupIndex=groupIndex or #groups
@@ -47,7 +47,7 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep,groupIndex)
 			group.negate=controls.mode:GetSelValue() == "Exclude group";group.scope=controls.scope:GetSelValue() == "Implicit modifiers" and "implicit" or "explicit"
 			for _,key in ipairs({"fractured","crafted"}) do local value=controls[key]:GetSelValue();group[key]=nil;if not value:match("^Any ") then group[key]=not value:match("^Not ") end end
 		end
-		local result={};for _,entry in ipairs(properties) do local value=controls[entry[1]].buf;if value ~= "" then result[entry[1]]=assert(tonumber(value),"Invalid "..entry[2]) end end
+		local result={};for _,entry in ipairs(properties) do local value=controls[entry[1]].buf;if value ~= "" then result[entry[1]]=assert(tonumber(value),"Enter a number for "..entry[2]:lower()) end end
 		local corruption=controls.corrupted:GetSelValue();if corruption ~= "Any corruption state" then result.corrupted=corruption == "Must be corrupted" end
 		result.harvestEnchant=controls.harvestEnchant:GetSelValueByKey("val") or nil
 		if controls.socketColours.buf~="" then result.socketColours=controls.socketColours.buf:upper();result.linkedColours=controls.linkedColours:GetSelValue()=="In one linked group" end

@@ -6,6 +6,22 @@ function M.fit(text,width,size)
 	text=tostring(text);if DrawStringWidth(size or 15,"VAR",text)<=width then return text end
 	while #text>0 and DrawStringWidth(size or 15,"VAR",text.."...")>width do text=text:sub(1,-2) end;return text.."..."
 end
+function M.errorText(value)
+	local fallback="Unable to complete this action."
+	if value==nil then return fallback end
+	local line=tostring(value):match("^[^\r\n]+")
+	if not line or not line:match("%S") then return fallback end
+	while true do
+		local before=line
+		line=line:gsub("^%[string \".-\"%]:%d+:%s*","",1)
+		local path=line:match("^(.-%.lua):%d+:%s*")
+		if path and (path:match("^/") or path:match("^%a:[/\\]") or path:match("^[@%w_.%-]+[/\\]") or path:match("^[@%w_.%-]+%.lua$")) then
+			line=line:gsub("^.-%.lua:%d+:%s*","",1)
+		end
+		if line==before then break end
+	end
+	return line:match("%S") and line or fallback
+end
 function M.draft(build,kind) states[build]=states[build] or {drafts={}};states[build].drafts[kind]=true end
 function M.kept(build,kind) states[build]=states[build] or {drafts={}};states[build].drafts[kind]=nil;states[build].kept=true end
 function M.discard(build,kind) if states[build] then states[build].drafts[kind]=nil end end
