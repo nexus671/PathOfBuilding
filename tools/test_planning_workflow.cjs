@@ -259,6 +259,9 @@ async function main(){
   const twiceFilter={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n TwiceCorrupted True'}]};
   const twiceDrop=await queued('test_loot_filter',{baseRevision:context.revision,profile:twiceFilter,sample:{BaseType:'Iron Hat',Rarity:'Rare',TwiceCorrupted:true}},'tested');assert.equal(twiceDrop.result.action,'Hide');
   const unknownTwice=await queued('test_loot_filter',{baseRevision:context.revision,profile:twiceFilter,sample:{BaseType:'Iron Hat',Rarity:'Rare'}},'tested');assert.equal(unknownTwice.result.status,'unknown');
+  const modFilter={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n HasExplicitMod "of Haast"'}]};
+  const hiddenMod=await queued('test_loot_filter',{baseRevision:context.revision,profile:modFilter,sample:{Identified:false,HasExplicitMod:['of Haast']}},'tested');assert.equal(hiddenMod.result.status,'unknown');
+  const visibleMod=await queued('test_loot_filter',{baseRevision:context.revision,profile:modFilter,sample:{Identified:true,HasExplicitMod:['of Haast']}},'tested');assert.equal(visibleMod.result.action,'Hide');
   const socketTest=await queued('test_loot_filter',{baseRevision:context.revision,profile:socketProfile,sample:{BaseType:'Plate Vest',Rarity:'Normal',SocketGroup:'GGGRRW'}},'tested');assert.equal(socketTest.result.action,'Hide');assert.equal(socketTest.result.ruleTitle,'Socket rule');
   const invalidSocketSample=await queued('test_loot_filter',{baseRevision:context.revision,profile:socketProfile,sample:{BaseType:'Plate Vest',Rarity:'Normal',SocketGroup:'GGGRRW?'}},'tested');assert.equal(invalidSocketSample.result.status,'unknown');assert.match(invalidSocketSample.result.reasons[0],/Invalid socket colours/);
   const mixedSocketProfile={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n Sockets 6 RGB'}]};

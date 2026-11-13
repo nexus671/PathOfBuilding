@@ -86,6 +86,9 @@ local function socketMatch(value,pattern,op)
 end
 function M.condition(c,item)
 	if not c.known then return nil,"Unsupported condition "..c.keyword end
+	if c.keyword=="HasExplicitMod" and item.Identified~=true then
+		return nil,item.Identified==false and "Explicit modifiers are hidden on unidentified items" or "Supply identification state for explicit modifiers"
+	end
 	local value=item[c.keyword];if value==nil then return nil,"Missing "..c.keyword end
 	local op=c.operator;local values=c.values
 	if c.keyword=="Sockets" then
