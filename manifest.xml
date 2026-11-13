@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview5" />
+	<Version number="2.67.2-ai.preview6" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="c7bcc9a7ac879719462c5b9fd7dfef8ba7f4e30d" />
+	<File name="changelog.txt" part="default" sha1="dda8940ff9d08e3be37ab020b59fa356c31f69ae" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -992,6 +992,11 @@
 	<File name="Assets/LootFilters/alert-7.wav" part="program" sha1="8fd1861bb939d399e40fe6114ae26376eebc38cf" />
 	<File name="Assets/LootFilters/alert-8.wav" part="program" sha1="996c0f7bad632767122573398d4d1f0f03a82998" />
 	<File name="Assets/LootFilters/alert-9.wav" part="program" sha1="10995736b4586bf70588110ab5dbd49fd4ab94aa" />
+	<File name="Assets/LootFilters/colour-alpha.png" part="program" sha1="fb161a7c598ebf9b25c8011f28c49798c506b837" />
+	<File name="Assets/LootFilters/colour-checker.png" part="program" sha1="b8dd26fbeee03012daf93a826ef1cdfa4b6ebe0a" />
+	<File name="Assets/LootFilters/colour-picker.json" part="program" sha1="967dd448f8e2f9b34014c80c2ee1fef35d9e12c1" />
+	<File name="Assets/LootFilters/colour-value.png" part="program" sha1="6f7fe00ef5bc09c5c96aae8ab3e5757da558f6aa" />
+	<File name="Assets/LootFilters/colour-wheel.png" part="program" sha1="ed4a4ff0fa5b44d670e2760262de6be212131da1" />
 	<File name="Assets/ShadedInnerRing.png" part="program" sha1="6ad9088ebaed6646dbd3d231d563dc9611ba4bc6" />
 	<File name="Assets/ShadedInnerRingFlipped.png" part="program" sha1="c13f41ef7cbfc14017a10776d21b121f0e558667" />
 	<File name="Assets/ShadedOuterRing.png" part="program" sha1="988dee6e0cf9906d78015bc1762b1d95983e89cb" />
@@ -1116,6 +1121,7 @@
 	<File name="Classes/CalcSectionControl.lua" part="program" sha1="ace88981a36381c6ccecbdb76ee1b9b04d1afeaf" />
 	<File name="Classes/CalcsTab.lua" part="program" sha1="007b8e87c68df50420c978442d9de0b9d6a425e3" />
 	<File name="Classes/CheckBoxControl.lua" part="program" sha1="021e4ea29d62a600ab14e69e6ed0ad33832d78ab" />
+	<File name="Classes/ColourPickerControl.lua" part="program" sha1="c635b032cb53d0770a68b2f2e64f0fcd19f6a256" />
 	<File name="Classes/CompareBuySimilar.lua" part="program" sha1="0efebcea57d90cc9169819cd0e344899f369b618" />
 	<File name="Classes/CompareCalcsHelpers.lua" part="program" sha1="61d00298ee05ed78238cf16b575fff0526b2342b" />
 	<File name="Classes/CompareEntry.lua" part="program" sha1="13c14eac4521a3717fa8f0a51d0a83994167ed3e" />
@@ -1161,19 +1167,19 @@
 	<File name="Classes/JourneyViews.lua" part="program" sha1="b89da0fb5e79ca13c8b4c8111f46b4fbe348c6a8" />
 	<File name="Classes/LabelControl.lua" part="program" sha1="7a8f38d225087ba6941537444b0ea0ec0ac150cd" />
 	<File name="Classes/ListControl.lua" part="program" sha1="9223f7e90e7fa3f67ad0cf8224e1266e59b9681f" />
-	<File name="Classes/LootFilterAppearance.lua" part="program" sha1="c707dc7c16867458a374da335930c27154ff3bb6" />
-	<File name="Classes/LootFilterCampaignControl.lua" part="program" sha1="18322c0d6b91aafab2e9e87eda30be8c70d2e5b8" />
+	<File name="Classes/LootFilterAppearance.lua" part="program" sha1="b5e2d450bc70302059a759f85cde5a20e2cf69a7" />
+	<File name="Classes/LootFilterCampaignControl.lua" part="program" sha1="5cd6211916dd62a07e6652aead7f1df0effbc839" />
 	<File name="Classes/LootFilterCategoryControl.lua" part="program" sha1="c2305569737cb47ef545e0b5770b71dabfc4ed35" />
 	<File name="Classes/LootFilterCollectionControl.lua" part="program" sha1="0cf287605346cae27d7d5155a3429e9f635a28d9" />
-	<File name="Classes/LootFilterControl.lua" part="program" sha1="2b879331fa78e4a409c573f85ceb02b48ec3ca5b" />
+	<File name="Classes/LootFilterControl.lua" part="program" sha1="1d6d053a39701d8a3d4dd1559ce0cfa643055282" />
 	<File name="Classes/LootFilterDiffControl.lua" part="program" sha1="994e194583ccb50a6f50fe71876258d7b0bdd2f9" />
 	<File name="Classes/LootFilterEffectsControl.lua" part="program" sha1="dc4d640e9b3668eedbb361621e478cba684c82f0" />
-	<File name="Classes/LootFilterGlobalControl.lua" part="program" sha1="4a4aae71c7eb85e049ab553e8956a10fa56261d6" />
+	<File name="Classes/LootFilterGlobalControl.lua" part="program" sha1="b7960416140c7282eaa00e3ef8d43ed8cb3ccdbf" />
 	<File name="Classes/LootFilterModuleControl.lua" part="program" sha1="0a2bd48b6c521e73ab0231e7cfbd8701e366d445" />
 	<File name="Classes/LootFilterSceneControl.lua" part="program" sha1="1bc33be06c10aa0659eb9448fe517848cd6cbf75" />
 	<File name="Classes/LootFilterStructureControl.lua" part="program" sha1="16e0697ac927b2419209947178397e2dcdf5be59" />
 	<File name="Classes/LootFilterTierControl.lua" part="program" sha1="5642eaf6dbf40145b87797069c14d4b578023014" />
-	<File name="Classes/LootFilterWorkspace.lua" part="program" sha1="065ce1341c93507704a1970e367c7f923d2b4e07" />
+	<File name="Classes/LootFilterWorkspace.lua" part="program" sha1="feaea9ddbdca9fcddd0fa55dd576aefd11fd80f5" />
 	<File name="Classes/MinionListControl.lua" part="program" sha1="655a6ddb06ba75011e51d5a6130db8cf7a9f3895" />
 	<File name="Classes/MinionSearchListControl.lua" part="program" sha1="cfff5d76e380c7bdcbdac229325cefb1599af36c" />
 	<File name="Classes/ModDB.lua" part="program" sha1="1327beebeba14dc8320d137a3dede673b74942af" />
@@ -1266,7 +1272,7 @@
 	<File name="Data/FlavourText.lua" part="program" sha1="c73a96f6d0aa7b0cebe2a4b6fc0f1eedc188bd0f" />
 	<File name="Data/Gems.lua" part="program" sha1="4e36e80d2f531ba5fe6950aa2a80189a782036c6" />
 	<File name="Data/Global.lua" part="program" sha1="72bff7e953555cf3045880b0ff0dc0c37f43056e" />
-	<File name="Data/HeadlessImageSizes.json" part="program" sha1="887597289f51d790c265d7b8fc3893747b90abfd" />
+	<File name="Data/HeadlessImageSizes.json" part="program" sha1="9b93ea7c863a3124daa42174f8c22ef3abf04b1d" />
 	<File name="Data/IncursionDropOnly.lua" part="program" sha1="1fa5c24b1bf897e781c54b3ce7a7fcd7d23fd645" />
 	<File name="Data/LootFilters/0.filter" part="program" sha1="7df469ee3b02e659ca340e02e5bd95cf98dbba47" />
 	<File name="Data/LootFilters/1.filter" part="program" sha1="99c89d8a728ad170c3af8e9c8ac1a33bb5da4289" />
@@ -1449,6 +1455,7 @@
 	<File name="Modules/CalcTools.lua" part="program" sha1="6d39e85eef9e3c71a9aa2e11e7031848f4c2fb9f" />
 	<File name="Modules/CalcTriggers.lua" part="program" sha1="34e19cf6f5abb5d95cd78dadf6e512c580e9b020" />
 	<File name="Modules/Calcs.lua" part="program" sha1="725161ad062c1a6b24122303a0d5f1a98b2bf86c" />
+	<File name="Modules/ColourMath.lua" part="program" sha1="f01a899fcc5c3e00d9a00a5994afed071ce8416b" />
 	<File name="Modules/Common.lua" part="program" sha1="bc179fdb025d02e46ceb0da9db23531d18cf9149" />
 	<File name="Modules/ConfigModBrowser.lua" part="program" sha1="6c32488700943decebee20dc939d8a2bde291bb0" />
 	<File name="Modules/ConfigOptions.lua" part="program" sha1="38842f6494a6b8a9404300e28cd51cbac552a56f" />
@@ -1483,7 +1490,7 @@
 	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="3d09908d45c8d65a77621d76a61ed37ceee42259" />
 	<File name="Modules/EncounterReport.lua" part="program" sha1="710dc78939bfbc8282f295cf626bcde9c9b7d8e5" />
 	<File name="Modules/HeadlessCompression.lua" part="program" sha1="16a42bf407eb777602f9b03b5c8466188a04ee58" />
-	<File name="Modules/HeadlessUI.lua" part="program" sha1="c5f0e526542005122fd2ca868365cee33fcbbcfa" />
+	<File name="Modules/HeadlessUI.lua" part="program" sha1="62a302392792431a8e1ceeb24208272e294b490c" />
 	<File name="Modules/ItemSlotHelper.lua" part="program" sha1="4b7d441f9ade5d57c413aa1f8f8067b654cfb927" />
 	<File name="Modules/ItemTools.lua" part="program" sha1="17a804109e872fa03c0450cdd10927fd23b5aa1d" />
 	<File name="Modules/JourneyUpgrades.lua" part="program" sha1="bb121d8115f693518ae9431fefff305fdb46878f" />

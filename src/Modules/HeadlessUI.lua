@@ -125,6 +125,9 @@ function M.install(options)
 		return controls
 	end
 	function ui:dispatch(host,events)
+		for _,event in ipairs(events) do
+			if event.type=="KeyDown" then self.keys[event.key]=true elseif event.type=="KeyUp" then self.keys[event.key]=nil end
+		end
 		if host.OnFrame then host:OnFrame(events) elseif host.ProcessInput then host:ProcessInput(events,main.viewPort) else host:ProcessControlsInput(events,main.viewPort) end
 	end
 	function ui:frame(host)
@@ -166,12 +169,13 @@ function M.install(options)
 		self:dispatch(host,{{type="KeyUp",key="LEFTBUTTON"}})
 		return self
 	end
-	function ui:dragAt(x,y,dx,dy)
+	function ui:dragAt(x,y,dx,dy,button)
+		button=button or "RIGHTBUTTON";assert(button=="LEFTBUTTON" or button=="RIGHTBUTTON" or button=="MIDDLEBUTTON","Choose a mouse button for the drag")
 		self.cursorX,self.cursorY=x,y;self:frame()
 		local host=self:activeHost()
-		self:dispatch(host,{{type="KeyDown",key="RIGHTBUTTON"}})
+		self:dispatch(host,{{type="KeyDown",key=button}})
 		self.cursorX,self.cursorY=x+dx,y+dy;self:frame()
-		self:dispatch(host,{{type="KeyUp",key="RIGHTBUTTON"}})
+		self:dispatch(host,{{type="KeyUp",key=button}})
 		return self
 	end
 	function ui:choose(key,value,member)

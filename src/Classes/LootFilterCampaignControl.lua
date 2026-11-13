@@ -17,7 +17,7 @@ function M.Open(build,value,onKeep)
 	local fields={{"minAreaLevel","From area",1},{"maxAreaLevel","Through area",70},{"minDropLevel","Minimum base level",0},{"minLinks","Minimum links",0},{"upgradeWindow","Upgrade window",15}}
 	local fieldWidth=math.floor((w-48)/6)
 	for i,field in ipairs(fields) do local key,title=field[1],field[2];local x=16+(i-1)*(fieldWidth+4);ui.label(c,key.."Label",x,96,title,12)
-		c[key]=new("EditControl"):EditControl(ui.anchor,{x,120,fieldWidth-4,28},tostring(current[key]),nil,"%d",3)
+		c[key]=new("EditControl"):EditControl(ui.anchor,{x,120,fieldWidth-4,28},tostring(current[key]),nil,"%D",3)
 	end
 	button("equipped",16+5*(fieldWidth+4),120,w-32-5*(fieldWidth+4),"Use equipped",function() selections(policy.equipped(build)) end)
 	c.upgradeWindow.tooltipText="0 keeps every selected base. Otherwise, five-area bands raise the required base DropLevel as you progress. A band starts at area level minus this window."

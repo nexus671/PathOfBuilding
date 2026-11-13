@@ -30,7 +30,12 @@ function M.Open(profile,onKeep,options)
 	local colorKeys={"textColor","borderColor","backgroundColor"}
 	for i,key in ipairs(colorKeys) do
 		local y=302+(i-1)*42;ui.label(c,key.."Label",16,y,({"Text colour","Border colour","Background colour"})[i],14)
-		c[key]=new("EditControl"):EditControl(ui.anchor,{268,y-4,336,28},appearance.hex(settings[key]),nil,nil,9,function(value) if value=="" then settings[key]=nil else local color=appearance.fromHex(value);if color then settings[key]=color end end end);c[key].placeholder="Keep original / hex RGBA"
+		c[key]=new("EditControl"):EditControl(ui.anchor,{268,y-4,252,28},appearance.hex(settings[key]),nil,nil,9,function(value) if value=="" then settings[key]=nil else local color=appearance.fromHex(value);if color then settings[key]=color end end end);c[key].placeholder="Keep original / hex RGBA"
+		c[key.."Pick"]=new("ButtonControl"):ButtonControl(ui.anchor,{528,y-4,76,28},"Pick",function()
+			local initial=appearance.fromHex(c[key].buf) or settings[key]
+			if not initial then local styles=parser.parse(filters.rule("example","Example",{},nil,profile.theme).text).rules[1].styles;local values=styles[({textColor="SetTextColor",borderColor="SetBorderColor",backgroundColor="SetBackgroundColor"})[key]];initial={tonumber(values[1]),tonumber(values[2]),tonumber(values[3]),tonumber(values[4]) or 255} end
+			require("Classes.ColourPickerControl").Open(initial,function(colour) c[key]:SetText(appearance.hex(colour),true) end,{title=({textColor="Text colour",borderColor="Border colour",backgroundColor="Background colour"})[key],minimumAlpha=key=="textColor" and profile.mode=="Ruthless" and 80 or 0})
+		end)
 	end
 	ui.label(c,"colourHint",16,414,"Hex: RRGGBB or RRGGBBAA; FF is opaque. Overrides replace tier colours.",12)
 	c.preview=new("Control"):Control(ui.anchor,{16,440,588,64})

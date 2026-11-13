@@ -5,7 +5,8 @@ local parser=require("Modules.LootFilterParser")
 local visual=require("Modules.LootFilterVisuals")
 local M={}
 local function button(c,key,x,y,w,label,run) c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,w,28},label,run) end
-function M.Open(rule,save,conditions)
+function M.Open(rule,save,conditions,options)
+	options=options or {}
 	local c={};local w,h=math.min(880,main.screenW-40),math.min(580,main.screenH-60)
 	local original=parser.parse(rule.text).rules[1];local changes={};local sample=library.sample(rule)
 	local function nextRule() local next=library.appearance(rule,changes);next.title=c.title.buf;return next end
@@ -24,7 +25,11 @@ function M.Open(rule,save,conditions)
 	for index,entry in ipairs(columns) do local key,label,style,fallback=unpack(entry);local x=16+(index-1)*(column+16)
 		ui.label(c,key.."Label",x,232,label,16)
 		local value=original.styles[style] or fallback;local hex="";for i=1,4 do hex=hex..string.format("%02X",tonumber(value[i]) or 255) end
-		c[key]=new("EditControl"):EditControl(ui.anchor,{x,350,column,28},hex,nil,nil,9,function(value) local rgba=decode(value);if rgba then changes[style]=rgba end end)
+		c[key]=new("EditControl"):EditControl(ui.anchor,{x,350,column-76,28},hex,nil,nil,9,function(value) local rgba=decode(value);if rgba then changes[style]=rgba end end)
+		button(c,key.."Pick",x+column-68,350,68,"Pick",function()
+			local values=decode(c[key].buf) or original.styles[style] or fallback;local rgba={};for i=1,4 do rgba[i]=tonumber(values[i]) or 255 end
+			require("Classes.ColourPickerControl").Open(rgba,function(colour) c[key]:SetText(require("Modules.LootFilterAppearanceSettings").hex(colour),true) end,{title=label,minimumAlpha=style=="SetTextColor" and options.mode=="Ruthless" and 80 or 0})
+		end)
 		for i,color in ipairs(palette) do local name=key.."Color"..i;local control=new("ButtonControl"):ButtonControl(ui.anchor,{x+((i-1)%4)*44,262+math.floor((i-1)/4)*40,34,32},"",function() c[key]:SetText(color.."FF");changes[style]=decode(color.."FF") end)
 			c[name]=control;custom[name]=true;control.planningFocusable=true;control.tooltipText=label.." #"..color
 			function control:Draw() local cx,cy=self:GetPos();visual.box(cx,cy,34,32,self.hasFocus and "^xF3D89D" or self:IsMouseOver() and "^xDAE4EE" or "^x4B5968");local rgb=decode(color);SetDrawColor(tonumber(rgb[1])/255,tonumber(rgb[2])/255,tonumber(rgb[3])/255);DrawImage(nil,cx+3,cy+3,28,26) end

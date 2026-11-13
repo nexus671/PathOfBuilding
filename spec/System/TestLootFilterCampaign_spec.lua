@@ -29,4 +29,13 @@ describe("Offline campaign pickup policies",function()
 		local raw,report=filters.compile(p);assert.is_true(#raw<filters.limit);for _,d in ipairs(report.diagnostics) do assert.is_nil(d.error,d.error) end
 		build.savers.LootFilters:Upsert(p);local xml={};build.savers.LootFilters:Save(xml);local restored=filters.new(build);restored:Load(xml);assert.same(p.campaign,restored.data.profiles[1].campaign)
 	end)
+	it("accepts digits in every campaign level and link field through native input",function()
+		local ui=require("Modules.HeadlessUI").install({width=1024,height=768});local kept
+		local ok,err=pcall(function()
+			require("Classes.LootFilterCampaignControl").Open(build,nil,function(value) kept=value end)
+			for key,value in pairs({minAreaLevel=10,maxAreaLevel=60,minDropLevel=10,minLinks=2,upgradeWindow=20}) do ui:text(key,tostring(value)) end
+			ui:click("keep");assert.equal(10,kept.minAreaLevel);assert.equal(60,kept.maxAreaLevel);assert.equal(10,kept.minDropLevel);assert.equal(2,kept.minLinks);assert.equal(20,kept.upgradeWindow)
+		end)
+		ui:restore();main.popups={};assert.is_true(ok,err)
+	end)
 end)

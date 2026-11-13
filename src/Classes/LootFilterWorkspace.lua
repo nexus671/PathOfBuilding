@@ -57,7 +57,8 @@ function M.Open(build,source,layout,controller)
 		if not found then profile.rules[#profile.rules+1]=rule end
 		selected=rule.id;scope="My rules";category="All items";query="";draft();reopen()
 	end
-	local function edit() if selectedRule() then controller.EditRule(selectedRule(),keepRule) end end
+	local function editRule(rule,save) controller.EditRule(rule,save,profile.mode) end
+	local function edit() if selectedRule() then editRule(selectedRule(),keepRule) end end
 	local function inspectMatches()
 		local outline=require("Modules.LootFilterStructure").outline(profile,raw,report,parsed)
 		local wanted={};for _,line in ipairs(result.matches or {}) do wanted[line]=true end;if result.line then wanted[result.line]=true end
@@ -65,7 +66,7 @@ function M.Open(build,source,layout,controller)
 			local rule=outline.entries[i].rule
 			entries[#entries+1]={id=block.line,label=(block.title or rule.title).." | "..block.action,details={"Compiled line "..block.line,"Editing a preset or module match creates a personal override.",table.concat(block.rawLines,"\n")},rule=rule}
 		end end
-		require("Classes.PlanningBrowserControl").Open("Matched filter rules",entries,{action="Edit matched rule",choose=function(entry) main:ClosePopup();controller.EditRule(entry.rule,keepRule) end,closeOnChoose=false})
+		require("Classes.PlanningBrowserControl").Open("Matched filter rules",entries,{action="Edit matched rule",choose=function(entry) main:ClosePopup();editRule(entry.rule,keepRule) end,closeOnChoose=false})
 	end
 	local function updateSelection(entry)
 		selectedEntry=entry;selected=entry and entry.rule.id;item=entry and copyTable(entry.sample) or item;if parsed then result=parser.simulate(parsed,item) end
@@ -91,7 +92,8 @@ function M.Open(build,source,layout,controller)
 			visible=visible+1;local cellW=(width-24)/columns;local cellH=(height-reserve)/rows;local cx=x+12+((visible-1)%columns)*cellW;local cy=y+12+math.floor((visible-1)/columns)*cellH
 			cells[#cells+1]={x=cx,y=cy,w=cellW,h=cellH,item=drop,result=evaluated,key=encode(drop)}
 			if selectable then local control=new("ButtonControl"):ButtonControl(ui.anchor,{cx,cy,cellW,cellH},"",function() rememberSample(drop);compile();if c.selection then c.selection.list=ui.rows(sampleDetails(drop,result),c.selection.width-28,14) end end)
-				c["drop"..visible]=control;custom["drop"..visible]=true;control.Draw=function() end;control.planningFocusable=true;control.tooltipText=table.concat(sampleDetails(drop,evaluated),"\n")
+				c["drop"..visible]=control;custom["drop"..visible]=true;control.planningFocusable=true;control.tooltipText=table.concat(sampleDetails(drop,evaluated),"\n")
+				function control:Draw(viewport) if self:IsMouseOver() then local px,py=self:GetPos();SetDrawLayer(nil,100);self:DrawTooltip(px,py,cellW,cellH,viewport or main.viewPort);SetDrawLayer(nil,0) end end
 			end
 		end
 		if selectable then
@@ -143,7 +145,7 @@ function M.Open(build,source,layout,controller)
 				refreshDependencies();require("Classes.PlanningBrowserControl").Open("Linked filter targets",dependencies.entries,{action="Open source",choose=function(entry) main:ClosePopup();require("Modules.LootFilterDependencies").open(build,layout,entry.origin) end,closeOnChoose=false,
 					secondary={label="Refresh build pickups",run=function() main:ClosePopup();profile.rules=filters.generate(build,profile);draft();reopen() end}})
 			elseif entry.id=="campaign" and profile then require("Classes.LootFilterCampaignControl").Open(build,profile.campaign,function(value) profile.campaign=value;draft();reopen() end)
-			elseif entry.id=="structure" and profile then require("Classes.LootFilterStructureControl").Open(profile,function(rule) controller.EditRule(rule,keepRule) end)
+			elseif entry.id=="structure" and profile then require("Classes.LootFilterStructureControl").Open(profile,function(rule) editRule(rule,keepRule) end)
 			elseif (entry.id=="sampleSets" or entry.id=="palettes") and profile then collection(entry.id)
 			elseif entry.id=="categoryStyles" and profile then require("Classes.LootFilterCategoryControl").Open(profile,replaceProfile)
 			elseif entry.id=="fileChanges" and profile then require("Classes.LootFilterDiffControl").Open(filters.find(saver.data,profile.id),profile)
@@ -176,9 +178,9 @@ function M.Open(build,source,layout,controller)
 		sceneControl("preview",left+32,214,right,h-288,library.scene(profile,build,"Mixed drops",0,83),true)
 		ui.description(c,"sceneHint",left+32,h-68,right,24,{"Live filter appearance. Open Simulate for drop inspection."},14)
 	elseif page=="Tiers" then
-		tierView=require("Classes.LootFilterTierControl").Mount(c,profile,w,h,tierState,{id=identifier,change=replaceProfile,reopen=reopen,edit=controller.EditRule})
+		tierView=require("Classes.LootFilterTierControl").Mount(c,profile,w,h,tierState,{id=identifier,change=replaceProfile,reopen=reopen,edit=editRule})
 	elseif page=="Modules" then
-		require("Classes.LootFilterModuleControl").Mount(c,data,profile,w,h,{id=identifier,change=function() draft();reopen() end,edit=controller.EditRule})
+		require("Classes.LootFilterModuleControl").Mount(c,data,profile,w,h,{id=identifier,change=function() draft();reopen() end,edit=editRule})
 	elseif page=="Customize" then
 		local sidebar=152;local listX=184;local listW=math.floor((w-216)*0.51);local detailX=listX+listW+16;local detailW=w-detailX-16
 		local ok,base=pcall(library.catalog,profile);catalog=ok and base or {}
@@ -213,7 +215,7 @@ function M.Open(build,source,layout,controller)
 		local bw=math.floor((listW-24)/4)
 		button(c,"add",listX,h-94,bw,scope=="Policies" and "Set policy" or "+ Rule",function()
 			if scope=="Policies" then require("Classes.LootFilterCampaignControl").Open(build,profile.campaign,function(value) profile.campaign=value;draft();reopen() end)
-			else controller.EditRule(filters.rule("rule-"..identifier(),"New pickup",{'BaseType == "Iron Hat"'}),keepRule) end
+			else editRule(filters.rule("rule-"..identifier(),"New pickup",{'BaseType == "Iron Hat"'}),keepRule) end
 		end)
 		button(c,"edit",listX+bw+8,h-94,bw,"Edit",edit)
 		button(c,"toggle",listX+(bw+8)*2,h-94,bw,"On / off",function() if selectedEntry then local rule=copyTable(selectedEntry.rule)

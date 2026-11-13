@@ -10,6 +10,7 @@ from pathlib import Path
 
 from render_headless_ui import render
 from update_crafting_currency_art import check as check_currency_art
+from update_colour_picker_art import check as check_colour_art
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,7 +27,7 @@ def source_hashes():
     sources += list((ROOT / "src/TreeData/3_30_ruthless").glob("*"))
     sources += list((ROOT / "src/TreeData/3_30_preview").glob("*"))
     sources += [ROOT / "src/_SimpleGraphic.def.lua", ROOT / "src/GameVersions.lua", ROOT / "src/Data/HeadlessImageSizes.json"]
-    sources += [ROOT / "src/HeadlessWrapper.lua", ROOT / "src/Data/Global.lua", Path(__file__), ROOT / "tools/render_headless_ui.py", ROOT / "tools/test_headless_ui.lua", ROOT / "tools/update_crafting_currency_art.py"]
+    sources += [ROOT / "src/HeadlessWrapper.lua", ROOT / "src/Data/Global.lua", Path(__file__), ROOT / "tools/render_headless_ui.py", ROOT / "tools/test_headless_ui.lua", ROOT / "tools/update_crafting_currency_art.py", ROOT / "tools/update_colour_picker_art.py"]
     return {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(sources) if path.is_file()}
 
 
@@ -46,6 +47,7 @@ def main():
     args = parser.parse_args()
     assert 1 <= args.workers <= 4, "Use 1 to 4 render workers"
     check_currency_art()
+    check_colour_art()
     hashes = source_hashes()
     args.output.mkdir(parents=True, exist_ok=True)
     directory = Path(tempfile.mkdtemp(prefix="run-", dir=args.output.resolve()))
@@ -61,7 +63,7 @@ def main():
     assert result.returncode == 0, result.stdout
     assert source_hashes() == hashes, "Source files changed during UI capture; repeat against stable sources"
     paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 612, f"Expected 612 UI frames, found {len(paths)}"
+    assert len(paths) == 630, f"Expected 630 UI frames, found {len(paths)}"
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         failures = [failure for failure in pool.map(render_frame, paths) if failure]
     negative = json.loads((directory / "expected-audit-failures.json").read_text())

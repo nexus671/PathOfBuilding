@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "source": "Generated HSV geometry and linear byte gradients",
+  "generatorSHA256": "a1b7c8f6e05418b6ee3fbd4ff8ee2e2643a8cc23713d410e405389d1cad52217",
+  "images": {
+    "colour-wheel.png": {
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "7e7a6fdc511c22b000485793aa106393c723d1ecdb56915f519ca6479f413a44"
+    },
+    "colour-value.png": {
+      "size": [
+        16,
+        256
+      ],
+      "sha256": "05815c32f237dc7ce3553fba35c84ca14a8dac8192fb66d5d3cbede32c8504c1"
+    },
+    "colour-alpha.png": {
+      "size": [
+        16,
+        256
+      ],
+      "sha256": "34ae3329e3c59446c44d85c037040d5e3d55d5cb554f813b0126759ee21d2972"
+    },
+    "colour-checker.png": {
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "9cb2eda1bdf21445c1576b0e26dda5c9bc13acaae3efd43da92182a7a8a21bd9"
+    }
+  }
+}

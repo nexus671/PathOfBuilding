@@ -1,0 +1,17 @@
+describe("Native colour selection",function()
+	local colour=require("Modules.ColourMath")
+	it("matches cardinal hues, grey values and byte opacity",function()
+		assert.same({255,0,0,255},colour.fromHSV(0,1,1));assert.same({0,255,0,80},colour.fromHSV(1/3,1,1,80))
+		assert.same({0,0,255,0},colour.fromHSV(-1/3,1,1,0));assert.same({128,128,128,255},colour.fromHSV(0,0,0.5))
+		assert.same({255,0,0,255},colour.fromHSV(1,1,1));assert.same({1,2,3,255},colour.rgba({1,2,3}))
+	end)
+	it("round-trips deterministic byte colours without drift",function()
+		local seed=104729;local function byte() seed=seed*16807%2147483647;return seed%256 end
+		for _=1,1000 do local rgba={byte(),byte(),byte(),byte()};local h,s,v,a=colour.toHSV(rgba);assert.same(rgba,colour.fromHSV(h,s,v,a)) end
+	end)
+	it("keeps the prior hue for grey and rejects invalid components",function()
+		local h,s,v=colour.toHSV({128,128,128,255},0.7);assert.equal(0.7,h);assert.equal(0,s);assert.equal(128/255,v)
+		assert.has_error(function() colour.rgba({256,0,0,255}) end);assert.has_error(function() colour.rgba({0,0,0,-1}) end)
+		assert.has_error(function() colour.fromHSV(0/0,1,1) end);assert.has_error(function() colour.fromHSV(0,math.huge,1) end)
+	end)
+end)

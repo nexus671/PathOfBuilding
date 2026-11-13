@@ -67,11 +67,11 @@ function M.Conditions(rule,save)
 	button(c,"cancel",w-156,h-48,140,"Cancel",function() main:ClosePopup() end)
 	drawConditions();ui.style(c,{keepRule=true});main:OpenPopup(w,h,"Loot filter rule",c,nil,"title","cancel");dialog=main.popups[1]
 end
-function M.EditRule(rule,save)
+function M.EditRule(rule,save,mode)
  require("Classes.LootFilterAppearance").Open(rule,function(nextRule)
   local profile=filters.profile("validate","Validate");profile.rules={nextRule};filters.validate({schemaVersion=1,activeId=profile.id,profiles={profile}})
   save(nextRule)
- end,M.Conditions)
+ end,M.Conditions,{mode=mode})
 end
 function M.Import(save)
  modal("Import loot filter","",function(raw)

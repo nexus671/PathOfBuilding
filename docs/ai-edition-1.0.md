@@ -16,6 +16,7 @@ The installed application and personal builds are outside this release workspace
 - [x] Style selected categories in place and review complete file changes.
 - [x] Page through saved examples and test separate items without overwriting the sets.
 - [x] Expand shared colour/sound styling and preview every supported icon shape.
+- [x] Choose colours visually with exact RGBA entry and Ruthless opacity validation.
 
 ## Crafting
 
@@ -50,15 +51,16 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,086 Lua tests, 40 Node tests,
-the real MCP save/reopen workflow and 585 source-stable UI frames without audit
+The published preview passed exact-commit CI with 1,099 Lua tests, 41 Node tests,
+the real MCP save/reopen workflow and 612 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `787b7d3c857092331f33839de82c8c46d75e111c`.
+against commit `3a694f9ae9da34d2afdcdbc83ff19de03f32cb52`.
 
-The next review adds in-place category styling, source-file comparison, complete
-scene paging, separate ad-hoc tests and unavailable-action guards. Local validation passed 1,099 Lua tests, 41 Node tests, the MCP workflow and
-612 source-stable UI states without audit failures. Final screenshot review also
-clarified default-Show sample explanations. Exact-commit CI is still required. The comparison engine also passed 2,000
+The next review adds a native colour wheel, brightness/opacity controls, exact
+RGBA input and Ruthless validation. Native input tests also exposed and fixed
+campaign fields rejecting numeric entry. Local validation passed 1,107 Lua tests
+and 630 source-stable UI states without audit failures. Exact-commit CI is still
+required. The comparison engine also passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.
 
@@ -68,7 +70,6 @@ is fixed. Foreground allocation plus recalculation measured 63-179 ms across fiv
 edits while recovery completed separately. Proposal preparation still takes
 several seconds on that build. These checks do not mark the release complete.
 
-Next: close source-verified socket/corruption/league gaps, add the colour picker,
-and repeat cross-tool performance,
+Next: close source-verified socket/corruption/league gaps and repeat cross-tool performance,
 recovery and layout checks. The coverage guide continues to identify incomplete
 mechanics explicitly.

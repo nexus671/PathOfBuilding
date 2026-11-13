@@ -88,4 +88,13 @@ describe("Planning experience queries",function()
 		assert.is_false(c.choose.enabled());c.choose:Click();c.search.enterFunc();assert.is_nil(chosen)
 		c.search.buf="Ready";c.search.changeFunc();assert.is_true(c.choose.enabled());c.choose:Click();assert.equal("ready",chosen)
 	end)
+	it("reports held keys during headless input dispatch and releases them afterwards",function()
+		local ui=require("Modules.HeadlessUI").install({width=1024,height=768});local down
+		local ok,err=pcall(function()
+			local host={ProcessControlsInput=function() down=IsKeyDown("LEFTBUTTON") end}
+			ui:dispatch(host,{{type="KeyDown",key="LEFTBUTTON"}});assert.is_true(down)
+			ui:dispatch(host,{{type="KeyUp",key="LEFTBUTTON"}});assert.is_false(down)
+		end)
+		ui:restore();assert.is_true(ok,err)
+	end)
 end)
