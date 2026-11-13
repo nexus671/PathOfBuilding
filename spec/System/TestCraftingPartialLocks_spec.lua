@@ -3,6 +3,27 @@ describe("3.30 partial affix locks",function()
 	local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86"
 	local id="bench:partial-prefix-1"
 	before_each(function() newBuild() end)
+	it("keeps the selected partial-lock prefix through one and three modifier bench rerolls",function()
+		local model=sim.model(raw);local selected={Prefix={},Suffix={}};local groups={}
+		for _,entry in ipairs(model.mods) do local side=entry.mod.type
+			if #selected[side]<(side=="Prefix" and 3 or 2) and not groups[entry.mod.group] then
+				selected[side][#selected[side]+1]=entry.id;groups[entry.mod.group]=true
+			end
+		end
+		assert.are.equal(3,#selected.Prefix);assert.are.equal(2,#selected.Suffix)
+		local affixes={};for _,side in ipairs({"Prefix","Suffix"}) do for _,modId in ipairs(selected[side]) do affixes[#affixes+1]={id=modId,range=0.1234} end end
+		local state=sim.validateState(model,{rarity="RARE",affixes=affixes})
+		local locked=sim.perform(raw,{method="bench",modId=id},1,state).state
+		for _,count in ipairs({1,3}) do for seed=1,10 do
+			local result=sim.perform(raw,{method="bench_reroll",count=count},seed,locked)
+			local preserved=false
+			for _,entry in ipairs(result.state.affixes) do for _,modId in ipairs(selected.Prefix) do
+				if entry.id==modId and entry.range==0.1234 then preserved=true end
+			end end
+			assert.is_true(preserved);assert.are.equal(6,#result.state.affixes)
+			assert.are.equal("partial_lock_model",result.warnings[1].code)
+		end end
+	end)
 	it("offers the lock and charges the published Divine Orb cost",function()
 		local model=sim.model(raw);local mod=assert(model.byId[id])
 		assert.are.equal("Suffix",mod.type);assert.are.equal("1 Prefix Modifier cannot be changed",mod[1])
@@ -84,6 +105,8 @@ describe("3.30 partial affix locks",function()
 		local choices,reason=sim.harvestChoices(model,state,"harvest_augment")
 		assert.are.equal(0,#choices);assert.matches("modifier that can be removed",reason)
 		local allowed=require("Modules.CraftingAvailability").check("harvest_augment",state,model);assert.is_false(allowed)
+		local ok,reason=pcall(sim.perform,raw,{method="bench_reroll",count=1},1,state)
+		assert.is_false(ok);assert.matches("No removable modifier",tostring(reason))
 	end)
 	it("does not offer a reforge tag blocked in every partial-lock selection",function()
 		local hat="Rarity: NORMAL\nIron Hat\nItem Level: 86";local model=sim.model(hat)

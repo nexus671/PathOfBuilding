@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Model one/three-modifier bench rerolls with experimental partial affix locks.
 * Enter explicit modifier names when testing identified drops against loot filters.
 * Keep loot-filter explicit-modifier previews uncertain when identification state is unknown or the item is unidentified.
 * Read influence markers from pasted ordinary equipment for loot-filter testing.

@@ -586,6 +586,8 @@ function A.extend(M,api)
 			state=copyTable(imprint)
 		elseif method == "bench_reroll" then
 			assert(state.rarity == "RARE" and (action.count == 1 or action.count == 3),"Choose one or three rare modifiers to reroll")
+			-- Model the protection selection once for the whole bench action.
+			if M.hasPartialLock(model,state) then api.selectPartialLocks(model,state,random) end
 			for _=1,action.count do remove(model,state,random,{attackProtection=true}) end
 			for _=1,action.count do append(model,state,random) end
 		elseif method == "eldritch_implicit" then

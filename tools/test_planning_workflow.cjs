@@ -78,6 +78,8 @@ async function main(){
   assert.deepEqual(partialSocketed.nativeCrafting.state.affixes,partialApplied.nativeCrafting.state.affixes);assert.equal(partialSocketed.nativeCrafting.state.sockets.length,3);
   const partialOdds=await queued('calculate_crafting',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'annul'},initialState:partialSocketed.nativeCrafting.state,targets:[{anyOf:['LocalAddedChaosDamage1']}],options:{trials:10}},'crafted');
   assert.equal(partialOdds.nativeCrafting.sampled,false);assert.equal(partialOdds.nativeCrafting.successChance,100);assert.equal(partialOdds.nativeCrafting.warnings[0].code,'partial_lock_model');
+  const partialBench=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'bench_reroll',count:1},initialState:partialSocketed.nativeCrafting.state,seed:19},'crafted');
+  assert.ok(partialBench.nativeCrafting.state.affixes.some(entry=>entry.id==='LocalAddedChaosDamage1'));assert.equal(partialBench.nativeCrafting.warnings[0].code,'partial_lock_model');
   for(const method of ['harvest_reforge','harvest_augment']) {
     const harvest=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method,tag:'fire'},initialState:partialSocketed.nativeCrafting.state,seed:19},'crafted');
     assert.ok(harvest.nativeCrafting.state.affixes.some(entry=>entry.id==='LocalAddedChaosDamage1'));assert.equal(harvest.nativeCrafting.warnings[0].code,'partial_lock_model');
