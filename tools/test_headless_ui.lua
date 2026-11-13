@@ -302,6 +302,9 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		local hints={};for _,row in ipairs(main.popups[1].controls.actionHint.list) do hints[#hints+1]=row[1] end;assert(table.concat(hints," "):find("Experimental partial lock",1,true),"Partial lock assumption was not explained before application")
 		frame("crafting-partial-lock-select")
 		ui:click("apply");assert(main.popups[1].controls.intro.label:find("Applied Crafting bench",1,true),"Partial lock was not applied")
+		ui:click("settings");ui:text("paletteSearch","white sockets (3.30)");assert(main.popups[1].controls.paletteUse:IsEnabled(),"Socket craft was blocked by a partial lock")
+		ui:click("paletteUse");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Bench: white sockets",1,true),"Socket craft did not apply")
+		frame("crafting-partial-lock-sockets")
 		ui:click("currency_annul");ui:choose("page","Craft settings");ui:click("exact");local jobs=require("Modules.CraftingTasks")
 		for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 		local odds=build.craftingAnalyses["partial-lock-ui"].results.odds.result

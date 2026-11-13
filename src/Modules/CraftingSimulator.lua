@@ -699,8 +699,11 @@ do
 	end
 end
 -- Extensions register state prerequisites once for both execution and browsing.
+local partialLockActions={bench=true,remove_crafted=true,annul=true,chaos=true,alteration=true,scour=true,divine=true,exalt=true,augmentation=true,regal=true,
+	socket_bench=true,socket_white_bench=true,socket_colour_bench=true,chromatic=true,omen_connections=true,omen_trichromatism=true,tainted_chromatic=true,tainted_jeweller=true,tainted_fusing=true,
+	quality=true,tainted_quality=true,catalyst=true,tainted_catalyst=true,blessed=true,sacred=true,harvest_enchant=true,eldritch_implicit=true,conflict=true}
 function M.methodReason(model,state,method)
-	if M.hasPartialLock(M.context(model,state),state) and not ({bench=true,remove_crafted=true,annul=true,chaos=true,alteration=true,scour=true,divine=true,exalt=true,augmentation=true,regal=true})[method] then
+	if M.hasPartialLock(M.context(model,state),state) and not partialLockActions[method] then
 		return "This action is not yet modeled with partial affix locks."
 	end
 	local check=M.methodChecks[method]
