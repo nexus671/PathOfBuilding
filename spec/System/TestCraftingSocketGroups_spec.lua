@@ -37,6 +37,21 @@ describe("Crafting socket group validation",function()
 		end end
 		assert.are.equal(240,exercised)
 	end)
+	it("extends the largest linked group by one socket without joining an entire neighbouring group",function()
+		local model=sim.model(raw:gsub("W W W","W W W W W W"))
+		for _,partition in ipairs({{0,0,0,0,1,1},{0,0,0,1,1,1}}) do
+			local state=copyTable(model.initial);state.corrupted=true;state.sockets={}
+			for i,group in ipairs(partition) do state.sockets[i]={color="W",group=group} end
+			local result=sim.validateState(model,sim.action(model,state,{method="tainted_fusing"},function() return 0.1 end))
+			local before,after={},{}
+			for _,socket in ipairs(state.sockets) do before[socket.group]=(before[socket.group] or 0)+1 end
+			for _,socket in ipairs(result.sockets) do after[socket.group]=(after[socket.group] or 0)+1 end
+			local oldMax,newMax=0,0
+			for _,count in pairs(before) do oldMax=math.max(oldMax,count) end
+			for _,count in pairs(after) do newMax=math.max(newMax,count) end
+			assert.are.equal(oldMax+1,newMax)
+		end
+	end)
 	it("does not count Abyss sockets as links or bridge colours across them",function()
 		local model=sim.model(raw);local state=copyTable(model.initial)
 		state.sockets={{color="R",group=0},{color="A",group=0},{color="G",group=0}}

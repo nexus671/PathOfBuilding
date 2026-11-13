@@ -123,6 +123,6 @@ function S.extend(M,A,api)
 	M.limits[#M.limits+1]="Omen of Trichromatism guarantees one red, green and blue socket using one Omen and one Chromatic Orb. Forced positions are sampled uniformly; remaining sockets use the existing colour model. Placement and extra-colour probabilities are model assumptions."
 	M.limits[#M.limits+1]="The white socket bench action uses the announced 3.30 rule. Other crafting data remains pinned to 3.29.3.6; this action does not update other rules or modifier pools."
 
-	M.limits[#M.limits+1]="Socket colours use Siveran's empirical 3.29 model, with attribute bias for ordinary Chromatics and uniform RGB for tainted Chromatics. Tainted socket/link currencies assume 50/50 addition/removal; added sockets are white."
+	M.limits[#M.limits+1]="Socket colours use Siveran's empirical 3.29 model, with attribute bias for ordinary Chromatics and uniform RGB for tainted Chromatics. Tainted socket/link currencies assume 50/50 addition/removal; added sockets are white. Tainted Fusing selects the first largest group and extends it to the right when possible; tie and direction rules are model assumptions."
 end
 return S

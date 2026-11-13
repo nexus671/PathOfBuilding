@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Explain the assumed Tainted Fusing group and direction selection in crafting results.
 * Match Harvest choices against possible partial-lock selections and explain conditional availability.
 * Model Harvest reforges and augments with experimental partial affix locks.
 * Enumerate partial-lock Annulment outcomes under the stated uniform-selection model.
