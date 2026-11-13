@@ -538,13 +538,25 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	frame("simulation-result");assert(#main.popups[1].controls.resultSummary.list>=4,"Detailed simulation results are missing")
 	ui:click("editRecipe");frame("crafting-recipe-cards");ui:click("flowGraph");frame("crafting-route-graph");ui:click("graphAll");frame("crafting-route-graph-all");ui:click("close");ui:click("recovery");ui:choose("action","stop","val");ui:text("notes","Inspect unwanted rolls before spending more");frame("crafting-failure-recovery");ui:click("keep");frame("crafting-recovery-route");ui:click("keep")
 	do
-		local saved;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy"}},targets={},requirements={maxAffixes=0}},{method="alchemy"},function(value) saved=value end)
+		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86";local routeModel=sim.model(raw);local benchId=routeModel.bench[1].id
+		local saved;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy"}},targets={},requirements={maxAffixes=0}},{method="alchemy"},function(value) saved=value end,routeModel)
 		ui:click("addCurrency");ui:text("search","Chaos Orb");frame("crafting-recipe-currency-picker");ui:click("choose")
 		ui:click("addCurrency");ui:text("search","Bench: reroll 3");ui:click("choose");assert(main.popups[1].controls.graph.list[3][1]:find("reroll 3 modifiers",1,true),"Bench reroll card lost its chosen count");frame("crafting-recipe-added-currencies")
-		ui:click("flowGraph");assert(main.popups[1].controls.graphStep.list[3].label:find("reroll 3 modifiers",1,true),"Flow graph lost the bench reroll count");frame("crafting-recipe-currency-flow");ui:click("close");ui:click("keep")
+		ui:click("flowGraph");assert(main.popups[1].controls.graphStep.list[3].label:find("reroll 3 modifiers",1,true),"Flow graph lost the bench reroll count");frame("crafting-recipe-currency-flow");ui:click("close")
+		ui:click("addCurrency");ui:text("search","Deafening Essence of Greed")
+		local details={};for _,row in ipairs(main.popups[1].controls.details.list) do details[#details+1]=row[1] end;assert(table.concat(details," "):find("Guaranteed on this base",1,true),"Essence picker omitted its guaranteed modifier")
+		frame("crafting-recipe-essence-picker");ui:click("choose")
+		ui:click("addCurrency");ui:text("search",benchId);ui:click("choose")
+		ui:click("addCurrency");ui:text("search","reforge with a tagged modifier (life)");ui:click("choose")
+		local cards=main.popups[1].controls.graph;local cardTop=5*92;assert(cards.controls.scrollBar.offset<=cardTop and cards.controls.scrollBar.offset+cards.height>=cardTop+92,"New recipe step was not scrolled into view")
+		frame("crafting-recipe-configured-actions");ui:click("keep")
 		assert(saved.steps[2].method=="chaos" and saved.steps[3].method=="bench_reroll" and saved.steps[3].count==3,"Direct recipe actions were not retained")
-		local result=sim.simulate("Rarity: NORMAL\nPlate Vest\nItem Level: 86",saved,{trials=1,maxActions=3,forceFirstAction=true})
+		assert(saved.steps[4].method=="essence" and saved.steps[5].modId==benchId and saved.steps[6].tag=="life","Configured recipe actions were not retained")
+		local result=sim.simulate(raw,saved,{trials=1,maxActions=3,forceFirstAction=true})
 		assert(not next(result.transitionErrors) and result.meanActions==3,"The directly assembled recipe did not run all three actions")
+		local essence=sim.perform(raw,saved.steps[4],1);assert(essence.state.rarity=="RARE","Direct Essence step did not execute")
+		assert(sim.perform(raw,saved.steps[5],1).state.rarity=="MAGIC","Direct bench step did not execute")
+		assert(sim.perform(raw,saved.steps[6],1,essence.state).state.rarity=="RARE","Direct Harvest step did not execute")
 	end
 	ui:click("distribution");frame("simulation-distribution");assert(main.popups[1].controls.successCard and main.popups[1].controls.medianSpend and main.popups[1].controls.veryUnluckySpend and main.popups[1].controls.moreTrials,"Simulation result cards are missing");ui:click("charts");frame("crafting-success-chart");ui:choose("mode","Spending per trial");frame("crafting-spending-chart");ui:click("copy");assert(ui.clipboard:find("route,value,percent,count,trials",1,true));ui:click("close");ui:click("sample");frame("crafting-sampled-outcome");ui:click("close");ui:click("moreTrials")
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end

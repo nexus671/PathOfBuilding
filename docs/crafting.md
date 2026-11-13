@@ -89,7 +89,7 @@ Roll percentage means the position within a modifier's native range. For several
 
 ## Simulate a recipe
 
-Set trials and the action budget. **Simulate action** repeats the action until its conditions match or the budget ends. **Keep actions as recipe** retains the emulator sequence. **Recipe routes** edits attempts and success/failure destinations, including bounded loops. **Add currency step** adds common currency and bench rerolls directly, even when a later step needs an item state the current item has not reached yet. **Simulate saved recipe** uses its captured initial state.
+Set trials and the action budget. **Simulate action** repeats the action until its conditions match or the budget ends. **Keep actions as recipe** retains the emulator sequence. **Recipe routes** edits attempts and success/failure destinations, including bounded loops. **Add recipe step** adds common currency, base-specific bench crafts and Essences, and tagged Harvest actions directly, even when a later step needs an item state the current item has not reached yet. The step is checked against the item when it runs. **Simulate saved recipe** uses its captured initial state.
 
 **Flow graph** displays the recipe as currency cards. Drag a success (**S**) or failure (**F**) port onto a step or Finish. Undo/Redo restores route edits; **Edit selected step** opens its detailed conditions. Keep the recipe in its editor to persist changes.
 

@@ -24,6 +24,8 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 	local function loadStep()
 		local step=draft.steps[selected];if not step then return end
 		for _,row in ipairs(controls.graph.list) do row.selected=row.step==selected end
+		local scroll=controls.graph.controls.scrollBar;local _,height=controls.graph:GetSize()
+		scroll:SetContentDimension(#draft.steps*92,height-4);scroll:ScrollIntoView((selected-1)*92,92)
 		controls.attempts:SetText(tostring(step.maxAttempts or 1))
 		controls.condition:SelByValue((step.untilTargets or step.untilRequirements) and "Keep custom conditions" or "After a successful action")
 		controls.success:SelByValue(step.onSuccess or 0,"val");controls.failure:SelByValue(step.onFailure or 0,"val")
@@ -31,13 +33,13 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 	local function refresh()
 		local list,routes,lines={ },{{label="Next step",val=0}},{}
 		for i,step in ipairs(draft.steps) do
-			list[#list+1]={label=i..". "..require("Modules.CraftingWorkbench").actionLabel(step),val=i}
+			list[#list+1]={label=i..". "..require("Modules.CraftingWorkbench").actionLabel(step,model),val=i}
 			routes[#routes+1]={label="Step "..i,val=i}
 			local function route(target) return target>#draft.steps and "Finish" or "Step "..target end
 			lines[#lines+1]={height=92,textSize=16,x=44,card=true,step=i,selected=i==selected,iconPath=require("Modules.CraftingWorkbench").icon(step.method),
 				subtitle=string.format("Success -> %s | Failure -> %s",route(step.onSuccess or i+1),step.onFailureAction and step.onFailureAction~="route" and require("Classes.CraftingRecoveryControl").labels[step.onFailureAction] or route(step.onFailure or i+1)),
 				detail=(step.untilTargets or step.untilRequirements) and "Repeat until target conditions match" or "Continue after one successful action",
-				"^7"..string.format("%d. %s | up to %d attempts",i,require("Modules.CraftingWorkbench").actionLabel(step),step.maxAttempts or 1)}
+				"^7"..string.format("%d. %s | up to %d attempts",i,require("Modules.CraftingWorkbench").actionLabel(step,model),step.maxAttempts or 1)}
 		end
 		routes[#routes+1]={label="End recipe",val=#draft.steps+1}
 		controls.graph.list=lines;controls.step:SetList(list);controls.step:SelByValue(selected,"val")
@@ -74,7 +76,7 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		require("Classes.CraftingRecoveryControl").Open(step,function(replacement) draft.steps[selected]=replacement;sim.validateRecipe(draft);refresh() end)
 	end)
 	button(controls,"keep",16,642,256,"Keep recipe",function() onKeep(sim.validateRecipe(draft));main:ClosePopup() end)
-	button(controls,"addCurrency",288,642,272,"Add currency step",function()
+	button(controls,"addCurrency",288,642,272,"Add recipe step",function()
 		assert(#draft.steps < 20,"Use up to twenty steps")
 		local entries={};local workbench=require("Modules.CraftingWorkbench")
 		for _,method in ipairs({"transmute","alteration","augmentation","regal","alchemy","binding","chaos","exalt","annul","scour","divine","vaal","blessed","sacred","chromatic","quality"}) do
@@ -83,6 +85,23 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		end
 		for _,count in ipairs({1,3}) do entries[#entries+1]={id="bench-reroll-"..count,label="Bench: reroll "..count.." modifier"..(count==1 and "" or "s"),category="Bench",icon=workbench.icon("bench_reroll"),action={method="bench_reroll",count=count},
 			details={"Add this bench action to the recipe without changing the working item.","The item must have enough removable modifiers when this step runs."}} end
+		if model then
+			for _,entry in ipairs(model.bench or {}) do
+				local action={method="bench",modId=entry.id};local label=workbench.actionLabel(action,model)
+				entries[#entries+1]={id=entry.id,label=label,search=entry.id,category="Bench",action=action,details={label,"Uses a bench-crafted slot. Item requirements and conflicts are checked when this step runs."}}
+			end
+			for _,entry in ipairs(model.essences or {}) do
+				local action={method="essence",essenceId=entry.id}
+				local mod=model.byId[entry.modId];local guaranteed=mod and table.concat(mod," / ") or "Unavailable"
+				entries[#entries+1]={id=entry.id,label=entry.name,search=entry.id,category="Essences",icon=workbench.icon("essence",action,model),action=action,
+					details={entry.name,"Guaranteed on this base: "..guaranteed,"Crafting data: "..sim.dataPatch..". The item must meet the Essence's requirements when this step runs."}}
+			end
+		end
+		for _,method in ipairs({"harvest_reforge","harvest_augment"}) do for _,tag in ipairs({"attack","caster","physical","fire","cold","lightning","chaos","life","defences","speed","critical","influence"}) do
+			if method~="harvest_augment" or tag~="influence" then local action={method=method,tag=tag};local label=workbench.actionLabel(action,model)
+				entries[#entries+1]={id=method..":"..tag,label=label,category="Harvest",action=action,details={label,"A legal modifier and item state are required when this step runs."}}
+			end
+		end end
 		require("Classes.PlanningBrowserControl").Open("Add a recipe step",entries,{action="Add step",choose=function(entry)
 			draft.steps[#draft.steps+1]=copyTable(entry.action);selected=#draft.steps;refresh()
 		end})
