@@ -243,6 +243,15 @@ test('proposes crafting metadata and optional target gear through desktop review
   assert.equal(f.call('get_crafting_projects',{}).projects.length,0);
 });
 
+test('preserves typed Harvest enchant actions, goals and inventory states', t => {
+  const f=fixture(t);const project=craftingProject();
+  project.preferredMethod='harvest_enchant';
+  project.nativeRecipe={steps:[{method:'harvest_enchant',enchantId:'WeaponCriticalEnchant'}],targets:[],requirements:{harvestEnchant:'WeaponCriticalEnchant'},initialState:{rarity:'NORMAL',affixes:[],harvestEnchant:'WeaponAreaEnchant'}};
+  f.call('propose_crafting_plan',{baseRevision:f.state.revision,project});
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.deepEqual(queued.proposal.operations[0].project.nativeRecipe,project.nativeRecipe);
+});
+
 test('rejects invalid crafting evidence and execution fields', t => {
   const f=fixture(t);const project=craftingProject();
   assert.throws(()=>f.call('propose_crafting_plan',{baseRevision:f.state.revision,project:{...project,runCode:'no'}}),/arguments/);

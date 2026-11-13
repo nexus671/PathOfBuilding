@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Added Harvest quality enchantments with native item previews, recipe goals, saved state and Lifeforce costs.
+* Fixed socket-bench preparation costs being charged again when the input already has the requested socket count.
 * Added a colour wheel, brightness/opacity controls and exact RGBA input to filter appearance editors.
 * Fixed campaign numeric entry and restored drop-preview and colour-swatch tooltips.
 * Added category-specific filter styling, full file change review and simulator paging for all saved examples.

@@ -182,6 +182,7 @@ function M.available(method,state,model)
 end
 function M.hint(method,state,model)
 	local available,reason=M.available(method,state,model)
+	if available and method=="harvest_enchant" then return "Replace the enchantment with a quality bonus. Options show the Lifeforce cost." end
 	return available and (descriptions[method] or "Choose the craft options, then apply to the item.") or reason
 end
 function M.currencies(controls,selectMethod,currentMethod,isShown,usage,getState,model,leftWidth)

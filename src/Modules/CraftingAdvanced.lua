@@ -592,7 +592,7 @@ function A.extend(M,api)
 		elseif method == "bench_reroll" then option("Reroll one random modifier",{count=1}); option("Reroll three random modifiers",{count=3})
 		elseif method == "eldritch_implicit" then for _,side in ipairs({"Exarch","Eater"}) do for tier=1,4 do option(side.." | "..({"Lesser","Greater","Grand","Exceptional"})[tier],{side=side,tier=tier}) end end
 		elseif method == "harvest_resistance" then for _,from in ipairs({"fire","cold","lightning"}) do for _,to in ipairs({"fire","cold","lightning"}) do if from ~= to then option(from.." to "..to,{from=from,to=to}) end end end
-		elseif method == "socket_bench" then for count=2,(model.item.base.socketLimit or 0) do option(count.." sockets (added sockets white)",{count=count}); option(count.." linked sockets",{count=count,linked=true}) end
+		elseif method == "socket_bench" then for count=2,(model.item.base.socketLimit or 0) do option(count.." sockets (added sockets white)",{count=count}); option("Set "..count.." sockets and link them",{count=count,linked=true}) end
 		end
 		table.sort(result,function(a,b) return a.label < b.label end)
 		return result
@@ -615,7 +615,10 @@ function A.extend(M,api)
 		end
 		if action.method == "socket_bench" then
 			local result={}
-			for _,bench in ipairs(A.data().bench) do if bench.actions.change_socket_count == action.count or action.linked and bench.actions.link_sockets == action.count then
+			-- The legacy combined action sets the count before linking. Do not
+			-- charge for that preparation when the input already has the count.
+			local changeCount=not action.linked or not state or #(state.sockets or {})~=action.count
+			for _,bench in ipairs(A.data().bench) do if changeCount and bench.actions.change_socket_count == action.count or action.linked and bench.actions.link_sockets == action.count then
 				for id,amount in pairs(bench.cost) do result[id]=(result[id] or 0)+amount end
 			end end
 			if next(result) then
@@ -685,6 +688,7 @@ function A.extend(M,api)
 	require("Modules.CraftingProperties").extend(M,A,api)
 	require("Modules.CraftingCorruption").extend(M,A,api)
 	require("Modules.CraftingSockets").extend(M,A,api)
+	require("Modules.CraftingEnchants").extend(M,A,api)
 	require("Modules.CraftingMemory").extend(M,A,api)
 	require("Modules.CraftingRecombination").extend(M,A,api)
 	require("Modules.CraftingPredictable").extend(M,A,api)

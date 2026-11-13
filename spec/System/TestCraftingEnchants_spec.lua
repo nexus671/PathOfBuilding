@@ -1,0 +1,68 @@
+describe("Harvest quality enchantments",function()
+	local sim=require("Modules.CraftingSimulator")
+	local enchants=require("Modules.CraftingEnchants")
+	local raw="Rarity: NORMAL\nRusted Sword\nItem Level: 86\nQuality: 20"
+	it("provides the pinned services and filters by exact base class",function()
+		local count=0;for _,craft in pairs(enchants.data().crafts) do count=count+1;assert.is_true(#craft.lines>=2);assert.is_true(craft.cost>0) end
+		assert.are.equal(14,count)
+		local function options(base) local model=sim.model("Rarity: NORMAL\n"..base.."\nItem Level: 86");return sim.actionOptions(model,model.initial,"harvest_enchant") end
+		assert.are.equal(6,#options("Rusted Sword"));assert.are.equal(5,#options("Crude Bow"));assert.are.equal(5,#options("Driftwood Wand"))
+		assert.are.equal(8,#options("Plate Vest"));assert.are.equal(0,#options("Iron Hat"));assert.are.equal(0,#options("Cobalt Jewel"))
+		local catalog=sim.catalog(raw,"critical",10)
+		assert.are.equal(1,#catalog.harvestEnchants);assert.are.equal("WeaponCriticalEnchant",catalog.harvestEnchants[1].action.enchantId)
+		assert.are.same({primal_lifeforce=5000},catalog.harvestEnchants[1].components)
+		assert.are.equal(1,#sim.catalog(raw,"",1).harvestEnchants)
+	end)
+	it("replaces the enchantment without changing affixes, quality or sockets",function()
+		local model=sim.model(raw);local initial=sim.perform(raw,{method="transmute"},12).state
+		initial.sockets={{color="R",group=0}};initial.quality=20
+		local next=sim.perform(raw,{method="harvest_enchant",enchantId="WeaponCriticalEnchant"},13,initial)
+		assert.are.same(initial.affixes,next.state.affixes);assert.are.same(initial.sockets,next.state.sockets);assert.are.equal(20,next.state.quality)
+		assert.is_nil(initial.harvestEnchant);assert.are.equal("WeaponCriticalEnchant",next.state.harvestEnchant)
+		local item=sim.toItem(model,next.state);assert.are.equal(2,#item.enchantModLines)
+		assert.are.equal("Quality does not increase Physical Damage",item.enchantModLines[1].line)
+		assert.are.equal("1% increased Critical Strike Chance per 4% Quality",item.enchantModLines[2].line)
+		local replaced=sim.perform(raw,{method="harvest_enchant",enchantId="WeaponAreaEnchant"},14,next.state)
+		assert.are.equal("WeaponAreaEnchant",replaced.state.harvestEnchant);assert.are.equal(2,#sim.toItem(model,replaced.state).enchantModLines)
+		local saved=assert(require("dkjson").decode(require("dkjson").encode(replaced.state)))
+		sim.validateState(model,saved);assert.are.equal(replaced.itemText,sim.toItem(model,saved).raw)
+		local rerolled=sim.perform(raw,{method="alteration"},15,saved);assert.are.equal("WeaponAreaEnchant",rerolled.state.harvestEnchant)
+	end)
+	it("rejects ineligible, corrupted, mirrored and unfinished items",function()
+		local model=sim.model(raw);local craft={method="harvest_enchant",enchantId="LifeBodyEnchant"}
+		assert.is_false(pcall(sim.action,model,model.initial,craft,function() error("Not random") end))
+		craft.enchantId="WeaponCriticalEnchant"
+		for _,flag in ipairs({"corrupted","mirrored","destroyed","veil"}) do local state=copyTable(model.initial);state[flag]=true;assert.is_false(pcall(sim.action,model,state,craft,function() error("Not random") end)) end
+		local state=copyTable(model.initial);state.harvestEnchant="LifeBodyEnchant";assert.is_false(pcall(sim.validateState,model,state))
+		state.harvestEnchant="unknown";assert.is_false(pcall(sim.validateState,model,state))
+	end)
+	it("charges the correct lifeforce independently of ordinary currency",function()
+		assert.are.same({primal_lifeforce=5000},sim.components({method="harvest_enchant",enchantId="WeaponCriticalEnchant"}))
+		assert.are.same({wild_lifeforce=3250},sim.components({method="harvest_enchant",enchantId="LifeBodyEnchant"}))
+		assert.are.same({vivid_lifeforce=5000},sim.components({method="harvest_enchant",enchantId="WeaponAttackSpeedEnchant"}))
+		assert.are.equal("harvest_enchant:WeaponCriticalEnchant",sim.priceKey({method="harvest_enchant",enchantId="WeaponCriticalEnchant"}))
+	end)
+	it("uses enchantments as recipe goals and includes their resource cost",function()
+		local recipe={steps={{method="harvest_enchant",enchantId="WeaponCriticalEnchant"}},targets={},requirements={harvestEnchant="WeaponCriticalEnchant"}}
+		sim.validateRecipe(recipe)
+		local result=sim.simulate(raw,recipe,{trials=10,maxActions=1,prices={primal_lifeforce=0.1},currency="units"})
+		assert.are.equal(10,result.successes);assert.are.equal(50000,result.currencySpent.primal_lifeforce);assert.are.equal(500,result.meanCost)
+		recipe.requirements.harvestEnchant="invented";assert.is_false(pcall(sim.validateRecipe,recipe))
+	end)
+	it("recognises imported enchants and preserves only the selected recombination host",function()
+		local enchanted=sim.perform(raw,{method="harvest_enchant",enchantId="WeaponCriticalEnchant"},1)
+		local model=sim.model(enchanted.itemText)
+		assert.are.equal("WeaponCriticalEnchant",model.initial.harvestEnchant)
+		local legacy=copyTable(model.initial);legacy.harvestEnchant=nil
+		assert.are.equal("WeaponCriticalEnchant",sim.validateState(model,legacy).harvestEnchant);assert.is_nil(legacy.harvestEnchant)
+		assert.is_true(sim.matches(model.initial,{},nil,model,{harvestEnchant="WeaponCriticalEnchant"}))
+		local recipe={steps={{method="harvest_enchant",enchantId="WeaponCriticalEnchant"}},targets={},requirements={harvestEnchant="WeaponCriticalEnchant"}}
+		local result=sim.simulate(enchanted.itemText,recipe,{trials=2,maxActions=1})
+		assert.are.equal(2,result.successes);assert.are.equal(0,result.meanActions)
+		local other="Rarity: NORMAL\nCopper Sword\nItem Level: 86"
+		local state=sim.action(model,model.initial,{method="recombine",donorItem=other},function() return 0.1 end)
+		assert.are.equal("WeaponCriticalEnchant",state.harvestEnchant)
+		state=sim.action(model,model.initial,{method="recombine",donorItem=other},function() return 0.9 end)
+		assert.is_nil(state.harvestEnchant);assert.are.equal(0,#sim.toItem(model,state).enchantModLines)
+	end)
+end)

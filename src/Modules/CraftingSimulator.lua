@@ -279,6 +279,7 @@ function M.matches(state,targets,rarity,model,requirements,requiredGroups)
   if requirements.minMemoryStrands and (state.memoryStrands or 0) < requirements.minMemoryStrands then return false end
   if requirements.maxMemoryStrands and (state.memoryStrands or 0) > requirements.maxMemoryStrands then return false end
   if requirements.corrupted ~= nil and (state.corrupted or false) ~= requirements.corrupted then return false end
+  if requirements.harvestEnchant and state.harvestEnchant~=requirements.harvestEnchant then return false end
   if requirements.sockets and #(state.sockets or model.item.sockets or {}) < requirements.sockets then return false end
   if requirements.socketColours then
    local groups={};local needed={}
@@ -310,7 +311,8 @@ function M.validateRecipe(recipe)
 		assert(type(requirements) == "table" and next(requirements),"Choose at least one property condition")
 		local limits={openPrefixes=3,openSuffixes=3,minAffixes=6,maxAffixes=6,minQuality=30,sockets=6,links=6,minMemoryStrands=100,maxMemoryStrands=100,minFractured=6,maxFractured=6,minIntangibility=100,maxIntangibility=100}
 		for key,value in pairs(requirements) do
-			if key == "corrupted" or key == "linkedColours" then assert(type(value) == "boolean","Invalid boolean property condition")
+			if key == "harvestEnchant" then assert(type(value)=="string" and require("Modules.CraftingEnchants").data().crafts[value],"Choose a known Harvest enchantment")
+			elseif key == "corrupted" or key == "linkedColours" then assert(type(value) == "boolean","Invalid boolean property condition")
 			elseif key == "socketColours" then assert(type(value)=="string" and #value>=1 and #value<=6 and not value:find("[^RGBW]"),"Use one to six socket colours: R, G, B or W")
 			else integer(value,0,assert(limits[key],"Unknown property condition"),key) end
 		end
@@ -428,13 +430,14 @@ function M.simulate(raw,recipe,options)
 				if actions >= maxActions then break end
 				if options.checkpoint then options.checkpoint({trial=trial,trials=trials,actions=actions,successes=successes}) end
 				actions=actions+1
+				local before=state
 				local ok,nextState=pcall(M.action,model,state,step,random)
 				if not ok then local message=tostring(nextState):match("[^:]+$") or tostring(nextState); errors[message]=(errors[message] or 0)+1; break end
 				state=nextState
 				route.executed=route.executed+1
 				totalExecuted=totalExecuted+1
 				local setupKey=(M.priceKey or priceKey)(step)
-				local components=options.prices and options.prices[setupKey] ~= nil and {[setupKey]=1} or M.components and M.components(step,state,model) or {[setupKey]=1}
+				local components=options.prices and options.prices[setupKey] ~= nil and {[setupKey]=1} or M.components and M.components(step,before,model) or {[setupKey]=1}
 				for key,amount in pairs(components) do
 					spent[key]=(spent[key] or 0)+amount
 					local price=options.prices and options.prices[key]

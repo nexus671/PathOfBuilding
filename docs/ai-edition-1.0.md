@@ -25,6 +25,7 @@ The installed application and personal builds are outside this release workspace
 - [x] Inspect recipe branches visually and edit routes without numeric guesswork.
 - [x] Keep experimental items in a named local inventory.
 - [x] Compare methods and explore success/budget and spending distributions.
+- [x] Apply quality enchantments with native item state, recipe goals and resource costs.
 - [ ] Review incomplete socket, corruption and league mechanics against sources.
 - [x] Keep empirical assumptions visible; never present unknown weights as facts.
 
@@ -51,16 +52,20 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,099 Lua tests, 41 Node tests,
-the real MCP save/reopen workflow and 612 source-stable UI frames without audit
+The published preview passed exact-commit CI with 1,107 Lua tests, 41 Node tests,
+the real MCP save/reopen workflow and 630 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `3a694f9ae9da34d2afdcdbc83ff19de03f32cb52`.
+against commit `651e892487b61e77e2c86aab069ea3d5fc94c3f7`.
 
-The next review adds a native colour wheel, brightness/opacity controls, exact
-RGBA input and Ruthless validation. Native input tests also exposed and fixed
-campaign fields rejecting numeric entry. Local validation passed 1,107 Lua tests
-and 630 source-stable UI states without audit failures. Exact-commit CI is still
-required. The comparison engine also passed 2,000
+That preview includes the native colour wheel, brightness/opacity controls,
+exact RGBA input and Ruthless validation. Native input tests also exposed and
+fixed campaign fields rejecting numeric entry. The next review adds 14
+client-derived Harvest quality enchantments, goals, native import/export and
+resource costs. It also fixes repeated socket-count preparation costs when
+linking an item that already has the requested count. Local validation passed
+1,115 Lua tests, 42 Node tests, the real MCP workflow and 642 source-stable UI
+states without audit failures. Exact-commit CI is still required for that batch.
+The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.
 

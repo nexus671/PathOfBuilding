@@ -8,7 +8,7 @@ The independent engine targets current PoE 1 using PoB modifiers and an immutabl
 | Core | Ordinary currencies, bench IDs, multiple crafted modifiers, crafted-mod removal, essences, one/three-mod bench rerolls | Resolvable non-unique items. Essences/resonators reject meta modifiers. |
 | Import | Known native identities and uniquely resolvable plain copies, including multi-line flasks, tinctures and cluster tags | Explicit item level required. Ambiguous identities and values that cannot be reconstructed are rejected; no hidden tier or roll is guessed. |
 | Fossils | Combinations, tag weights, special added/forced mods, lucky rolls, fractures, corrupted implicits | Tangled needs a revealed outcome; Sanctified uses empirical level bias. |
-| Harvest | Tagged reforge, augment/remove, elemental resistance swaps | Supported current tags; arbitrary legacy crafts excluded. |
+| Harvest | Tagged reforge, augment/remove, elemental resistance swaps, 14 quality enchantments with client-derived eligibility and costs | Supported current tags; arbitrary legacy crafts excluded. |
 | Influence | Six slams, Awakener, Dominance | Known native higher tiers and compatible bases. |
 | Veiled | Remove/add veil, offered choices, preferred choices in recipes | Pending choices are unfinished items. |
 | Bestiary | Level 20/30 Aspects, affix conversion, imprint/restore, random metamod, influenced augmentation, one/two-mod Talisman fractures | Talisman fractures sample distinct modifiers uniformly. Unique services remain unsupported. |
@@ -41,5 +41,7 @@ The independent engine targets current PoE 1 using PoB modifiers and an immutabl
 ## Patch maintenance
 
 `python tools/update_allflame_data.py` rebuilds the pinned client-derived Allflame catalog in memory and records source hashes. `python tools/update_crafting_data.py` rebuilds supplemental data from the pinned commit and records source hashes. Updating the patch requires checking modifier identities, mechanics and regression fixtures together.
+
+`python tools/update_harvest_enchants.py` joins the pinned client Harvest service table to RePoE modifier text and base classes. It records every source hash and includes deterministic quality-enchantment services, rather than assuming random enchantment weights. Imported matching enchantments are recognised; replacement, recipe goals, inventory state and selected recombination hosts retain their identities. For supplied resource prices, use `wild_lifeforce`, `vivid_lifeforce` and `primal_lifeforce`.
 
 [Announced 3.30 changes](https://www.pathofexile.com/forum/view-thread/4013680), including partial affix locks and Annulment interactions, remain separate until released data and behavior are verified. Historical Necropolis and Crucible crafting are outside this work's scope.

@@ -21,6 +21,8 @@ def source_hashes():
     sources += list((ROOT / "src/Assets/Crafting").rglob("*"))
     sources += list((ROOT / "src/Assets/Atlas").rglob("*"))
     sources += list((ROOT / "src/Data/Atlas").glob("*.json"))
+    sources += list((ROOT / "src/Data/Crafting").glob("*.json"))
+    sources += [ROOT / "tools/update_harvest_enchants.py", ROOT / "tools/update_crafting_data.py", ROOT / "tools/update_allflame_data.py"]
     sources += list((ROOT / "src/Data/LootFilters").glob("*"))
     sources += list((ROOT / "src/Assets/LootFilters").glob("*"))
     sources += list((ROOT / "src/TreeData/3_30").glob("*"))
@@ -63,7 +65,7 @@ def main():
     assert result.returncode == 0, result.stdout
     assert source_hashes() == hashes, "Source files changed during UI capture; repeat against stable sources"
     paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 630, f"Expected 630 UI frames, found {len(paths)}"
+    assert len(paths) == 642, f"Expected 642 UI frames, found {len(paths)}"
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         failures = [failure for failure in pool.map(render_frame, paths) if failure]
     negative = json.loads((directory / "expected-audit-failures.json").read_text())

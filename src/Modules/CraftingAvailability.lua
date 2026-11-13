@@ -22,6 +22,7 @@ function M.check(method,state,model)
 	if (method=="annul" or method=="divine" or method=="scour" or method=="veiled_orb" or method=="ducat_kishara") and #state.affixes==0 then return false,"Requires an item with modifiers." end
 	local fractured,crafted=false,false;for _,entry in ipairs(state.affixes) do fractured=fractured or entry.fractured;crafted=crafted or entry.crafted end
 	local influenced=state.influences and #state.influences>0
+	if method=="harvest_enchant" and #sim.actionOptions(model,state,method)==0 then return false,"Harvest quality enchantments require an eligible weapon or body armour." end
 	if method=="exalt" or method=="augmentation" or method=="foulborn_exalt" or method=="foulborn_augmentation" then if #state.affixes>=sim.capacities(model,state).total then return false,"There is no open modifier slot." end end
 	if method=="fracture" then
 		if #state.affixes<4 then return false,"Fracturing requires at least four modifiers." end

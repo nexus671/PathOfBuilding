@@ -157,6 +157,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:choose("libraryPage","Item")
 	bridge.disable(build);io.open,os.remove=originalOpen,originalRemove
 	ui:bind(nil)
+	local enchantedProject={id="harvest-ui",title="Body armour quality enchant",slot="Body Armour",startingItem="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20",goals={},steps={}}
+	require("Classes.CraftingSimulatorControl").Open(build,enchantedProject)
+	ui:click("settings");ui:text("paletteSearch","replace quality");frame("crafting-harvest-service");ui:click("paletteUse")
+	ui:choose("option",require("Modules.CraftingEnchants").label("LifeBodyEnchant"),"label");ui:click("apply");frame("crafting-harvest-enchanted")
+	assert(main.popups[1].controls.intro.label:find("Applied Harvest",1,true),"Harvest enchantment was not applied")
+	ui:choose("page","Target conditions");ui:click("targetConditions");ui:choose("harvestEnchant","LifeBodyEnchant","val");frame("crafting-harvest-goal");ui:click("keep")
+	ui:choose("page","Emulate item");ui:click("undo");frame("crafting-harvest-undone");ui:click("close")
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

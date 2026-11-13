@@ -35,7 +35,12 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep,groupIndex)
 	controls.linkedColours:SelByValue(conditions.linkedColours and "In one linked group" or "Anywhere on item")
 	controls.corrupted=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,462,572,24},{"Any corruption state","Must be corrupted","Must be uncorrupted"})
 	controls.corrupted:SelByValue(conditions.corrupted == true and "Must be corrupted" or conditions.corrupted == false and "Must be uncorrupted" or "Any corruption state")
-	button("keep",16,506,220,"Keep target conditions",function()
+	local enchantments={{label="Any Harvest enchantment",val=false}}
+	for id,craft in pairs(require("Modules.CraftingEnchants").data().crafts) do enchantments[#enchantments+1]={label=(id:find("Body",1,true) and "Body: " or "Weapon: ")..craft.lines[#craft.lines],val=id} end
+	table.sort(enchantments,function(a,b) if not a.val then return not not b.val elseif not b.val then return false else return a.label<b.label end end)
+	controls.harvestEnchant=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,502,572,24},enchantments)
+	controls.harvestEnchant:SelByValue(conditions.harvestEnchant or false,"val")
+	button("keep",16,552,220,"Keep target conditions",function()
 		if group then
 			group.atLeast=assert(tonumber(controls.count.buf),"Enter a matching-mod count")
 			group.minRoll=controls.roll.buf ~= "" and assert(tonumber(controls.roll.buf),"Enter a minimum roll percent")/100 or nil
@@ -44,16 +49,17 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep,groupIndex)
 		end
 		local result={};for _,entry in ipairs(properties) do local value=controls[entry[1]].buf;if value ~= "" then result[entry[1]]=assert(tonumber(value),"Invalid "..entry[2]) end end
 		local corruption=controls.corrupted:GetSelValue();if corruption ~= "Any corruption state" then result.corrupted=corruption == "Must be corrupted" end
+		result.harvestEnchant=controls.harvestEnchant:GetSelValueByKey("val") or nil
 		if controls.socketColours.buf~="" then result.socketColours=controls.socketColours.buf:upper();result.linkedColours=controls.linkedColours:GetSelValue()=="In one linked group" end
 		local required=controls.groups.buf ~= "" and assert(tonumber(controls.groups.buf),"Invalid required group count") or nil
 		if not next(result) then result=nil end
 		sim.validateRecipe({steps={{method="chaos"}},targets=groups,requirements=result,requiredGroups=required})
 		onKeep(groups,result,required);main:ClosePopup()
 	end)
-	button("close",492,506,116,"Close",function() main:ClosePopup() end)
+	button("close",492,552,116,"Close",function() main:ClosePopup() end)
 	if not group then for _,key in ipairs({"count","roll","mode","scope","fractured","crafted"}) do controls[key].enabled=false end end
 	require("Modules.PlanningUI").style(controls,{keep=true})
-	main:OpenPopup(624,554,"Crafting target conditions",controls,nil,nil,"close")
+	main:OpenPopup(624,600,"Crafting target conditions",controls,nil,nil,"close")
 	return controls
 end
 return Panel
