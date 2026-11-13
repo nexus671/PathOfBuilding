@@ -169,6 +169,10 @@ local currencies={
 }
 local descriptions={omen_trichromatism="Guarantee one red, green and blue socket. Uses one Omen and one Chromatic Orb.",omen_connections="Fully link existing sockets. Uses one Omen of Connections and one Orb of Fusing.",transmute="Add magic modifiers to a normal item.",alteration="Reroll the modifiers on a magic item.",augmentation="Add a modifier to a magic item.",regal="Upgrade a magic item and add a modifier.",alchemy="Turn a normal item into a rare item.",chaos="Reroll the modifiers on a rare item.",exalt="Add a modifier to a rare item.",annul="Remove a random modifier.",scour="Remove the item's modifiers.",divine="Reroll the values of existing modifiers.",vaal="Corrupt the item. Outcomes can be destructive.",chromatic="Reroll socket colours."}
 local currencyArt,currencyNames
+function M.actionLabel(action)
+	if action.method=="bench_reroll" and (action.count==1 or action.count==3) then return "Bench: reroll "..action.count.." modifier"..(action.count==1 and "" or "s") end
+	return simulator.labels[action.method] or action.method
+end
 function M.icon(method,action,model)
 	if not currencyArt then
 		local file=assert(io.open("Assets/Crafting/currencies.json","rb"));currencyArt=assert(require("dkjson").decode(file:read("*a")));file:close();currencyNames={}

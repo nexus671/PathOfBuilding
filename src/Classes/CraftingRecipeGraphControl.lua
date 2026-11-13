@@ -1,6 +1,5 @@
 -- Direct route editing: drag labelled success/failure ports onto destination cards.
 local ui=require("Modules.PlanningUI")
-local sim=require("Modules.CraftingSimulator")
 local routes=require("Modules.CraftingRoutes")
 local art=require("Modules.CraftingWorkbench")
 local visual=require("Modules.LootFilterVisuals")
@@ -39,7 +38,7 @@ function M.Open(input,options)
 		for _,node in ipairs(nodes) do if node.y+node.h>0 and node.y<self.height then
 			local step=recipe.steps[node.index];visual.box(node.x,node.y,node.w,node.h,node.index==selected and "^xC5AB74" or "^x3F566F");visual.box(node.x+1,node.y+1,node.w-2,node.h-2,"^x192635")
 			local path=step and art.icon(step.method,step,options.model);if path then SetDrawColor(1,1,1);DrawImage(visual.image(path),node.x+10,node.y+10,28,28) end
-			visual.text(node.x+46,node.y+10,15,step and node.index..". "..(sim.labels[step.method] or step.method) or "Finish","^xF0D8A1",node.w-62)
+			visual.text(node.x+46,node.y+10,15,step and node.index..". "..art.actionLabel(step) or "Finish","^xF0D8A1",node.w-62)
 			visual.text(node.x+10,node.y+44,13,step and ((step.maxAttempts or 1)==1 and "1 attempt per visit" or "Up to "..step.maxAttempts.." attempts") or "End this recipe","^xD5DEE8",node.w-28)
 			visual.text(node.x+10,node.y+68,12,step and ((step.untilTargets or step.untilRequirements) and "Repeat until conditions match" or "One action per visit") or "Inspect the final item","^xA6B3C6",node.w-28)
 			if step then for _,port in ipairs({{"S",30,"^x78D5A0"},{"F",64,"^xE49B91"}}) do visual.box(node.x+node.w-6,node.y+port[2]-7,14,14,port[3]);visual.text(node.x+node.w-3,node.y+port[2]-6,12,port[1],"^x0A121A") end end
@@ -63,7 +62,7 @@ function M.Open(input,options)
 	end
 	function canvas:OnFocusLost() self.drag=nil end
 	button("graphAll",16,76,180,"Show all routes",function() all=not all end);c.graphAll.label=function() return all and "Show selected routes" or "Show all routes" end
-	local steps={};for i,step in ipairs(recipe.steps) do steps[#steps+1]={label=i..". "..(sim.labels[step.method] or step.method),val=i} end
+	local steps={};for i,step in ipairs(recipe.steps) do steps[#steps+1]={label=i..". "..art.actionLabel(step),val=i} end
 	c.graphStep=new("DropDownControl"):DropDownControl(ui.anchor,{208,76,w-224,28},steps,function(_,entry) selected=entry.val;layout();local node=canvas.nodes[selected];if node.y<0 or node.y+node.h>canvas.height then canvas.scroll=math.max(0,canvas.scroll+node.y-16) end end)
 	c.graphStep.enabled=#steps>0
 	ui.label(c,"legend",16,h-84,"S: success | F: failure / exhausted attempts | Final targets or action budget can stop the recipe early.",12)

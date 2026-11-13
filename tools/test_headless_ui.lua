@@ -537,6 +537,15 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(not jobs.job,"Crafting simulation did not finish")
 	frame("simulation-result");assert(#main.popups[1].controls.resultSummary.list>=4,"Detailed simulation results are missing")
 	ui:click("editRecipe");frame("crafting-recipe-cards");ui:click("flowGraph");frame("crafting-route-graph");ui:click("graphAll");frame("crafting-route-graph-all");ui:click("close");ui:click("recovery");ui:choose("action","stop","val");ui:text("notes","Inspect unwanted rolls before spending more");frame("crafting-failure-recovery");ui:click("keep");frame("crafting-recovery-route");ui:click("keep")
+	do
+		local saved;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy"}},targets={},requirements={maxAffixes=0}},{method="alchemy"},function(value) saved=value end)
+		ui:click("addCurrency");ui:text("search","Chaos Orb");frame("crafting-recipe-currency-picker");ui:click("choose")
+		ui:click("addCurrency");ui:text("search","Bench: reroll 3");ui:click("choose");assert(main.popups[1].controls.graph.list[3][1]:find("reroll 3 modifiers",1,true),"Bench reroll card lost its chosen count");frame("crafting-recipe-added-currencies")
+		ui:click("flowGraph");assert(main.popups[1].controls.graphStep.list[3].label:find("reroll 3 modifiers",1,true),"Flow graph lost the bench reroll count");frame("crafting-recipe-currency-flow");ui:click("close");ui:click("keep")
+		assert(saved.steps[2].method=="chaos" and saved.steps[3].method=="bench_reroll" and saved.steps[3].count==3,"Direct recipe actions were not retained")
+		local result=sim.simulate("Rarity: NORMAL\nPlate Vest\nItem Level: 86",saved,{trials=1,maxActions=3,forceFirstAction=true})
+		assert(not next(result.transitionErrors) and result.meanActions==3,"The directly assembled recipe did not run all three actions")
+	end
 	ui:click("distribution");frame("simulation-distribution");assert(main.popups[1].controls.successCard and main.popups[1].controls.medianSpend and main.popups[1].controls.veryUnluckySpend and main.popups[1].controls.moreTrials,"Simulation result cards are missing");ui:click("charts");frame("crafting-success-chart");ui:choose("mode","Spending per trial");frame("crafting-spending-chart");ui:click("copy");assert(ui.clipboard:find("route,value,percent,count,trials",1,true));ui:click("close");ui:click("sample");frame("crafting-sampled-outcome");ui:click("close");ui:click("moreTrials")
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 	assert(not jobs.job and main.popups[1].controls.trials.buf=="48","More trials did not rerun the captured setup")

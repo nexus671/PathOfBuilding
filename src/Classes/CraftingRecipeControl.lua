@@ -1,4 +1,4 @@
--- Native recipe routing editor. Actions are captured from the emulator.
+-- Native recipe routing editor with emulator actions and future currency steps.
 local sim=require("Modules.CraftingSimulator")
 local Panel={}
 local function button(controls,key,x,y,w,label,callback)
@@ -31,13 +31,13 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 	local function refresh()
 		local list,routes,lines={ },{{label="Next step",val=0}},{}
 		for i,step in ipairs(draft.steps) do
-			list[#list+1]={label=i..". "..(sim.labels[step.method] or step.method),val=i}
+			list[#list+1]={label=i..". "..require("Modules.CraftingWorkbench").actionLabel(step),val=i}
 			routes[#routes+1]={label="Step "..i,val=i}
 			local function route(target) return target>#draft.steps and "Finish" or "Step "..target end
 			lines[#lines+1]={height=92,textSize=16,x=44,card=true,step=i,selected=i==selected,iconPath=require("Modules.CraftingWorkbench").icon(step.method),
 				subtitle=string.format("Success -> %s | Failure -> %s",route(step.onSuccess or i+1),step.onFailureAction and step.onFailureAction~="route" and require("Classes.CraftingRecoveryControl").labels[step.onFailureAction] or route(step.onFailure or i+1)),
 				detail=(step.untilTargets or step.untilRequirements) and "Repeat until target conditions match" or "Continue after one successful action",
-				"^7"..string.format("%d. %s | up to %d attempts",i,sim.labels[step.method] or step.method,step.maxAttempts or 1)}
+				"^7"..string.format("%d. %s | up to %d attempts",i,require("Modules.CraftingWorkbench").actionLabel(step),step.maxAttempts or 1)}
 		end
 		routes[#routes+1]={label="End recipe",val=#draft.steps+1}
 		controls.graph.list=lines;controls.step:SetList(list);controls.step:SelByValue(selected,"val")
@@ -74,6 +74,19 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		require("Classes.CraftingRecoveryControl").Open(step,function(replacement) draft.steps[selected]=replacement;sim.validateRecipe(draft);refresh() end)
 	end)
 	button(controls,"keep",16,642,256,"Keep recipe",function() onKeep(sim.validateRecipe(draft));main:ClosePopup() end)
+	button(controls,"addCurrency",288,642,272,"Add currency step",function()
+		assert(#draft.steps < 20,"Use up to twenty steps")
+		local entries={};local workbench=require("Modules.CraftingWorkbench")
+		for _,method in ipairs({"transmute","alteration","augmentation","regal","alchemy","binding","chaos","exalt","annul","scour","divine","vaal","blessed","sacred","chromatic","quality"}) do
+			entries[#entries+1]={id=method,label=sim.labels[method],category="Currency",icon=workbench.icon(method),action={method=method},
+				details={"Add this action to the recipe without changing the working item.","The item must meet its requirements when this step runs."}}
+		end
+		for _,count in ipairs({1,3}) do entries[#entries+1]={id="bench-reroll-"..count,label="Bench: reroll "..count.." modifier"..(count==1 and "" or "s"),category="Bench",icon=workbench.icon("bench_reroll"),action={method="bench_reroll",count=count},
+			details={"Add this bench action to the recipe without changing the working item.","The item must have enough removable modifiers when this step runs."}} end
+		require("Classes.PlanningBrowserControl").Open("Add a recipe step",entries,{action="Add step",choose=function(entry)
+			draft.steps[#draft.steps+1]=copyTable(entry.action);selected=#draft.steps;refresh()
+		end})
+	end)
 	button(controls,"close",728,642,116,"Close",function() main:ClosePopup() end)
 	local height=math.max(520,math.min(690,main.screenH-60));local offset=690-height
 	controls.graph.height=264-offset
