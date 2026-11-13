@@ -55,6 +55,8 @@ The engine covers core currencies, bench modifiers, essences, fossils, Harvest t
 
 Unpredictable recombination can choose either base, retains that base's item level, and later actions continue on that base. Its count table predates the 3.30 changes for pools of one to three modifiers, so those estimates are not current odds. See [coverage and assumptions](crafting-coverage.md) for missing or incomplete methods.
 
+Results and comparisons carry model notes for recipes using outdated recombination odds or historical Allflame. Charts provide the same notes through **Model notes**; sampling intervals do not measure these rule uncertainties.
+
 Use a blank base or item text PoB can identify. Unresolved explicit modifiers are rejected. If an imported implicit cannot be identified, the workbench explains which calculations are unavailable. Try advanced item text with modifier ranges or another starting item. MCP clients can also supply a known structured implicit state.
 
 **Orb of Remembrance** samples published observations. Memory strands restrict tiers for applicable currencies; **Orb of Unravelling** consumes the remaining strands to attempt upgrades. Foulborn Augmentation, Regal and Exalted orbs add a separate tier bias. Their estimates and uncertain cases are listed under **Rules**. Import counts with a `Memory Strands: 82` line or continue the structured state returned by MCP; native PoB item text alone does not retain this property.

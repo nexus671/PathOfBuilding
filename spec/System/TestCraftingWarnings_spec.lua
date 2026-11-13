@@ -1,0 +1,27 @@
+describe("Crafting result model notes",function()
+	local sim=require("Modules.CraftingSimulator")
+	local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86"
+	local donor="Rarity: NORMAL\nCone Helmet\nItem Level: 70"
+	it("deduplicates contextual notes and leaves ordinary actions clear",function()
+		assert.are.equal(0,#sim.actionWarnings({method="alchemy"}))
+		local notes=sim.recipeWarnings({steps={{method="recombine",donorItem=donor},{method="recombine",donorItem=donor},{method="alchemy",allflame={auto=true}}}})
+		assert.are.equal(2,#notes);assert.are.equal("recombination_count_odds",notes[1].code);assert.are.equal("allflame_historical",notes[2].code)
+		assert.are.equal("allflame_historical",sim.actionWarnings({method="ducat_kishara"})[1].code)
+	end)
+	it("attaches notes to action, simulation and sampled odds results",function()
+		local action={method="recombine",donorItem=donor}
+		local performed=sim.perform(raw,action,1);assert.are.equal("recombination_count_odds",performed.warnings[1].code)
+		local simulated=sim.simulate(raw,{steps={action},targets={},requirements={minAffixes=1}},{trials=2,maxActions=1})
+		assert.are.equal("recombination_count_odds",simulated.warnings[1].code)
+		local odds=sim.calculate(raw,action,{},nil,{requirements={minAffixes=1},trials=2})
+		assert.are.equal("recombination_count_odds",odds.warnings[1].code)
+		local historical=sim.perform(raw,{method="alchemy",allflame={auto=true}},1)
+		assert.are.equal("allflame_historical",historical.warnings[1].code)
+	end)
+	it("keeps notes with chart routes even when prices are missing",function()
+		local charts=require("Modules.CraftingChartData")
+		local route={label="Historical route",result={trials=1,actionDistribution={{actions=1,trials=1,successes=0}},warnings={{code="allflame_historical",message="Allflame is historical."}}}}
+		local data=charts.series({route},charts.modes[3]);assert.are.equal(0,#data.series)
+		assert.are.equal("Historical route: Allflame is historical.",data.warnings[1])
+	end)
+end)

@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Keep historical Allflame and unverified recombination-odds notes with crafting results, comparisons, charts and AI responses.
 * Updated recombination to preserve the selected base's level and exclude incompatible rollable modifiers before drawing counts; permit different defence bases in the same item class.
 * Marked Allflame crafting as historical 3.29 content in the workbench and AI inspection.
 * Updated full prefix and suffix lock ingredient costs for 3.30 item types.

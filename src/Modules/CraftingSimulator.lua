@@ -4,6 +4,19 @@ local encounter = require("Modules.CalcEncounter")
 local M = {methodChecks={}}
 M.methods = {"transmute","alteration","augmentation","regal","alchemy","chaos","exalt","annul","scour","divine","bench","remove_crafted","essence"}
 M.labels = {transmute="Orb of Transmutation",alteration="Orb of Alteration",augmentation="Orb of Augmentation",regal="Regal Orb",alchemy="Orb of Alchemy",chaos="Chaos Orb",exalt="Exalted Orb",annul="Orb of Annulment",scour="Orb of Scouring",divine="Divine Orb",bench="Crafting bench",remove_crafted="Remove crafted modifiers",essence="Essence"}
+function M.actionWarnings(action)
+	local result={}
+	if action.method=="recombine" then result[#result+1]={code="recombination_count_odds",message="Recombination uses older count odds; 3.30 odds are not verified."} end
+	if action.allflame or action.method=="ducat_kishara" then result[#result+1]={code="allflame_historical",message="Allflame is historical and did not return to core in 3.30."} end
+	return result
+end
+function M.recipeWarnings(recipe)
+	local result,seen={},{}
+	for _,action in ipairs(recipe and recipe.steps or {}) do for _,warning in ipairs(M.actionWarnings(action)) do
+		if not seen[warning.code] then result[#result+1]=warning;seen[warning.code]=true end
+	end end
+	return result
+end
 M.limits = {"Experimental PoE 1 model, not a complete game crafting implementation.",
 	"Supported: ordinary equipment, known modifier IDs, fractured modifiers, basic currencies, bench modifiers and essences. Meta modifiers protect/remap only the supported actions.",
 	"Unsupported actions fail explicitly: fossils, Harvest, recombination, influence orbs, corruption, sockets/links, veiled crafts and special league mechanics.",
@@ -567,7 +580,7 @@ function M.simulate(raw,recipe,options)
 	local usage={};for _,entry in pairs(resourceUsage) do entry.meanPerTrial=entry.amount/trials;usage[#usage+1]=entry end;table.sort(usage,function(a,b) return a.key<b.key end)
 	assert(totalExecuted > 0 or successes > 0,"Recipe could not execute a supported action; inspect its starting rarity and open affixes")
 	local result={trials=trials,successes=successes,successChance=successes/trials*100,confidenceLow=low,confidenceHigh=high,seed=seed,maxActions=maxActions,
-		meanActions=totalActions/trials,currencySpent=spent,resourceUsage=usage,unpriced=missing,transitionErrors=errors,limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
+		meanActions=totalActions/trials,currencySpent=spent,resourceUsage=usage,unpriced=missing,transitionErrors=errors,warnings=M.recipeWarnings(recipe),limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
 		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units",
 		baseCost=baseCost,retainedSuccesses=retained,retentionLimit=retain,affixDistribution=affixDistribution,propertyDistribution=propertyDistribution,actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
 	if not next(missing) then
@@ -588,7 +601,7 @@ function M.perform(raw,action,seed,initialState)
 	local model=M.model(raw)
 	if initialState then model.initial=M.validateState(model,initialState) end
 	local state,details=M.action(model,model.initial,action,rng(encounter.seed(integer(seed or 104729,1,2147483646,"seed"),1,31)))
-	return {priceKey=(M.priceKey or priceKey)(action),itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
+	return {priceKey=(M.priceKey or priceKey)(action),itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,warnings=M.actionWarnings(action),limitations=copyTable(M.limits)}
 end
 
 function M.catalog(raw,query,limit)
@@ -618,6 +631,12 @@ function M.capacities(model,state)
 end
 require("Modules.CraftingAdvanced").extend(M,{counts=counts,flags=flags,clear=clear,protected=protected,add=add,integer=integer,priceKey=priceKey})
 require("Modules.CraftingCalculator").extend(M)
+do
+	local calculate=M.calculate
+	function M.calculate(raw,craft,...)
+		local result=calculate(raw,craft,...);result.warnings=M.actionWarnings(craft);return result
+	end
+end
 -- Extensions register state prerequisites once for both execution and browsing.
 function M.methodReason(model,state,method)
 	local check=M.methodChecks[method]

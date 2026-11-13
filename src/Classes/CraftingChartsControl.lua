@@ -41,8 +41,15 @@ function M.Open(routes)
 		for _,message in ipairs(data.omitted) do lines[#lines+1]=message end
 		self.list=ui.rows(lines,w-60,14);drawReadout(self,...)
 	end
-	ui.label(c,"assumption",16,h-76,"",12);c.assumption.label=function() return "^7"..ui.fit(data.note,w-32,12) end
+	ui.label(c,"assumption",16,h-76,"",12);c.assumption.label=function() return "^7"..ui.fit((#data.warnings>0 and "Model notes available. " or "")..data.note,w-32,12) end
 	c.copy=new("ButtonControl"):ButtonControl(ui.anchor,{16,h-42,180,28},"Copy chart data (CSV)",function() Copy(charts.csv(data)) end)
+	c.notes=new("ButtonControl"):ButtonControl(ui.anchor,{208,h-42,160,28},"Model notes",function()
+		local popup={};local width,height=math.min(780,main.screenW-40),math.min(420,main.screenH-60)
+		popup.messages=new("TextListControl"):TextListControl(ui.anchor,{16,28,width-32,height-92},nil,ui.rows(data.warnings,width-60,14))
+		popup.close=new("ButtonControl"):ButtonControl(ui.anchor,{width-156,height-48,140,28},"Close",function() main:ClosePopup() end)
+		ui.style(popup);main:OpenPopup(width,height,"Chart model notes",popup,nil,nil,"close")
+	end)
+	c.notes.enabled=function() return #data.warnings>0 end
 	c.close=new("ButtonControl"):ButtonControl(ui.anchor,{w-156,h-42,140,28},"Close",function() main:ClosePopup() end)
 	c.mode.selFunc=function() data=charts.series(routes,c.mode:GetSelValue());pinned=nil end;c.mode.selFunc()
 	ui.style(c);for _,control in pairs(c) do control.layoutAudit="crafting-charts" end;main:OpenPopup(w,h,"Crafting results and budget charts",c,nil,nil,"close");return c

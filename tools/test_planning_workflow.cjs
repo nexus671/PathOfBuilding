@@ -91,6 +91,7 @@ async function main(){
   const recombinationDonor=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:{method:'divine'},seed:1,initialState:{rarity:'MAGIC',affixes:[{id:'LocalIncreasedPhysicalDamageReductionRating1',range:0.5}]}},'crafted');
   const evasionRaw='Rarity: NORMAL\nZodiac Leather\nItem Level: 70';
   const recombined=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:evasionRaw,action:{method:'recombine',donorItem:recombinationDonor.nativeCrafting.itemText},seed:1,initialState:{rarity:'MAGIC',affixes:[{id:'IncreasedLife0',range:0.5}]}},'crafted');
+  assert.equal(recombined.nativeCrafting.warnings[0].code,'recombination_count_odds');
   assert.match(recombined.nativeCrafting.itemText,/Zodiac Leather/);assert.match(recombined.nativeCrafting.itemText,/Item Level: 70/);
   const recombinedNext=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:evasionRaw,action:{method:'regal'},seed:1,initialState:recombined.nativeCrafting.state},'crafted');
   assert.match(recombinedNext.nativeCrafting.itemText,/Zodiac Leather/);assert.match(recombinedNext.nativeCrafting.itemText,/Item Level: 70/);

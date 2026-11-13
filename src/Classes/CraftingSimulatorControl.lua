@@ -369,6 +369,7 @@ function Panel.Open(build,project,layout)
 			result.meanCost~=nil and string.format("Mean spent: %.2f %s",result.meanCost,result.costCurrency) or "Cost unavailable: some executed actions have no supplied price.",
 			captured.label,capturedSettings(captured),
 			string.format("95%% sampling interval: %.2f%% to %.2f%%",result.confidenceLow,result.confidenceHigh),string.format("Mean attempted actions: %.2f",result.meanActions)}
+		for i,warning in ipairs(result.warnings or simulator.recipeWarnings(captured.recipe)) do table.insert(lines,1+i,"Model note: "..warning.message) end
 		if result.priceSource then lines[#lines+1]="Quotes: "..result.priceSource.." | "..os.date("%Y-%m-%d",result.priceQuotedAt) end
 		if result.actionPriceOverridesSupplied then
 			lines[#lines+1]=result.actionPriceOverridesApplied>0 and "Includes selected-action price overrides." or "Selected-action override was not used by this recipe."
@@ -453,6 +454,7 @@ function Panel.Open(build,project,layout)
 	end)
 	local function showOddsResult(result)
 		local lines={string.format("Target chance under model: %.6f%%",result.successChance),result.exactFor or result.estimateFor}
+		for i,warning in ipairs(result.warnings or {}) do table.insert(lines,1+i,"Model note: "..warning.message) end
 		if result.sampled then lines[#lines+1]=string.format("%d trials | 95%% interval %.2f%% to %.2f%%",result.trials,result.confidenceLow,result.confidenceHigh) end
 		for _,entry in ipairs(result.outcomes) do if entry.matches then lines[#lines+1]=string.format("%.6f%% | %s",entry.chance,entry.text or "Finite item outcome") end end
 		refresh(lines)
@@ -468,6 +470,7 @@ function Panel.Open(build,project,layout)
 		local result=assert(lastSimulation,"Run a simulation first")
 		local request=lastSimulationRun and copyTable(lastSimulationRun)
 		local lines={{height=24,"Attempted actions per trial (all trials, including failures)"}}
+		for i,warning in ipairs(result.warnings or request and simulator.recipeWarnings(request.recipe) or {}) do table.insert(lines,i,{height=24,"Model note: "..warning.message}) end
 		for _,bucket in ipairs(result.actionDistribution) do
 			lines[#lines+1]={height=20,string.format("%4d | %s %d trials, %d successes",bucket.actions,string.rep("|",math.max(1,math.floor(bucket.trials/result.trials*50))),bucket.trials,bucket.successes)}
 		end
@@ -497,6 +500,7 @@ function Panel.Open(build,project,layout)
 		ui.card(popup,"costCard",438,28,cardWidth,"MEAN SPENDING",result.meanCost and string.format("%.2f",result.meanCost) or "Not priced",result.meanCost and result.costCurrency or "Unpriced actions")
 		ui.card(popup,"intervalCard",649,28,195,"95% INTERVAL",string.format("%.1f-%.1f%%",result.confidenceLow,result.confidenceHigh),"Sampling uncertainty")
 		local precision={}
+		if result.warnings and #result.warnings>0 then precision[#precision+1]="Model notes are listed with the distribution below." end
 		if request then precision[#precision+1]=request.label.." | "..capturedSettings(request) end
 		precision[#precision+1]=(result.trials<100 or result.confidenceHigh-result.confidenceLow>10) and "Imprecise estimate: run more trials before choosing a crafting route." or "Results describe the captured starting item, targets and supplied prices."
 		ui.description(popup,"precision",16,132,828,40,precision,14)

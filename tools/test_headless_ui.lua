@@ -301,10 +301,15 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		local leftState=sim.validateState(left,{rarity="MAGIC",affixes={{id="IncreasedLife0",range=0.5}}})
 		local rightState=sim.validateState(right,{rarity="MAGIC",affixes={{id="LocalIncreasedPhysicalDamageReductionRating1",range=0.5}}})
 		local donor=sim.toItem(right,rightState).raw
-		require("Classes.CraftingSimulatorControl").Open(build,{id="recombine-330-ui",title="Armour and evasion bases",slot="Body Armour",startingItem=sim.toItem(left,leftState).raw,goals={},steps={}})
+		require("Classes.CraftingSimulatorControl").Open(build,{id="recombine-330-ui",title="Armour and evasion bases",slot="Body Armour",startingItem=sim.toItem(left,leftState).raw,goals={},steps={},nativeRecipe={steps={{method="recombine",donorItem=donor}},targets={},requirements={minAffixes=2}}})
 		ui:click("settings");ui:text("paletteSearch","Unpredictable recombination");ui:click("paletteUse");ui:click("tab_settings");ui:click("configure");ui:text("donor",donor);frame("crafting-recombine-330-donor");ui:click("use");ui:text("seed","1");ui:click("tab_craft")
 		local hints={};for _,row in ipairs(main.popups[1].controls.actionHint.list) do hints[#hints+1]=row[1] end;assert(table.concat(hints," "):find("older estimates",1,true),"Recombination did not flag outdated count odds")
-		frame("crafting-recombine-330-warning");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Unpredictable",1,true),"Cross-defence recombination failed");frame("crafting-recombine-330-result");ui:click("close")
+		frame("crafting-recombine-330-warning");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Unpredictable",1,true),"Cross-defence recombination failed");frame("crafting-recombine-330-result")
+		ui:click("tab_simulate");ui:text("trials","2");ui:text("budget","1");ui:click("runRecipe");local jobs=require("Modules.CraftingTasks");for i=1,1000 do if not jobs.job then break end;jobs.tick(build) end;assert(not jobs.job)
+		local lines={};for _,row in ipairs(main.popups[1].controls.resultSummary.list) do lines[#lines+1]=row[1] end;assert(table.concat(lines," "):find("older count odds",1,true),"Saved recipe result lost its model note");frame("crafting-recombine-model-note")
+		ui:click("compareRecipes");ui:click("run");for i=1,1000 do if not jobs.job then break end;jobs.tick(build) end;assert(not jobs.job)
+		lines={};for _,row in ipairs(main.popups[1].controls.results.list) do lines[#lines+1]=row[1] end;assert(table.concat(lines," "):find("older count odds",1,true),"Recipe comparison lost its model note");frame("crafting-recombine-comparison-note");ui:click("close")
+		ui:click("distribution");frame("crafting-recombine-distribution-note");ui:click("charts");assert(main.popups[1].controls.notes:IsEnabled());frame("crafting-recombine-chart-note");ui:click("notes");frame("crafting-recombine-chart-notes-open");ui:click("close");ui:click("close");ui:click("close");ui:click("close")
 	end
 
 	do

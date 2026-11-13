@@ -60,6 +60,7 @@ function M.Open(build,raw,state,targets,requirements,requiredGroups,current,save
 				lines[#lines+1]="";lines[#lines+1]=route.label
 				if route.error then lines[#lines+1]=route.error else local r=route.result
 					lines[#lines+1]=string.format("%.2f%% success | 95%% interval %.2f-%.2f%% | %.2f mean actions",r.successChance,r.confidenceLow,r.confidenceHigh,r.meanActions)
+					for _,warning in ipairs(r.warnings or {}) do lines[#lines+1]="Model note: "..warning.message end
 					lines[#lines+1]=r.meanCost and string.format("Mean spent: %.2f %s per trial",r.meanCost,r.costCurrency) or "Cost unknown: supply every executed action's price."
 					for message,count in pairs(r.transitionErrors) do lines[#lines+1]=count.." failed transitions: "..message end
 				end
