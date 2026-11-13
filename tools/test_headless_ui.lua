@@ -622,6 +622,21 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		assert(w.controls.fossilResults:IsEnabled());frame("crafting-fossil-background-return")
 		ui:click("tab_settings");job,release=hold("exact");resize();release();finish();ui:click("tab_simulate");frame("crafting-odds-remounted")
 	end
+	do
+		newBuild();ui:bind(build);build.viewMode="CONFIG";ui:click("aiBuild")
+		assert(require("Modules.PlanningUI").saveStatus(build)=="No pending build changes");frame("planning-fresh-build-status")
+		local p={id="remove-restore",title=string.rep("Saved crafting guide ",5),slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",goals={},steps={},priceBook={currency="chaos",source="Removal quotes",quotedAt=1700000000,values={}}}
+		local state=sim.model(p.startingItem).initial;p.run=require("Modules.CraftingInventory").run(state)
+		p.inventory={require("Modules.CraftingInventory").capture(p,state,"Kept base")};build.savers.CraftingProjects:Upsert(p)
+		local w=build.planningWorkspace;w:Show("crafting",{kind="workbench",project=p});ui:frame();ui:click("currency_alchemy");ui:click("item")
+		local working=w:CraftingDraft(p.id).state;ui:click("close");frame("crafting-project-remove-ready")
+		ui:click("remove");assert(#build.savers.CraftingProjects.projects==0 and w.controls.undoRemove:IsEnabled());frame("crafting-project-removed-empty")
+		ui:click("nav_text");frame("crafting-project-removal-large-text");ui:click("nav_text")
+		ui:click("undoRemove");assert(#build.savers.CraftingProjects.projects[1].inventory==1);frame("crafting-project-restored")
+		ui:click("inventory");frame("crafting-project-restored-inventory");ui:click("close");ui:click("native")
+		assert(tableDeepEquals(working,w.cache.crafting.layout.snapshot().state));frame("crafting-project-restored-working")
+		ui:click("keepWorking");assert(not require("Modules.PlanningUI").hasDraft(build,"workingCraft",p.id));frame("crafting-project-restored-kept")
+	end
 
 	ui:restore()
 end

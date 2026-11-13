@@ -66,7 +66,21 @@ function M.changes(before, after)
 	end
 	if not tableDeepEquals(before.craftingProjects,after.craftingProjects) or not tableDeepEquals(after.craftingProjects,before.craftingProjects) then
 		add("Crafting projects updated (saved only with an explicit build Save)")
-		for _,project in ipairs(after.craftingProjects) do for _,line in ipairs(require("Modules.CraftingProjects").lines(project)) do add(line) end end
+		local originals,present={},{}
+		for _,project in ipairs(before.craftingProjects or {}) do originals[project.id]=project end
+		for _,project in ipairs(after.craftingProjects or {}) do
+			present[project.id]=true
+			local old=originals[project.id]
+			if not old or not tableDeepEquals(old,project) or not tableDeepEquals(project,old) then
+				add((old and "Updated" or "Added").." crafting project: "..project.title)
+				for _,line in ipairs(require("Modules.CraftingProjects").lines(project)) do add(line) end
+			end
+		end
+		for _,project in ipairs(before.craftingProjects or {}) do if not present[project.id] then
+			local linked=0;for _,entry in ipairs(after.journey and after.journey.wishlist or {}) do if entry.projectId==project.id then linked=linked+1 end end
+			local items=#(project.inventory or {})
+			add("Removed crafting project: "..project.title.." ["..project.id.."] | "..items.." saved inventory "..(items==1 and "item" or "items").." | "..linked.." linked gear "..(linked==1 and "goal remains" or "goals remain"))
+		end end
 	end
 	if not tableDeepEquals(before.atlasPlans,after.atlasPlans) then
 		add("Atlas plans updated (planning only; character stats are unchanged by Atlas nodes)")

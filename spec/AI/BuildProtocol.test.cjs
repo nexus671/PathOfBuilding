@@ -18,6 +18,16 @@ function fixture(t) {
     operations:[{type:'set_character',level:80,className:'Witch',ascendancy:'Elementalist'},{type:'set_skills',groups:[{gems:[{name:'Fireball'}]}]}]}};
 }
 
+test('queues reviewed crafting removals with closed project-ID validation', t => {
+  const f=fixture(t);const proposal={...f.proposal,mode:'edit',operations:[{type:'remove_crafting_project',projectId:'helmet-guide'}]};
+  f.call('propose_build',proposal);
+  const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.deepEqual(request.proposal.operations,proposal.operations);assert.equal(f.captured.context.craftingProjects,undefined);
+  for(const operation of [{type:'remove_crafting_project',projectId:'../other'},{type:'remove_crafting_project',projectId:''},{type:'remove_crafting_project',projectId:'helmet',project:{}}]) {
+    assert.throws(()=>f.call('propose_build',{...proposal,operations:[operation]}),/arguments/);
+  }
+});
+
 test('queues loot-filter generation, evaluation and reviewed profiles without writing exports', t => {
   const f=fixture(t);const profile={id:'maps',title:'Map pickups',preset:'early_maps',strictness:2,rules:[{id:'base',title:'Craft base',text:'Show\n BaseType == "Iron Hat"',enabled:true}]};
   const filters={schemaVersion:1,activeId:'maps',profiles:[profile]};f.captured.context.lootFilters=filters;f.write('context',f.captured);

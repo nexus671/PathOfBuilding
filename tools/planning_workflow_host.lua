@@ -34,6 +34,9 @@ for line in io.lines() do
 			build.viewMode="CONFIG";ui:bind(build);ui:click("aiBuild");ui:click("review");ui:click("apply")
 			assert(not main.popups[1],"Native apply did not finish")
 			build=main.modes.BUILD;ui:bind(build);frame();bridge.refresh(build)
+		elseif command.kind=="undo-applied" then
+			build.viewMode="CONFIG";ui:bind(build);ui:click("aiBuild");ui:choose("page","Plan & review");ui:click("restore")
+			build=main.modes.BUILD;ui:bind(build);frame();bridge.refresh(build)
 		elseif command.kind=="save-reopen" then
 			build.viewMode="CONFIG";ui:bind(build);ui:click("aiBuild");ui:click("nav_crafting");ui:click("native")
 			ui:click("currency_alchemy");ui:click("item");ui:click("keepWorking")

@@ -107,6 +107,16 @@ Use **Keep working craft** to checkpoint the working item, undo history, targets
 
 Keeping a recipe marks the build unsaved. Use normal build **Save** to persist it. There is no project-count limit: keep plans for every gear slot and alternatives for each piece. Crafting metadata retains a 2 MiB total size limit and per-field validation. Projects and recipes live in AI Edition XML; other editions may discard them on re-save. AI Edition preserves unreadable or newer metadata unchanged.
 
+On a project's **Item** tab, **Remove project** removes the guide and its saved
+inventory. **Undo removal** restores the last removed guide, its order and working
+draft during the current session. Linked gear goals remain listed; choose another
+guide for those goals. Save the build to persist a removal or restoration.
+
+Working-draft status is tracked per guide. Keeping one guide does not hide another
+guide's unfinished work, and opening another build starts with fresh save status.
+AI clients can propose `remove_crafting_project` through `propose_build`; native
+review identifies the removed guide, inventory count and remaining gear links.
+
 **Preview in build** calculates a separate candidate. Review controls application, and the existing undo flow restores the build. Simulation and planning never spend game currency.
 
 ## Compare recipes

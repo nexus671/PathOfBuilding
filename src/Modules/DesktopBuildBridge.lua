@@ -188,6 +188,8 @@ local function applyOperation(build, op)
 		build.savers.LootFilters:Replace(op.filters)
 	elseif op.type == "set_crafting_project" then
 		build.savers.CraftingProjects:Upsert(op.project)
+	elseif op.type == "remove_crafting_project" then
+		build.savers.CraftingProjects:Remove(text(op.projectId,64,"project ID"))
 	elseif op.type == "set_atlas_plan" then
 		build.savers.AtlasPlans:Upsert(op.plan)
 	else error("Unknown operation: "..tostring(op.type)) end
@@ -268,6 +270,22 @@ M.serialize=serialize
 function M.apply(prepared)
 	assert(main.modes.BUILD == prepared.base and M.revision(prepared.base) == prepared.baseRevision,"Build changed since preview. Submit a fresh proposal.")
 	local candidate = prepared.candidate
+	if prepared.mode=="edit" then
+		local carriedRemoval=false
+		local previousRemoval=prepared.base.savers.CraftingProjects.lastRemoved
+		if not candidate.savers.CraftingProjects.lastRemoved and previousRemoval then
+			local copy=copyTable(previousRemoval);copy.project=require("Modules.CraftingProjects").copy({previousRemoval.project})[1]
+			candidate.savers.CraftingProjects.lastRemoved=copy;carriedRemoval=true
+		end
+		local workspace=prepared.base.planningWorkspace
+		if workspace then workspace:CopyCraftingDrafts(candidate) end
+		local removed=candidate.savers.CraftingProjects.lastRemoved
+		if removed and not carriedRemoval then
+			removed.draft=workspace and workspace:CraftingDraft(removed.project.id)
+			removed.pending=require("Modules.PlanningUI").hasDraft(prepared.base,"workingCraft",removed.project.id)
+			if not removed.draft then local recovery=require("Modules.PlanningRecovery").forCraftingProject(prepared.base,removed.project.id);if recovery then removed.draft=recovery.draft;removed.pending=recovery.pending end end
+		end
+	end
 	if prepared.mode == "edit" then candidate.dbFileName,candidate.dbFileSubPath = prepared.base.dbFileName,prepared.base.dbFileSubPath end
 	candidate.modFlag,candidate.unsaved = true,true
 	M.undo[#M.undo+1] = {build=prepared.base,cache=GlobalCache}

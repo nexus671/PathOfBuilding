@@ -64,6 +64,7 @@ end
 function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLink)
 	require("Modules.CraftingAnalysis").reset(self)
 	if package.loaded["Modules.AtlasTargets"] then package.loaded["Modules.AtlasTargets"].reset(self) end
+	if package.loaded["Modules.PlanningUI"] then package.loaded["Modules.PlanningUI"].reset(self) end
 	self.dbFileName = dbFileName
 	self.buildName = buildName
 	self.importLink = importLink
@@ -83,6 +84,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	self.timelessData = { jewelType = { }, conquerorType = { }, devotionVariant1 = 1, devotionVariant2 = 1, jewelSocket = { }, fallbackWeightMode = { }, searchList = "", searchListFallback = "", searchResults = { }, sharedResults = { } }
 	self.viewMode = "TREE"
 	self.planningWorkspace = nil
+	self.planningCraftDrafts = nil
 	self.characterLevel = m_min(m_max(main.defaultCharLevel or 1, 1), 100)
 	self.targetVersion = liveTargetVersion
 	self.bandit = "None"
@@ -993,6 +995,7 @@ function buildMode:Shutdown()
 	require("Modules.DesktopBuildBridge").close(self)
 	require("Modules.CraftingAnalysis").reset(self)
 	if package.loaded["Modules.AtlasTargets"] then package.loaded["Modules.AtlasTargets"].reset(self) end
+	if package.loaded["Modules.PlanningUI"] then package.loaded["Modules.PlanningUI"].reset(self) end
 	if launch.devMode and (not main.disableDevAutoSave) and self.targetVersion and not self.abortSave then
 		if self.dbFileName then
 			self:SaveDBFile()

@@ -1,0 +1,107 @@
+describe("Crafting project removal and save-state ownership",function()
+	local projects=require("Modules.CraftingProjects")
+	local sim=require("Modules.CraftingSimulator")
+	local uiState=require("Modules.PlanningUI")
+	local tasks=require("Modules.CraftingTasks")
+	local bridge=require("Modules.DesktopBuildBridge")
+	local activeMode,activeCache
+	local function project(id)
+		return {id=id,title="Guide "..id,slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",goals={},steps={},priceBook={currency="chaos",source="Manual",quotedAt=1700000000,values={}}}
+	end
+	before_each(function() newBuild();activeMode=build;activeCache=GlobalCache;main.popups={};bridge.prepared=nil end)
+	after_each(function()
+		tasks.cancel();main.popups={};main.modes.BUILD=activeMode;GlobalCache=activeCache
+		bridge.prepared=nil;bridge.owner=nil;bridge.build=nil;bridge.previous=nil;bridge.undo={};bridge.history={};bridge.enabled=false
+	end)
+	it("resets draft and saved labels across reused builds and keeps project draft scopes separate",function()
+		uiState.draft(build,"workingCraft","a");uiState.draft(build,"workingCraft","b");uiState.kept(build,"workingCraft","a")
+		assert.is_false(uiState.hasDraft(build,"workingCraft","a"));assert.is_true(uiState.hasDraft(build,"workingCraft","b"))
+		assert.is_truthy(uiState.saveStatus(build):find("Working draft",1,true));newBuild()
+		assert.are.equal("No pending build changes",uiState.saveStatus(build))
+		uiState.saved(build);newBuild();assert.are.equal("No pending build changes",uiState.saveStatus(build))
+		uiState.kept(build,"crafting");newBuild();build.modFlag=true
+		assert.are.equal("Build changes | Save needed",uiState.saveStatus(build))
+	end)
+	it("restores the exact project, order, inventory, checkpoint and empty dictionary quotes",function()
+		local store=build.savers.CraftingProjects
+		for _,id in ipairs({"a","b","c"}) do
+			local p=project(id);local state=sim.model(p.startingItem).initial
+			p.run=require("Modules.CraftingInventory").run(state);p.inventory={require("Modules.CraftingInventory").capture(p,state,"Saved base")};store:Upsert(p)
+		end
+		local before=projects.copy(store.projects);store:Remove("b")
+		assert.are.equal(2,#store.projects);assert.are.equal("c",store.projects[2].id)
+		store:UndoRemove();assert.are.same(before,store.projects)
+		assert.is_truthy(require("dkjson").encode(store.projects[2]):find('"values":{}',1,true));assert.is_nil(store.lastRemoved)
+		local xml=build:SaveDB("Restored guides");loadBuildFromXML(xml,"Restored guides");assert.are.same(before,build.savers.CraftingProjects.projects)
+	end)
+	it("refuses unknown, unreadable or conflicting restoration without losing history",function()
+		local store=build.savers.CraftingProjects;store:Upsert(project("a"));store:Remove("a")
+		assert.is_false(pcall(store.Remove,store,"missing"));assert.are.equal("a",store.lastRemoved.project.id)
+		local replacement=project("a");replacement.title="Replacement";store:Upsert(replacement)
+		assert.is_false(pcall(store.UndoRemove,store));assert.are.equal("Replacement",store.projects[1].title);assert.is_truthy(store.lastRemoved)
+		store.unreadable="preserved";assert.is_false(pcall(store.Remove,store,"a"));assert.are.equal(1,#store.projects);store.unreadable=nil
+	end)
+	it("removes only the selected project's draft, analysis and job and restores its working state",function()
+		local store=build.savers.CraftingProjects;local a,b=project("a"),project("b");store:Upsert(a);store:Upsert(b)
+		local ui=require("Modules.HeadlessUI").install({width=1024,height=768})
+		local ok,message=pcall(function()
+			ui:bind(build);build.viewMode="CONFIG";ui:click("aiBuild")
+			local workspace=build.planningWorkspace;workspace:Show("crafting",{kind="workbench",project=a});ui:frame();ui:click("currency_alchemy");ui:click("item")
+			local aDraft=workspace:CraftingDraft("a");assert.is_true(uiState.hasDraft(build,"workingCraft","a"))
+			workspace.craftDrafts.b={kind="workbench",project=b};uiState.draft(build,"workingCraft","b")
+			local other=require("Modules.CraftingAnalysis").get(build,b)
+			local own=require("Modules.CraftingAnalysis").get(build,a);own:start("odds",nil,function() coroutine.yield() end)
+			store:Remove("a");assert.is_nil(tasks.job);assert.is_nil(workspace.craftDrafts.a);assert.is_nil(workspace.cache.crafting)
+			assert.are.equal(other,build.craftingAnalyses.b);assert.is_truthy(workspace.craftDrafts.b);assert.is_true(uiState.hasDraft(build,"workingCraft","b"))
+			assert.is_false(uiState.hasDraft(build,"workingCraft","a"));store:UndoRemove()
+			assert.are.same(aDraft.state,workspace.craftDrafts.a.state);assert.is_true(uiState.hasDraft(build,"workingCraft","a"))
+		end)
+		ui:restore();assert(ok,message)
+	end)
+	it("keeps native remove and undo reachable, including the empty project list",function()
+		local store=build.savers.CraftingProjects;store:Upsert(project("a"));local c=require("Classes.CraftingProjectControl").Open(build)
+		c.remove:Click();c=main.popups[1].controls;assert.are.equal(0,#store.projects);assert.is_false(c.remove:IsEnabled());assert.is_true(c.undoRemove:IsEnabled())
+		c.undoRemove:Click();c=main.popups[1].controls;assert.are.equal("a",store.projects[c.projects:GetSelValueByKey("val")].id);assert.is_false(c.undoRemove:IsEnabled())
+	end)
+	it("reviews removal explicitly and preserves unrelated working drafts through apply and build undo",function()
+		local store=build.savers.CraftingProjects;local a,b=project("a"),project("b");store:Upsert(a);store:Upsert(b)
+		local journey=require("Modules.BuildJourney").empty();journey.wishlist={{id="gear-a",title="Gear a",slot="Helmet",route="craft",status="planned",projectId="a"}};build.savers.BuildJourney:Replace(journey)
+		assert.are.equal(1,#store:References("a"))
+		local workspace=require("Modules.PlanningWorkspace").new(build);build.planningWorkspace=workspace
+		workspace.craftDrafts.b={kind="workbench",project=b,state=sim.model(b.startingItem).initial};uiState.draft(build,"workingCraft","b")
+		local base=build;local revision=bridge.revision(base)
+		local prepared=bridge.prepare(base,{mode="edit",title="Remove guide",baseRevision=revision,operations={{type="remove_crafting_project",projectId="a"}}})
+		assert.are.equal(2,#store.projects);assert.are.equal(revision,bridge.revision(base))
+		assert.is_truthy(table.concat(prepared.changes," "):find("Removed crafting project: Guide a",1,true))
+		assert.is_truthy(table.concat(prepared.changes," "):find("1 linked gear goal remains",1,true))
+		local applied=bridge.apply(prepared);assert.are.equal(1,#applied.savers.CraftingProjects.projects)
+		assert.is_truthy(applied.planningCraftDrafts.b);assert.is_true(uiState.hasDraft(applied,"workingCraft","b"))
+		assert.is_truthy(workspace.craftDrafts.b);assert.are.equal(base,bridge.restore())
+		assert.are.equal(2,#base.savers.CraftingProjects.projects)
+	end)
+	it("retains removal undo across an unrelated reviewed edit",function()
+		local store=build.savers.CraftingProjects;store:Upsert(project("a"));store:Upsert(project("b"));store:Remove("a")
+		local workspace=require("Modules.PlanningWorkspace").new(build);build.planningWorkspace=workspace
+		local working=sim.model(project("b").startingItem).initial;working.quality=10
+		local draft=require("Modules.CraftingInventory").run(working);draft.kind="workbench";draft.project=project("b")
+		workspace.craftDrafts.b=draft;uiState.draft(build,"workingCraft","b")
+		local b=project("b");b.title="Updated b"
+		local prepared=bridge.prepare(build,{mode="edit",title="Edit another guide",baseRevision=bridge.revision(build),operations={{type="set_crafting_project",project=b}}})
+		local candidate=bridge.apply(prepared);local changed=candidate.savers.CraftingProjects
+		assert.is_truthy(changed.lastRemoved);changed:UndoRemove()
+		assert.are.equal("a",changed.projects[1].id);assert.are.equal("Updated b",changed.projects[2].title)
+		assert.are.equal("Updated b",candidate.planningCraftDrafts.b.project.title);assert.are.equal(10,candidate.planningCraftDrafts.b.state.quality)
+		changed:Remove("a");bridge.restore()
+	end)
+	it("uses the saved recipe's starting state rather than a manually changed working base",function()
+		local p=project("base-state");local state=sim.model(p.startingItem).initial;state.quality=20
+		p.run=require("Modules.CraftingInventory").run(state)
+		p.nativeRecipe={steps={{method="quality"}},targets={},requirements={minQuality=1}}
+		p.priceBook.values["Metadata/Items/Currency/CurrencyArmourQuality"]=2
+		local c=require("Classes.CraftingSimulatorControl").Open(build,p);c.page:SelByValue("Simulate recipe");c.page.selFunc()
+		c.trials:SetText("2");c.budget:SetText("1");c.runRecipe:Click()
+		for i=1,1000 do if not tasks.job then break end;tasks.tick(build) end
+		assert.is_nil(tasks.job);local rows={};for _,row in ipairs(c.resultSummary.list) do rows[#rows+1]=row[1] end
+		assert.is_truthy(table.concat(rows," "):find("Mean spent: 2.00 chaos",1,true))
+	end)
+end)

@@ -1,4 +1,4 @@
--- Crafting plans stay in the build; external simulation stays in Craft of Exile.
+-- Saved crafting plans, the native workbench and optional external handoffs.
 local projects = require("Modules.CraftingProjects")
 local json = require("dkjson")
 local ui=require("Modules.PlanningUI")
@@ -70,7 +70,7 @@ function Panel.Edit(build,source,initialItem,initialSlot,layout)
  end)
 end
 
-function Panel.Open(build,displayItem,displaySlot,layout)
+function Panel.Open(build,displayItem,displaySlot,layout,selectedId)
 	if layout then layout.snapshot=nil;layout.viewState=nil;layout.workbench=nil end
 	local controls,list={},{ }
 	local store=build.savers.CraftingProjects
@@ -78,8 +78,13 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 	local height=layout and layout.height or math.min(720,main.screenH-60)
 	local width=layout and layout.width or 880
 	local function selected() return (assert(store.projects[controls.projects:GetSelValueByKey("val")],"Create or select a project first")) end
+	local function reopen(id)
+		if layout then layout.selectedProject=id else main:ClosePopup() end
+		Panel.Open(build,nil,nil,layout,id)
+	end
 	local function refresh()
 		local lines={"Crafting plans, targets and estimates are kept with this build. Save the build explicitly.","Native crafting runs locally. External Craft of Exile results remain separate supplied evidence."}
+		if store.notice then table.insert(lines,1,store.notice) end
 		if store.warning then lines[#lines+1]=store.warning end
 		if #list > 0 then
 			for _,line in ipairs(projects.lines(selected())) do lines[#lines+1]=line end
@@ -88,7 +93,8 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 		controls.details.list=rows(lines,width-60)
 	end
 	controls.projects=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,650,24},list,function() if layout then layout.selectedProject=selected().id;Panel.Open(build,nil,nil,layout) else refresh() end end)
-	if layout and layout.selectedProject then for index,entry in ipairs(store.projects) do if entry.id==layout.selectedProject then controls.projects:SelByValue(index,"val") end end end
+	local selection=selectedId or layout and layout.selectedProject
+	if selection then for index,entry in ipairs(store.projects) do if entry.id==selection then controls.projects:SelByValue(index,"val") end end end
 	controls.edit=button(682,28,182,"Edit selected project",function() Panel.Edit(build,selected(),nil,nil,layout) end)
 	controls.edit.enabled=#list > 0
 	controls.details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,68,848,height-224},nil,{})
@@ -130,11 +136,32 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 	controls.inventory=button(252,height-48,180,"Item inventory",function()
 		require("Classes.CraftingInventoryControl").Open(build,{resume=function(project) if layout then layout.openWorkbench(project) else require("Classes.CraftingSimulatorControl").Open(build,project) end end})
 	end)
+	controls.remove=button(444,height-48,140,"Remove project",function()
+		local entry=selected();local index=controls.projects:GetSelValueByKey("val")
+		local recovery=require("Modules.PlanningRecovery").forgetCraftingProject(build,entry.id)
+		store:Remove(entry.id)
+		if recovery and not store.lastRemoved.draft then store.lastRemoved.draft=recovery.draft;store.lastRemoved.pending=recovery.pending end
+		local following=store.projects[math.min(index,#store.projects)];reopen(following and following.id)
+	end)
+	controls.remove.enabled=function() return #list>0 and not store.unreadable end
+	controls.remove.tooltipText=function()
+		if #list==0 then return "Select a project to remove." end
+		local p=selected();local items=#(p.inventory or {});local links=#store:References(p.id)
+		return "Remove "..p.title..", its saved working craft and "..items.." inventory "..(items==1 and "item" or "items")..".\n"..links.." linked gear "..(links==1 and "goal remains" or "goals remain")..". Undo removal restores the project."
+	end
+	controls.undoRemove=button(600,height-48,132,"Undo removal",function()
+		local entry,draft=store:UndoRemove()
+		if draft then require("Modules.PlanningRecovery").save(build,"crafting",{plan=draft},true) end
+		reopen(entry.id)
+	end)
+	controls.undoRemove.enabled=function() return store.lastRemoved~=nil and not store.unreadable end
+	controls.undoRemove.tooltipText="Restore the last removed project, inventory and working draft. Available until another project is removed or this build is closed."
 	if layout then
-		ui.label(controls,"heading",16,18,"Crafting projects",24)
+		ui.label(controls,"heading",16,14,"Crafting projects",24)
 		controls.projects.x=16;controls.projects.y=60;controls.projects.width=width-336
 		controls.new.x=width-304;controls.new.y=60;controls.new.width=136
 		controls.edit.x=width-156;controls.edit.y=60;controls.edit.width=140;controls.edit.label="Edit project"
+		ui.label(controls,"notice",16,43,store.notice and ui.fit(store.notice,width-32,ui.size(12)) or "",12)
 		controls.libraryPage=new("DropDownControl"):DropDownControl(ui.anchor,{16,102,360,28},{"Item","Plan","Sharing"})
 		ui.tabs(controls,controls.libraryPage,{{"tab_item","Item","Item"},{"tab_plan","Plan","Plan"},{"tab_sharing","Sharing","Sharing & tools"}},16,102,440)
 		controls.inventory.x=width-196;controls.inventory.y=102
@@ -143,6 +170,9 @@ function Panel.Open(build,displayItem,displaySlot,layout)
 		controls.native.x=16;controls.native.y=404;controls.native.width=260;controls.native.height=32;controls.native.label="Open workbench"
 		controls.preview.x=16;controls.preview.y=448;controls.preview.width=260;controls.preview.height=32;controls.preview.label="Compare target with build"
 		for _,key in ipairs({"native","preview"}) do controls[key].shown=function() return controls.libraryPage:GetSelValue()=="Item" end end
+		controls.remove.x=16;controls.remove.y=height-56;controls.remove.width=126
+		controls.undoRemove.x=154;controls.undoRemove.y=height-56;controls.undoRemove.width=122
+		for _,key in ipairs({"remove","undoRemove"}) do controls[key].shown=function() return controls.libraryPage:GetSelValue()=="Item" end end
 		controls.preview.enabled=function() return #list>0 and selected().targetItem and selected().targetItem:match("%S")~=nil end
 		for index,key in ipairs({"done","undoStep"}) do
 			controls[key].x=16+(index-1)*224;controls[key].y=height-56;controls[key].width=212

@@ -31,4 +31,28 @@ describe("Local planning draft recovery",function()
 		assert.is_true(recovery.isCurrent(build,"atlas",{plan=require("Modules.AtlasPlanner").validate(plan)}))
 		assert.is_false(recovery.isCurrent(build,"atlas",{plan=plan,view={title="",budgetText="-1",notes="Unfinished"}}))
 	end)
+	it("removes only the requested project's valid recovery slots and returns its working draft",function()
+		local function craft(id)
+			local p={id=id,title=id,slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",goals={},steps={}}
+			local state=require("Modules.CraftingSimulator").model(p.startingItem).initial
+			local run=require("Modules.CraftingInventory").run(state);run.project=p;run.kind="workbench";return {plan=run}
+		end
+		assert.is_true(recovery.save(build,"crafting",craft("a"),true));assert.is_true(recovery.save(build,"crafting",craft("b"),true))
+		assert.is_true(recovery.save(build,"filters",entry("Unrelated filter"),true))
+		local saved=recovery.forgetCraftingProject(build,"a");assert.are.equal("a",saved.draft.project.id)
+		assert.is_nil(recovery.forCraftingProject(build,"a"));assert.are.equal("b",recovery.load(build,"crafting").entry.plan.project.id)
+		assert.are.equal("Unrelated filter",recovery.load(build,"filters").entry.plan.data.profiles[1].title)
+		assert.is_true(recovery.save(build,"crafting",{plan=saved.draft},true));assert.is_truthy(recovery.forCraftingProject(build,"a"))
+	end)
+	it("keeps recovery files unchanged while preparing and applying an MCP removal",function()
+		local p={id="review-delete",title="Review delete",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",goals={},steps={}}
+		build.savers.CraftingProjects:Upsert(p)
+		local run=require("Modules.CraftingInventory").run(require("Modules.CraftingSimulator").model(p.startingItem).initial);run.project=p;run.kind="workbench"
+		assert.is_true(recovery.save(build,"crafting",{plan=run},true))
+		local function bytes() local f=assert(io.open(recovery.load(build,"crafting").path,"rb"));local raw=f:read("*a");f:close();return raw end
+		local original=bytes();local bridge=require("Modules.DesktopBuildBridge");local base=build
+		local prepared=bridge.prepare(base,{mode="edit",title="Remove guide",baseRevision=bridge.revision(base),operations={{type="remove_crafting_project",projectId=p.id}}})
+		assert.are.equal(original,bytes());bridge.apply(prepared);assert.are.equal(original,bytes())
+		bridge.restore();assert.are.equal(original,bytes())
+	end)
 end)

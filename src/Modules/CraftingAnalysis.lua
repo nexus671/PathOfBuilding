@@ -5,11 +5,16 @@ function M.reset(build)
 	if tasks.job and tasks.job.build==build then tasks.cancel("The active build changed") end
 	build.craftingAnalyses=nil
 end
+function M.forget(build,id)
+	local job=tasks.job
+	if job and job.build==build and job.analysis and job.analysis.projectId==id then tasks.cancel("Calculation cancelled.") end
+	if build.craftingAnalyses then build.craftingAnalyses[id]=nil end
+end
 function M.get(build,project,restored)
 	build.craftingAnalyses=build.craftingAnalyses or {}
 	local session=build.craftingAnalyses[project.id]
 	if session and session.raw==project.startingItem then return session end
-	session={raw=project.startingItem,results={}}
+	session={projectId=project.id,raw=project.startingItem,results={}}
 	build.craftingAnalyses[project.id]=session
 	if restored then
 		if restored.lastSimulation then session.results.simulation={result=restored.lastSimulation,context=restored.lastSimulationRun} end

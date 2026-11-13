@@ -56,11 +56,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `082bd913283615b08186f887a631c6afd0ab68dc`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43407520764),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43407520807)).
-It passed 1,177 Lua tests, 45 Node tests, the real MCP save/reopen workflow and
-789 source-stable UI states without audit failures. All 2,423 updater file hashes
+The latest verified checkpoint is `aaf5f42c30b2265325f0cb0e0065029a6afd96d9`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43411481294),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43411481303)).
+It passed 1,186 Lua tests, 45 Node tests, the real MCP save/reopen workflow and
+807 source-stable UI states without audit failures. All 2,424 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
@@ -213,7 +213,7 @@ buttons prevent duplicate jobs; closing a workbench cancels its own calculation.
 Captured result setups survive layout changes, while older results without a
 captured setup require a fresh simulation before refinement.
 
-The current review retains simulation, fossil and action-odds results in transient
+Preview 26 retains simulation, fossil and action-odds results in transient
 build-owned analysis sessions. Rebuilt views reconnect to the running calculation;
 results remain available after navigation discards an old view cache. Background
 fossil comparisons do not interrupt another tool. Asynchronous errors retain raw
@@ -221,6 +221,15 @@ diagnostic details while showing readable messages in the UI. Build initializati
 and shutdown clear analysis state and cancel crafting work because PoB reuses its
 build-mode object across files.
 Running and completed Atlas route previews are also cleared on a build change.
+
+The current review resets save-state labels across reused builds and scopes working
+craft drafts by project. Project removal and undo preserve inventory, checkpoint,
+quotes, order and working drafts; cleanup targets only the removed project.
+Reviewed MCP removals identify what is removed and retain recovery files. Applying
+an edit carries compatible working drafts and removal undo forward without changing
+the original build's undo state. Saved recipes use their own starting state even
+after manual working-item edits. Native screens cover empty lists, restoration,
+inventory and large-text removal notices.
 
 Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies

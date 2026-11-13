@@ -189,7 +189,7 @@ function Panel.Open(build,project,layout)
 		local function keep(nextState,index)
 			changedAffixes={};local previous={};for _,entry in ipairs(state.affixes) do previous[entry.id]=require("dkjson").encode(entry) end
 			for _,entry in ipairs(nextState.affixes) do if previous[entry.id]~=require("dkjson").encode(entry) then changedAffixes[entry.id]=true end end
-			ui.draft(build,"workingCraft")
+			ui.draft(build,"workingCraft",draft.id)
 			history[#history+1]=copyTable(state);if #history > 40 then table.remove(history,1) end
 			if index then craft.allflame=craft.allflame or copyTable(result.allflame.settings);craft.allflame.choiceIndex=index end
 			state=nextState;actions[#actions+1]=craft;updateOptions();refresh({"Applied "..(simulator.labels[craft.method] or "craft")..". Select another currency or undo."})
@@ -207,7 +207,7 @@ function Panel.Open(build,project,layout)
 			main:OpenPopup(660,440,"Allflame outcomes",popup,nil,nil,"close")
 		else keep(result.state) end
 	end)
-	button(controls,"undo",308,204,124,"Undo currency",function() assert(#history > 0,"No currency action to undo"); state=table.remove(history);table.remove(actions);changedAffixes={};ui.draft(build,"workingCraft");updateOptions();refresh() end)
+	button(controls,"undo",308,204,124,"Undo currency",function() assert(#history > 0,"No currency action to undo"); state=table.remove(history);table.remove(actions);changedAffixes={};ui.draft(build,"workingCraft",draft.id);updateOptions();refresh() end)
 	button(controls,"history",232,390,200,"Item history",function()
 		require("Classes.CraftingHistoryControl").Open(model,state,history,actions,function(saved,count)
 			state=saved;for i=1,count do table.remove(history);table.remove(actions) end;updateOptions();refresh({"Restored an earlier working item."})
@@ -317,7 +317,7 @@ function Panel.Open(build,project,layout)
 		end,present=function(id)
 			assert(not state.destroyed and not state.veil,"Reset destruction or finish the unveil first")
 			local next=copyTable(state);if next.rarity=="NORMAL" then next.rarity="RARE" end
-			next.affixes[#next.affixes+1]={id=id,range=0.5,crafted=false};state=simulator.validateState(model,next);initial=copyTable(state);history={};actions={};lastSimulation=nil;changedAffixes={};ui.draft(build,"workingCraft");updateOptions();refresh({"Modifier staged on a hypothetical item. Working actions reset."})
+			next.affixes[#next.affixes+1]={id=id,range=0.5,crafted=false};state=simulator.validateState(model,next);initial=copyTable(state);history={};actions={};analysis:clearSimulation();syncAnalysis();changedAffixes={};ui.draft(build,"workingCraft",draft.id);updateOptions();refresh({"Modifier staged on a hypothetical item. Working actions reset."})
 		end})
 	end)
 	button(controls,"addTarget",16,310,132,"Add target",function()
@@ -368,7 +368,7 @@ function Panel.Open(build,project,layout)
 		local actionPrices=pricing.actionOverride(simulator.priceKey(action()),
 			controls.price.buf~="" and assert(tonumber(controls.price.buf),"Invalid action price") or nil)
 		local options={retainSuccesses=10,baseCost=controls.baseCost.buf ~= "" and assert(tonumber(controls.baseCost.buf),"Invalid starting item cost") or 0,trials=assert(tonumber(controls.trials.buf),"Invalid trial count"),maxActions=budget,seed=assert(tonumber(controls.seed.buf),"Invalid seed"),
-			initialState=copyTable(fromInitial and initial or state),actionPrices=actionPrices,priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf}
+			initialState=copyTable(fromInitial and (recipe.initialState or model.initial) or state),actionPrices=actionPrices,priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf}
 		startSimulation({raw=draft.startingItem,recipe=recipe,options=options,label=fromInitial and "Saved recipe | original starting item" or "Selected action: "..actionName()})
 	end
 	button(controls,"simulate",16,486,200,"Simulate action",function()
@@ -506,11 +506,11 @@ function Panel.Open(build,project,layout)
 	end)
 	button(controls,"manual",16,448,416,"Edit hypothetical item",function()
 		require("Classes.CraftingItemEditorControl").Open(model,state,function(edited)
-			state=edited;initial=copyTable(edited);history={};actions={};analysis:clearSimulation();syncAnalysis();changedAffixes={};ui.draft(build,"workingCraft")
+			state=edited;initial=copyTable(edited);history={};actions={};analysis:clearSimulation();syncAnalysis();changedAffixes={};ui.draft(build,"workingCraft",draft.id)
 			updateOptions();refresh({"Manual edits set a new recipe starting state."})
 		end)
 	end)
-	button(controls,"reset",232,530,200,"Reset item",function() state=copyTable(initial);history={};actions={};changedAffixes={};ui.draft(build,"workingCraft");updateOptions();refresh() end)
+	button(controls,"reset",232,530,200,"Reset item",function() state=copyTable(initial);history={};actions={};changedAffixes={};ui.draft(build,"workingCraft",draft.id);updateOptions();refresh() end)
 	button(controls,"preview",16,height-48,200,"Preview in build",function()
 		assert(not state.veil and not state.destroyed,"A pending unveil or destroyed item cannot be previewed")
 		local entry=copyTable(draft); entry.targetItem=simulator.toItem(model,state).raw
@@ -527,7 +527,7 @@ function Panel.Open(build,project,layout)
 	controls.coverage.tooltipText="View supported crafting methods and assumptions."
 	button(controls,"close",width-164,height-48,148,layout and "Back to projects" or "Close",function()
 		if tasks.job and tasks.job.owner==controls then tasks.cancel("Crafting view closed") end
-		if layout then layout.openProjects() else main:ClosePopup() end
+		if layout then layout.openProjects() else ui.discard(build,"workingCraft",draft.id);main:ClosePopup() end
 	end)
 	controls.resultSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,398,416,height-464},nil,rows({"Run an action or a recipe to inspect its results."}))
 	controls.undo.enabled=function() return #history>0 end
@@ -650,7 +650,7 @@ function Panel.Open(build,project,layout)
 			settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}
 		local saved=copyTable(draft);saved.run=run
 		local kept=build.savers.CraftingProjects:Upsert(saved);draft=copyTable(kept)
-		ui.kept(build,"workingCraft")
+		ui.kept(build,"workingCraft",draft.id)
 		refresh({"Working item, history and settings kept. Use build Save to resume after restarting. No budget was spent."})
 	end)
 	controls.keepWorking.shown=function() return require("Modules.CraftingTasks").job==nil end

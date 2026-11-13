@@ -22,9 +22,12 @@ function M.errorText(value)
 	end
 	return line:match("%S") and line or fallback
 end
-function M.draft(build,kind) states[build]=states[build] or {drafts={}};states[build].drafts[kind]=true end
-function M.kept(build,kind) states[build]=states[build] or {drafts={}};states[build].drafts[kind]=nil;states[build].kept=true end
-function M.discard(build,kind) if states[build] then states[build].drafts[kind]=nil end end
+local function draftKey(kind,id) return id and kind..":"..id or kind end
+function M.reset(build) states[build]=nil end
+function M.draft(build,kind,id) states[build]=states[build] or {drafts={}};states[build].drafts[draftKey(kind,id)]=true end
+function M.kept(build,kind,id) states[build]=states[build] or {drafts={}};states[build].drafts[draftKey(kind,id)]=nil;states[build].kept=true end
+function M.discard(build,kind,id) if states[build] then states[build].drafts[draftKey(kind,id)]=nil end end
+function M.hasDraft(build,kind,id) return states[build] and states[build].drafts[draftKey(kind,id)]==true or false end
 function M.saved(build) states[build]=states[build] or {drafts={}};states[build].saved=true;states[build].kept=nil end
 function M.saveStatus(build)
 	local state=states[build]

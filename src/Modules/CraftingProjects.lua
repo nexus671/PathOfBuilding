@@ -112,9 +112,43 @@ function M.new(build)
 		end end
 		if not found then replacement[#replacement+1]=entry end
 		assert(#json.encode({schemaVersion=1,projects=replacement}) <= 2*1024*1024,"Crafting projects exceed the supported size")
-		self.projects=replacement; build.modFlag=true
+		self.projects=replacement;self.notice=nil; build.modFlag=true
 		require("Modules.PlanningUI").kept(build,"crafting")
 		return entry
+	end
+	function self:References(id)
+		local result={}
+		for _,entry in ipairs(build.savers.BuildJourney.data.wishlist) do if entry.projectId==id then result[#result+1]={id=entry.id,title=entry.title} end end
+		return result
+	end
+	function self:Remove(id)
+		assert(not self.unreadable,self.warning)
+		local replacement=M.copy(self.projects);local removed,index
+		for i,entry in ipairs(replacement) do if entry.id==id then removed=table.remove(replacement,i);index=i;break end end
+		assert(removed,"Unknown crafting project")
+		local ui=require("Modules.PlanningUI")
+		local pending=ui.hasDraft(build,"workingCraft",id)
+		require("Modules.CraftingAnalysis").forget(build,id)
+		local draft=build.planningWorkspace and build.planningWorkspace:ForgetCraftingProject(id)
+		self.lastRemoved={project=removed,index=index,draft=draft,pending=pending}
+		self.projects=replacement;ui.discard(build,"workingCraft",id);ui.kept(build,"crafting");build.modFlag=true
+		self.notice="Removed project: "..removed.title..". Use Undo removal to restore."
+		return removed
+	end
+	function self:UndoRemove()
+		assert(not self.unreadable,self.warning)
+		local removed=assert(self.lastRemoved,"No removed project to restore")
+		for _,entry in ipairs(self.projects) do assert(entry.id~=removed.project.id,"A project with this ID already exists; undo will not replace it") end
+		local entry=self:Upsert(removed.project)
+		for i,project in ipairs(self.projects) do if project.id==entry.id then table.remove(self.projects,i);break end end
+		table.insert(self.projects,math.min(removed.index,#self.projects+1),entry)
+		if removed.draft then
+			if build.planningWorkspace then build.planningWorkspace.craftDrafts[entry.id]=copyTable(removed.draft)
+			else build.planningCraftDrafts=build.planningCraftDrafts or {};build.planningCraftDrafts[entry.id]=copyTable(removed.draft) end
+		end
+		if removed.pending then require("Modules.PlanningUI").draft(build,"workingCraft",entry.id) end
+		self.lastRemoved=nil;self.notice="Restored project: "..entry.title..". Use build Save to persist."
+		return entry,removed.draft
 	end
 	return self
 end

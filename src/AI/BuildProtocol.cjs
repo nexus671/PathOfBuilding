@@ -64,6 +64,7 @@ const operations = [
   object({type:{const:'set_build_journey'},journey:journeySchema},['type','journey']),
   object({type:{const:'set_loot_filters'},filters:lootFilters},['type','filters']),
   object({type:{const:'set_crafting_project'},project:craftingProjectSchema},['type','project']),
+  object({type:{const:'remove_crafting_project'},projectId:{type:'string',pattern:'^[A-Za-z0-9_-]{1,64}$'}},['type','projectId']),
 ];
 const metricNames = ['LifeUnreserved','EnergyShield','ManaUnreserved','CombinedDPS','FullDPS','TotalEHP','PhysicalMaximumHitTaken','ChaosMaximumHitTaken','RecoverySimulationSurvivalChance','RecoverySimulationDamageDPS','RecoverySimulationAttackUptime','ManaRegen','Speed','EffectiveMovementSpeedMod','FireResist','ColdResist','LightningResist','ChaosResist','Str','Dex','Int'];
 const planSchema = object({goal:{enum:['balanced','boss_damage','mapping','survival','comfort']},budget:number(0,1e12),currency:quoteSchema.properties.currency,

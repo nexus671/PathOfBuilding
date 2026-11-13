@@ -48,19 +48,37 @@ function M.isCurrent(build,kind,entry)
 	end)
 	return ok and result==true
 end
+local function readRecord(build,kind,slot)
+	local filePath=path(build,kind,slot);if not filePath then return end
+	local file=io.open(filePath,"rb");if not file then return end
+	local raw=file:read(M.limit+1);file:close();if #raw>M.limit then return end
+	local ok,value=pcall(function()
+		local record=assert(json.decode(raw));assert(record.schemaVersion==1 and record.kind==kind and type(record.generation)=="number" and record.generation==math.floor(record.generation) and record.generation>=1 and record.generation<1e12,"Invalid recovery record")
+		assert(type(record.at)=="number" and record.at>=0 and record.at<4102444800,"Invalid recovery date")
+		assert(record.digest==data.hash(record.entry),"Incomplete recovery record");record.entry=M.clean(kind,record.entry);record.path=filePath;return record
+	end)
+	if ok then return value end
+end
 function M.load(build,kind)
 	local best
-	for slot=1,2 do local filePath=path(build,kind,slot);if not filePath then return end
-		local file=io.open(filePath,"rb");if file then
-			local raw=file:read(M.limit+1);file:close()
-			if #raw<=M.limit then local ok,value=pcall(function()
-				local record=assert(json.decode(raw));assert(record.schemaVersion==1 and record.kind==kind and type(record.generation)=="number" and record.generation==math.floor(record.generation) and record.generation>=1 and record.generation<1e12,"Invalid recovery record")
-				assert(type(record.at)=="number" and record.at>=0 and record.at<4102444800,"Invalid recovery date")
-				assert(record.digest==data.hash(record.entry),"Incomplete recovery record");record.entry=M.clean(kind,record.entry);record.path=filePath;return record
-			end);if ok and (not best or value.generation>best.generation) then best=value end end
-		end
-	end
+	for slot=1,2 do local value=readRecord(build,kind,slot);if value and (not best or value.generation>best.generation) then best=value end end
 	return best
+end
+function M.forCraftingProject(build,id)
+	local best
+	for slot=1,2 do local record=readRecord(build,"crafting",slot);if record and record.entry.plan.project.id==id and (not best or record.generation>best.generation) then best=record end end
+	if best then return {draft=best.entry.plan,pending=not M.isCurrent(build,"crafting",best.entry)} end
+end
+function M.forgetCraftingProject(build,id)
+	local removed=M.forCraftingProject(build,id)
+	for slot=1,2 do
+		local record=readRecord(build,"crafting",slot)
+		if record and record.entry.plan.project.id==id then local ok,why,code=os.remove(record.path);assert(ok or code==2,why) end
+	end
+	local _,directory=path(build,"crafting",1);if not directory then return removed end
+	local cache=M.cache[directory..":"..(build.dbFileName or build.buildName or "")..":crafting"]
+	if cache then cache.digest=nil;cache.checked=nil;if not M.load(build,"crafting") then cache.pending=false end end
+	return removed
 end
 function M.save(build,kind,entry,force)
 	local _,directory=path(build,kind,1);if not directory then return end

@@ -157,6 +157,14 @@ async function main(){
   assert.equal(savedBody.inventory[0].state.harvestEnchant,'LifeBodyEnchant');assert.equal(savedBody.targetItem,bodySimulation.nativeCrafting.sampleItem);
   const atlasPlans=await call('get_atlas_plans');assert.equal(atlasPlans.plans[1].strategy.setupCost.amount,25);assert.equal(atlasPlans.plans[1].progression.previousId,'starter-atlas');await host('bundle-roundtrip');
   assert.deepEqual((await call('get_crafting_projects')).projects.find(entry=>entry.id==='body-enchant').priceBook,bodyPriceBook);
+  context=(await call('get_build_context')).context;
+  const removal=await queued('propose_build',{mode:'edit',title:'Remove body guide',baseRevision:context.revision,operations:[{type:'remove_crafting_project',projectId:'body-enchant'}]},'review');
+  assert.ok(removal.changes.some(line=>line.includes('Removed crafting project:')));
+  assert.equal((await call('get_crafting_projects')).projects.length,2,'Removal changed live guides before review');
+  await host('apply');assert.equal((await call('get_crafting_projects')).projects.length,1);
+  await host('undo-applied');
+  const restoredProjects=(await call('get_crafting_projects')).projects;assert.equal(restoredProjects.length,2);
+  assert.deepEqual(restoredProjects.find(entry=>entry.id==='body-enchant').priceBook,bodyPriceBook);
   await host('quit');
   console.log('PLANNING_WORKFLOW_OK: real MCP stdio, native calculations, UI review, crafting simulation, Journey ranking, Atlas strategy, save/reopen, checkpoint undo and portable bundle import');
 }
