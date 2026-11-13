@@ -32,7 +32,7 @@ Damage scales from the active configuration's raw hit inputs. These are editable
 
 Use **Atlas > Stages & strategy** to label a plan Starter, Intermediate or Final and link its previous saved plan. The progression view orders refunds and allocations while preserving connectivity and the supplied point budget, including granted points. If a direct route fails, it tries a rebuild and labels the extra refunds. It reports when it cannot find a sequential route with the available budget. Routes are valid transitions, not minimum-refund solutions; refund currency prices are not assumed.
 
-The strategy tab records maps and rolling requirements, scarabs and consumables, character/unlock requirements, mechanics or modifiers to avoid, and a dated setup estimate with currency and source. Select **Use in Atlas draft**, then **Keep plan** and save the build. Estimates do not automatically spend or reserve Journey resources.
+The strategy tab records maps and rolling requirements, map supplies and consumables, character/unlock requirements, mechanics or modifiers to avoid, and a dated setup estimate with currency and source. Record Threads for 3.30 strategies or Scarabs for older versions. Select **Use in Atlas draft**, then **Keep plan** and save the build. Estimates do not automatically spend or reserve Journey resources.
 
 Linked stages must use the same Atlas version and cannot form a cycle. Saved Atlas plans have a total metadata size guard rather than an eight-plan count limit.
 

@@ -52,20 +52,22 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,115 Lua tests, 42 Node tests,
+The published preview passed exact-commit CI with 1,116 Lua tests, 42 Node tests,
 the real MCP save/reopen workflow and 642 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `18136096378682aa33a96e595606797e4ad3cd98`.
+against commit `361a5b3894ed978998c0343f27c7618e06da8e0a`.
 
 That preview includes the native colour wheel, brightness/opacity controls,
 exact RGBA input and Ruthless validation. Native input tests also exposed and
 fixed campaign fields rejecting numeric entry. It also includes 14
 client-derived Harvest quality enchantments, goals, native import/export and
 resource costs. It also fixes repeated socket-count preparation costs when
-linking an item that already has the requested count. The next review removes
-duplicate recovery trials during AI candidate loading. Local validation passed
-1,116 Lua tests, the real MCP workflow and 642 source-stable UI states without
-audit failures. Exact-commit CI is still required for that performance change.
+linking an item that already has the requested count, and removes duplicate
+recovery trials during AI candidate loading. The next review refreshes Atlas
+map-supply wording, exposes the crafting rules version and bounds catalogue
+trimming for direct callers. The Atlas changes passed 642 source-stable UI states;
+the later Rules button passed nine focused native states, including hover and
+coverage navigation, at all three sizes. Exact-commit CI is still required.
 The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.

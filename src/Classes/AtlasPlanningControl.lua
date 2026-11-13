@@ -19,7 +19,7 @@ function M.Open(build,plan,keep)
 		c.transition.list=ui.rows(lines,w-56)
 	end
 	c.previous.selFunc=refresh
-	local s=draft.strategy or {};local fields={{"maps","Maps and rolling requirements"},{"scarabs","Scarabs and consumables"},{"requirements","Character / unlock requirements"},{"avoid","Mechanics or map modifiers to avoid"}}
+	local s=draft.strategy or {};local fields={{"maps","Maps and rolling requirements"},{"scarabs","Map supplies and consumables"},{"requirements","Character / unlock requirements"},{"avoid","Mechanics or map modifiers to avoid"}}
 	local col=math.floor((w-48)/2)
 	for i,field in ipairs(fields) do local x=16+(i-1)%2*(col+16);local y=78+math.floor((i-1)/2)*144
 		ui.label(c,field[1].."Label",x,y,field[2],15);c[field[1]]=new("EditControl"):EditControl(ui.anchor,{x,y+26,col,100},s[field[1]] or "",nil,"^%C\t\n",4000,nil,16)

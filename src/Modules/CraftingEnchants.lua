@@ -33,7 +33,7 @@ function E.extend(M,A,api)
 			end
 		end
 		table.sort(result.harvestEnchants,function(a,b) return a.id<b.id end)
-		while #result.harvestEnchants>(limit or 50) do table.remove(result.harvestEnchants) end
+		for i=#result.harvestEnchants,1,-1 do if i>(limit or 50) then result.harvestEnchants[i]=nil else break end end
 		return result
 	end
 	local originalModel=M.model

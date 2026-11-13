@@ -451,6 +451,8 @@ function Panel.Open(build,project,layout)
 		for _,method in ipairs(simulator.methods) do entries[#entries+1]={id=method,label=simulator.labels[method],category=inspect.category(method),details={"Implemented in the bounded model",workbench.hint(method,state,model),"Item-specific options and prerequisites are validated when applying.","Coverage does not imply complete game parity."}} end
 		browser.Open("Crafting coverage and assumptions",entries)
 	end)
+	controls.coverage.label=function() return "Rules "..tostring(simulator.dataPatch or "bundled") end
+	controls.coverage.tooltipText="View supported crafting methods and assumptions."
 	button(controls,"close",width-164,height-48,148,layout and "Back to projects" or "Close",function() if layout then layout.openProjects() else main:ClosePopup() end end)
 	controls.resultSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,398,416,height-464},nil,rows({"Run an action or a recipe to inspect its results."}))
 	controls.undo.enabled=function() return #history>0 end

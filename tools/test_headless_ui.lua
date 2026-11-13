@@ -103,7 +103,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("keep");assert(#build.savers.AtlasPlans.plans==1)
 	local starter=copyTable(build.savers.AtlasPlans.plans[1]);starter.id="starter-atlas";starter.title="Starter maps";starter.nodes={};starter.progression={stage="starter"};build.savers.AtlasPlans:Upsert(starter)
 	ui:click("progression");ui:choose("stage","final","val");ui:choose("previous","starter-atlas","val");frame("atlas-progression")
-	ui:click("strategyTab");ui:text("maps","T16 maps; avoid reflect");ui:text("scarabs","Record scarabs here");ui:text("requirements","Complete map unlocks");ui:text("avoid","Reflect");ui:text("amount","25");ui:text("source","Manual test quote");frame("atlas-strategy-requirements");ui:click("keep");ui:click("keep")
+	ui:click("strategyTab");ui:text("maps","T16 maps; avoid reflect");ui:text("scarabs","Record map supplies here");ui:text("requirements","Complete map unlocks");ui:text("avoid","Reflect");ui:text("amount","25");ui:text("source","Manual test quote");frame("atlas-strategy-requirements");ui:click("keep");ui:click("keep")
 	assert(build.savers.AtlasPlans.plans[1].strategy.setupCost.amount==25 and build.savers.AtlasPlans.plans[1].progression.previousId=="starter-atlas","Atlas strategy was not kept")
 	ui:choose("page","Tree");ui:click("tools");ui:text("search","Compare");ui:click("choose");frame("atlas-compare");ui:text("search","Starter maps");ui:click("choose");frame("atlas-comparison-overlay");assert(workspace.controls.canvas.comparison,"Saved-plan comparison did not reach the canvas")
 	ui:click("tools");ui:text("search","history");ui:click("choose");frame("atlas-history");ui:click("close")

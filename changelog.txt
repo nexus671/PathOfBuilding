@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Made the crafting rules version visible on the workbench, with one-click coverage details.
+* Updated Atlas map-supply wording for current strategies while retaining older saved notes.
 * Avoided duplicate recovery trials while loading AI proposal candidates, retaining complete final calculations.
 * Added Harvest quality enchantments with native item previews, recipe goals, saved state and Lifeforce costs.
 * Fixed socket-bench preparation costs being charged again when the input already has the requested socket count.

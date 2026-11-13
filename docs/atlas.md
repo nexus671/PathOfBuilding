@@ -38,7 +38,7 @@ Search and routing are queued. Poll `get_proposal_status` and match the returned
 
 Example request: “Use my Atlas version and a 90-point budget. Find Essence and map-sustain nodes, avoid mechanics I dislike, and propose a connected farming plan. Explain the keystones and tradeoffs before I apply it.”
 
-The planner does not fetch character Atlas completion, scrape community trees, provide popularity heatmaps, price scarabs or predict farming income. **Stages & strategy** records progression, respec routes, maps, scarabs, requirements and dated setup estimates; see [connected planning tools](planning-workflows.md).
+The planner does not fetch character Atlas completion, scrape community trees, provide popularity heatmaps, price supplies or predict farming income. **Stages & strategy** records progression, respec routes, maps, supplies, requirements and dated setup estimates; see [connected planning tools](planning-workflows.md).
 
 ## Sources and maintenance
 

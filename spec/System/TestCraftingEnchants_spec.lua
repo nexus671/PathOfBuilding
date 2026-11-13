@@ -12,6 +12,7 @@ describe("Harvest quality enchantments",function()
 		assert.are.equal(1,#catalog.harvestEnchants);assert.are.equal("WeaponCriticalEnchant",catalog.harvestEnchants[1].action.enchantId)
 		assert.are.same({primal_lifeforce=5000},catalog.harvestEnchants[1].components)
 		assert.are.equal(1,#sim.catalog(raw,"",1).harvestEnchants)
+		assert.are.equal(0,#sim.catalog(raw,"",-1).harvestEnchants)
 	end)
 	it("replaces the enchantment without changing affixes, quality or sockets",function()
 		local model=sim.model(raw);local initial=sim.perform(raw,{method="transmute"},12).state

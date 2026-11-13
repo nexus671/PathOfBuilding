@@ -374,7 +374,7 @@ function Panel.Open(build,source,layout)
 	controls.progression=button(452,height-42,180,"Stages & strategy",function() require("Classes.AtlasPlanningControl").Open(build,current(),function(plan) change(plan) end) end)
 	controls.close=button(width-132,height-42,116,"Close",function() main:ClosePopup() end)
 	controls.page=new("DropDownControl"):DropDownControl(ui.anchor,{side,64,260,24},{"Tree","Notes & sharing"})
-	ui.label(controls,"notesLabel",16,88,"Farming goals, maps, scarabs and strategy notes")
+	ui.label(controls,"notesLabel",16,88,"Farming goals, maps, supplies and strategy notes")
 	for _,key in ipairs({"canvas","strategySummary","search","find","results","mechanic","matchCount","details","allocate","remove","undo","redo","fit","help","avoid","clearAvoid","stats","browse","routes","tools"}) do
 		controls[key].shown=function() return controls.page:GetSelValue()=="Tree" end
 	end
