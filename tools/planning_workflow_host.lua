@@ -27,6 +27,9 @@ for line in io.lines() do
 	local ok,result=xpcall(function()
 		if command.kind=="tick" then
 			for i=1,command.frames or 1 do frame();bridge.poll(build,true) end
+		elseif command.kind=="convert-tree" then
+			build.treeTab:ConvertToVersion(assert(command.version),true,false,true);frame();bridge.refresh(build)
+			return {treeVersion=build.spec.treeVersion,revision=bridge.revision(build)}
 		elseif command.kind=="request-test" then bridge.connectionTest={nonce="workflow-connection-test",requestedAt=os.time()};bridge.publishState()
 		elseif command.kind=="connection-proof" then return {client=bridge.client and bridge.client.name,tested=bridge.connectionTest and bridge.connectionTest.passed,synced=bridge.client and bridge.client.contextRevision==bridge.contextRevision}
 		elseif command.kind=="apply" then

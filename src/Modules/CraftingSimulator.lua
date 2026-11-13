@@ -4,6 +4,15 @@ local encounter = require("Modules.CalcEncounter")
 local M = {methodChecks={}}
 M.methods = {"transmute","alteration","augmentation","regal","alchemy","chaos","exalt","annul","scour","divine","bench","remove_crafted","essence"}
 M.labels = {transmute="Orb of Transmutation",alteration="Orb of Alteration",augmentation="Orb of Augmentation",regal="Regal Orb",alchemy="Orb of Alchemy",chaos="Chaos Orb",exalt="Exalted Orb",annul="Orb of Annulment",scour="Orb of Scouring",divine="Divine Orb",bench="Crafting bench",remove_crafted="Remove crafted modifiers",essence="Essence"}
+function M.withTreeContext(result,version)
+	result.dataPatch=result.dataPatch or M.dataPatch
+	if version~=nil then
+		assert(type(version)=="string" and treeVersions[version],"Unknown build tree version")
+		result.treeVersion=version;result.treeVersionScope="build_context_only"
+	end
+	result.latestAvailableTreeVersion=latestTreeVersion
+	return result
+end
 function M.actionWarnings(action)
 	local result={}
 	if action.method=="recombine" then result[#result+1]={code="recombination_count_odds",message="Recombination uses older count odds; 3.30 odds are not verified."} end
@@ -581,7 +590,7 @@ function M.simulate(raw,recipe,options)
 	assert(totalExecuted > 0 or successes > 0,"Recipe could not execute a supported action; inspect its starting rarity and open affixes")
 	local result={trials=trials,successes=successes,successChance=successes/trials*100,confidenceLow=low,confidenceHigh=high,seed=seed,maxActions=maxActions,
 		meanActions=totalActions/trials,currencySpent=spent,resourceUsage=usage,unpriced=missing,transitionErrors=errors,warnings=M.recipeWarnings(recipe),limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
-		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units",
+		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,costCurrency=options.currency or "supplied price units",
 		baseCost=baseCost,retainedSuccesses=retained,retentionLimit=retain,affixDistribution=affixDistribution,propertyDistribution=propertyDistribution,actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
 	if not next(missing) then
 		result.meanCost=totalCost/trials;result.costPerSuccess=successes>0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts)
@@ -594,14 +603,14 @@ function M.simulate(raw,recipe,options)
 	result.resourcePriceOverridesSupplied=suppliedPrices
 	result.actionPriceOverridesSupplied=suppliedActions;result.actionPriceOverridesApplied=actionPriceUses
 	result.recovery=recovery
-	return result
+	return M.withTreeContext(result,options.treeVersion)
 end
 
-function M.perform(raw,action,seed,initialState)
+function M.perform(raw,action,seed,initialState,treeVersion)
 	local model=M.model(raw)
 	if initialState then model.initial=M.validateState(model,initialState) end
 	local state,details=M.action(model,model.initial,action,rng(encounter.seed(integer(seed or 104729,1,2147483646,"seed"),1,31)))
-	return {priceKey=(M.priceKey or priceKey)(action),itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,warnings=M.actionWarnings(action),limitations=copyTable(M.limits)}
+	return M.withTreeContext({priceKey=(M.priceKey or priceKey)(action),itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,warnings=M.actionWarnings(action),limitations=copyTable(M.limits)},treeVersion)
 end
 
 function M.catalog(raw,query,limit)
@@ -633,8 +642,16 @@ require("Modules.CraftingAdvanced").extend(M,{counts=counts,flags=flags,clear=cl
 require("Modules.CraftingCalculator").extend(M)
 do
 	local calculate=M.calculate
-	function M.calculate(raw,craft,...)
-		local result=calculate(raw,craft,...);result.warnings=M.actionWarnings(craft);return result
+	function M.calculate(raw,craft,targets,initialState,options)
+		local result=calculate(raw,craft,targets,initialState,options);result.warnings=M.actionWarnings(craft);return M.withTreeContext(result,options and options.treeVersion)
+	end
+	local catalog=M.catalog
+	function M.catalog(raw,query,limit,initialState,treeVersion)
+		return M.withTreeContext(catalog(raw,query,limit,initialState),treeVersion)
+	end
+	local optimize=M.optimizeFossils
+	function M.optimizeFossils(raw,targets,options)
+		return M.withTreeContext(optimize(raw,targets,options),options and options.treeVersion)
 	end
 end
 -- Extensions register state prerequisites once for both execution and browsing.

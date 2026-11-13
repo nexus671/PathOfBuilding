@@ -240,6 +240,15 @@ async function main(){
   await host('undo-applied');
   const restoredProjects=(await call('get_crafting_projects')).projects;assert.equal(restoredProjects.length,2);
   assert.deepEqual(restoredProjects.find(entry=>entry.id==='body-enchant').priceBook,bodyPriceBook);
+  const converted=await native.send({kind:'convert-tree',version:'3_29'});assert.ok(converted.ok,converted.error);assert.equal(converted.result.treeVersion,'3_29');
+  context=(await call('get_build_context')).context;assert.equal(context.revision,converted.result.revision);
+  const oldTreeInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:raw,limit:2},'inspected');
+  assert.equal(oldTreeInspection.crafting.nativeEngine.treeVersion,'3_29');assert.equal(oldTreeInspection.crafting.nativeEngine.treeVersionScope,'build_context_only');
+  const oldTreeAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:raw,action:{method:'alchemy'}},'crafted');
+  assert.equal(oldTreeAction.nativeCrafting.treeVersion,'3_29');
+  const oldTreeSimulation=await queued('simulate_crafting',{baseRevision:context.revision,itemText:raw,recipe:{steps:[{method:'alchemy'}],targets:[],requirements:{minAffixes:1}},options:{trials:1,maxActions:1}},'crafted');
+  assert.equal(oldTreeSimulation.nativeCrafting.treeVersion,'3_29');assert.equal(oldTreeSimulation.nativeCrafting.treeVersionScope,'build_context_only');assert.notEqual(oldTreeSimulation.nativeCrafting.latestAvailableTreeVersion,'3_29');assert.equal(oldTreeSimulation.nativeCrafting.dataPatch,oldTreeInspection.crafting.nativeEngine.dataPatch);
+  const oldTreeOdds=await queued('calculate_crafting',{baseRevision:context.revision,itemText:raw,action:{method:'socket_bench',count:2},targets:[],options:{requirements:{sockets:2}}},'crafted');assert.equal(oldTreeOdds.nativeCrafting.treeVersion,'3_29');
   await host('quit');
   console.log('PLANNING_WORKFLOW_OK: real MCP stdio, native calculations, UI review, crafting simulation, Journey ranking, Atlas strategy, save/reopen, checkpoint undo and portable bundle import');
 }

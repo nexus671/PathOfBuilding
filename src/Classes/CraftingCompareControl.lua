@@ -49,13 +49,14 @@ function M.Open(build,raw,state,targets,requirements,requiredGroups,current,save
 			for i,route in ipairs(captured) do
 				local prices=settings.prices and copyTable(settings.prices)
 				local actionPrices=require("Modules.CraftingPrices").actionOverride(route.priceKey,route.price)
-				local options={initialState=copyTable(state),trials=settings.trials,maxActions=settings.budget,seed=settings.seed,currency=settings.currency,priceBook=settings.priceBook,prices=prices,actionPrices=actionPrices,checkpoint=function(progress) checkpoint({route=i,trial=progress.trial,trials=progress.trials}) end}
+				local options={initialState=copyTable(state),trials=settings.trials,maxActions=settings.budget,seed=settings.seed,currency=settings.currency,priceBook=settings.priceBook,prices=prices,actionPrices=actionPrices,treeVersion=settings.treeVersion,checkpoint=function(progress) checkpoint({route=i,trial=progress.trial,trials=progress.trials}) end}
 				local ok,result=pcall(sim.simulate,raw,route.recipe,options);results[#results+1]={label=route.label,result=ok and result or nil,error=not ok and ui.errorText(result) or nil}
 			end
 			return results
 		end,function(results)
 			chartResults=results
 			local lines={"Same starting item and encounter-independent crafting model."}
+			if settings.treeVersion then lines[#lines+1]="Build tree: "..(treeVersions[settings.treeVersion] and treeVersions[settings.treeVersion].display or settings.treeVersion).." (context only) | crafting data: "..tostring(sim.dataPatch) end
 			for _,route in ipairs(results) do
 				lines[#lines+1]="";lines[#lines+1]=route.label
 				if route.error then lines[#lines+1]=route.error else local r=route.result

@@ -564,7 +564,7 @@ function M.poll(build, force)
 			local simulator=require("Modules.CraftingSimulator")
 			M.status={id=request.id,status="calculating"}; M.publishState()
 			if request.kind == "craftSimulate" or request.kind == "craftOptimize" or request.kind == "craftCalculate" then
-				local session=M.session;local options=copyTable(request.options or {})
+				local session=M.session;local options=copyTable(request.options or {});options.treeVersion=build.spec.treeVersion
 				local function publish(status,values)
 					if not M.enabled or M.session ~= session then return end
 					M.status={id=request.id,status=status,baseRevision=request.baseRevision}
@@ -577,7 +577,7 @@ function M.poll(build, force)
 				end,function(result) publish("crafted",{nativeCrafting=result}) end,function(message) publish("failed",{error=message}) end,function(progress) publish("calculating",{progress=progress}) end)
 				job.requestId=request.id
 			else
-				local result=simulator.perform(raw,request.action,request.seed,request.initialState)
+				local result=simulator.perform(raw,request.action,request.seed,request.initialState,build.spec.treeVersion)
 				M.status={id=request.id,status="crafted",nativeCrafting=result}; M.publishState()
 			end
 			return
@@ -590,7 +590,7 @@ function M.poll(build, force)
 				raw = assert(build.itemsTab.items[slot.selItemId],"Selected slot is empty").raw
 			end
 			M.status = {id=request.id,status="inspected",crafting=require("Modules.CraftingProjects").inspect(raw,request.query,request.limit)}
-			local ok,catalog=pcall(require("Modules.CraftingSimulator").catalog,raw,request.query,request.limit,request.initialState)
+			local ok,catalog=pcall(require("Modules.CraftingSimulator").catalog,raw,request.query,request.limit,request.initialState,build.spec.treeVersion)
 			if ok then
 				M.status.crafting.nativeEngine=catalog
 				if request.action then

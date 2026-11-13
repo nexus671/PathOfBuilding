@@ -293,6 +293,8 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		require("Classes.CraftingSimulatorControl").Open(build,p);ui:click("tab_simulate");ui:click("resourcePrices");ui:choose("mode","Recipe resources");frame("crafting-meta-330-resources");ui:click("close")
 		ui:text("trials","2");ui:text("budget","1");ui:click("runRecipe");local jobs=require("Modules.CraftingTasks");for i=1,200 do if not jobs.job then break end;jobs.tick(build) end;assert(not jobs.job)
 		local lines={};for _,row in ipairs(main.popups[1].controls.resultSummary.list) do lines[#lines+1]=row[1] end;assert(table.concat(lines," "):find("Mean spent: 48.00 chaos",1,true),"3.30 lock ingredient costs were not included")
+		local provenance=build.craftingAnalyses[p.id].results.simulation.result;assert(provenance.treeVersion==build.spec.treeVersion and provenance.treeVersionScope=="build_context_only","Crafting result lost the selected tree context")
+		assert(table.concat(lines," "):find("context only",1,true),"Crafting result did not explain tree provenance")
 		frame("crafting-meta-330-budget");ui:click("close")
 	end
 

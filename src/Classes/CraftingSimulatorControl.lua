@@ -206,7 +206,7 @@ function Panel.Open(build,project,layout)
 	button(controls,"apply",162,204,130,"Apply currency",function()
 		sequence=sequence+1
 		local craft=action();local usedSeed=assert(tonumber(controls.seed.buf),"Invalid seed")+sequence-1
-		local result=simulator.perform(draft.startingItem,craft,usedSeed,state)
+		local result=simulator.perform(draft.startingItem,craft,usedSeed,state,build.spec.treeVersion)
 		local function keep(nextState,index)
 			changedAffixes={};local previous={};for _,entry in ipairs(state.affixes) do previous[entry.id]=require("dkjson").encode(entry) end
 			for _,entry in ipairs(nextState.affixes) do if previous[entry.id]~=require("dkjson").encode(entry) then changedAffixes[entry.id]=true end end
@@ -369,7 +369,9 @@ function Panel.Open(build,project,layout)
 			result.meanCost~=nil and string.format("Mean spent: %.2f %s",result.meanCost,result.costCurrency) or "Cost unavailable: some executed actions have no supplied price.",
 			captured.label,capturedSettings(captured),
 			string.format("95%% sampling interval: %.2f%% to %.2f%%",result.confidenceLow,result.confidenceHigh),string.format("Mean attempted actions: %.2f",result.meanActions)}
-		for i,warning in ipairs(result.warnings or simulator.recipeWarnings(captured.recipe)) do table.insert(lines,1+i,"Model note: "..warning.message) end
+		local warnings=result.warnings or simulator.recipeWarnings(captured.recipe)
+		for i,warning in ipairs(warnings) do table.insert(lines,1+i,"Model note: "..warning.message) end
+		if result.treeVersion then table.insert(lines,2+#warnings,"Build tree: "..(treeVersions[result.treeVersion] and treeVersions[result.treeVersion].display or result.treeVersion).." (context only) | crafting data: "..tostring(result.dataPatch)) end
 		if result.priceSource then lines[#lines+1]="Quotes: "..result.priceSource.." | "..os.date("%Y-%m-%d",result.priceQuotedAt) end
 		if result.actionPriceOverridesSupplied then
 			lines[#lines+1]=result.actionPriceOverridesApplied>0 and "Includes selected-action price overrides." or "Selected-action override was not used by this recipe."
@@ -397,7 +399,7 @@ function Panel.Open(build,project,layout)
 		local budget=assert(tonumber(controls.budget.buf),"Invalid action budget")
 		local actionPrices=pricing.actionOverride(simulator.priceKey(action()),
 			controls.price.buf~="" and assert(tonumber(controls.price.buf),"Invalid action price") or nil)
-		local options={retainSuccesses=10,baseCost=controls.baseCost.buf ~= "" and assert(tonumber(controls.baseCost.buf),"Invalid starting item cost") or 0,trials=assert(tonumber(controls.trials.buf),"Invalid trial count"),maxActions=budget,seed=assert(tonumber(controls.seed.buf),"Invalid seed"),
+		local options={retainSuccesses=10,treeVersion=build.spec.treeVersion,baseCost=controls.baseCost.buf ~= "" and assert(tonumber(controls.baseCost.buf),"Invalid starting item cost") or 0,trials=assert(tonumber(controls.trials.buf),"Invalid trial count"),maxActions=budget,seed=assert(tonumber(controls.seed.buf),"Invalid seed"),
 			initialState=copyTable(fromInitial and (recipe.initialState or model.initial) or state),actionPrices=actionPrices,priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf}
 		startSimulation({raw=draft.startingItem,recipe=recipe,options=options,label=fromInitial and "Saved recipe | original starting item" or "Selected action: "..actionName()})
 	end
@@ -409,7 +411,7 @@ function Panel.Open(build,project,layout)
 	button(controls,"compareRecipes",16,354,200,"Compare recipes",function()
 		assert(#targets>0 or requirements and next(requirements),"Choose target modifiers or item conditions first")
 		require("Classes.CraftingCompareControl").Open(build,draft.startingItem,copyTable(state),copyTable(targets),requirements and copyTable(requirements),requiredGroups,action(),draft.nativeRecipe,
-			{trials=assert(tonumber(controls.trials.buf)),budget=assert(tonumber(controls.budget.buf)),seed=assert(tonumber(controls.seed.buf)),currency=controls.currency.buf,priceBook=draft.priceBook and copyTable(draft.priceBook)})
+			{trials=assert(tonumber(controls.trials.buf)),budget=assert(tonumber(controls.budget.buf)),seed=assert(tonumber(controls.seed.buf)),currency=controls.currency.buf,treeVersion=build.spec.treeVersion,priceBook=draft.priceBook and copyTable(draft.priceBook)})
 	end)
 	button(controls,"resourcePrices",232,266,200,"Resource prices",function()
 		local books={};for _,project in ipairs(build.savers.CraftingProjects.projects) do if project.id~=draft.id and project.priceBook and next(project.priceBook.values) then books[#books+1]=project end end
@@ -448,20 +450,21 @@ function Panel.Open(build,project,layout)
 	button(controls,"fossilResults",232,310,200,"Fossil results",showFossilComparison)
 	button(controls,"optimize",16,618,200,"Compare fossil subsets",function()
 		local selected=action();assert(selected.method == "fossil" and selected.fossils,"Configure a fossil combination first")
-		local options={priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf,fossils=copyTable(selected.fossils),initialState=copyTable(state),maxSockets=#selected.fossils,requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups,trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
+		local options={priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf,treeVersion=build.spec.treeVersion,fossils=copyTable(selected.fossils),initialState=copyTable(state),maxSockets=#selected.fossils,requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups,trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
 		local captured=copyTable(targets)
 		analysis:start("fossils",nil,function(checkpoint) options.checkpoint=checkpoint;return simulator.optimizeFossils(draft.startingItem,captured,options) end)
 	end)
 	local function showOddsResult(result)
 		local lines={string.format("Target chance under model: %.6f%%",result.successChance),result.exactFor or result.estimateFor}
 		for i,warning in ipairs(result.warnings or {}) do table.insert(lines,1+i,"Model note: "..warning.message) end
+		if result.treeVersion then lines[#lines+1]="Build tree: "..(treeVersions[result.treeVersion] and treeVersions[result.treeVersion].display or result.treeVersion).." (context only) | crafting data: "..tostring(result.dataPatch) end
 		if result.sampled then lines[#lines+1]=string.format("%d trials | 95%% interval %.2f%% to %.2f%%",result.trials,result.confidenceLow,result.confidenceHigh) end
 		for _,entry in ipairs(result.outcomes) do if entry.matches then lines[#lines+1]=string.format("%.6f%% | %s",entry.chance,entry.text or "Finite item outcome") end end
 		refresh(lines)
 	end
 	button(controls,"exact",232,574,200,"Calculate action odds",function()
 		local craft=action();local captured=copyTable(state);local capturedTargets=copyTable(targets)
-		local options={trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf)),requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups}
+		local options={trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf)),treeVersion=build.spec.treeVersion,requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups}
 		analysis:start("odds",nil,function(checkpoint)
 			options.checkpoint=checkpoint;return simulator.calculate(draft.startingItem,craft,capturedTargets,captured,options)
 		end)
