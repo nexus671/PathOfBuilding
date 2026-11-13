@@ -91,6 +91,7 @@ function Panel.Open(build,project,layout)
 	label(controls,"intro",16,64,"Select a currency, then click your item to craft.")
 	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=196,artSize=96,compact=true,slot=draft.slot,selectedAffix=function() return inspectedId end,changedAffixes=function() return changedAffixes end})
 	controls.targetSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,244,416,height-312},nil,{})
+	local targetReason,savedResultRows,warningActive
 	local function refresh(extra)
 		if action and controls.price then
 			local key=simulator.priceKey(action())
@@ -114,10 +115,25 @@ function Panel.Open(build,project,layout)
 			else lines[#lines+1]=key:gsub("(%l)(%u)","%1 %2")..": "..tostring(value) end
 		end
 		controls.targetSummary.list=rows(lines)
-		if extra and controls.resultSummary then controls.resultSummary.list=rows(extra) end
+		local workingWarning=targetReason and targetReason()
+		local savedWarning=targetReason and draft.nativeRecipe and targetReason(true)
+		if controls.resultSummary then
+			if extra then savedResultRows=rows(extra)
+			elseif not warningActive then savedResultRows=controls.resultSummary.list end
+			local notices={}
+			if workingWarning then notices[#notices+1]="Working item: "..workingWarning end
+			if savedWarning and not workingWarning then notices[#notices+1]="Saved recipe: "..savedWarning end
+			local wasWarning=warningActive;warningActive=#notices>0
+			if warningActive then
+				local combined=rows(notices,leftWidth-28);for _,row in ipairs(savedResultRows or {}) do combined[#combined+1]=row end
+				controls.resultSummary.list=combined
+				if not wasWarning then controls.resultSummary.controls.scrollBar.offset=0 end
+			else controls.resultSummary.list=savedResultRows or controls.resultSummary.list end
+		end
 		local craftingPage=not controls.page or controls.page:GetSelValue()=="Emulate item"
 		local message=craftingPage and inspectedId and "Modifier details. Your working item stays in view." or craftingPage and paletteOpen and "Find an action without leaving your working item." or extra and extra[1] or controls.page and pageHints[controls.page:GetSelValue()] or "Select a currency, then click your item to craft."
 		if controls.page and controls.page:GetSelValue()=="Simulate recipe" then message="Selected action: "..actionName() end
+		if workingWarning or savedWarning then message=controls.page and controls.page:GetSelValue()=="Simulate recipe" and "Implicit target unavailable; details below." or "Implicit target unavailable; see Simulate tab." end
 		controls.intro.label="^7"..ui.fit(message,leftWidth,14)
 		if controls.actionHint and controls.actionHint.list then controls.actionHint.list=ui.rows({workbench.hint(controls.method:GetSelValueByKey("val"),state,model)},leftWidth-30,14) end
 	end
@@ -556,7 +572,7 @@ function Panel.Open(build,project,layout)
 	end)
 	controls.resultSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,398,416,height-464},nil,rows({"Run an action or a recipe to inspect its results."}))
 	controls.undo.enabled=function() return #history>0 end
-	local function targetReason(saved)
+	targetReason=function(saved)
 		local recipe=saved and draft.nativeRecipe
 		local current=recipe and (recipe.initialState or model.initial) or state
 		return simulator.implicitTargetReason(simulator.context(model,current),current,recipe and recipe.targets or targets)
@@ -682,7 +698,7 @@ function Panel.Open(build,project,layout)
 	end
 	if layout then
 		layout.snapshot=function() return copyTable({kind="workbench",priceOverrides=priceOverrides,project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,craftWidth=leftWidth,favorites=favorites,paletteOpen=paletteOpen,palette=paletteView and paletteView.snapshot(),inspectedId=inspectedId,
-			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,lastSimulationRun=lastSimulationRun,lastFossilComparison=lastFossilComparison,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
+			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,lastSimulationRun=lastSimulationRun,lastFossilComparison=lastFossilComparison,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=savedResultRows or controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
 	end
 	button(controls,"keepWorking",232,height-48,200,"Keep working craft",function()
 		if overrideKey then priceOverrides[overrideKey]=controls.price.buf end

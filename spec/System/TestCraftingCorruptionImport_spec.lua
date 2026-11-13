@@ -59,6 +59,9 @@ describe("Imported corruption identities",function()
 		assert.is_truthy(sim.model(text).unresolvedCorruption)
 		local p={id="unknown-implicit",title="Unknown implicit",slot="Helmet",startingItem=text,goals={},steps={},preferredMethod="tainted_chromatic",nativeRecipe={steps={{method="tainted_chromatic"}},targets={target}}}
 		local c=require("Classes.CraftingSimulatorControl").Open(build,p)
+		local visible={};for _,row in ipairs(c.resultSummary.list) do visible[#visible+1]=StripEscapes(row[1]) end
+		assert.is_truthy(table.concat(visible," "):find("could not be identified uniquely",1,true))
+		assert.is_truthy(c.intro.label:find("Implicit target unavailable",1,true))
 		for _,key in ipairs({"simulate","runRecipe","exact","compareRecipes","optimize"}) do
 			assert.is_false(c[key]:IsEnabled(),key);assert.is_truthy(c[key]:GetProperty("tooltipText"):find("could not be identified uniquely",1,true),key)
 		end

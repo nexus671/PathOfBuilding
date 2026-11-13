@@ -688,6 +688,15 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		assert(#saved.run.state.corruptedImplicits==2);assert(saved.nativeRecipe.targets[1].anyOf[1]==target.anyOf[1])
 		build.viewMode="PLANNER";build.planningWorkspace:Show("crafting",{kind="workbench",project=saved});frame("crafting-implicit-import-reopened")
 	end
+	do
+		local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W W W\nImplicits: 1\n{exarch}31% increased Movement Speed"
+		local target={anyOf={"AreaOfEffectEldritchImplicit1"},scope="implicit"}
+		local p={id="unknown-implicit-warning",title="Unidentified implicit",slot="Helmet",startingItem=raw,goals={},steps={},preferredMethod="alchemy",nativeRecipe={steps={{method="alchemy"}},targets={target}}}
+		build.savers.CraftingProjects:Upsert(p);local w=build.planningWorkspace;w:Show("crafting",{kind="workbench",project=p});ui:frame();ui:click("tab_simulate");ui:key("TAB")
+		assert(not w.controls.simulate:IsEnabled() and w.controls.intro.label:find("details below",1,true))
+		local text={};for _,row in ipairs(w.controls.resultSummary.list) do text[#text+1]=StripEscapes(row[1]) end
+		assert(table.concat(text," "):find("could not be identified uniquely",1,true));frame("crafting-unknown-implicit-inline-warning")
+	end
 	ui:restore()
 end
 -- These checks exercise the audit itself: raw uncoloured list text inherits the

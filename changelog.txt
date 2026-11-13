@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Show unresolved implicit warnings directly in the crafting workbench, including for keyboard navigation, while retaining prior results.
 * Explain ambiguous imported implicits before starting a crafting calculation, preserve valid structured Eldritch overrides, and clarify the per-trial action limit in results.
 * Recovered unambiguous corrupted implicit identities from pasted items for crafting targets, saved-state recovery and MCP; ambiguous imports now explain why implicit odds cannot be checked.
 * Preserved Twice Corrupted items through importing, tainted crafting, hypothetical editing, saved projects and MCP.

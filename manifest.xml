@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview33" />
+	<Version number="2.67.2-ai.preview34" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="5dd533a94c3124acda2ead2537212d889166f577" />
+	<File name="changelog.txt" part="default" sha1="aefccc425fe3a0782194d80c62fb505b858a487c" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1154,7 +1154,7 @@
 	<File name="Classes/CraftingRecipeControl.lua" part="program" sha1="cfe3c1495350ef402536b2de5ac1e233443f940b" />
 	<File name="Classes/CraftingRecipeGraphControl.lua" part="program" sha1="48f536d650b220c56f9d2b7cbdc6c79bb0a7dbc2" />
 	<File name="Classes/CraftingRecoveryControl.lua" part="program" sha1="6bdf797c867f14c6a1b5338bfc6f6dcea18cd1f1" />
-	<File name="Classes/CraftingSimulatorControl.lua" part="program" sha1="431a44c68b0b6987e53279a5b1f4b04cf021105b" />
+	<File name="Classes/CraftingSimulatorControl.lua" part="program" sha1="b9d080b46283b39b866932330941c1837821a751" />
 	<File name="Classes/CraftingTargetControl.lua" part="program" sha1="0cadd4e3055ca4fc5e400ac9e2e367b0a24fddce" />
 	<File name="Classes/CraftingTargetGroupsControl.lua" part="program" sha1="62e25cea684f9892f87d01c13edc90d9dd294361" />
 	<File name="Classes/DraggerControl.lua" part="program" sha1="99b86b751df018a33714b000c9eed240a7101b8e" />
