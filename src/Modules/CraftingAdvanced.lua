@@ -213,7 +213,7 @@ function A.extend(M,api)
 		state.affixes[#state.affixes+1]={id=id,range=range}
 		return id
 	end
-	local function remove(model,state,random,options)
+	local function removable(model,state,options)
 		options=options or {}; local f=api.flags(model,state); local eligible={}
 		for i,entry in ipairs(state.affixes) do
 			local mod=model.byId[entry.id]
@@ -221,9 +221,38 @@ function A.extend(M,api)
 			if options.attackProtection and (f.attack and hasTag(model,entry.id,"attack") or f.caster and hasTag(model,entry.id,"caster")) then legal=false end
 			if legal then eligible[#eligible+1]=i end
 		end
+		return eligible
+	end
+	local function remove(model,state,random,options)
+		local eligible=removable(model,state,options)
 		assert(#eligible > 0,"No removable modifier for this craft")
 		local index=eligible[math.floor(random()*#eligible)+1]; local removed=state.affixes[index]
 		table.remove(state.affixes,index); return removed
+	end
+	-- Removal may itself remove a meta modifier, changing the next candidate set.
+	-- Backtrack over distinct removals, preserving partial-lock markers on entries.
+	local function canRemove(model,state,count)
+		if count==0 then return true end
+		for _,index in ipairs(removable(model,state,{attackProtection=true})) do
+			local entry=table.remove(state.affixes,index)
+			local ok=canRemove(model,state,count-1)
+			table.insert(state.affixes,index,entry)
+			if ok then return true end
+		end
+		return false
+	end
+	function M.benchRerollChoices(model,state)
+		local possible={};if state.rarity~="RARE" then return possible end
+		local function check(shadow)
+			for _,count in ipairs({1,3}) do if not possible[count] and canRemove(model,shadow,count) then possible[count]=true end end
+			return possible[1] and possible[3]
+		end
+		if M.hasPartialLock(model,state) then M.eachPartialSelection(model,state,check) else check(copyTable(state)) end
+		return possible
+	end
+	M.methodChecks.bench_reroll=function(model,state)
+		if state.rarity~="RARE" then return "Requires a rare item." end
+		if not M.benchRerollChoices(model,state)[1] then return "No modeled selection leaves a removable modifier." end
 	end
 	local function targetCount(model,state,random)
 		local value=random(); return math.min(cap(model,state).total,value < 8/12 and 4 or value < 11/12 and 5 or 6)
@@ -743,12 +772,19 @@ function A.extend(M,api)
 				end
 			end
 		end
-		result.benchServiceCosts={}
+		result.benchServiceCosts={};local rerollAllowed,rerollReason,rerollPossible
 		for _,action in ipairs({{method="remove_crafted"},{method="bench_reroll",count=1},{method="bench_reroll",count=3}}) do
 			local label=M.labels[action.method]..(action.count and " / "..action.count or "")
 			if #result.benchServiceCosts<(limit or 50) and (action.method.." "..label):lower():find((query or ""):lower(),1,true) then
 				local cost,sources=require("Modules.CraftingBenchCosts").service(M.context(model,state),action)
-				result.benchServiceCosts[#result.benchServiceCosts+1]={action=action,label=label,priceKey=M.priceKey(action),components=cost or {[M.priceKey(action)]=1},ingredientCostsKnown=cost~=nil,costSources=sources}
+				local allowed,reason
+				if action.method=="bench_reroll" then
+					if rerollAllowed==nil then rerollAllowed,rerollReason=available(action.method,state,model);if rerollAllowed then rerollPossible=M.benchRerollChoices(M.context(model,state),state) end end
+					allowed,reason=rerollAllowed,rerollReason
+					if allowed and not rerollPossible[action.count] then allowed=false;reason="No modeled removal sequence can reroll "..action.count.." modifiers." end
+				else allowed,reason=available(action.method,state,model) end
+				result.benchServiceCosts[#result.benchServiceCosts+1]={action=action,label=label,priceKey=M.priceKey(action),components=cost or {[M.priceKey(action)]=1},ingredientCostsKnown=cost~=nil,costSources=sources,available=allowed,unavailableReason=not allowed and reason or nil,
+					selectionNote=allowed and action.method=="bench_reroll" and "A modeled removal sequence exists; other selections or later rolls can fail." or nil}
 			end
 		end
 		result.harvestOptions={}
@@ -772,7 +808,7 @@ function A.extend(M,api)
 		elseif method == "influence_exalt" or method == "beast_influence" then for key in pairs(influences) do if method == "influence_exalt" or contains(state.influences,key) then option(key,{influence=key}) end end
 		elseif method == "unveil" then for _,id in ipairs(state.veil and state.veil.choices or {}) do option(table.concat(model.byId[id]," / "),{modId=id}) end
 		elseif method == "beast_aspect" then for id,mod in pairs(data.beastCraft) do if id:find("AspectCrafted",1,true) and not contains(mod.weightKey,"deepwater_pantheon_aspect") then option(table.concat(mod," / "),{modId=id}) end end
-		elseif method == "bench_reroll" then option("Reroll one random modifier",{count=1}); option("Reroll three random modifiers",{count=3})
+		elseif method == "bench_reroll" then local possible=M.benchRerollChoices(model,state);if possible[1] then option("Reroll one random modifier",{count=1}) end;if possible[3] then option("Reroll three random modifiers",{count=3}) end
 		elseif method == "eldritch_implicit" then for _,side in ipairs({"Exarch","Eater"}) do for tier=1,4 do option(side.." | "..({"Lesser","Greater","Grand","Exceptional"})[tier],{side=side,tier=tier}) end end
 		elseif method == "harvest_resistance" then result=M.resistanceOptions(model,state)
 		elseif method == "socket_bench" then for count=2,(model.item.base.socketLimit or 0) do option(count.." sockets (added sockets white)",{count=count}); option("Set "..count.." sockets and link them",{count=count,linked=true}) end

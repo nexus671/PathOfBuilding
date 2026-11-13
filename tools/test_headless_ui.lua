@@ -322,6 +322,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		require("Classes.CraftingSimulatorControl").Open(build,{id="partial-bench-ui",title="Partial lock bench reroll",slot="Weapon 1",startingItem=raw,goals={},steps={},nativeRecipe={initialState=state,steps={},targets={}}})
 		ui:click("settings");ui:text("paletteSearch",sim.labels.bench_reroll);assert(main.popups[1].controls.paletteUse:IsEnabled(),"Bench reroll was blocked by a partial lock")
 		ui:click("paletteUse");ui:choose("option","Reroll one random modifier","label")
+		assert(#main.popups[1].controls.option.list==1,"Impossible three-mod reroll was offered")
 		local hints={};for _,row in ipairs(main.popups[1].controls.actionHint.list) do hints[#hints+1]=row[1] end;assert(table.concat(hints," "):find("too few removable",1,true),"Conditional bench reroll was not explained")
 		frame("crafting-partial-bench-reroll");ui:click("apply")
 		assert(main.popups[1].controls.intro.label:find("Applied",1,true),"Partial-lock bench reroll did not apply");ui:click("close")
@@ -341,7 +342,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		require("Classes.CraftingSimulatorControl").Open(build,{id="partial-harvest-blocked-ui",title="Protected Harvest item",slot="Helmet",startingItem=raw,goals={},steps={},nativeRecipe={initialState=protected,steps={},targets={}}})
 		ui:click("settings");ui:text("paletteSearch",sim.labels.harvest_augment);assert(not main.popups[1].controls.paletteUse:IsEnabled(),"Fully protected Harvest augment was offered")
 		local hints={};for _,row in ipairs(main.popups[1].controls.paletteHint.list) do hints[#hints+1]=StripEscapes(row[1]) end;assert(table.concat(hints," "):gsub("%s+"," "):find("modifier that can be removed",1,true),"Protected-item reason was not explained")
-		frame("crafting-partial-harvest-unavailable");ui:click("close")
+		frame("crafting-partial-harvest-unavailable")
+		ui:text("paletteSearch",sim.labels.bench_reroll);assert(not main.popups[1].controls.paletteUse:IsEnabled(),"Fully protected bench reroll was offered")
+		hints={};for _,row in ipairs(main.popups[1].controls.paletteHint.list) do hints[#hints+1]=StripEscapes(row[1]) end;assert(table.concat(hints," "):gsub("%s+"," "):find("removable modifier",1,true),"Bench reroll unavailability was not explained")
+		frame("crafting-partial-bench-unavailable");ui:click("close")
 	end
 
 	do

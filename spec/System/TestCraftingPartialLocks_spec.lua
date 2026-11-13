@@ -3,6 +3,15 @@ describe("3.30 partial affix locks",function()
 	local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86"
 	local id="bench:partial-prefix-1"
 	before_each(function() newBuild() end)
+	it("rechecks attack protection after its blocker is removed",function()
+		local model=sim.model(raw)
+		model.byId.testAttackA={type="Prefix",group="testA",modTags={"attack"}}
+		model.byId.testAttackB={type="Prefix",group="testB",modTags={"attack"}}
+		model.byId.testBlocker={"Cannot roll Attack Modifiers",type="Suffix",group="testBlock"}
+		local state={rarity="RARE",affixes={{id="testAttackA"},{id="testAttackB"},{id="testBlocker"}}}
+		assert.is_true(sim.benchRerollChoices(model,state)[3])
+		state.affixes[3].fractured=true;assert.is_nil(sim.benchRerollChoices(model,state)[3])
+	end)
 	it("keeps the selected partial-lock prefix through one and three modifier bench rerolls",function()
 		local model=sim.model(raw);local selected={Prefix={},Suffix={}};local groups={}
 		for _,entry in ipairs(model.mods) do local side=entry.mod.type
@@ -14,6 +23,7 @@ describe("3.30 partial affix locks",function()
 		local affixes={};for _,side in ipairs({"Prefix","Suffix"}) do for _,modId in ipairs(selected[side]) do affixes[#affixes+1]={id=modId,range=0.1234} end end
 		local state=sim.validateState(model,{rarity="RARE",affixes=affixes})
 		local locked=sim.perform(raw,{method="bench",modId=id},1,state).state
+		local options=sim.actionOptions(model,locked,"bench_reroll");assert.are.equal(2,#options)
 		for _,count in ipairs({1,3}) do for seed=1,10 do
 			local result=sim.perform(raw,{method="bench_reroll",count=count},seed,locked)
 			local preserved=false
@@ -35,6 +45,10 @@ describe("3.30 partial affix locks",function()
 		local prefix;for _,entry in ipairs(model.mods) do if entry.mod.type=="Prefix" then prefix=entry.id;break end end
 		local magic=sim.validateState(model,{rarity="MAGIC",affixes={{id=prefix,range=0.5}}})
 		local locked=sim.perform(raw,{method="bench",modId=id},1,magic)
+		local rare=copyTable(locked.state);rare.rarity="RARE"
+		local options=sim.actionOptions(model,rare,"bench_reroll");assert.are.equal(1,#options);assert.are.equal(1,options[1].action.count)
+		local costs=sim.catalog(raw,"bench_reroll",10,rare).benchServiceCosts
+		assert.is_true(costs[1].available);assert.is_false(costs[2].available);assert.matches("reroll 3",costs[2].unavailableReason)
 		local altered=sim.perform(raw,{method="alteration"},2,locked.state)
 		local found=false;for _,entry in ipairs(altered.state.affixes) do if entry.id==prefix then found=true end end
 		assert.is_true(found)
@@ -106,7 +120,11 @@ describe("3.30 partial affix locks",function()
 		assert.are.equal(0,#choices);assert.matches("modifier that can be removed",reason)
 		local allowed=require("Modules.CraftingAvailability").check("harvest_augment",state,model);assert.is_false(allowed)
 		local ok,reason=pcall(sim.perform,raw,{method="bench_reroll",count=1},1,state)
-		assert.is_false(ok);assert.matches("No removable modifier",tostring(reason))
+		assert.is_false(ok);assert.matches("removable modifier",tostring(reason))
+		allowed,reason=require("Modules.CraftingAvailability").check("bench_reroll",state,model);assert.is_false(allowed);assert.matches("removable modifier",reason)
+		assert.are.equal(0,#sim.actionOptions(model,state,"bench_reroll"))
+		local costs=sim.catalog(raw,"bench_reroll",10,state).benchServiceCosts
+		assert.are.equal(2,#costs);for _,entry in ipairs(costs) do assert.is_false(entry.available);assert.is_truthy(entry.unavailableReason) end
 	end)
 	it("does not offer a reforge tag blocked in every partial-lock selection",function()
 		local hat="Rarity: NORMAL\nIron Hat\nItem Level: 86";local model=sim.model(hat)
