@@ -1,8 +1,9 @@
 -- cspell:ignore Siveran
 -- Current colour model follows Siveran's CC0 calculator (3.29).
 local S={}
+local colours={"R","G","B"}
 function S.extend(M,A,api)
-	local methods={omen_connections="Orb of Fusing + Omen of Connections",chromatic="Chromatic Orb",socket_colour_bench="Bench: non-white sockets",tainted_chromatic="Tainted Chromatic Orb",tainted_jeweller="Tainted Jeweller's Orb",tainted_fusing="Tainted Orb of Fusing"}
+	local methods={omen_trichromatism="Omen of Trichromatism (RGB)",omen_connections="Orb of Fusing + Omen of Connections",chromatic="Chromatic Orb",socket_colour_bench="Bench: non-white sockets",tainted_chromatic="Tainted Chromatic Orb",tainted_jeweller="Tainted Jeweller's Orb",tainted_fusing="Tainted Orb of Fusing"}
 	for method,label in pairs(methods) do M.methods[#M.methods+1]=method;M.labels[method]=label end;table.sort(M.methods)
 	local originalAction,originalOptions,originalPrice,originalComponents=M.action,M.actionOptions,M.priceKey,M.components
 	M.methodChecks.omen_connections=function(model,state)
@@ -14,6 +15,10 @@ function S.extend(M,A,api)
 			linked=linked and socket.group==sockets[1].group
 		end
 		if linked then return "The item is already fully linked." end
+	end
+	M.methodChecks.omen_trichromatism=function(model,state)
+		if #(state.sockets or {})<3 then return "Add at least three sockets for the RGB guarantee." end
+		for _,socket in ipairs(state.sockets) do if socket.color=="A" then return "Abyssal sockets need a separate socket model." end end
 	end
 	local function colourWeights(model,tainted)
 		if tainted then return {1/3,1/3,1/3} end
@@ -29,7 +34,7 @@ function S.extend(M,A,api)
 		return result
 	end
 	local function colour(weights,random)
-		local pick=random();for i,value in ipairs(weights) do pick=pick-value;if pick < 0 then return ({"R","G","B"})[i] end end;return "B"
+		local pick=random();for i,value in ipairs(weights) do pick=pick-value;if pick < 0 then return colours[i] end end;return "B"
 	end
 	function M.action(model,input,craft,random)
 		local method=craft.method
@@ -62,13 +67,17 @@ function S.extend(M,A,api)
 				sockets[biggest[#biggest]].group=free
 			end
 		else
-			local forced=method == "socket_colour_bench" and api.integer(craft.count,2,4,"minimum non-white sockets") or 1
+			local rgb=method == "omen_trichromatism"
+			local forced=rgb and 3 or method == "socket_colour_bench" and api.integer(craft.count,2,4,"minimum non-white sockets") or 1
 			assert(forced <= #sockets,"Not enough sockets for this colour craft")
 			local indices={};for i=1,#sockets do indices[i]=i end
 			for i=#indices,2,-1 do local j=math.floor(random()*i)+1;indices[i],indices[j]=indices[j],indices[i] end
 			local weights=colourWeights(model,tainted)
 			local chance=math.min(1,0.00375*math.max(model.item.itemLevel-14,1)*(1+math.min(state.quality or 0,30)/100))
-			for i,index in ipairs(indices) do sockets[index].color=(i <= forced or random() < chance) and colour(weights,random) or "W" end
+			for i,index in ipairs(indices) do
+				if rgb and i<=3 then sockets[index].color=colours[i]
+				else sockets[index].color=(i <= forced or random() < chance) and colour(weights,random) or "W" end
+			end
 		end
 		local previous,group=nil,-1
 		for _,socket in ipairs(sockets) do local old=socket.group;if old ~= previous then group=group+1;previous=old end;socket.group=group end
@@ -81,6 +90,7 @@ function S.extend(M,A,api)
 	function M.priceKey(action) if action.method == "socket_colour_bench" then return action.method..":"..tostring(action.count) end;return originalPrice(action) end
 	function M.components(action,state,model)
 		if action.method == "omen_connections" then return {["Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks"]=1,["Metadata/Items/Currency/CurrencyRerollSocketLinks"]=1} end
+		if action.method == "omen_trichromatism" then return {["Metadata/Items/Currency/AncestralOmenOnChromaticAddWhiteSockets"]=1,["Metadata/Items/Currency/CurrencyRerollSocketColours"]=1} end
 		if action.method == "socket_colour_bench" then
 			local amount=({[2]=5,[3]=20,[4]=75})[action.count]
 			local result={chromatic=amount};if state and state.corrupted then result["Metadata/Items/Currency/CurrencyCorrupt"]=amount end;return result
@@ -93,18 +103,19 @@ function S.extend(M,A,api)
 		local state=initialState and M.validateState(model,initialState) or model.initial
 		model=M.context(model,state);query=(query or ""):lower();result.socketCrafts={}
 		local available=require("Modules.CraftingAvailability").check
-		for _,method in ipairs({"socket_bench","omen_connections"}) do
+		for _,method in ipairs({"socket_bench","omen_connections","omen_trichromatism"}) do
 			local choices=method=="socket_bench" and M.actionOptions(model,state,method) or {{label=M.labels[method],action={method=method}}}
 			local allowed,reason=available(method,state,model)
 			for _,choice in ipairs(choices) do
 				if #result.socketCrafts<(limit or 50) and (method.." "..choice.label):lower():find(query,1,true) then
 					result.socketCrafts[#result.socketCrafts+1]={method=method,label=choice.label,action=copyTable(choice.action),priceKey=M.priceKey(choice.action),
-						available=allowed,unavailableReason=not allowed and reason or nil,deterministic=true,components=M.components(choice.action,state)}
+						available=allowed,unavailableReason=not allowed and reason or nil,deterministic=method~="omen_trichromatism",guaranteedColours=method=="omen_trichromatism" and "RGB" or nil,components=M.components(choice.action,state)}
 				end
 			end
 		end
 		return result
 	end
+	M.limits[#M.limits+1]="Omen of Trichromatism guarantees one red, green and blue socket using one Omen and one Chromatic Orb. Forced positions are sampled uniformly; remaining sockets use the existing colour model. Placement and extra-colour probabilities are model assumptions."
 
 	M.limits[#M.limits+1]="Socket colours use Siveran's empirical 3.29 model, with attribute bias for ordinary Chromatics and uniform RGB for tainted Chromatics. Tainted socket/link currencies assume 50/50 addition/removal; added sockets are white."
 end

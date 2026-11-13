@@ -23,6 +23,20 @@ Search **Find currencies** for **replace quality** to apply a Harvest quality en
 
 **Set sockets and link them** is a combined bench preparation: it sets the requested socket count if necessary, then links those sockets. When the count already matches, estimates charge only the linking cost. Corrupted items include the corresponding Vaal Orb surcharge. Resource estimates use the state before each action.
 
+Find **Omen of Trichromatism (RGB)** in **Find currencies** to use one Omen and one
+Chromatic Orb together. It guarantees at least one red, green and blue socket on
+an uncorrupted item with at least three ordinary sockets, preserving their links.
+Recipes can combine it with Omen of Connections for linked RGB goals. Placement
+and additional colours use the stated socket-model assumptions; a three-socket
+item gets exactly one of each colour. Three-socket calculations enumerate all
+six placements under the uniform-position assumption; larger items use labelled
+sampling. Undo restores the previous item; saved working crafts retain the action,
+and simulation results report both ingredient quantities.
+
+**Allflame settings** is unavailable for actions without a supported Allflame
+transition, including Omen combinations and bench services. Its tooltip explains
+the restriction before an unsupported profile can be entered.
+
 **Item history** previews earlier items and the changes between them; restoring one undoes all subsequent actions. **Before / after** in Settings compares the working item with its recipe starting state. Drag the divider to give more space to the controls or item. Working state, favorites and history survive tool switches and resizing during the session.
 
 In **Targets**, use **Find target modifiers** to browse tiers, item levels, weights, groups and tags. The table explains blocked modifiers and shows conditional draw chances. These describe one ordinary affix draw, rather than the selected currency or a complete recipe. The same explanations are available through AI inspection.

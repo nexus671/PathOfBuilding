@@ -319,6 +319,13 @@ test('keeps Atlas proposals in the desktop review flow and rejects unsupported v
 });
 
 
+test('queues Omen of Trichromatism actions through the typed crafting protocol', t => {
+  const f=fixture(t);const args={baseRevision:f.state.revision,itemText:'Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: W-W-W',action:{method:'omen_trichromatism'}};
+  f.call('apply_crafting_action',args);
+  const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.deepEqual(request.action,args.action);
+});
+
 test('queues advanced crafting states and rejects untyped execution data', t => {
   const f=fixture(t);
   const args={baseRevision:f.state.revision,itemText:craftingProject().startingItem,action:{method:'fossil',fossils:['Metadata/Items/Currency/CurrencyDelveCraftingLife']},initialState:{rarity:'RARE',affixes:[],influences:[],quality:20,sockets:[{color:'W',group:0}],catalyst:8,catalystQuality:20,baseImplicitRanges:[[0,1]]}};

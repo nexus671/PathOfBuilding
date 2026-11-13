@@ -6,6 +6,22 @@ function C.extend(M)
 	function M.calculate(raw,craft,targets,initialState,options)
 		options=options or {}
 		local method=M.baseCurrency(craft)
+		if method=="omen_trichromatism" and not craft.allflame then
+			local model=M.model(raw);local state=initialState and M.validateState(model,initialState) or model.initial
+			if #(state.sockets or {})==3 then
+				M.validateRecipe({steps={craft},targets=targets,requirements=options.requirements,requiredGroups=options.requiredGroups})
+				local outcomes,hits={},0
+				for first=1,3 do for second=1,2 do
+					local draws={(first-0.5)/3,(second-0.5)/2};local at=0
+					local result=M.action(model,state,craft,function() at=at+1;return assert(draws[at],"Unexpected socket-placement draw") end)
+					local hit=M.matches(result,targets,nil,model,options.requirements,options.requiredGroups)
+					if hit then hits=hits+1 end
+					outcomes[#outcomes+1]={chance=100/6,weight=1,matches=hit,text="RGB placement "..(#outcomes+1),state=result}
+				end end
+				return {exactFor="Six socket placements under the stated uniform-position model",sampled=false,successChance=100*hits/6,totalWeight=6,matchingWeight=hits,
+					outcomes=outcomes,sampleState=outcomes[1].state,sampleItem=M.toItem(model,outcomes[1].state).raw,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
+			end
+		end
 		if (method=="socket_bench" or method=="omen_connections") and not craft.allflame then
 			M.validateRecipe({steps={craft},targets=targets,requirements=options.requirements,requiredGroups=options.requiredGroups})
 			local model=M.model(raw);local result=M.perform(raw,craft,options.seed,initialState)

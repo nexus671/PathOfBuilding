@@ -47,6 +47,14 @@
       "height": 78,
       "sha256": "5572880f224331e33fb103dc770e53696109f3c6a71bf73f8d3a9e7b072e530d"
     },
+    "Metadata/Items/Currency/AncestralOmenOnChromaticAddWhiteSockets": {
+      "name": "Omen of Trichromatism",
+      "path": "Assets/Crafting/Currency/4f1249b503844df0c88b.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Azmeri/VoodooOmens4Purple.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "64465e7d738c8d6c674ad1b99e2aabd71a3cf7cae1ba0c25c81c6b46171dd672"
+    },
     "Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks": {
       "name": "Omen of Connections",
       "path": "Assets/Crafting/Currency/93c6d800e09f89a9a227.png",
@@ -1816,6 +1824,7 @@
     "harvest_resistance": "Metadata/Items/Currency/HarvestSeedBlue",
     "jeweller": "Metadata/Items/Currency/CurrencyRerollSocketNumbers",
     "omen_connections": "Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks",
+    "omen_trichromatism": "Metadata/Items/Currency/AncestralOmenOnChromaticAddWhiteSockets",
     "quality": "Metadata/Items/Currency/CurrencyArmourQuality",
     "regal": "Metadata/Items/Currency/CurrencyUpgradeMagicToRare",
     "remembrance": "Metadata/Items/Currency/CurrencyAddZanaInfluence",

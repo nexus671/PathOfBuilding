@@ -71,6 +71,15 @@ async function main(){
   const linksService=linksInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='omen_connections');
   assert.ok(linksService.available && linksService.deterministic);assert.deepEqual(linksService.components,{'Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks':1,'Metadata/Items/Currency/CurrencyRerollSocketLinks':1});
   const linkAction=linksService.action;
+  const rgbInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'RGB',limit:5},'inspected');
+  const rgbService=rgbInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='omen_trichromatism');
+  assert.ok(rgbService.available && !rgbService.deterministic);assert.equal(rgbService.guaranteedColours,'RGB');
+  const rgbAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:rgbService.action},'crafted');
+  for(const colour of ['R','G','B'])assert.ok(rgbAction.nativeCrafting.state.sockets.some(socket=>socket.color===colour));
+  const rgbPlan=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[rgbService.action,linkAction],targets:[],requirements:{socketColours:'RGB',linkedColours:true,links:6}},options:{trials:4,maxActions:2,currency:'chaos',prices:{'Metadata/Items/Currency/AncestralOmenOnChromaticAddWhiteSockets':2,'Metadata/Items/Currency/CurrencyRerollSocketColours':0.5,'Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks':2,'Metadata/Items/Currency/CurrencyRerollSocketLinks':0.25}}},'crafted');
+  assert.equal(rgbPlan.nativeCrafting.successes,4);assert.equal(rgbPlan.nativeCrafting.meanCost,4.75);assert.equal(rgbPlan.nativeCrafting.resourceUsage.length,4);
+  assert.ok(rgbPlan.nativeCrafting.resourceUsage.every(entry=>entry.amount===4));
+  assert.equal((await call('get_build_context')).context.revision,context.revision,'Omen crafting changed the live character');
   const bodyPriceBook={currency:'chaos',source:'Workflow resource quotes',quotedAt:1700000000,values:{wild_lifeforce:0.1,'Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks':2,'Metadata/Items/Currency/CurrencyRerollSocketLinks':0.25}};
   const bodyRecipe={steps:[enchantService.action,linkAction],targets:[],requirements:{links:6,harvestEnchant:'LifeBodyEnchant',nativeStats:{Armour:enchantInspection.crafting.nativeEngine.nativeStats.Armour}}};
   const bodySimulation=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:bodyRecipe,options:{trials:4,maxActions:2,priceBook:bodyPriceBook}},'crafted');
@@ -107,6 +116,8 @@ async function main(){
   assert.equal(fossilAction.nativeCrafting.combinations[0].priceKey,'fossil:'+fossilId);assert.equal(fossilAction.nativeCrafting.combinations[0].meanCost,9);assert.equal(fossilAction.nativeCrafting.combinations[0].actionPriceOverridesApplied,2);
   const exactLinks=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:linkAction,targets:[],options:{requirements:{links:6}}},'crafted');
   assert.equal(exactLinks.nativeCrafting.successChance,100);assert.equal(exactLinks.nativeCrafting.sampled,false);assert.equal(exactLinks.nativeCrafting.outcomes.length,1);
+  const exactRGB=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw.replace('Sockets: W W W W W W','Sockets: W-W W'),action:rgbService.action,targets:[],options:{requirements:{socketColours:'RG',linkedColours:true}}},'crafted');
+  assert.equal(exactRGB.nativeCrafting.sampled,false);assert.equal(exactRGB.nativeCrafting.outcomes.length,6);assert.ok(Math.abs(exactRGB.nativeCrafting.successChance-100/3)<1e-8);assert.match(exactRGB.nativeCrafting.exactFor,/uniform-position/);
   const steelRaw='Rarity: NORMAL\nSteel Ring\nItem Level: 86';
   const blessedRing=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:steelRaw,action:{method:'blessed'},seed:1},'crafted');
   assert.ok(Array.isArray(blessedRing.nativeCrafting.state.baseImplicitRanges[0]));

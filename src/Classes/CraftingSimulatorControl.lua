@@ -573,10 +573,18 @@ function Panel.Open(build,project,layout)
 	controls.price.tooltipText=function() return "Optional total price of "..actionName()..". It applies when that action executes, including inside saved recipes." end
 	controls.runRecipe.enabled=function() return not tasks.job and draft.nativeRecipe~=nil end
 	controls.runRecipe.tooltipText=function() return tasks.job and "Finish or cancel the running calculation first." or "Run the project's saved steps from the original starting item, with the saved recipe's targets." end
-	controls.exact.enabled=function() return not tasks.job end
+	controls.exact.enabled=function() return not tasks.job and (#targets>0 or requirements~=nil and next(requirements)~=nil) and workbench.available(controls.method:GetSelValueByKey("val"),state,model) end
+	controls.exact.tooltipText=function()
+		if tasks.job then return "Finish or cancel the running calculation first." end
+		if #targets==0 and not (requirements and next(requirements)) then return "Choose a target modifier or item condition before calculating." end
+		local available,reason=workbench.available(controls.method:GetSelValueByKey("val"),state,model)
+		return available and "Calculate this action from the working item, with captured target conditions." or reason
+	end
 	controls.compareRecipes.enabled=function() return not tasks.job and (#targets>0 or requirements and next(requirements)~=nil) end
 	controls.keepRecipe.enabled=function() return #actions>0 and not state.destroyed and not state.veil end
 	controls.manual.enabled=function() return not state.destroyed and not state.veil end
+	controls.allflame.enabled=function() return simulator.supportsAllflame(controls.method:GetSelValueByKey("val")) end
+	controls.allflame.tooltipText=function() return controls.allflame:IsEnabled() and "Configure client data or an observed Allflame profile for this currency." or "Allflame is not modeled for this action. Choose a supported itemised currency." end
 	controls.fossilResults.tooltipText="Reopen the captured comparison. Rerun after changing the item, targets or quotes."
 	controls.fossilResults.enabled=function() return lastFossilComparison~=nil and require("Modules.CraftingTasks").job==nil end
 	controls.optimize.tooltipText="Set targets or item properties, then select Fossil resonator. Settings / Configure chooses multiple candidates. Comparisons use ordinary fossil crafts."

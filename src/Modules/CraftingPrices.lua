@@ -13,7 +13,7 @@ local function catalogue()
 	return art
 end
 local catalysts={"Abrasive","Accelerating","Dextral","Fertile","Imbued","Intrinsic","Noxious","Prismatic","Sinistral","Tempering","Turbulent","Unstable"}
-local complex={fossil=true,essence=true,catalyst=true,quality=true,tainted_quality=true,eldritch_implicit=true,harvest_reforge=true,harvest_augment=true,harvest_resistance=true,omen_connections=true}
+local complex={fossil=true,essence=true,catalyst=true,quality=true,tainted_quality=true,eldritch_implicit=true,harvest_reforge=true,harvest_augment=true,harvest_resistance=true,omen_connections=true,omen_trichromatism=true}
 function M.aliases(model)
 	local kind=model and model.item.type or ""
 	if aliasCache[kind] then return aliasCache[kind] end

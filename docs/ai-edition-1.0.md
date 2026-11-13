@@ -57,11 +57,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `d1c10329e43b9e85427c87b6c4422a28caac8bb2`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43419172693),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43419172586)).
-It passed 1,200 Lua tests, 46 Node tests, the real MCP save/reopen workflow and
-840 source-stable UI states without audit failures. All 2,424 updater file hashes
+The latest verified checkpoint is `56efa8a8fec282231ed2a2944ecaa9e5ca12d1ed`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43422641668),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43422641726)).
+It passed 1,209 Lua tests, 46 Node tests, the real MCP save/reopen workflow and
+852 source-stable UI states without audit failures. All 2,424 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working

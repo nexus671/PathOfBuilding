@@ -13,7 +13,11 @@ end
 function F.extend(M,A,api)
 	local model,validate,action,calculate,components,priceKey=M.model,M.validateState,M.action,M.calculate,M.components,M.priceKey
 	local function settings(craft) return craft.allflame or craft.method == "ducat_kishara" and {auto=true,upgradeTier=2} end
+	function M.supportsAllflame(method)
+		return names[method]~=nil or method=="fossil" or method=="essence" or method=="influence_exalt"
+	end
 	function M.allflameProfile(model,state,craft)
+		assert(M.supportsAllflame(craft.method),"Allflame is not modeled for this action")
 		local profile=assert(settings(craft),"Enable Allflame first")
 		if not profile.auto then return copyTable(profile) end
 		model=M.context(model,state)
@@ -51,7 +55,7 @@ function F.extend(M,A,api)
 	function M.action(model,input,craft,random)
 		local profile=settings(craft)
 		if not profile then return action(model,input,craft,random) end
-		assert(names[craft.method] or craft.method == "fossil" or craft.method == "essence" or craft.method == "influence_exalt","This action is not an itemised currency supported by the Allflame model")
+		assert(M.supportsAllflame(craft.method),"This action is not an itemised currency supported by the Allflame model")
 		profile=M.allflameProfile(model,input,craft)
 		assert(not input.corrupted and not input.mirrored and not input.destroyed and not input.veil,"Allflame requires a modifiable item with no pending unveil")
 		local count=api.integer(profile.outcomes,1,4,"observed maximum ghost outcomes")

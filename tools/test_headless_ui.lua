@@ -239,6 +239,21 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	end
 
 	do
+		local rgbRaw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: W-W-W"
+		local p={id="omen-rgb-ui",title="Guaranteed RGB colours",slot="Body Armour",startingItem=rgbRaw,goals={},steps={},nativeRecipe={steps={{method="omen_trichromatism"}},targets={},requirements={socketColours="RGB",linkedColours=true}},priceBook={currency="chaos",source="Omen quotes",quotedAt=1700000000,values={["Metadata/Items/Currency/AncestralOmenOnChromaticAddWhiteSockets"]=2,["Metadata/Items/Currency/CurrencyRerollSocketColours"]=0.25}}}
+		require("Classes.CraftingSimulatorControl").Open(build,p);ui:click("settings");ui:text("paletteSearch","Trichromatism");assert(main.popups[1].controls.paletteUse:IsEnabled());frame("crafting-omen-rgb-selection")
+		ui:click("paletteUse");ui:click("item");frame("crafting-omen-rgb-applied");ui:click("undo");frame("crafting-omen-rgb-undone")
+		ui:click("tab_settings");ui:click("exact");local exactJobs=require("Modules.CraftingTasks");for i=1,1000 do if not exactJobs.job then break end;exactJobs.tick(build) end
+		assert(not exactJobs.job);local exactLines={};for _,row in ipairs(main.popups[1].controls.resultSummary.list) do exactLines[#exactLines+1]=row[1] end;assert(table.concat(exactLines," "):find("Six socket placements",1,true));ui:click("tab_simulate");frame("crafting-omen-rgb-enumeration")
+		ui:click("tab_simulate");ui:text("trials","2");ui:text("budget","1");ui:click("runRecipe")
+		local jobs=require("Modules.CraftingTasks");for i=1,1000 do if not jobs.job then break end;jobs.tick(build) end
+		assert(not jobs.job);local lines={};for _,row in ipairs(main.popups[1].controls.resultSummary.list) do lines[#lines+1]=row[1] end;assert(table.concat(lines," "):find("Mean spent: 2.25 chaos",1,true));frame("crafting-omen-rgb-simulation")
+		ui:click("distribution");ui:click("resources");assert(#main.popups[1].controls.results.list>=2);frame("crafting-omen-rgb-ingredients");ui:click("close");ui:click("close");ui:click("close")
+		require("Classes.CraftingSimulatorControl").Open(build,{id="omen-rgb-short",title="Add a third socket first",slot="Body Armour",startingItem=rgbRaw:gsub("W%-W%-W","W-W"),goals={},steps={},preferredMethod="omen_trichromatism"})
+		assert(not main.popups[1].controls.apply:IsEnabled());frame("crafting-omen-rgb-unavailable");ui:click("tab_settings");assert(not main.popups[1].controls.allflame:IsEnabled());frame("crafting-omen-rgb-unsupported-profile");ui:click("close")
+	end
+
+	do
 		local socketRaw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: R-G B W-W R"
 		require("Classes.CraftingSimulatorControl").Open(build,{id="omen-links-ui",title="Guaranteed socket links",slot="Body Armour",startingItem=socketRaw,goals={},steps={},nativeRecipe={steps={{method="omen_connections"}},targets={},requirements={links=6}}})
 		ui:click("settings");ui:text("paletteSearch","Omen of Connections");assert(main.popups[1].controls.paletteUse:IsEnabled())
