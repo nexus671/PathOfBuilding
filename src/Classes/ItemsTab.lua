@@ -1389,7 +1389,20 @@ function ItemsTabClass:Load(xml, dbFileName)
 	self:ResetUndo()
 end
 
-function ItemsTabClass:Save(xml)
+local function snapshotItem(item)
+	local raw = item:BuildRaw()
+	-- BuildRaw rounds encoded ranges; use an isolated native parse when that
+	-- changes metadata, rather than normalizing the active item's mod lines.
+	for _, list in ipairs({item.buffModLines, item.enchantModLines, item.scourgeModLines, item.implicitModLines, item.explicitModLines, item.crucibleModLines}) do
+		for _, line in ipairs(list) do
+			local range = line.line:match("%(%-?[%d%.]+%-%-?[%d%.]+%)") and line.range and round(line.range, 6) or main.defaultItemAffixQuality
+			if range ~= line.range then return new("Item"):Item(raw), raw end
+		end
+	end
+	return item, raw
+end
+
+function ItemsTabClass:Save(xml, options)
 	xml.attrib = {
 		activeItemSet = tostring(self.activeItemSetId),
 		useSecondWeaponSet = tostring(self.activeItemSet.useSecondWeaponSet),
@@ -1409,8 +1422,15 @@ function ItemsTabClass:Save(xml)
 				variantAlt5 = item.variantAlt5 and tostring(item.variantAlt5)
 			}
 		}
-		item:BuildAndParseRaw()
-		t_insert(child, item.raw)
+		local raw
+		if options and options.snapshot then
+			-- Capture current fields without reparsing or mutating the active item.
+			item, raw = snapshotItem(item)
+		else
+			item:BuildAndParseRaw()
+			raw = item.raw
+		end
+		t_insert(child, raw)
 		local id = #item.buffModLines + 1
 		for _, modLine in ipairs(item.enchantModLines) do
 			if modLine.range then

@@ -2353,7 +2353,7 @@ function buildMode:LoadDBFile()
 	return self:LoadDB(xmlText, self.dbFileName)
 end
 
-function buildMode:SaveDB(fileName)
+function buildMode:SaveDB(fileName, options)
 	local dbXML = { elem = "PathOfBuilding" }
 
 	-- Save Build section first
@@ -2366,16 +2366,18 @@ function buildMode:SaveDB(fileName)
 	-- Call on all savers to save their data in their respective sections
 	for elem, saver in pairsSortByKey(self.savers) do
 		local node = { elem = elem }
-		saver:Save(node)
+		saver:Save(node, options)
 		t_insert(dbXML, node)
 	end
+
+	if options and options.treeOnly then return nil, dbXML end
 
 	-- Compose the XML
 	local xmlText, errMsg = common.xml.ComposeXML(dbXML)
 	if not xmlText then
 		launch:ShowErrMsg("Error saving '%s': %s", fileName, errMsg)
 	else
-		return xmlText
+		return xmlText, options and options.snapshot and dbXML or nil
 	end
 end
 

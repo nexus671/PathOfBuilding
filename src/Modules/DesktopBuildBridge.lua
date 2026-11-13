@@ -5,21 +5,39 @@ local insights = require("Modules.BuildInsights")
 local M = { enabled=false, history={}, undo={}, plan={goal="balanced"} }
 local metrics = { "LifeUnreserved", "EnergyShield", "ManaUnreserved", "CombinedDPS", "FullDPS", "TotalEHP", "PhysicalMaximumHitTaken", "ChaosMaximumHitTaken", "RecoverySimulationSurvivalChance", "RecoverySimulationDamageDPS", "RecoverySimulationAttackUptime", "ManaRegen", "Speed", "EffectiveMovementSpeedMod", "FireResist", "ColdResist", "LightningResist", "ChaosResist", "Str", "Dex", "Int" }
 
-local function serialize(build)
+local function capture(build,treeOnly)
 	-- The native Notes saver temporarily hides color codes. Preserve the editor.
 	local notes = build.notesTab
 	local edit = notes.controls.edit
 	local buf, colors, caret, selection = edit.buf,notes.showColorCodes,edit.caret,edit.sel
-	local ok, result = pcall(build.SaveDB,build,"AI build context")
+	local ok, result, tree = pcall(build.SaveDB,build,"AI build context",{snapshot=true,treeOnly=treeOnly})
 	edit.buf, notes.showColorCodes, edit.caret, edit.sel = buf,colors,caret,selection
 	notes.controls.toggleColorCodes.label = colors and "Hide Color Codes" or "Show Color Codes"
-	assert(ok and result,ok and "Could not serialize build" or result)
-	return result
+	assert(ok and (treeOnly and (tree or result) or result),ok and "Could not serialize build" or result)
+	return result, tree
 end
 
-local function revisionXML(build,raw)
-	local xml = assert(common.xml.ParseXML(raw))
-	local root = xml[1]
+local function serialize(build) local raw=capture(build);return raw end
+
+-- Match ComposeXML/ParseXML text normalization without reparsing the snapshot.
+local function canonicalTree(node,level)
+	local result={elem=node.elem,attrib=node.attrib and copyTable(node.attrib)}
+	local pending={}
+	local function flush()
+		if #pending>0 then
+			local text=table.concat(pending,"\n"..string.rep("\t",level+1)):match("^%s*(.-)%s*$")
+			if text:find("%S") then result[#result+1]=text end
+			pending={}
+		end
+	end
+	for _,child in ipairs(node) do
+		if type(child)=="table" then flush();result[#result+1]=canonicalTree(child,level+1) else pending[#pending+1]=child end
+	end
+	flush();return result
+end
+
+local function revisionXML(build,raw,tree)
+	local root = tree and canonicalTree(tree,0) or assert(common.xml.ParseXML(raw))[1]
 	for index=#root,1,-1 do
 		local node = root[index]
 		if type(node) == "table" then
@@ -32,9 +50,9 @@ local function revisionXML(build,raw)
 	end
 	return sha1((build.buildName or "")..assert(common.xml.ComposeXML(root)))
 end
-function M.revision(build) return revisionXML(build,serialize(build)) end
+function M.revision(build) local raw,tree=capture(build,true);return revisionXML(build,raw,tree) end
 function M.freeze(build)
-	local raw=serialize(build);return {build=build,xml=raw,revision=revisionXML(build,raw)}
+	local raw,tree=capture(build);return {build=build,xml=raw,revision=revisionXML(build,raw,tree)}
 end
 
 local function stats(build)

@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Reduced AI snapshot pauses by avoiding active-item reparses and repeated XML parsing while preserving native save data and revision guards.
 * Preserved independent rolls across multi-line affixes in native items, imports, comparisons and crafting previews.
 * Added Omen-assisted linking, exact socket calculations and discoverable socket-service costs through MCP.
 * Accepted and validated independently rolled Blessed Orb values across the native engine and MCP.

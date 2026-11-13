@@ -55,11 +55,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `fb26bbe3f85022128980126dd845b5acf11191c6`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43373682281),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43373682094)).
-It passed 1,144 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
-696 source-stable UI states without audit failures. All 2,411 updater file hashes
+The latest verified checkpoint is `c5360517937c9ece451f614a338f98eeb9473a5b`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43377191381),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43377191348)).
+It passed 1,151 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
+711 source-stable UI states without audit failures. All 2,412 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
@@ -90,14 +90,14 @@ sweep applied all 3,400 actions without errors. Local validation passed 1,144 Lu
 tests, the real MCP workflow and 696 source-stable UI states without audit
 failures. Exact-commit CI passed, and its artifact source hashes were verified.
 
-The current review adds Omen of Connections with currency artwork, availability
+Preview 19 adds Omen of Connections with currency artwork, availability
 checks, undo and two-resource costs. Socket-service metadata lets MCP discover
 the action and costs; the native guide can combine a Harvest enchantment and
 guaranteed linking. Socket bench and Omen calculations return a single exact
 model outcome instead of a sampling interval. The MCP schema also accepts
 multi-value Blessed Orb rolls, with matching native validation. Local validation passed 1,151 Lua tests, 43 Node tests, the full MCP save/reopen
 workflow and 711 source-stable UI states without audit failures. Exact-commit
-CI remains required for this change.
+CI passed, and its artifact source hashes were verified.
 
 A follow-up modifier audit found that all 44 tested multi-line affixes reused
 the first roll on later lines. Native item crafting, plain import inference,
@@ -105,7 +105,7 @@ bench modifiers and workbench comparisons now share the same range renderer.
 The corrected audit has no mismatches; scalar and legacy singleton rolls retain
 uniform behavior. The regression matrix also verifies native item round trips.
 
-The latest read-only saved-build benchmark returned equivalent synchronous and
+Before this review, a read-only saved-build benchmark returned equivalent synchronous and
 background results in 3.93 and 4.87 seconds, with a 250 ms snapshot and a 38 ms
 worst worker slice. Earlier runs measured about 3.9 seconds each, with 18-37 ms
 worst slices after adding checkpoints, versus 142-163 ms before them. These
@@ -113,7 +113,28 @@ bounded, variable measurements do not establish sustained desktop
 responsiveness or exclude a performance regression. Snapshot creation and
 occasional initialization pauses still need attention.
 
-Complete the current availability regression checks, then repeat cross-tool performance and
+The current review replaces full active-item reparsing during AI snapshots with
+read-only capture. Unusual range normalization uses an isolated native parse;
+regular native file saves keep their existing path. Revision hashing uses the
+captured tree while retaining legacy XML normalization and hashes. It also
+avoids composing a full snapshot when only the revision is needed.
+
+The 264-item saved-build check preserves every XML byte, the legacy hash and
+active item objects. A separate catalogue comparison passed all 1,333 unique
+items without XML mismatches. Focused tests cover range rounding, variants,
+whitespace/entities, source edits and notes restoration on failure. The command
+`luajit ../tools/check_snapshot_equivalence.lua path/to/build.xml`, run from
+`src`, repeats the saved-build proof without writing the supplied file.
+A paired run captured the same 476,247 XML bytes and legacy revision in 119 ms,
+versus 282 ms for the legacy path; a revision-only check took 91 ms. The idle
+planning benchmark measured a 101 ms snapshot, 3.79 seconds synchronous,
+3.53 seconds background and an 18 ms worst worker slice, with equivalent
+calculations. These bounded timings do not prove sustained desktop responsiveness.
+
+Local validation passed 1,155 Lua tests, the full MCP workflow and 711
+source-stable UI states without audit failures. Exact-commit CI remains required.
+
+Add a native per-resource price editor and repeat cross-tool performance and
 recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies
 incomplete mechanics and model assumptions; this is not a full-parity release.
