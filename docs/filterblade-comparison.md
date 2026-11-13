@@ -29,7 +29,7 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Hidden-drop display | Simulator toggle | Dedicated hidden-drop statistics |
 | Click a simulated item | Explains results and opens matched blocks for editing | More unknown-property guidance |
 | Item configuration | Editable properties and native game-clipboard import | Hidden identities are never inferred |
-| Item history | Dedicated session sample-history browser | Persisted named sample sets |
+| Item history | Session history plus persistent named sets of exact sample properties | More encounter sample presets |
 | Generator level settings | Shared area/item-level controls | Encounter-specific samples |
 | Expensive-drop generation | Currency scene and exact custom samples | A separate expensive-item mode based on verified tiers |
 | Preview background | Stone, dark and light scenes | Additional environments |
@@ -37,7 +37,7 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Font size | Live size slider | Additional typography presets |
 | Alert sound selection | All 16 numbered IDs plus silence; custom references preserved | Exact game audio preview and custom sound pack management |
 | Minimap icons | All twelve shapes, colour/size selection and native geometry previews | Exact game-texture rendering |
-| Themes | Generated-target palettes, personal restyling and whole-filter decorators | Saved custom palettes and colour wheel |
+| Themes | Generated-target palettes, personal restyling, whole-filter decorators and named appearance snapshots | Colour wheel |
 | Global one-click edits | Reversible declared font/colour, alert identity/volume, icon visibility and beam controls | More selective category transformations |
 | Shared modules | Portable named snapshots, cross-profile copy and explicit updates | Public discovery and module dependency graphs |
 | Review changes | Before/after rule and item-list review, priority-conflict diagnostics, undo/redo | Full source-file diff for imported bases |
@@ -54,6 +54,6 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Validation | Native parser checks and account-server validation when authorised | Broader syntax coverage and live game validation |
 | Mobile layout | Desktop layouts tested at 960, 1024 and 1280 widths | Native PoB is not a mobile web app |
 
-The remaining offline depth includes selective bulk transformations, named sample sets, saved palettes and a full source-file diff view. Hosted economy updates remain separate service work. The release checklist tracks implementation and repeated workflow verification.
+The remaining offline depth includes selective bulk transformations, a colour wheel and a full source-file diff view. Hosted economy updates remain separate service work. The release checklist tracks implementation and repeated workflow verification.
 
 Reference screenshots were captured outside the repository during the review. Third-party advertising scripts logged browser errors; the main anonymous customizer and simulator remained usable. No login, publication, purchase or subscription was performed.

@@ -359,6 +359,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("viewSimulate");ui.clipboard="Item Class: Stackable Currency\nRarity: Currency\nChaos Orb\n--------\nStack Size: 7/20";ui:click("pasteDrop");frame("filter-copied-item")
 	ui:click("sceneSettings");ui:text("areaLevel","72");ui:text("itemLevel","75");ui:choose("background","Dark");frame("filter-scene-settings");ui:click("keepScene")
 	ui:click("sampleHistory");frame("filter-sample-history");ui:click("choose");ui:click("inspectMatch");frame("filter-matched-rules");ui:click("close")
+	local savedArea=build.planningWorkspace.cache.filters.layout.snapshot().sample.AreaLevel
+	ui:click("savedSamples");frame("filter-saved-examples-empty");ui:text("name","Mapping examples");ui:click("saveNew");frame("filter-saved-examples");ui:click("use");frame("filter-saved-scene")
+	local savedDraft=build.planningWorkspace.cache.filters.layout.snapshot();assert(savedDraft.sceneKind=="Saved examples" and savedDraft.data.profiles[1].sampleSets[1].samples[1].AreaLevel==savedArea,"Saved examples changed their original properties")
+	assert(not build.planningWorkspace.controls.regenerate:IsEnabled(),"Saved sets should not offer a no-op regeneration action")
+	ui:click("viewStyle");ui:click("savedPalettes");ui:text("name","Gold highlights");ui:click("saveNew");frame("filter-saved-palette");ui:click("use");ui:click("keep")
+	assert(#build.savers.LootFilters.data.profiles[1].palettes==1 and #build.savers.LootFilters.data.profiles[1].sampleSets==1,"Filter libraries were not kept")
+	ui:click("viewSimulate");ui:choose("sceneKind","Mixed drops")
 	filterTool("Linked build targets");frame("filter-linked-targets");ui:click("choose");assert(build.planningWorkspace.page~="filters","Linked filter target did not open its source plan");frame("filter-linked-plan");ui:click("nav_filters");frame("filter-returned-draft");assert(build.planningWorkspace.cache.filters.layout.snapshot().page=="Simulate","Following a linked plan lost the filter draft")
 	ui:click("nav_atlas");ui:text("search","");ui:choose("mechanic","Essence");ui:click("targets");ui:click("targetAdd");ui:choose("targetMechanic","Harvest");ui:click("targetMechanicAdd");frame("atlas-desired-targets")
 	ui:click("targetCalculate");for i=1,500 do ui:frame();if not require("Modules.AtlasTargets").jobs[build].thread then break end end

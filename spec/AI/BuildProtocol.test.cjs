@@ -71,6 +71,15 @@ test('accepts typed campaign pickup policies and rejects invented families', t =
     assert.throws(()=>f.call('export_loot_filter',{baseRevision:f.state.revision,profile:{...profile,campaign}}),/arguments/);
   }
 });
+
+test('queues exact saved filter examples and named appearance snapshots', t => {
+  const f=fixture(t);const profile={id:'test',title:'Test',preset:'early_maps',strictness:2,rules:[],sampleSets:[{id:'early',title:'Early drops',samples:[{BaseType:'Iron Hat',AreaLevel:12,HasInfluence:['Shaper']}]}],palettes:[{id:'muted',title:'Muted',theme:'contrast',appearance:{alertVolume:0,textColor:[255,220,100,255]}}]};
+  f.call('propose_loot_filters',{title:'Reusable examples',baseRevision:f.state.revision,filters:{schemaVersion:1,activeId:'test',profiles:[profile]}});
+  const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.proposal.operations[0].filters.profiles[0],profile);
+  for(const sampleSets of [[{id:'empty',title:'Empty',samples:[]}],[{id:'invalid',title:'Invalid',samples:[{BaseType:{nested:'not a property'}}]}]]) {
+    assert.throws(()=>f.call('export_loot_filter',{baseRevision:f.state.revision,profile:{...profile,sampleSets}}),/arguments/);
+  }
+});
 test('reads journey resources and queues a reviewed replacement without applying', t => {
   const f=fixture(t);
   const journey={schemaVersion:1,milestones:[{id:'links',title:'Get links',kind:'gems',dependencies:[]}],wishlist:[],resources:[],ledger:[],stages:[]};

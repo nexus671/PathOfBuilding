@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Added saved filter example sets and named appearance palettes that travel with the build.
 * Prevented recalculated full-DPS summaries from falsely invalidating AI proposals.
 * Added campaign base-family pickup policies, progressive upgrade windows and a compiled filter structure browser.
 * Fixed duplicate filter overrides across views, equipment/gem sample classes and repeated catalogue/dependency work.

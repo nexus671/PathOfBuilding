@@ -39,6 +39,8 @@ function M.validate(data)
 			entry.appearance=require("Modules.LootFilterAppearanceSettings").validate(p.appearance)
 		end
 		if p.campaign~=nil then entry.campaign=require("Modules.LootFilterCampaign").validate(p.campaign) end
+		if p.sampleSets~=nil then entry.sampleSets=require("Modules.LootFilterCollections").sampleSets(p.sampleSets) end
+		if p.palettes~=nil then entry.palettes=require("Modules.LootFilterCollections").palettes(p.palettes) end
 		entry.baseCommit=p.baseCommit and text(p.baseCommit,40,"template revision") or M.source().commit
 		if p.template then entry.template=text(p.template,M.limit,"imported filter");assert(#parser.parse(p.template).rules>0,"Imported filter has no rules") end
 		local seen={}

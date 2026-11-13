@@ -13,6 +13,7 @@ function M.Open(build,source,layout,controller)
 	local page=state.page or "Overview";local category=state.category or "All items";local scope=state.scope or (profile and #profile.rules>0 and "My rules" or "Base filter");local query=state.query or "";local selected=state.rule
 	local item=state.sample or library.sample();local dirty=state.dirty or false;local sceneKind=state.sceneKind or "Mixed drops";local seed=state.seed or 0;local showHidden=state.showHidden~=false
 	local settings=state.sceneSettings or {areaLevel=83,itemLevel=86,background="Stone"};local samples=state.sampleHistory or {}
+	local sampleSetId=state.sampleSetId
 	local function rememberSample(next)
 		item=copyTable(next);local encode=require("Modules.PlanningData").encode;local raw=encode(item);local size=0
 		for i=#samples,1,-1 do if encode(samples[i])==raw then table.remove(samples,i) end end;samples[#samples+1]=copyTable(item)
@@ -25,10 +26,16 @@ function M.Open(build,source,layout,controller)
 		if profile then dependencies=require("Modules.LootFilterDependencies").report(build,profile) end;dependencyTime=GetTime()
 	end
 	local function draft(field) dirty=true;history:record(data,field);ui.draft(build,"filters") end
-	local function snapshot() return {data=data,selected=profile and profile.id,page=page,category=category,scope=scope,query=query,rule=selected,sample=item,dirty=dirty,seed=seed,sceneKind=sceneKind,showHidden=showHidden,history=history:snapshot(),tierState=tierView and tierView.snapshot() or tierState,sceneSettings=settings,sampleHistory=samples} end
+	local function snapshot() return {data=data,selected=profile and profile.id,page=page,category=category,scope=scope,query=query,rule=selected,sample=item,dirty=dirty,seed=seed,sceneKind=sceneKind,showHidden=showHidden,history=history:snapshot(),tierState=tierView and tierView.snapshot() or tierState,sceneSettings=settings,sampleHistory=samples,sampleSetId=sampleSetId} end
 	local function reopen() layout.navigate("filters",snapshot()) end
 	local function replaceProfile(next)
 		for i,value in ipairs(data.profiles) do if value.id==next.id then data.profiles[i]=next end end;profile=next;draft();reopen()
+	end
+	local function collection(kind)
+		local sources={{title="Current item",samples={item}},{title="Tested item history",samples=samples},{title="Generated examples",samples=library.scene(profile,build,"Mixed drops",seed,settings.areaLevel,settings.itemLevel)}}
+		require("Classes.LootFilterCollectionControl").Open(profile,kind,sources,function(next,chosen)
+			if chosen then page="Simulate";sceneKind="Saved examples";sampleSetId=chosen.id;item=copyTable(chosen.samples[1]) end;replaceProfile(next)
+		end)
 	end
 	local function compile()
 		parsed=nil
@@ -100,6 +107,8 @@ function M.Open(build,source,layout,controller)
 			{id="links",label="Linked build targets",details={"Review changed craft, gear, resource, skill and Atlas pickups; open their source plans."}},
 			{id="campaign",label="Campaign and base-family pickups",details={"Choose weapon and armour families, upgrade windows and recipe pickups without changing preset files."}},
 			{id="structure",label="Filter structure and priority",details={"Browse compiled sections, nested item families, Continue blocks, diagnostics and exact source text."}},
+			{id="sampleSets",label="Saved example sets",details={"Keep exact test items with the build and reuse them after filter edits."}},
+			{id="palettes",label="Saved palettes",details={"Name and reuse whole-filter appearance snapshots."}},
 			{id="delete",label="Delete this profile",details={"This changes the working draft. Keep and Save to persist."}},
 		}
 		require("Classes.PlanningBrowserControl").Open("Filter profile tools",choices,{action="Open",choose=function(entry)
@@ -115,6 +124,7 @@ function M.Open(build,source,layout,controller)
 					secondary={label="Refresh build pickups",run=function() main:ClosePopup();profile.rules=filters.generate(build,profile);draft();reopen() end}})
 			elseif entry.id=="campaign" and profile then require("Classes.LootFilterCampaignControl").Open(build,profile.campaign,function(value) profile.campaign=value;draft();reopen() end)
 			elseif entry.id=="structure" and profile then require("Classes.LootFilterStructureControl").Open(profile,function(rule) controller.EditRule(rule,keepRule) end)
+			elseif (entry.id=="sampleSets" or entry.id=="palettes") and profile then collection(entry.id)
 			elseif entry.id=="delete" and profile then for i,p in ipairs(data.profiles) do if p.id==profile.id then table.remove(data.profiles,i);break end end;profile=data.profiles[1];data.activeId=profile and profile.id or "";draft();reopen() end
 		end,closeOnChoose=false})
 	end)
@@ -207,18 +217,28 @@ function M.Open(build,source,layout,controller)
 	elseif page=="Simulate" then
 		local left=208;local groundX=240;local groundW=w-256
 		ui.label(c,"sceneTitle",16,124,"Loot simulator",20)
-		c.sceneKind=new("DropDownControl"):DropDownControl(ui.anchor,{16,162,left,26},{"Mixed drops","Build targets","Currency"},function(_,value) sceneKind=value;reopen() end);c.sceneKind:SelByValue(sceneKind)
-		button(c,"regenerate",16,202,left,"Generate sample loot",function() seed=seed+1;reopen() end)
+		local kinds={"Mixed drops","Build targets","Currency"};local savedSets=profile.sampleSets or {};if #savedSets>0 then kinds[#kinds+1]="Saved examples" elseif sceneKind=="Saved examples" then sceneKind="Mixed drops" end
+		c.sceneKind=new("DropDownControl"):DropDownControl(ui.anchor,{16,162,left,26},kinds,function(_,value) sceneKind=value;reopen() end);c.sceneKind:SelByValue(sceneKind)
+		button(c,"regenerate",16,202,100,"Regenerate",function() seed=seed+1;reopen() end)
+		c.regenerate.enabled=sceneKind~="Saved examples";c.regenerate.tooltipText="Regenerate generated scenes. Saved examples keep their exact properties; edit them through Saved sets."
+		button(c,"savedSamples",124,202,100,"Saved sets",function() collection("sampleSets") end)
+		local savedSet
+		if sceneKind=="Saved examples" then
+			local choices={};for _,entry in ipairs(savedSets) do choices[#choices+1]={label=entry.title,val=entry.id};if entry.id==sampleSetId then savedSet=entry end end;savedSet=savedSet or savedSets[1];sampleSetId=savedSet.id
+			c.sceneSet=new("DropDownControl"):DropDownControl(ui.anchor,{groundX+16,130,groundW-32,26},choices,function(_,entry) sampleSetId=entry.val;reopen() end);c.sceneSet:SelByValue(sampleSetId,"val")
+		end
 		button(c,"hidden",16,242,left,showHidden and "Hidden drops: visible" or "Hidden drops: off",function() showHidden=not showHidden;reopen() end)
 		button(c,"sampleEdit",16,282,100,"Configure",function() controller.EditSample(item,function(next) rememberSample(next);compile();reopen() end) end)
 		button(c,"pasteDrop",124,282,100,"Paste item",function() rememberSample(require("Modules.LootFilterClipboard").parse(Paste(),settings.areaLevel));compile();reopen() end)
 		button(c,"sceneSettings",16,322,100,"Scene",function() require("Classes.LootFilterSceneControl").Open(settings,function(next) settings=next;reopen() end) end)
+		if savedSet then c.sceneSettings.tooltipText="Background settings apply here. Saved examples retain their recorded item and area levels." end
 		button(c,"sampleHistory",124,322,100,"History",function() local entries={};for i=#samples,1,-1 do local sample=samples[i];entries[#entries+1]={id=i,label=sample.BaseType or "Unknown item",details={"Item level: "..tostring(sample.ItemLevel or "unknown"),"Area level: "..tostring(sample.AreaLevel or "unknown"),"Missing properties remain unknown."},sample=sample} end
 			require("Classes.PlanningBrowserControl").Open("Tested item history",entries,{action="Test again",choose=function(entry) rememberSample(entry.sample);compile();reopen() end})
 		end)
 		button(c,"sound",16,362,left,"Preview selected sound",function() local _,message=require("Modules.LootFilterAudio").play(result and result.styles or {});c.selection.list=ui.rows({item.BaseType,message},left-28,14) end)
 		c.selection=new("TextListControl"):TextListControl(ui.anchor,{16,410,left,h-474},nil,ui.rows({item.BaseType,result and result.action or "Choose a drop",result and result.ruleTitle or "Select a drop to inspect the rule."},left-28,14))
-		scene=library.scene(profile,build,sceneKind,seed,settings.areaLevel,settings.itemLevel);table.insert(scene,1,item);sceneControl("preview",groundX,120,groundW,h-182,scene,true)
+		if savedSet then scene=copyTable(savedSet.samples) else scene=library.scene(profile,build,sceneKind,seed,settings.areaLevel,settings.itemLevel);table.insert(scene,1,item) end
+		sceneControl("preview",groundX,savedSet and 168 or 120,groundW,h-(savedSet and 230 or 182),scene,true)
 		button(c,"inspectMatch",w-216,h-96,184,"Inspect matched rules",inspectMatches);c.inspectMatch.enabled=function() return parsed~=nil end
 	else
 		ui.label(c,"styleHeading",16,128,"A palette for your pickups",22)
@@ -230,6 +250,7 @@ function M.Open(build,source,layout,controller)
 		end
 		button(c,"applyStyle",16,438,260,"Restyle personal pickups",function() local template=parser.parse(filters.rule("style","Style",{},nil,profile.theme).text).rules[1].styles;for i,rule in ipairs(profile.rules) do profile.rules[i]=library.appearance(rule,template);profile.rules[i].origin=rule.origin end;draft();reopen() end)
 		button(c,"globalStyle",292,438,260,"Whole-filter appearance",function() require("Classes.LootFilterGlobalControl").Open(profile,function(next) profile.appearance=next.appearance;draft();reopen() end) end)
+		button(c,"savedPalettes",568,438,math.min(260,w-584),"Saved palettes",function() collection("palettes") end)
 	end
 	if profile then
 		button(c,"undo",w-332,h-38,68,"Undo",function() local id=profile.id;data=history:step(true);profile=filters.find(data,id) or data.profiles[1];dirty=true;reopen() end);c.undo.enabled=#history.undo>0

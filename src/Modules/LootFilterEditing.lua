@@ -114,7 +114,7 @@ function M.review(before,after)
 			if previous.template~=p.template then lines[#lines+1]="Base filter changed: "..(previous.template and "imported ("..#previous.template.." bytes)" or "pinned preset").." -> "..(p.template and "imported ("..#p.template.." bytes)" or "pinned preset") end
 			if previous.baseCommit~=p.baseCommit then lines[#lines+1]="Base revision: "..tostring(previous.baseCommit).." -> "..tostring(p.baseCommit) end
 			for _,key in ipairs({"rules","tiers","modules"}) do local a,b={},{};for _,v in ipairs(previous[key] or {}) do a[#a+1]=v.id end;for _,v in ipairs(p[key] or {}) do b[#b+1]=v.id end;if #a==#b and table.concat(a,"/")~=table.concat(b,"/") then lines[#lines+1]="Priority order changed: "..key end end
-			for _,key in ipairs({"rules","tiers","modules"}) do
+			for _,key in ipairs({"rules","tiers","modules","sampleSets","palettes"}) do
 				local map={};for _,v in ipairs(previous[key] or {}) do map[v.id]=v end
 				for _,v in ipairs(p[key] or {}) do local prior=map[v.id];map[v.id]=nil
 					if not prior or encode(prior)~=encode(v) then
@@ -122,6 +122,7 @@ function M.review(before,after)
 						if prior and prior.text then lines[#lines+1]="Before:\n"..prior.text end;if v.text then lines[#lines+1]="After:\n"..v.text end
 						if key=="tiers" then lines[#lines+1]="Items before: "..table.concat(prior and prior.items or {},", ");lines[#lines+1]="Items after: "..table.concat(v.items,", ") end
 						if key=="modules" then lines[#lines+1]="Module before: "..(prior and encode(prior) or "not installed");lines[#lines+1]="Module after: "..encode(v) end
+						if key=="sampleSets" or key=="palettes" then lines[#lines+1]="Before: "..(prior and encode(prior) or "not saved");lines[#lines+1]="After: "..encode(v) end
 					end
 				end
 				for _,v in pairsSortByKey(map) do lines[#lines+1]="Removed "..key..": "..v.title end

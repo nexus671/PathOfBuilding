@@ -12,6 +12,7 @@ The installed application and personal builds are outside this release workspace
 - [x] Configure campaign weapon/defence families and browse compiled source sections.
 - [x] Reach every shared catalogue result through paging.
 - [x] Test clipboard items, configure scene levels and revisit sample history.
+- [x] Save named exact example sets and reusable appearance palettes in the build.
 - [x] Expand shared colour/sound styling and preview every supported icon shape.
 
 ## Crafting
@@ -47,11 +48,15 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The current batch passed 1,082 Lua tests, 39 Node tests, the real MCP
-save/reopen workflow and 573 source-stable UI frames without audit failures.
+The published preview passed exact-commit CI with 1,082 Lua tests, 39 Node tests,
+the real MCP save/reopen workflow and 573 source-stable UI frames without audit failures.
 Mod-cache regeneration matches the committed data. Serial and parallel rendering
-produced identical pixels and audits for representative frames. Exact-commit CI
-and updater verification are required before publishing the checkpoint.
+produced identical pixels and audits for representative frames. The updater manifest and every CI artifact source hash were verified against
+commit `477aa7dad998896b0b981c2e77f751890fbb680c`.
+
+The next batch adds build-owned example sets and palettes. It passed 1,086 Lua
+tests, 40 Node tests, the MCP workflow and 585 source-stable UI frames without
+audit failures. Exact-commit CI is required before this checkpoint is accepted.
 
 A read-only saved-build benchmark confirmed reversible tree edits and exposed a
 false revision change caused by reordered derived full-DPS rows; the regression
@@ -60,6 +65,6 @@ edits while recovery completed separately. Proposal preparation still takes
 several seconds on that build. These checks do not mark the release complete.
 
 Next: close source-verified socket/corruption/league gaps, add selective category
-styles, named sample sets and saved palettes, and repeat cross-tool performance,
+styles and source-file diff review, and repeat cross-tool performance,
 recovery and layout checks. The coverage guide continues to identify incomplete
 mechanics explicitly.
