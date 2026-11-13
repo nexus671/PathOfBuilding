@@ -2,11 +2,13 @@
 
 The twenty review items are implemented across the planning workspace. Normal build Save persists kept plans and checkpoints; working item drafts remain separate until kept.
 
+The planning header keeps **Save**, **Save As**, the build name and save status visible. Choose **< Build** to edit character level, class, ascendancy or loadout. Those controls return when you leave the planning workspace.
+
 | # | Change | Where to use it |
 |---|---|---|
 | 1 | Small-screen project dialog with a fixed footer and visible title | Crafting > New project |
 | 2 | Separate working draft, kept and saved states | Workspace header; Keep working craft; normal Save |
-| 3 | Consistent tool navigation with remembered page, focus and scroll state | Workspace navigation and Alt+1 through Alt+4 |
+| 3 | Consistent tool navigation with remembered page, focus and scroll state | Workspace navigation and Alt+1 through Alt+5 |
 | 4 | Highlighted selections and keyboard list navigation | Journey, Atlas results, prerequisites, recipe cards; arrows to browse and Space to toggle checklists |
 | 5 | Normal/large planning text preference | Aa in the workspace bar; retained in application settings |
 | 6 | Collapsible item modifiers and a draggable item/details divider | Journey > Gear > Expand details; drag the horizontal handle |

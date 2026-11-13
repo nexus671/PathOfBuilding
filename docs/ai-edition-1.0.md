@@ -40,7 +40,7 @@ The installed application and personal builds are outside this release workspace
 
 ## Shared experience
 
-- [ ] Consistent typography, buttons, spacing, navigation and empty states.
+- [x] Consistent planning typography, buttons, spacing, navigation and empty states.
 - [ ] Explain unavailable actions and conflicting choices before execution.
 - [x] Keep invalid forms editable and explain validation errors without source paths.
 - [x] Show stale dependencies after gear, craft or Atlas targets change.
@@ -55,65 +55,28 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,132 Lua tests, 43 Node tests,
-the real MCP save/reopen workflow and 672 source-stable UI frames without audit
-failures. The updater manifest and every CI artifact source hash were verified
-against commit `a184cccb47c2228062d8877e44dbdf34ea0e9f9c`.
-That preview includes the native colour wheel, brightness/opacity controls,
-exact RGBA input and Ruthless validation. Native input tests also exposed and
-fixed campaign fields rejecting numeric entry. It also includes 14
-client-derived Harvest quality enchantments, goals, native import/export and
-resource costs. It also fixes repeated socket-count preparation costs when
-linking an item that already has the requested count, and removes duplicate
-recovery trials during AI candidate loading. Atlas map-supply wording and the
-visible Rules button are included. The real MCP workflow now discovers and
-applies a Harvest enchantment, prices its recipe, reviews two gear guides and
-preserves them through save/reopen and portable bundle import.
+The latest verified checkpoint is `e62df5e0f4c1bbff363b6d6471a7cdd6f8c19012`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43363224937),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43363225079)).
+It passed 1,133 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
+675 source-stable UI states without audit failures. All 2,411 updater file hashes
+and every CI artifact source hash were verified against that commit.
 
-That preview also shows native weapon properties and Ward in item comparisons,
-keeps invalid forms editable and explains input errors without Lua source paths.
-It also disables the non-white socket bench when no count option exists
-and adds consistent ellipses to long build/save-status labels. Native input checks
-confirm Enter cannot select the unavailable action and a valid two-socket craft
-still applies.
+The current review clears overlapping character controls from the planning
+header, gives the build name and save status more room, and includes native file
+actions in overlap audits. Character controls return on the Build page. Focused
+tests and native input at three widths pass. Full local validation passed 1,134
+Lua tests, the real MCP workflow and 675 source-stable UI states without audit
+failures. Exact-commit CI remains required.
 
-That preview also adds native weapon/defence minimums to item goals, recipe stop
-conditions, the target editor and MCP inspection. A real MCP workflow verifies
-changed native Armour values after a Harvest enchantment and preserves that goal
-through save/reopen and bundle import.
+A read-only saved-build benchmark returned identical synchronous/background
+results in 3.9 seconds each, with a 251 ms snapshot and an 18 ms worst worker
+slice. A separate instrumented run measured 37 ms worst, versus 142-163 ms before
+the added checkpoints. These bounded measurements do not establish sustained
+desktop responsiveness. Snapshot creation and occasional initialization pauses
+still need attention.
 
-That preview makes XML parsing and candidate initialization cooperative,
-yields between calculation stages and skills, and checks recovery cancellation
-more frequently. It also explains Aspect crafts without a free suffix and Sacred
-Orbs without variable base defences before execution.
-
-The next review separates shared item properties from modifier-group editing.
-The compact form preserves groups, group-count requirements and native stat
-goals. Full local validation passed 1,133 Lua tests and 675 source-stable UI
-states without audit failures. Native input at three sizes verifies both forms.
-Exact-commit CI remains required.
-The comparison engine passed 2,000
-deterministic reconstruction cases. Caching bundled migrations preserved all
-seven exported filters and their reports while reducing repeated work.
-
-A read-only saved-build benchmark confirmed reversible tree edits and exposed a
-false revision change caused by reordered derived full-DPS rows; the regression
-is fixed. Foreground allocation plus recalculation measured 63-179 ms across five
-edits while recovery completed separately. Proposal preparation still takes
-several seconds on that build. An isolated comparison of the new candidate-load
-path measured 7.1 seconds before and 5.7 seconds after, with all 708 numeric
-outputs identical. An earlier comparison measured 6.7 versus 4.7 seconds. These
-bounded checks do not establish sustained UI performance or mark the release complete.
-The final native benchmark returned identical synchronous/background results:
-3.8 seconds synchronously, 4.6 seconds in the worker, and 236 ms to snapshot.
-Its slowest worker slice was 137 ms. The next review makes parsing, control
-creation and calculation stages cooperative. The final native benchmark returned
-identical synchronous/background results in 3.9 seconds each, with a 251 ms
-snapshot and an 18 ms worst worker slice. A separate instrumented run measured
-37 ms worst, versus 142-163 ms before the added checkpoints. Snapshot creation
-and occasional initialization pauses remain measurable; this is a bounded saved-build
-check, not sustained interactive gameplay evidence.
-
-Next: close source-verified socket/corruption/league gaps and repeat cross-tool performance,
-recovery and layout checks. The coverage guide continues to identify incomplete
-mechanics explicitly.
+Complete the header regression checks, then repeat cross-tool performance and
+recovery checks. Close source-verified socket, corruption and league gaps without
+inventing missing weights. The [coverage guide](crafting-coverage.md) identifies
+incomplete mechanics and model assumptions; this is not a full-parity release.

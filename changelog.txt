@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Cleared the planning header at narrow widths and included file actions in overlap audits.
 * Separated the compact item-property form from modifier-group controls without changing saved targets.
 * Reduced long AI preparation pauses with cooperative parsing, control creation and calculation stages.
 * Explained unavailable Aspect and Sacred Orb crafts before execution.

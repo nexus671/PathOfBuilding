@@ -1400,7 +1400,7 @@ function buildMode:OnFrame(inputEvents)
 	DrawImage(nil, 0, 0, main.screenW, 28)
 	SetDrawColor(0.85, 0.85, 0.85)
 	DrawImage(nil, 0, 28, main.screenW, 4)
-	DrawImage(nil, main.screenW/2 - 2, 0, 4, 28)
+	if self.viewMode~="PLANNER" then DrawImage(nil, main.screenW/2 - 2, 0, 4, 28) end
 
 	if self.viewMode=="PLANNER" then
 		for _,control in pairs(self.controls) do

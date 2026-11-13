@@ -23,7 +23,20 @@ function M.new(build)
 	self.nav.controls.nav_tools=require("Modules.PlanningUI").styleButton(new("ButtonControl"):ButtonControl({"TOPLEFT",anchor,"TOPLEFT"},{726,10,80,28},"Tools",function() require("Classes.PlanningToolsControl").Open(build) end))
 	self.nav.controls.nav_tools.label=function() return require("Modules.PlanningRecovery").hasPending(build) and "Tools *" or "Tools" end
 	self.nav.controls.nav_tools.tooltipText="Planning tools and local draft recovery. * means an earlier session has a draft to review."
-	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{822,10,function() return math.max(0,self.viewport.width-838) end,28})
+	-- Planning keeps file actions in the native header; character editing stays
+	-- on the Build page so it cannot crowd file actions at smaller widths.
+	for _,key in ipairs({"pointDisplay","levelScalingButton","characterLevel","classDrop","ascendDrop","secondaryAscendDrop","buildLoadouts","buildName"}) do
+		local control=build.controls[key];local shown=control.shown
+		control.shown=function(c)
+			if build.viewMode=="PLANNER" then return false end
+			if type(shown)=="function" then return shown(c) end
+			return shown
+		end
+	end
+	for _,key in ipairs({"back","save","saveAs"}) do build.controls[key].layoutAudit="planning-header" end
+	local context=new("Control"):Control(nil,{224,0,function() return math.max(0,main.screenW-240) end,28})
+	context.shown=function() return build.viewMode=="PLANNER" end
+	context.layoutAudit="planning-header"
 	function context:Draw()
 		local x,y=self:GetPos();local w=self:GetSize();local title=build.buildName or "Untitled build"
 		if w<DrawStringWidth(13,"VAR","...") then return end
@@ -31,7 +44,7 @@ function M.new(build)
 		title=ui.fit(title,w,13);status=ui.fit(status,w,12)
 		SetDrawColor("^x9BA9BA");DrawString(x+w,y,"RIGHT_X",13,"VAR",title);DrawString(x+w,y+15,"RIGHT_X",12,"VAR",status)
 	end
-	self.nav.controls.nav_context=context
+	build.controls.planningContext=context
 	return self
 end
 function M:Remember(page)
