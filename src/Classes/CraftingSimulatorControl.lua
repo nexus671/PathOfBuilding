@@ -135,7 +135,15 @@ function Panel.Open(build,project,layout)
 		if controls.page and controls.page:GetSelValue()=="Simulate recipe" then message="Selected action: "..actionName() end
 		if workingWarning or savedWarning then message=controls.page and controls.page:GetSelValue()=="Simulate recipe" and "Implicit target unavailable; details below." or "Implicit target unavailable; see Simulate tab." end
 		controls.intro.label="^7"..ui.fit(message,leftWidth,14)
-		if controls.actionHint and controls.actionHint.list then controls.actionHint.list=ui.rows({workbench.hint(controls.method:GetSelValueByKey("val"),state,model)},leftWidth-30,14) end
+		if controls.actionHint and controls.actionHint.list then
+			local hint=workbench.hint(controls.method:GetSelValueByKey("val"),state,model)
+			local selected=controls.option and controls.option:GetSelValue()
+			local id=selected and selected.action and selected.action.modId
+			if id and id:match("^bench:partial%-") or simulator.hasPartialLock(simulator.context(model,state),state) and workbench.available(controls.method:GetSelValueByKey("val"),state,model) then
+				hint="Experimental partial lock: random protection is modeled with assumed equal weights."
+			end
+			controls.actionHint.list=ui.rows({hint},leftWidth-30,14)
+		end
 	end
 	label(controls,"methodLabel",16,64,"Crafting action")
 	local methods={ }

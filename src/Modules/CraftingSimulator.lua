@@ -15,9 +15,15 @@ function M.withTreeContext(result,version)
 end
 function M.actionWarnings(action)
 	local result={}
+	if action.method=="bench" and type(action.modId)=="string" and action.modId:match("^bench:partial%-") then result[#result+1]={code="partial_lock_model",message="Partial locks use assumed uniform selection; some interactions remain unsupported."} end
 	if action.method=="recombine" then result[#result+1]={code="recombination_count_odds",message="Recombination uses older count odds; 3.30 odds are not verified."} end
 	if action.allflame or action.method=="ducat_kishara" then result[#result+1]={code="allflame_historical",message="Allflame is historical and did not return to core in 3.30."} end
 	return result
+end
+local function partialWarning(warnings)
+	for _,warning in ipairs(warnings) do if warning.code=="partial_lock_model" then return warnings end end
+	warnings[#warnings+1]={code="partial_lock_model",message="Partial locks use assumed uniform selection; some interactions remain unsupported."}
+	return warnings
 end
 function M.recipeWarnings(recipe)
 	local result,seen={},{}
@@ -54,6 +60,7 @@ local function flags(model,state)
 	local result={ }
 	for _,entry in ipairs(state.affixes) do
 		local mod=model.byId[entry.id]
+		if mod.partialLock then result[mod.partialLock.side]=mod.partialLock.count end
 		for _,line in ipairs(mod) do
 			if line == "Prefixes Cannot Be Changed" then result.prefixes=true end
 			if line == "Suffixes Cannot Be Changed" then result.suffixes=true end
@@ -141,6 +148,19 @@ function M.model(raw)
 			model.byId[id]=mod; model.bench[#model.bench+1]={id=id,mod=mod}
 		end
 	end
+	-- The 3.30 lock texts and prices are published by GGG; the affix sides
+	-- follow the 3.30 client modifier records. Keep these separate from pinned
+	-- 3.29 master-mod rows so saved IDs do not shift on a data update.
+	for _,side in ipairs({"Prefix","Suffix"}) do
+		local templateText=side=="Prefix" and "Prefixes Cannot Be Changed" or "Suffixes Cannot Be Changed"
+		local template
+		for _,entry in ipairs(model.bench) do if entry.mod[1]==templateText then template=entry.mod;break end end
+		if template then for count=1,2 do
+			local id="bench:partial-"..side:lower().."-"..count;local mod=copyTable(template)
+			mod[1]=count.." "..side.." Modifier"..(count==1 and "" or "s").." cannot be changed"
+			mod.partialLock={side=side,count=count};model.byId[id]=mod;model.bench[#model.bench+1]={id=id,mod=mod}
+		end end
+	end
 	for id,essence in pairs(data.essences) do
 		local modId=essence.mods[item.type]
 		if modId and model.byId[modId] then model.essences[#model.essences+1]={id=id,name=essence.name,modId=modId,tier=essence.tier,type=essence.type} end
@@ -206,7 +226,20 @@ local function add(model,state,random)
 	end
 	error("Could not select a modifier")
 end
-local function protected(entry,mod,f) return entry.fractured or mod.type == "Prefix" and f.prefixes or mod.type == "Suffix" and f.suffixes end
+local partialSelected=setmetatable({},{__mode="k"})
+local function protected(entry,mod,f) return entry.fractured or partialSelected[entry] or mod.type == "Prefix" and f.prefixes or mod.type == "Suffix" and f.suffixes end
+function M.hasPartialLock(model,state)
+	local f=flags(model,state);return f.Prefix~=nil or f.Suffix~=nil
+end
+local function selectPartialLocks(model,state,random)
+	local f=flags(model,state)
+	for _,side in ipairs({"Prefix","Suffix"}) do if f[side] then
+		local choices={};for _,entry in ipairs(state.affixes) do if model.byId[entry.id].type==side then choices[#choices+1]=entry end end
+		for _=1,math.min(f[side],#choices) do
+			local index=math.floor(random()*#choices)+1;partialSelected[table.remove(choices,index)]=true
+		end
+	end end
+end
 function M.annulCandidates(model,state)
 	local f=flags(model,state);local eligible={}
 	for index,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then eligible[#eligible+1]=index end end
@@ -255,6 +288,7 @@ end
 function M.action(model,input,action,random)
 	local state=copyState(input)
 	local method=action.method
+	if (method=="annul" or method=="chaos" or method=="alteration" or method=="scour" or method=="divine") and M.hasPartialLock(model,state) then selectPartialLocks(model,state,random) end
 	local c,f=counts(model,state),flags(model,state)
 	if method == "transmute" or method == "alteration" or method == "alchemy" or method == "chaos" then
 		local magic=method == "transmute" or method == "alteration"
@@ -303,6 +337,7 @@ function M.action(model,input,action,random)
 		target=math.min(target,M.capacities(model,state).total)
 		while #state.affixes < target do add(model,state,random) end
 	else error("Unsupported crafting action: "..tostring(method)) end
+	for _,entry in ipairs(state.affixes) do partialSelected[entry]=nil end
 	state.rollBlock=nil
 	return state
 end
@@ -593,7 +628,7 @@ function M.simulate(raw,recipe,options)
 	local usage={};for _,entry in pairs(resourceUsage) do entry.meanPerTrial=entry.amount/trials;usage[#usage+1]=entry end;table.sort(usage,function(a,b) return a.key<b.key end)
 	assert(totalExecuted > 0 or successes > 0,"Recipe could not execute a supported action; inspect its starting rarity and open affixes")
 	local result={trials=trials,successes=successes,successChance=successes/trials*100,confidenceLow=low,confidenceHigh=high,seed=seed,maxActions=maxActions,
-		meanActions=totalActions/trials,currencySpent=spent,resourceUsage=usage,unpriced=missing,transitionErrors=errors,warnings=M.recipeWarnings(recipe),limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
+		meanActions=totalActions/trials,currencySpent=spent,resourceUsage=usage,unpriced=missing,transitionErrors=errors,warnings=M.hasPartialLock(M.context(model,model.initial),model.initial) and partialWarning(M.recipeWarnings(recipe)) or M.recipeWarnings(recipe),limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
 		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,costCurrency=options.currency or "supplied price units",
 		baseCost=baseCost,retainedSuccesses=retained,retentionLimit=retain,affixDistribution=affixDistribution,propertyDistribution=propertyDistribution,actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
 	if not next(missing) then
@@ -614,7 +649,9 @@ function M.perform(raw,action,seed,initialState,treeVersion)
 	local model=M.model(raw)
 	if initialState then model.initial=M.validateState(model,initialState) end
 	local state,details=M.action(model,model.initial,action,rng(encounter.seed(integer(seed or 104729,1,2147483646,"seed"),1,31)))
-	return M.withTreeContext({priceKey=(M.priceKey or priceKey)(action),itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,warnings=M.actionWarnings(action),limitations=copyTable(M.limits)},treeVersion)
+	local warnings=M.actionWarnings(action)
+	if M.hasPartialLock(M.context(model,model.initial),model.initial) then partialWarning(warnings) end
+	return M.withTreeContext({priceKey=(M.priceKey or priceKey)(action),itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,warnings=warnings,limitations=copyTable(M.limits)},treeVersion)
 end
 
 function M.catalog(raw,query,limit)
@@ -647,7 +684,10 @@ require("Modules.CraftingCalculator").extend(M)
 do
 	local calculate=M.calculate
 	function M.calculate(raw,craft,targets,initialState,options)
-		local result=calculate(raw,craft,targets,initialState,options);result.warnings=M.actionWarnings(craft);return M.withTreeContext(result,options and options.treeVersion)
+		local result=calculate(raw,craft,targets,initialState,options);result.warnings=result.warnings or M.actionWarnings(craft)
+		if initialState then for _,entry in ipairs(initialState.affixes or {}) do if entry.id:match("^bench:partial%-") then partialWarning(result.warnings);break end end end
+		if raw:find("Modifier cannot be changed",1,true) or raw:find("Modifiers cannot be changed",1,true) then partialWarning(result.warnings) end
+		return M.withTreeContext(result,options and options.treeVersion)
 	end
 	local catalog=M.catalog
 	function M.catalog(raw,query,limit,initialState,treeVersion)
@@ -660,6 +700,9 @@ do
 end
 -- Extensions register state prerequisites once for both execution and browsing.
 function M.methodReason(model,state,method)
+	if M.hasPartialLock(M.context(model,state),state) and not ({bench=true,remove_crafted=true,annul=true,chaos=true,alteration=true,scour=true,divine=true,exalt=true,augmentation=true,regal=true})[method] then
+		return "This action is not yet modeled with partial affix locks."
+	end
 	local check=M.methodChecks[method]
 	if check then return check(M.context(model,state),state) end
 end

@@ -78,6 +78,7 @@ end
 function B.cost(model,id,lookup)
 	local mod=model.byId[id]
 	if not mod or not id:match("^bench:") then return end
+	if mod.partialLock and not lookup then return {["Metadata/Items/Currency/CurrencyModValues"]=mod.partialLock.count},{"GGG 3.30 patch notes"} end
 	local cost,sources=lookupEntry(signature(table.concat(mod,"\n"),mod.level,mod.type,B.class(model.item)),lookup)
 	if not cost then return end
 	if not lookup and #mod==1 and (mod[1]=="Prefixes Cannot Be Changed" or mod[1]=="Suffixes Cannot Be Changed") then

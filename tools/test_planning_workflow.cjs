@@ -68,6 +68,14 @@ async function main(){
   const annulOddsState={rarity:'RARE',affixes:[{id:'LocalAddedChaosDamage1',range:0.5},{id:'bench:731',range:0.5,crafted:true}]};
   const annulOdds=await queued('calculate_crafting',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'annul'},initialState:annulOddsState,targets:[{anyOf:['LocalAddedChaosDamage1']}]},'crafted');
   assert.equal(annulOdds.nativeCrafting.sampled,false);assert.equal(annulOdds.nativeCrafting.successChance,50);assert.equal(annulOdds.nativeCrafting.outcomes.length,2);
+  const partialCatalog=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:annulOddsRaw,query:'1 Prefix Modifier',limit:30},'inspected');
+  const partial=partialCatalog.crafting.nativeEngine.bench.find(entry=>entry.id==='bench:partial-prefix-1');
+  assert.ok(partial);assert.deepEqual(partial.components,{'Metadata/Items/Currency/CurrencyModValues':1});
+  const partialStart={rarity:'RARE',affixes:[{id:'LocalAddedChaosDamage1',range:0.5}]};
+  const partialApplied=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'bench',modId:partial.id},initialState:partialStart},'crafted');
+  assert.equal(partialApplied.nativeCrafting.warnings[0].code,'partial_lock_model');
+  const partialOdds=await queued('calculate_crafting',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'annul'},initialState:partialApplied.nativeCrafting.state,targets:[{anyOf:['LocalAddedChaosDamage1']}],options:{trials:10}},'crafted');
+  assert.equal(partialOdds.nativeCrafting.sampled,true);assert.equal(partialOdds.nativeCrafting.successChance,100);assert.equal(partialOdds.nativeCrafting.warnings[0].code,'partial_lock_model');
   assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.status,'historical');assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.availableInCore,false);assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.asOfPatch,'3.30');
   const enchantService=bodyInspection.crafting.nativeEngine.harvestEnchants.find(entry=>entry.id==='LifeBodyEnchant');
   assert.ok(bodyInspection.crafting.nativeEngine.nativeStats.Armour>0);

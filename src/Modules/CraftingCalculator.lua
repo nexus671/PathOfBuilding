@@ -10,6 +10,7 @@ function C.extend(M)
 			M.validateRecipe({steps={craft},targets=targets,requirements=options.requirements,requiredGroups=options.requiredGroups})
 			local model=M.model(raw);local state=initialState and M.validateState(model,initialState) or model.initial
 			if M.context then model=M.context(model,state) end
+			if not M.hasPartialLock(model,state) then
 			local choices=M.annulCandidates(model,state);local count=#choices
 			assert(state.rarity~="NORMAL","Annulment requires a magic or rare item")
 			assert(count>0,"No modifier can be removed")
@@ -23,6 +24,7 @@ function C.extend(M)
 			end
 			return {exactFor="One Annulment under the model's uniform removable-modifier assumption",sampled=false,successChance=100*hits/count,totalWeight=count,matchingWeight=hits,
 				outcomes=outcomes,sampleState=outcomes[1].state,sampleItem=M.toItem(model,outcomes[1].state).raw,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
+			end
 		end
 		if method=="omen_trichromatism" and not craft.allflame then
 			local model=M.model(raw);local state=initialState and M.validateState(model,initialState) or model.initial

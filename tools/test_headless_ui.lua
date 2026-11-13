@@ -293,6 +293,21 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:choose("page","Simulate recipe");frame("crafting-annul-exact-odds");ui:choose("page","Emulate item")
 		frame("crafting-annul-330-rule");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Orb of Annulment",1,true));frame("crafting-annul-330-applied");ui:click("close")
 	end
+	do
+		local raw="Rarity: NORMAL\nDriftwood Wand\nItem Level: 86";local model=sim.model(raw)
+		local state=sim.validateState(model,{rarity="RARE",affixes={{id="LocalAddedChaosDamage1",range=0.5}}})
+		require("Classes.CraftingSimulatorControl").Open(build,{id="partial-lock-ui",title="Partial prefix lock",slot="Weapon 1",startingItem=sim.toItem(model,state).raw,goals={},steps={},nativeRecipe={steps={},targets={{anyOf={"LocalAddedChaosDamage1"}}}}})
+		ui:click("settings");ui:text("paletteSearch","Crafting bench");assert(main.popups[1].controls.paletteUse:IsEnabled(),"Crafting bench not offered")
+		ui:click("paletteUse");ui:choose("option","1 Prefix Modifier cannot be changed","label")
+		local hints={};for _,row in ipairs(main.popups[1].controls.actionHint.list) do hints[#hints+1]=row[1] end;assert(table.concat(hints," "):find("Experimental partial lock",1,true),"Partial lock assumption was not explained before application")
+		frame("crafting-partial-lock-select")
+		ui:click("apply");assert(main.popups[1].controls.intro.label:find("Applied Crafting bench",1,true),"Partial lock was not applied")
+		ui:click("currency_annul");ui:choose("page","Craft settings");ui:click("exact");local jobs=require("Modules.CraftingTasks")
+		for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
+		local odds=build.craftingAnalyses["partial-lock-ui"].results.odds.result
+		assert(not jobs.job and odds.sampled and odds.successChance==100 and odds.warnings[1].code=="partial_lock_model","Partial lock odds were not disclosed")
+		ui:choose("page","Simulate recipe");frame("crafting-partial-lock-odds");ui:click("close")
+	end
 
 	do
 		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86";local model=sim.model(raw)

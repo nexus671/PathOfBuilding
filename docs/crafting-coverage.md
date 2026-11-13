@@ -1,11 +1,12 @@
 <!-- cspell:ignore Siveran Katakohi Ukatoa -->
 # Crafting coverage and rules
 
-The independent engine uses PoB modifiers and an immutable [RePoE export](https://github.com/repoe-fork/repoe-fork.github.io/tree/ae6d85a5c36857e08819852ab8732239294aba59), version **3.29.3.6**. The white-socket bench craft, standard Orb of Annulment, full prefix/suffix lock costs, and replacement of bench Chance Orb costs with equal Alteration Orb costs use the announced 3.30 rules. Other 3.30 crafting changes and modifier data are not yet incorporated; it does not yet provide complete Craft of Exile parity.
+The independent engine uses PoB modifiers and an immutable [RePoE export](https://github.com/repoe-fork/repoe-fork.github.io/tree/ae6d85a5c36857e08819852ab8732239294aba59), version **3.29.3.6**. It incorporates several announced 3.30 rules, including experimental partial locks. Other 3.30 crafting changes and modifier data are not yet incorporated; it does not yet provide complete Craft of Exile parity.
 
 | Area | Included | Limits |
 | --- | --- | --- |
 | Core | Ordinary currencies, bench IDs, multiple crafted modifiers, crafted-mod removal, essences, one/three-mod bench rerolls | Resolvable non-unique items. Essences/resonators reject meta modifiers. |
+| 3.30 partial locks | One/two prefix or suffix locks; core Alteration, Chaos, Annulment, Scouring, Divine, Exalted and bench actions | Experimental: assumes uniform selection among all modifiers on the protected side (including fractures) and shared groups with full locks. Other interactions are rejected while a partial lock is present. |
 | Import | Known native identities and uniquely resolvable plain copies, including multi-line flasks, tinctures and cluster tags | Explicit item level required. Ambiguous identities and values that cannot be reconstructed are rejected; no hidden tier or roll is guessed. |
 | Fossils | Combinations, tag weights, special added/forced mods, lucky rolls, fractures, corrupted implicits | Tangled needs a revealed outcome; Sanctified uses empirical level bias. |
 | Harvest | Tagged reforge, augment/remove, elemental resistance swaps, 14 quality enchantments with client-derived eligibility and costs | Supported current tags; arbitrary legacy crafts excluded. |
@@ -70,7 +71,7 @@ and CSV export are available. Selecting a subset only configures the workbench.
 - Omen of Connections fully links existing ordinary sockets, retaining their colours and count. The action consumes one Omen and one Orb of Fusing, following the pinned client item description. Socket bench and Omen of Connections calculations return their single deterministic outcome, including item-property goals. Ordinary random Fusing/Jeweller odds remain outside current coverage.
 - Omen of Trichromatism consumes one Omen and one Chromatic Orb to guarantee at least one red, green and blue socket, following the [3.29 patch notes](https://www.pathofexile.com/forum/view-thread/3985332) and pinned client description. It preserves socket count and links. Forced positions are sampled uniformly; additional socket colours use the existing model. Those placement and extra-colour probabilities are assumptions, rather than published server weights. Three-socket calculations enumerate six placements under the uniform-position assumption; larger items use labelled sampling. Other socket Omens remain outside current coverage.
 - Wilson intervals measure sampling uncertainty, not uncertainty in rules or data.
-- Ordinary Annulment odds enumerate each removable modifier with equal weight under the simulator's model, including fractures and full prefix/suffix locks. This does not establish hidden server weights or model the new partial locks.
+- Ordinary Annulment odds enumerate each removable modifier with equal weight under the simulator's model, including fractures and full prefix/suffix locks. This does not establish hidden server weights. Partial-lock cases use bounded sampling instead.
 
 - Retained successes are the first requested successful trials, capped at 100, rather than an unbiased sample of all successes. Final property histograms exclude destroyed items; affix frequencies count final states across all trials.
 
@@ -80,4 +81,4 @@ and CSV export are available. Selecting a subset only configures the workbench.
 
 `python tools/update_harvest_enchants.py` joins the pinned client Harvest service table to RePoE modifier text and base classes. It records every source hash and includes deterministic quality-enchantment services, rather than assuming random enchantment weights. Imported matching enchantments are recognised; replacement, recipe goals, inventory state and selected recombination hosts retain their identities. For supplied resource prices, use `wild_lifeforce`, `vivid_lifeforce` and `primal_lifeforce`.
 
-[Announced 3.30 changes](https://www.pathofexile.com/forum/view-thread/4013680), including partial affix locks and Annulment interactions, remain separate until released data and behavior are verified. Historical Necropolis and Crucible crafting are outside this work's scope.
+[Announced 3.30 changes](https://www.pathofexile.com/forum/view-thread/4013680) are layered over the pinned dataset where documented. GGG's [FAQ](https://www.pathofexile.com/forum/view-thread/4013527) confirms partial locks randomly select protected modifiers; their affix sides follow these [3.30 client records](https://poe-datamine.phelnaxgaming.workers.dev/). The simulator assumes equal weights and conservative modifier-group conflicts pending further verification. Historical Necropolis and Crucible crafting are outside this work's scope.
