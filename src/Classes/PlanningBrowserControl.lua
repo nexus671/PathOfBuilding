@@ -62,9 +62,10 @@ function M.Open(title,entries,options)
 	local function turn(delta) page=page+delta;selected=nil;controls.results.controls.scrollBar.offset=0;refresh() end
 	button("previousPage",width-320,height-86,140,"Previous page",function() turn(-1) end);controls.previousPage.enabled=function() return page>1 end
 	button("nextPage",width-172,height-86,156,"Next page",function() turn(1) end);controls.nextPage.enabled=function() return page*pageSize<#filtered end
-	local function choose() if selected and options.choose then options.choose(selected);if options.closeOnChoose~=false then main:ClosePopup() end end end
+	local function available() return selected~=nil and (not options.canChoose or options.canChoose(selected)) and true or false end
+	local function choose() if available() and options.choose then options.choose(selected);if options.closeOnChoose~=false then main:ClosePopup() end end end
 	button("choose",16,height-48,180,options.action or "Select",choose)
-	controls.choose.shown=options.choose~=nil;controls.choose.enabled=function() return selected~=nil end
+	controls.choose.shown=options.choose~=nil;controls.choose.enabled=available
 	if options.secondary then
 		assert(not options.favorites,"Choose either a secondary action or a favorite toggle")
 		button("secondary",208,height-48,180,options.secondary.label,function() if selected then options.secondary.run(selected) end end)

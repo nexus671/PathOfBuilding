@@ -1,6 +1,9 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Added category-specific filter styling, full file change review and simulator paging for all saved examples.
+* Kept ad-hoc test items separate from saved sets and improved sample selection and unavailable-action behavior.
+* Reduced repeated bundled-preset migration work while preserving all seven exports and diagnostics.
 * Added saved filter example sets and named appearance palettes that travel with the build.
 * Prevented recalculated full-DPS summaries from falsely invalidating AI proposals.
 * Added campaign base-family pickup policies, progressive upgrade windows and a compiled filter structure browser.

@@ -38,10 +38,10 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Alert sound selection | All 16 numbered IDs plus silence; custom references preserved | Exact game audio preview and custom sound pack management |
 | Minimap icons | All twelve shapes, colour/size selection and native geometry previews | Exact game-texture rendering |
 | Themes | Generated-target palettes, personal restyling, whole-filter decorators and named appearance snapshots | Colour wheel |
-| Global one-click edits | Reversible declared font/colour, alert identity/volume, icon visibility and beam controls | More selective category transformations |
+| Global one-click edits | Reversible whole-filter and category font/colour, alert identity/volume, icon and beam controls | More saved appearance presets |
 | Shared modules | Portable named snapshots, cross-profile copy and explicit updates | Public discovery and module dependency graphs |
-| Review changes | Before/after rule and item-list review, priority-conflict diagnostics, undo/redo | Full source-file diff for imported bases |
-| Filter structure | Dedicated compiled section/family tree, priority conflicts, exact block text and editing | Full source-file diff |
+| Review changes | Rule/item review, file-level compiled/base comparisons, provable conflicts and undo/redo | Richer predicate overlap analysis |
+| Filter structure | Compiled section/family tree, priority conflicts, exact block text, editing and file comparison | More source-rule descriptions |
 | Test local filter | Original imported text retained; simulator evaluates it | Resolve external Import files explicitly |
 | Save/resume | Native Save/bundles, page drafts and two-slot local draft recovery | Further crash/restart field testing |
 | Cloud saved filters | Account list/import UI | FilterBlade cloud saves are not connected |
@@ -54,6 +54,6 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Validation | Native parser checks and account-server validation when authorised | Broader syntax coverage and live game validation |
 | Mobile layout | Desktop layouts tested at 960, 1024 and 1280 widths | Native PoB is not a mobile web app |
 
-The remaining offline depth includes selective bulk transformations, a colour wheel and a full source-file diff view. Hosted economy updates remain separate service work. The release checklist tracks implementation and repeated workflow verification.
+The remaining offline polish includes a colour wheel, additional starter presets, encounter sample collections and local export packaging. Hosted economy updates remain separate service work. The release checklist tracks implementation and repeated workflow verification.
 
 Reference screenshots were captured outside the repository during the review. Third-party advertising scripts logged browser errors; the main anonymous customizer and simulator remained usable. No login, publication, purchase or subscription was performed.

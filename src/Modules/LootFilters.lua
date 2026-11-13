@@ -41,6 +41,7 @@ function M.validate(data)
 		if p.campaign~=nil then entry.campaign=require("Modules.LootFilterCampaign").validate(p.campaign) end
 		if p.sampleSets~=nil then entry.sampleSets=require("Modules.LootFilterCollections").sampleSets(p.sampleSets) end
 		if p.palettes~=nil then entry.palettes=require("Modules.LootFilterCollections").palettes(p.palettes) end
+		if p.categoryStyles~=nil then entry.categoryStyles=require("Modules.LootFilterCategoryStyles").validate(p.categoryStyles) end
 		entry.baseCommit=p.baseCommit and text(p.baseCommit,40,"template revision") or M.source().commit
 		if p.template then entry.template=text(p.template,M.limit,"imported filter");assert(#parser.parse(p.template).rules>0,"Imported filter has no rules") end
 		local seen={}
@@ -139,20 +140,30 @@ function M.base(profile)
 	assert(profile.baseCommit==M.source().commit,"The bundled base changed. Review Audit / update before exporting this profile.")
 	return read(profile.strictness..".filter")
 end
+function M.migratedBase(profile)
+	local raw=M.base(profile)
+	if profile.template then return M.migrate(raw) end
+	-- Bundled presets and the patch map are immutable until the next restart.
+	local key="migrated-"..profile.strictness
+	if not cache[key] then cache[key]={M.migrate(raw)} end
+	return cache[key][1],copyTable(cache[key][2])
+end
 function M.compile(profile)
 	local checked=M.validate({schemaVersion=1,activeId=profile.id,profiles={profile}}).profiles[1]
+	local function styled(text,category) return require("Modules.LootFilterCategoryStyles").apply(text,checked.categoryStyles,category) end
 	local output={"# Path of Building AI Edition | "..checked.title,"# PoE 3.30 | NeverSink base "..checked.baseCommit,"# NeverSink templates: MIT. Personal rules precede the base filter."}
 	output[#output+1]="# "..read("LICENSE-NeverSink.txt"):gsub("\r\n","\n"):gsub("\n","\n# ")
-	for _,r in ipairs(checked.rules) do if r.enabled then output[#output+1]="\n# PoB rule: "..r.title..(r.origin and " ["..r.origin.."]" or "");output[#output+1]=r.text end end
-	for _,tier in ipairs(checked.tiers or {}) do local rule=require("Modules.LootFilterEditing").rule(tier);if rule then output[#output+1]="\n# PoB rule: Tier / "..rule.title;output[#output+1]=rule.text end end
-	for _,module in ipairs(checked.modules or {}) do if module.enabled then for _,rule in ipairs(module.rules) do if rule.enabled then output[#output+1]="\n# PoB rule: "..module.title.." / "..rule.title;output[#output+1]=rule.text end end end end
-	for _,rule in ipairs(require("Modules.LootFilterCampaign").rules(checked.campaign,checked.theme)) do output[#output+1]="\n# PoB rule: Campaign / "..rule.title;output[#output+1]=rule.text end
+	for _,r in ipairs(checked.rules) do if r.enabled then output[#output+1]="\n# PoB rule: "..r.title..(r.origin and " ["..r.origin.."]" or "");output[#output+1]=styled(r.text,r.origin and "Build targets") end end
+	for _,tier in ipairs(checked.tiers or {}) do local rule=require("Modules.LootFilterEditing").rule(tier);if rule then output[#output+1]="\n# PoB rule: Tier / "..rule.title;output[#output+1]=styled(rule.text) end end
+	for _,module in ipairs(checked.modules or {}) do if module.enabled then for _,rule in ipairs(module.rules) do if rule.enabled then output[#output+1]="\n# PoB rule: "..module.title.." / "..rule.title;output[#output+1]=styled(rule.text,rule.origin and "Build targets") end end end end
+	for _,rule in ipairs(require("Modules.LootFilterCampaign").rules(checked.campaign,checked.theme)) do output[#output+1]="\n# PoB rule: Campaign / "..rule.title;output[#output+1]=styled(rule.text,"Campaign") end
 	-- New league items are shown until a later pinned base can tier them.
 	local patch=M.patch();local classes={};for class in pairs(patch.added) do classes[#classes+1]=class end;table.sort(classes)
 	for _,class in ipairs(classes) do local values={};for _,name in ipairs(patch.added[class]) do values[#values+1]=quote(name) end
-		output[#output+1]="\n# 3.30 new-item safety: "..class.."\nShow\n    BaseType == "..table.concat(values," ").."\n    SetTextColor 255 235 175\n    SetBorderColor 175 110 230\n    SetFontSize 40"
+		local kind=require("Modules.LootFilterLibrary").category({text='Class == "'..class..'"'})
+		output[#output+1]=styled("\n# 3.30 new-item safety: "..class.."\nShow\n    BaseType == "..table.concat(values," ").."\n    SetTextColor 255 235 175\n    SetBorderColor 175 110 230\n    SetFontSize 40",kind)
 	end
-	local base,changes=M.migrate(M.base(checked));output[#output+1]="\n# Pinned base filter\n"..base
+	local base,changes=M.migratedBase(checked);output[#output+1]="\n# Pinned base filter\n"..styled(base)
 	local raw=require("Modules.LootFilterDecorators").apply(table.concat(output,"\n"),checked.appearance);assert(#raw<=M.limit,"Compiled filter exceeds 2 MiB")
 	if checked.mode=="Ruthless" then raw=raw:gsub("\n([ \t]*)Hide(%f[%W])","\n%1Minimal%2") end
 	local parsed=parser.parse(raw)

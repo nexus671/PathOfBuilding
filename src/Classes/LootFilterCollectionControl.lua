@@ -4,13 +4,14 @@ local visual=require("Modules.LootFilterVisuals")
 local filters=require("Modules.LootFilters")
 local parser=require("Modules.LootFilterParser")
 local M={}
+local serial=0
 function M.Open(profile,kind,sources,onAccept)
 	assert(kind=="sampleSets" or kind=="palettes","Unknown filter library")
 	local samples=kind=="sampleSets";local draft=copyTable(profile);draft[kind]=draft[kind] or {};local selected;local c={}
 	local w,h=math.min(940,main.screenW-40),math.min(660,main.screenH-60);local left=math.floor((w-48)*0.43);local right=left+32;local detailW=w-right-16
 	local example,preview;local previewParsed=samples and parser.parse(filters.compile(profile))
 	local function button(key,x,y,width,label,run) c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,width,28},label,run) end
-	ui.description(c,"help",16,28,w-32,44,{samples and "Keep exact example properties to test this filter again. Missing properties stay unknown. Named sets travel with the build." or "Keep named appearance snapshots. Using one restores its whole-filter settings and the theme used for new build targets. Pickup conditions stay unchanged."},14)
+	ui.description(c,"help",16,28,w-32,44,{samples and "Keep exact example properties to test this filter again. Missing properties stay unknown. Named sets travel with the build." or "Keep named appearance snapshots. Using one restores its whole-filter and category settings and the theme for new build targets. Pickup conditions stay unchanged."},14)
 	c.name=new("EditControl"):EditControl(ui.anchor,{16,84,left,28},samples and "My example set" or "My palette","Collection name",nil,120)
 	if samples then local choices={};for i,source in ipairs(sources) do choices[#choices+1]={label=source.title.." ("..#source.samples..")",val=i} end
 		c.source=new("DropDownControl"):DropDownControl(ui.anchor,{right,84,detailW,28},choices)
@@ -28,9 +29,11 @@ function M.Open(profile,kind,sources,onAccept)
 			if preview then lines[#lines+1]="Preview: "..preview.action;for _,reason in ipairs(preview.reasons or {}) do lines[#lines+1]=reason end end
 			for _,sample in ipairs(entry and entry.samples or {}) do lines[#lines+1]=(sample.BaseType or "Unknown base").." | item level "..tostring(sample.ItemLevel or "unknown").." | area "..tostring(sample.AreaLevel or "unknown") end
 		else
-			example={BaseType="Crafting base"};local p=copyTable(draft);if entry then p.appearance=entry.appearance;p.theme=entry.theme end
-			local raw=require("Modules.LootFilterDecorators").apply(filters.rule("example","Example",{},nil,p.theme).text,p.appearance)
+			example={BaseType="Crafting base"};local p=copyTable(draft);if entry then p.appearance=entry.appearance;p.theme=entry.theme;if entry.categoryStyles~=nil then p.categoryStyles=entry.categoryStyles end end
+			local raw=require("Modules.LootFilterCategoryStyles").apply(filters.rule("example","Example",{},nil,p.theme).text,p.categoryStyles,"Build targets")
+			raw=require("Modules.LootFilterDecorators").apply(raw,p.appearance)
 			preview={action="Show",styles=parser.parse(raw).rules[1].styles};lines[#lines+1]=entry and "Use selected restores this snapshot. Further edits do not change the saved palette." or "Tune Whole-filter appearance on the Style page before saving a new palette."
+			lines[#lines+1]=entry and entry.categoryStyles~=nil and "Restores "..#entry.categoryStyles.." saved category styles." or "Category settings stay as currently configured."
 			lines[#lines+1]="Snapshot preview; undeclared styles in imported filters still inherit normally."
 		end
 		c.details.list=ui.rows(lines,detailW-28,14);c.details.controls.scrollBar.offset=0
@@ -45,11 +48,14 @@ function M.Open(profile,kind,sources,onAccept)
 	local function capture(id)
 		local entry={id=id,title=c.name.buf}
 		if samples then entry.samples=copyTable(sources[c.source:GetSelValueByKey("val")].samples)
-		else entry.appearance=copyTable(profile.appearance or {});entry.theme=profile.theme end
+		else entry.appearance=copyTable(profile.appearance or {});entry.theme=profile.theme;entry.categoryStyles=copyTable(profile.categoryStyles or {}) end
 		draft=collections.install(draft,kind,entry);refresh(id)
 	end
 	local bw=math.floor((w-56)/4)
-	button("saveNew",16,h-126,bw,"Save new",function() capture("saved-"..require("sha1")(os.time()..tostring({})):sub(1,20)) end)
+	button("saveNew",16,h-126,bw,"Save new",function()
+		local used={};for _,entry in ipairs(draft[kind]) do used[entry.id]=true end
+		local id;repeat serial=serial+1;id="saved-"..os.time().."-"..serial until not used[id];capture(id)
+	end)
 	c.saveNew.enabled=function() return not samples or #sources[c.source:GetSelValueByKey("val")].samples>0 end
 	button("replace",24+bw,h-126,bw,"Replace selected",function() assert(selected,"Choose an entry");capture(selected.id) end);c.replace.enabled=function() return selected~=nil and c.saveNew.enabled() end
 	button("rename",32+2*bw,h-126,bw,"Rename",function() assert(selected,"Choose an entry");local entry=copyTable(selected);entry.title=c.name.buf;draft=collections.install(draft,kind,entry);refresh(entry.id) end);c.rename.enabled=function() return selected~=nil end

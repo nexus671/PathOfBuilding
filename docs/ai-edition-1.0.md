@@ -13,6 +13,8 @@ The installed application and personal builds are outside this release workspace
 - [x] Reach every shared catalogue result through paging.
 - [x] Test clipboard items, configure scene levels and revisit sample history.
 - [x] Save named exact example sets and reusable appearance palettes in the build.
+- [x] Style selected categories in place and review complete file changes.
+- [x] Page through saved examples and test separate items without overwriting the sets.
 - [x] Expand shared colour/sound styling and preview every supported icon shape.
 
 ## Crafting
@@ -48,15 +50,17 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,082 Lua tests, 39 Node tests,
-the real MCP save/reopen workflow and 573 source-stable UI frames without audit failures.
-Mod-cache regeneration matches the committed data. Serial and parallel rendering
-produced identical pixels and audits for representative frames. The updater manifest and every CI artifact source hash were verified against
-commit `477aa7dad998896b0b981c2e77f751890fbb680c`.
+The published preview passed exact-commit CI with 1,086 Lua tests, 40 Node tests,
+the real MCP save/reopen workflow and 585 source-stable UI frames without audit
+failures. The updater manifest and every CI artifact source hash were verified
+against commit `787b7d3c857092331f33839de82c8c46d75e111c`.
 
-The next batch adds build-owned example sets and palettes. It passed 1,086 Lua
-tests, 40 Node tests, the MCP workflow and 585 source-stable UI frames without
-audit failures. Exact-commit CI is required before this checkpoint is accepted.
+The next review adds in-place category styling, source-file comparison, complete
+scene paging, separate ad-hoc tests and unavailable-action guards. Local validation passed 1,099 Lua tests, 41 Node tests, the MCP workflow and
+612 source-stable UI states without audit failures. Final screenshot review also
+clarified default-Show sample explanations. Exact-commit CI is still required. The comparison engine also passed 2,000
+deterministic reconstruction cases. Caching bundled migrations preserved all
+seven exported filters and their reports while reducing repeated work.
 
 A read-only saved-build benchmark confirmed reversible tree edits and exposed a
 false revision change caused by reordered derived full-DPS rows; the regression
@@ -64,7 +68,7 @@ is fixed. Foreground allocation plus recalculation measured 63-179 ms across fiv
 edits while recovery completed separately. Proposal preparation still takes
 several seconds on that build. These checks do not mark the release complete.
 
-Next: close source-verified socket/corruption/league gaps, add selective category
-styles and source-file diff review, and repeat cross-tool performance,
+Next: close source-verified socket/corruption/league gaps, add the colour picker,
+and repeat cross-tool performance,
 recovery and layout checks. The coverage guide continues to identify incomplete
 mechanics explicitly.

@@ -68,7 +68,8 @@ async function main(){
   generated.profile.modules=[{id:'links',title:'Link currency',rules:[{id:'fusing',title:'Fusing',text:'Show\n BaseType == "Orb of Fusing"\n SetFontSize 40'}]}];
   generated.profile.campaign={weapons:['Bow'],defences:['Energy shield'],recipes:['Quality gems'],minAreaLevel:1,maxAreaLevel:70,upgradeWindow:15};
   generated.profile.sampleSets=[{id:'campaign-drop',title:'Early helmet',samples:[{BaseType:'Iron Hat',Class:'Helmets',Rarity:'Normal',AreaLevel:12,ItemLevel:12}]}];
-  generated.profile.palettes=[{id:'gold',title:'Gold highlights',appearance:generated.profile.appearance,theme:'default'}];
+  generated.profile.categoryStyles=[{category:'Currency',appearance:{minimumFontSize:40,alertVolume:0}}];
+  generated.profile.palettes=[{id:'gold',title:'Gold highlights',appearance:generated.profile.appearance,theme:'default',categoryStyles:generated.profile.categoryStyles}];
   assert.ok(generated.profile.rules.some(rule=>rule.origin==='craft:helmet'));
   const tested=await queued('test_loot_filter',{baseRevision:context.revision,profile:generated.profile,sample:{BaseType:'Iron Hat',Rarity:'Rare',ItemLevel:86}},'tested');assert.equal(tested.result.action,'Show');
   const exported=await queued('export_loot_filter',{baseRevision:context.revision,profile:generated.profile},'exported');assert.ok(exported.filter.includes('PoB rule:'));assert.ok(exported.filter.includes('Frayed Thread'));

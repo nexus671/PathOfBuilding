@@ -31,6 +31,7 @@ local function validate(values,kind)
 			next.samples={};for _,sample in ipairs(array(entry.samples)) do next.samples[#next.samples+1]=M.sample(sample) end;assert(#next.samples>0,"Save at least one example item")
 		else
 			next.appearance=appearance.validate(entry.appearance);next.theme=entry.theme or "default";assert(next.theme=="default" or next.theme=="contrast","Invalid palette theme")
+			if entry.categoryStyles~=nil then next.categoryStyles=require("Modules.LootFilterCategoryStyles").validate(entry.categoryStyles) end
 		end;result[#result+1]=next
 	end;return result
 end
@@ -45,7 +46,7 @@ function M.install(profile,key,entry)
 	if not found then next[key][#next[key]+1]=copyTable(entry) end;return checked(next)
 end
 function M.palette(profile,id)
-	for _,entry in ipairs(profile.palettes or {}) do if entry.id==id then local next=copyTable(profile);next.appearance=copyTable(entry.appearance);next.theme=entry.theme;return checked(next) end end
+	for _,entry in ipairs(profile.palettes or {}) do if entry.id==id then local next=copyTable(profile);next.appearance=copyTable(entry.appearance);next.theme=entry.theme;if entry.categoryStyles~=nil then next.categoryStyles=copyTable(entry.categoryStyles) end;return checked(next) end end
 	error("Choose a saved palette")
 end
 return M

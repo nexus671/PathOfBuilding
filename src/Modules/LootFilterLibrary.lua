@@ -54,7 +54,7 @@ function M.sample(rule,block)
 	return item
 end
 function M.catalog(profile)
-	local raw=filters.migrate(filters.base(profile));local entries={};local ids={}
+	local raw=filters.migratedBase(profile);local entries={};local ids={}
 	for i,block in ipairs(parser.parse(raw).rules) do
 		local text=table.concat(block.rawLines,"\n");local example
 		local tier=block.rawLines[1]:match("%$tier%-%>([%w_-]+)") or "Base rule"

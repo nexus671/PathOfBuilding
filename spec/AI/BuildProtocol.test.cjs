@@ -80,6 +80,13 @@ test('queues exact saved filter examples and named appearance snapshots', t => {
     assert.throws(()=>f.call('export_loot_filter',{baseRevision:f.state.revision,profile:{...profile,sampleSets}}),/arguments/);
   }
 });
+
+test('queues category styles and palette snapshots without changing rule priority', t => {
+  const f=fixture(t);const categoryStyles=[{category:'Currency',appearance:{textColor:[255,220,100,255],alertVolume:0}}];
+  const profile={id:'test',title:'Test',preset:'early_maps',strictness:2,rules:[],categoryStyles,palettes:[{id:'saved',title:'Saved',appearance:{},categoryStyles}]};
+  f.call('export_loot_filter',{baseRevision:f.state.revision,profile});const request=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(request.profile,profile);
+  assert.throws(()=>f.call('export_loot_filter',{baseRevision:f.state.revision,profile:{...profile,categoryStyles:[{category:'Invented category',appearance:{}}]}}),/arguments/);
+});
 test('reads journey resources and queues a reviewed replacement without applying', t => {
   const f=fixture(t);
   const journey={schemaVersion:1,milestones:[{id:'links',title:'Get links',kind:'gems',dependencies:[]}],wishlist:[],resources:[],ledger:[],stages:[]};

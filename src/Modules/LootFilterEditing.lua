@@ -129,6 +129,7 @@ function M.review(before,after)
 			end
 			if encode(previous.appearance)~=encode(p.appearance) then lines[#lines+1]="Appearance before: "..json.encode(previous.appearance);lines[#lines+1]="Appearance after: "..json.encode(p.appearance) end
 			if encode(previous.campaign)~=encode(p.campaign) then lines[#lines+1]="Campaign policy before: "..encode(previous.campaign);lines[#lines+1]="Campaign policy after: "..encode(p.campaign) end
+			if encode(previous.categoryStyles)~=encode(p.categoryStyles) then lines[#lines+1]="Category styles before: "..encode(previous.categoryStyles);lines[#lines+1]="Category styles after: "..encode(p.categoryStyles) end
 			entries[#entries+1]={id=p.id,label="Changed: "..p.title,details=lines}
 		end
 	end
