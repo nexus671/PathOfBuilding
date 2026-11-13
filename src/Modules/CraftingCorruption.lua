@@ -3,6 +3,13 @@ function C.extend(M,A,api)
 	local labels={vaal="Vaal Orb",locus="Locus of Corruption",tainted_exalt="Tainted Exalted Orb",tainted_chaos="Tainted Chaos Orb"}
 	for method,label in pairs(labels) do M.methods[#M.methods+1]=method;M.labels[method]=label end;table.sort(M.methods)
 	local originalModel,originalAction,originalDecorate,originalValidate,originalItem=M.model,M.action,M.decorateItem,M.validateState,M.toItem
+	local originalMatches=M.matches
+	function M.matches(state,targets,rarity,model,...)
+		if model and model.unresolvedCorruption and not state.destroyed and not state.veil and not state.corruptedImplicits then
+			for _,group in ipairs(targets) do assert(group.scope~="implicit","Imported implicit identities are ambiguous or unsupported; use a structured corruption state before checking implicit targets") end
+		end
+		return originalMatches(state,targets,rarity,model,...)
+	end
 	function M.toItem(model,state) assert(not state.destroyed,"The hypothetical item was destroyed");return originalItem(model,state) end
 	local function weight(model,id)
 		local metadata=A.data().mods[id]
@@ -18,6 +25,8 @@ function C.extend(M,A,api)
 			model.corruptions[#model.corruptions+1]={id=id,weight=weight(model,id)};model.special[id]=true
 		end end
 		table.sort(model.corruptions,function(a,b) return a.id < b.id end)
+		local imported,reason=require("Modules.CraftingCorruptionImport").resolve(M,model,A.data().mods)
+		model.initial.corruptedImplicits=imported;model.unresolvedCorruption=reason
 		return model
 	end
 	function M.rollCorrupted(model,state,random,count)
@@ -54,6 +63,9 @@ function C.extend(M,A,api)
 		-- Missing markers inherit the starting text; explicit false is a manual override.
 		if state.corrupted==nil and model.initial.corrupted then state=copyTable(state);state.corrupted=true end
 		if state.twiceCorrupted==nil and state.corrupted and model.initial.twiceCorrupted then state=copyTable(state);state.twiceCorrupted=true end
+		if state.corrupted and not state.corruptedImplicits and not state.implicits and not state.vendorImplicit and not state.baseImplicitRanges and model.initial.corruptedImplicits then
+			state=copyTable(state);state.corruptedImplicits=copyTable(model.initial.corruptedImplicits)
+		end
 		assert(state.twiceCorrupted==nil or type(state.twiceCorrupted)=="boolean","Invalid twice-corruption marker")
 		assert(not state.twiceCorrupted or state.corrupted==true,"Twice Corrupted items must also be Corrupted")
 		assert(state.destroyed == nil or type(state.destroyed) == "boolean","Invalid destruction flag")

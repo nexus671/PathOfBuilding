@@ -673,6 +673,21 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		assert(saved.run.state.twiceCorrupted==false and saved.run.state.corrupted==false)
 		build.viewMode="PLANNER";build.planningWorkspace:Show("crafting",{kind="workbench",project=saved});frame("crafting-twice-reopened")
 	end
+	do
+		local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W W W\nImplicits: 2\n0.5% of Cold Damage Leeched as Life\n+10% to Damage over Time Multiplier\nTwice Corrupted"
+		local target={anyOf={"V2ColdDamageLifeLeechPermyriadCorrupted_"},scope="implicit"}
+		local p={id="implicit-import",title="Imported corruption target",slot="Helmet",startingItem=raw,goals={},steps={},preferredMethod="tainted_chromatic",nativeRecipe={steps={{method="tainted_chromatic"}},targets={target},requirements={minAffixes=0}}}
+		build.savers.CraftingProjects:Upsert(p)
+		local w=build.planningWorkspace;w:Show("crafting",{kind="workbench",project=p});ui:frame()
+		assert(#w.cache.crafting.layout.snapshot().state.corruptedImplicits==2);frame("crafting-implicit-import-card")
+		ui:click("tab_simulate");ui:text("trials","2");ui:text("budget","1");ui:click("simulate")
+		for i=1,3000 do if not jobs.job then break end;jobs.tick(build) end
+		assert(w.cache.crafting.layout.snapshot().lastSimulation.successes==2);frame("crafting-implicit-import-results")
+		ui:click("keepWorking");local xml=build:SaveDB("Imported corruption UI");loadBuildFromXML(xml,"Imported corruption UI");ui:bind(build)
+		local saved;for _,entry in ipairs(build.savers.CraftingProjects.projects) do if entry.id==p.id then saved=entry end end
+		assert(#saved.run.state.corruptedImplicits==2);assert(saved.nativeRecipe.targets[1].anyOf[1]==target.anyOf[1])
+		build.viewMode="PLANNER";build.planningWorkspace:Show("crafting",{kind="workbench",project=saved});frame("crafting-implicit-import-reopened")
+	end
 	ui:restore()
 end
 -- These checks exercise the audit itself: raw uncoloured list text inherits the

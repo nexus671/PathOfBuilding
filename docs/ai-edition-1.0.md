@@ -57,19 +57,25 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `93d01456d5af7f40884121ba803b58c96c08d1d6`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43427622229),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43427622251)).
-It passed 1,218 Lua tests, 47 Node tests, the real MCP save/reopen workflow and
-876 source-stable UI states without audit failures. All 2,425 updater file hashes
+The latest verified checkpoint is `50d4de4dc4bc2d4cd453e33ecf40ec4ae8df139c`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43432889733),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43432889735)).
+It passed 1,224 Lua tests, 48 Node tests, the real MCP save/reopen workflow and
+894 source-stable UI states without audit failures. All 2,425 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
-The next review preserves the Twice Corrupted marker through native item import,
+Preview 31 preserves the Twice Corrupted marker through native item import,
 tainted crafting, manual edits, saved projects and MCP. This does not add second
-corruption outcomes to the labelled 3.29 crafting model. Pasted corrupted implicit
-text survives crafting, but recovering its modifier IDs for implicit target checks
-remains release work. The UI audit now distinguishes overlay tooltips from button
+corruption outcomes to the labelled 3.29 crafting model. The UI audit now distinguishes overlay tooltips from button
 content, with positive tooltip and deliberately broken clipping fixtures.
+
+The next review recovers complete, unique assignments of up to two corrupted
+implicits from pasted item text. It preserves independent rolls and recognises
+reordered lines without mistaking unchanged natural implicits for Vaal modifiers.
+Ambiguous or unsupported identities block implicit odds checks with an explanation;
+they do not silently produce a zero-percent result. Older saved states can recover
+missing identities from their source item. A seven-base, 140-item diagnostic
+recovered every generated example with matching text and target identities.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
 item. Bench and Essence execution share their precondition helpers with the

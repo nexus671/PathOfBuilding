@@ -1,0 +1,71 @@
+describe("Imported corruption identities",function()
+	local sim=require("Modules.CraftingSimulator")
+	local resolve=require("Modules.CraftingCorruptionImport").resolve
+	local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W W W"
+	local function fixture(lines,mods,base)
+		local model={item={corrupted=true,implicitModLines={},base={implicit=base}},initial={},byId=mods,corruptions={}}
+		local metadata={}
+		for _,line in ipairs(lines) do model.item.implicitModLines[#model.item.implicitModLines+1]=type(line)=="table" and line or {line=line} end
+		for id in pairs(mods) do model.corruptions[#model.corruptions+1]={id=id};metadata[id]={groups={id}} end
+		return model,metadata
+	end
+	before_each(function() newBuild();main.popups={} end)
+	after_each(function() main.popups={} end)
+	it("recovers one and two native implicits and preserves them through tainted crafting",function()
+		local model=sim.model(raw)
+		for count=1,2 do
+			local state=copyTable(model.initial);sim.rollCorrupted(model,state,function() return 0.1 end,count);state.twiceCorrupted=true
+			local text=sim.toItem(model,state).raw;local imported=sim.model(text)
+			assert.are.equal(count,#imported.initial.corruptedImplicits);assert.is_nil(imported.unresolvedCorruption)
+			for _,entry in ipairs(state.corruptedImplicits) do assert.is_true(sim.matches(imported.initial,{{anyOf={entry.id},scope="implicit"}},nil,imported)) end
+			local result=sim.perform(text,{method="tainted_chromatic"},1)
+			assert.are.same(imported.initial.corruptedImplicits,result.state.corruptedImplicits);assert.is_true(new("Item"):Item(result.itemText).twiceCorrupted)
+		end
+	end)
+	it("retains independent ranges and recognises reordered multi-line modifiers",function()
+		local model,metadata=fixture({"14 added Fire Damage","4 added Cold Damage"},{one={"(1-5) added Cold Damage","(10-20) added Fire Damage"}})
+		local entries=resolve(sim,model,metadata);assert.are.same({{id="one",range={0.75,0.4}}},entries)
+	end)
+	it("does not guess between overlapping identities but honours exact native templates",function()
+		local mods={one={"(1-5) added Cold Damage"},two={"(3-7) added Cold Damage"}}
+		local model,metadata=fixture({"4 added Cold Damage"},mods)
+		local entries,reason=resolve(sim,model,metadata);assert.is_nil(entries);assert.are.equal("unresolved",reason)
+		model.item.implicitModLines={{line=mods.one[1],range=0.75}}
+		entries=resolve(sim,model,metadata);assert.are.same({{id="one",range=0.75}},entries)
+	end)
+	it("rejects conflicting groups and more than two corruption modifiers",function()
+		local model,metadata=fixture({"1 added Cold Damage","2 added Fire Damage"},{one={"1 added Cold Damage"},two={"2 added Fire Damage"}})
+		metadata.two.groups=metadata.one.groups
+		local entries,reason=resolve(sim,model,metadata);assert.is_nil(entries);assert.are.equal("unresolved",reason)
+		model,metadata=fixture({"1 added Cold Damage","2 added Fire Damage","3 added Chaos Damage"},{one={"1 added Cold Damage"},two={"2 added Fire Damage"},three={"3 added Chaos Damage"}})
+		entries,reason=resolve(sim,model,metadata);assert.is_nil(entries);assert.are.equal("unresolved",reason)
+	end)
+	it("keeps unchanged natural implicits separate and refuses ambiguous natural alternatives",function()
+		local model,metadata=fixture({"4 added Cold Damage"},{one={"1 added Fire Damage"}},"(1-5) added Cold Damage")
+		local entries,reason=resolve(sim,model,metadata);assert.is_nil(entries);assert.is_nil(reason)
+		model.byId.one={"(1-5) added Cold Damage"};entries,reason=resolve(sim,model,metadata);assert.is_nil(entries);assert.are.equal("unresolved",reason)
+		model,metadata=fixture({"2 added Fire Damage","1 added Cold Damage"},{one={"1 added Cold Damage"},two={"2 added Fire Damage"}},"1 added Cold Damage\n2 added Fire Damage")
+		entries,reason=resolve(sim,model,metadata);assert.is_nil(entries);assert.are.equal("unresolved",reason)
+	end)
+	it("explains unresolved implicit targets while allowing explicit checks and resolved overrides",function()
+		local model={unresolvedCorruption="unresolved"};local state={rarity="NORMAL",affixes={}}
+		assert.has_error(function() sim.matches(state,{{anyOf={"one"},scope="implicit"}},nil,model) end,"Imported implicit identities are ambiguous or unsupported; use a structured corruption state before checking implicit targets")
+		assert.is_true(sim.matches(state,{},nil,model));state.corruptedImplicits={{id="one",range=0.5}}
+		assert.is_true(sim.matches(state,{{anyOf={"one"},scope="implicit"}},nil,model))
+	end)
+	it("preserves twice corruption across every tainted equipment method",function()
+		local text=sim.perform(raw,{method="alchemy"},1).itemText.."\nTwice Corrupted"
+		for _,method in ipairs({"tainted_chaos","tainted_exalt","tainted_quality","tainted_chromatic","tainted_jeweller","tainted_fusing"}) do for seed=1,10 do
+			local result=sim.perform(text,{method=method},seed);assert.is_true(result.state.corrupted);assert.is_true(result.state.twiceCorrupted)
+			assert.is_true(new("Item"):Item(result.itemText).twiceCorrupted);sim.validateState(sim.model(text),result.state)
+		end end
+	end)
+	it("recovers missing identities from older saved states without mutating them",function()
+		local model=sim.model(raw);local source=copyTable(model.initial);sim.rollCorrupted(model,source,function() return 0.1 end,2)
+		local text=sim.toItem(model,source).raw;model=sim.model(text)
+		local legacy=copyTable(model.initial);legacy.corruptedImplicits=nil;local before=copyTable(legacy)
+		local restored=sim.validateState(model,legacy);assert.are.same(model.initial.corruptedImplicits,restored.corruptedImplicits);assert.are.same(before,legacy)
+		local result=sim.perform(text,{method="tainted_chromatic"},1,legacy)
+		assert.are.same(restored.corruptedImplicits,result.state.corruptedImplicits)
+	end)
+end)

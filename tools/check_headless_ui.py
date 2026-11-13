@@ -66,7 +66,7 @@ def main():
     assert result.returncode == 0, result.stdout
     assert source_hashes() == hashes, "Source files changed during UI capture; repeat against stable sources"
     paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 894, f"Expected 894 UI frames, found {len(paths)}"
+    assert len(paths) == 903, f"Expected 903 UI frames, found {len(paths)}"
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         failures = [failure for failure in pool.map(render_frame, paths) if failure]
     tooltip = json.loads((directory / "expected-audit-tooltip.json").read_text())

@@ -81,6 +81,13 @@ async function main(){
   assert.equal(twiceAction.nativeCrafting.state.corrupted,true);assert.equal(twiceAction.nativeCrafting.state.twiceCorrupted,true);
   assert.ok(twiceAction.nativeCrafting.itemText.includes('Twice Corrupted'));
   assert.equal((await call('get_build_context')).context.revision,context.revision);
+  const implicitRaw='Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W W W\nImplicits: 2\n0.5% of Cold Damage Leeched as Life\n+10% to Damage over Time Multiplier\nTwice Corrupted';
+  const implicitTarget={anyOf:['V2ColdDamageLifeLeechPermyriadCorrupted_'],scope:'implicit'};
+  const implicitAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:implicitRaw,action:{method:'tainted_chromatic'}},'crafted');
+  assert.equal(implicitAction.nativeCrafting.state.corruptedImplicits.length,2);
+  assert.ok(implicitAction.nativeCrafting.state.corruptedImplicits.some(entry=>entry.id===implicitTarget.anyOf[0]));
+  const implicitOdds=await queued('calculate_crafting',{baseRevision:context.revision,itemText:implicitRaw,action:{method:'tainted_chromatic'},targets:[implicitTarget],options:{trials:10}},'crafted');
+  assert.equal(implicitOdds.nativeCrafting.successChance,100);
   const rgbPlan=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[rgbService.action,linkAction],targets:[],requirements:{socketColours:'RGB',linkedColours:true,links:6}},options:{trials:4,maxActions:2,currency:'chaos',prices:{'Metadata/Items/Currency/AncestralOmenOnChromaticAddWhiteSockets':2,'Metadata/Items/Currency/CurrencyRerollSocketColours':0.5,'Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks':2,'Metadata/Items/Currency/CurrencyRerollSocketLinks':0.25}}},'crafted');
   assert.equal(rgbPlan.nativeCrafting.successes,4);assert.equal(rgbPlan.nativeCrafting.meanCost,4.75);assert.equal(rgbPlan.nativeCrafting.resourceUsage.length,4);
   assert.ok(rgbPlan.nativeCrafting.resourceUsage.every(entry=>entry.amount===4));
