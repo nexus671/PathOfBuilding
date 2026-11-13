@@ -278,6 +278,14 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	end
 
 	do
+		local raw="Rarity: NORMAL\nDriftwood Wand\nItem Level: 86";local model=sim.model(raw)
+		local state=sim.validateState(model,{rarity="RARE",affixes={{id="LocalAddedChaosDamage1",range=0.5},{id="bench:731",range=0.5,crafted=true}}})
+		require("Classes.CraftingSimulatorControl").Open(build,{id="annul-330-ui",title="Annul with attack blocker",slot="Weapon 1",startingItem=sim.toItem(model,state).raw,goals={},steps={}})
+		ui:click("currency_annul");local hints={};for _,row in ipairs(main.popups[1].controls.actionHint.list) do hints[#hints+1]=row[1] end;assert(table.concat(hints," "):find("3.30",1,true),"Annulment did not explain the 3.30 rule")
+		frame("crafting-annul-330-rule");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Orb of Annulment",1,true));frame("crafting-annul-330-applied");ui:click("close")
+	end
+
+	do
 		local hybridRaw="Rarity: NORMAL\nIron Hat\nItem Level: 86";local m=sim.model(hybridRaw);local state=copyTable(m.initial)
 		state.rarity="RARE";state.affixes={{id="LocalBaseArmourAndLife1",range={0,1}}}
 		require("Classes.CraftingSimulatorControl").Open(build,{id="independent-affix-ui",title="Independent modifier rolls",slot="Helmet",startingItem=sim.toItem(m,state).raw,goals={},steps={}})

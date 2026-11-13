@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Updated standard Orb of Annulment previews for the 3.30 attack and caster blocker change.
 * Added the 3.30 white-socket bench craft, with corrupted-item costs and deterministic previews.
 * Explain invalid socket rules and test-drop colours instead of showing a misleading filter preview; refresh the explanation when the sample changes.
 * Correct socket and link comparisons in loot filter previews when rules specify both a count and colours.

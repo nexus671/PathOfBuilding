@@ -87,6 +87,12 @@ async function main(){
   assert.deepEqual(corruptedWhiteInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='socket_white_bench').components,{'Metadata/Items/Currency/CurrencyConvertToNormal':1,'Metadata/Items/Currency/CurrencyCorrupt':1});
   const exactWhite=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:whiteService.action,initialState:corruptedWhiteState,targets:[],options:{requirements:{socketColours:'WWWWWW'}}},'crafted');
   assert.equal(exactWhite.nativeCrafting.successChance,100);assert.equal(exactWhite.nativeCrafting.sampled,false);
+  const annulRaw='Rarity: NORMAL\nDriftwood Wand\nItem Level: 86';
+  for(const [id,blocker] of [['LocalAddedChaosDamage1','bench:731'],['GlobalChaosSpellGemsLevel1','bench:732']]) {
+    const initialState={rarity:'RARE',affixes:[{id,range:0.5},{id:blocker,range:0.5,crafted:true}]};
+    const annulled=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:annulRaw,action:{method:'annul'},seed:1,initialState},'crafted');
+    assert.equal(annulled.nativeCrafting.state.affixes.length,1);assert.equal(annulled.nativeCrafting.state.affixes[0].id,blocker);
+  }
   const invalidSockets={rarity:'NORMAL',affixes:[],sockets:[{color:'R',group:0},{color:'G',group:1},{color:'B',group:0}]};
   const rejectedSockets=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:{method:'chromatic'},initialState:invalidSockets,targets:[],options:{requirements:{socketColours:'RB',linkedColours:true},trials:2}},'failed');
   assert.match(rejectedSockets.error,/contiguous group/);
