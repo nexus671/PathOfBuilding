@@ -216,6 +216,10 @@ function M.url(plan)
 end
 function M.new(build)
 	local self={plans={},build=build}
+	local function shortTitle(title)
+		title=title:gsub("%s+"," ")
+		return #title>24 and title:sub(1,21).."..." or title
+	end
 	function self:Load(xml)
 		local ok,plans=pcall(function()
 			local raw=table.concat(xml); assert(#raw <= 2*1024*1024,"Atlas metadata too large")
@@ -236,6 +240,11 @@ function M.new(build)
 		local entry=M.validate(plan); local replacement=copyTable(self.plans); local found
 		for i,old in ipairs(replacement) do if old.id == entry.id then replacement[i]=entry; found=true; break end end
 		if not found then replacement[#replacement+1]=entry end
+		for _,other in ipairs(replacement) do
+			if other.progression and other.progression.previousId==entry.id then
+				assert(other.version==entry.version,"'"..shortTitle(other.title).."' follows this plan. Change its previous plan first.")
+			end
+		end
 		local seen={[entry.id]=true};local previous=entry.progression and entry.progression.previousId
 		while previous do assert(not seen[previous],"Atlas progression contains a cycle");seen[previous]=true;local nextPlan;for _,p in ipairs(replacement) do if p.id==previous then nextPlan=p end end;assert(nextPlan and nextPlan.version==entry.version,"Previous Atlas plan is missing or uses a different version");previous=nextPlan.progression and nextPlan.progression.previousId end
 		assert(#json.encode(replacement) <= 2*1024*1024,"Atlas metadata too large")
@@ -243,6 +252,9 @@ function M.new(build)
 	end
 	function self:Remove(id)
 		assert(not self.unreadable,self.warning)
+		for _,plan in ipairs(self.plans) do
+			assert(not (plan.progression and plan.progression.previousId==id),"'"..shortTitle(plan.title).."' follows this plan. Change its previous plan first.")
+		end
 		for i,plan in ipairs(self.plans) do if plan.id == id then table.remove(self.plans,i); build.modFlag=true; return end end
 	end
 	return self

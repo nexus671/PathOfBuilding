@@ -110,7 +110,11 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(build.savers.AtlasPlans.plans[1].strategy.setupCost.amount==25 and build.savers.AtlasPlans.plans[1].progression.previousId=="starter-atlas","Atlas strategy was not kept")
 	ui:choose("page","Tree");ui:click("tools");ui:text("search","Compare");ui:click("choose");frame("atlas-compare");ui:text("search","Starter maps");ui:click("choose");frame("atlas-comparison-overlay");assert(workspace.controls.canvas.comparison,"Saved-plan comparison did not reach the canvas")
 	ui:click("tools");ui:text("search","history");ui:click("choose");frame("atlas-history");ui:click("close")
-	ui:click("library");frame("atlas-library");ui:click("open")
+	ui:click("library");frame("atlas-library")
+	ui:choose("plans","starter-atlas","val");ui:click("delete")
+	assert(main.popups[1].title=="Saved Atlas plans" and main.popups[1].controls[1].label:find("follows this plan",1,true),"Atlas dependency was not explained")
+	assert(#build.savers.AtlasPlans.plans==2,"A referenced Atlas stage was deleted");frame("atlas-delete-dependency");ui:click("close")
+	ui:choose("plans",build.savers.AtlasPlans.plans[1].id,"val");ui:click("open")
 	ui:choose("page","Tree");ui:click("fit");frame("atlas-fit")
 	canvas=workspace.controls.canvas;x,y=canvas:GetPos();ui.cursorX,ui.cursorY=x+canvas.width/2,y+canvas.height/2
 	local scale=canvas.scale;ui:key("WHEELUP");assert(canvas.scale>scale,"Wheel did not zoom the Atlas canvas")

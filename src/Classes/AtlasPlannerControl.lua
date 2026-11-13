@@ -443,7 +443,11 @@ function Panel.Library(build,layout)
 	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,76,0,14},"^7"..(store.warning or "Keep farming strategies in this build. Save the build to persist them."))
 	local function selected() local choice=controls.plans:GetSelValue(); for _,plan in ipairs(store.plans) do if choice and plan.id == choice.val then return plan end end; error("Choose a saved plan") end
 	controls.open=button(16,112,160,"Open plan",function() local plan=selected(); main:ClosePopup(); Panel.Open(build,plan,layout) end)
-	controls.delete=button(188,112,160,"Delete plan",function() local plan=selected(); store:Remove(plan.id); main:ClosePopup(); Panel.Library(build,layout) end)
+	controls.delete=button(188,112,160,"Delete plan",function()
+		local ok,err=pcall(function() local plan=selected(); store:Remove(plan.id) end)
+		if not ok then main:OpenMessagePopup("Saved Atlas plans",ui.errorText(err)); return end
+		main:ClosePopup(); Panel.Library(build,layout)
+	end)
 	controls.open.enabled=#list>0;controls.delete.enabled=#list>0
 	controls.close=button(468,160,116,"Close",function() main:ClosePopup() end)
 	main:OpenPopup(600,204,"Saved Atlas plans",controls,nil,nil,"close")
