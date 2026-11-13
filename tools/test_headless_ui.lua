@@ -636,6 +636,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:click("inventory");frame("crafting-project-restored-inventory");ui:click("close");ui:click("native")
 		assert(tableDeepEquals(working,w.cache.crafting.layout.snapshot().state));frame("crafting-project-restored-working")
 		ui:click("keepWorking");assert(not require("Modules.PlanningUI").hasDraft(build,"workingCraft",p.id));frame("crafting-project-restored-kept")
+		ui:click("tab_simulate");w.controls.trials:SetText("37",true)
+		assert(require("Modules.PlanningUI").hasDraft(build,"workingCraft",p.id));frame("crafting-settings-working-draft")
+		ui:click("keepWorking");assert(not require("Modules.PlanningUI").hasDraft(build,"workingCraft",p.id));frame("crafting-settings-kept")
+		ui:click("close");ui:click("native");assert(w.controls.trials.buf=="37" and not require("Modules.PlanningUI").hasDraft(build,"workingCraft",p.id));frame("crafting-settings-reopened-clean")
 	end
 
 	ui:restore()

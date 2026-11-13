@@ -160,4 +160,10 @@ Craft of Exile remains an optional independent check. Its [documented import lin
 
 The project library separates **Item**, **Plan**, and **Sharing & tools**. The workbench stays in the planning workspace; **Back to projects** preserves the current item and undo history for this session. Currency icons dim when incompatible with the item, and the action hint explains why.
 
+Changing targets, simulation settings or craft options marks a **Working draft**.
+Use **Keep working craft**, then build **Save**, to retain those changes after a
+restart. Opening a saved craft, browsing its tabs or cancelling an options dialog
+does not mark it as edited. **Keep resource prices** saves its quotes directly;
+other unfinished work still needs **Keep working craft**.
+
 Base artwork is bundled from the same pinned game-data export as crafting. Missing artwork uses PoB's equipment silhouette. The workbench works offline; `python tools/update_crafting_art.py` refreshes the asset manifest when the crafting data is updated.

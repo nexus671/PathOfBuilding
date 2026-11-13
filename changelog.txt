@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Marked unfinished crafting targets, run settings and advanced options as working drafts while keeping restored views and saved quote changes clean.
 * Added crafting-project removal and undo, including inventory, quotes, checkpoints, order and working-draft restoration.
 * Added reviewed MCP project removals with clear change summaries, and preserved compatible drafts and removal undo through AI edits.
 * Reset stale save-state labels when opening another build and tracked unfinished crafts separately per project.

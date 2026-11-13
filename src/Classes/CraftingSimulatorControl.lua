@@ -49,6 +49,10 @@ function Panel.Open(build,project,layout)
 	local requirements=draft.nativeRecipe and draft.nativeRecipe.requirements and copyTable(draft.nativeRecipe.requirements)
 	local requiredGroups=draft.nativeRecipe and draft.nativeRecipe.requiredGroups
 	local controls,history,actions={},{},{}
+	local ready=false
+	local function changed()
+		if ready then ui.draft(build,"workingCraft",draft.id) end
+	end
 	local configured={}
 	local sequence=0
 	local lastSimulation,lastSimulationRun,lastFossilComparison
@@ -73,7 +77,7 @@ function Panel.Open(build,project,layout)
 	local inspectedId=restored and restored.inspectedId
 	local paletteView
 	local populateAffix
-	local action,overrideKey
+	local action,overrideKey,updateCurrency
 	local function actionName()
 		local selected=action()
 		return (selected.allflame and "Allflame " or "")..simulator.labels[selected.method]
@@ -137,7 +141,7 @@ function Panel.Open(build,project,layout)
 			if old and old.allflame and old.allflame.auto then configured[method].allflame=copyTable(old.allflame) end
 		end
 	end
-	controls.method.selFunc=function() updateOptions();refresh() end
+	controls.method.selFunc=function() updateOptions();changed();refresh() end
 	controls.option.enabled=function() return #controls.option.list > 0 end
 	controls.option.selFunc=function()
 		local method=controls.method:GetSelValueByKey("val");local previous=configured[method]
@@ -146,6 +150,7 @@ function Panel.Open(build,project,layout)
 		if previous and previous.allflame and previous.allflame.auto and selected then
 			configured[method]=copyTable(selected.action);configured[method].allflame=copyTable(previous.allflame)
 		end
+		changed()
 		refresh()
 	end
 	label(controls,"seedLabel",16,184,"Seed")
@@ -156,7 +161,7 @@ function Panel.Open(build,project,layout)
 		return copyTable(configured[method] or option and option.action or {method=method})
 	end
 	local function chooseMethod(method)
-		paletteOpen=false;inspectedId=nil;controls.method:SelByValue(method,"val");updateOptions();refresh()
+		paletteOpen=false;inspectedId=nil;controls.method:SelByValue(method,"val");updateOptions();changed();refresh()
 	end
 	local function palette()
 		paletteOpen=true;inspectedId=nil;paletteView.refresh();refresh()
@@ -164,7 +169,7 @@ function Panel.Open(build,project,layout)
 	end
 	local function pickTarget(id)
 		assert(#targets<6,"Use up to six target groups")
-		local kind=simulator.context(model,state).byId[id].type;targets[#targets+1]={anyOf={id},scope=(kind=="Exarch" or kind=="Eater" or kind=="Corrupted") and "implicit" or "explicit"};refresh()
+		local kind=simulator.context(model,state).byId[id].type;targets[#targets+1]={anyOf={id},scope=(kind=="Exarch" or kind=="Eater" or kind=="Corrupted") and "implicit" or "explicit"};changed();refresh()
 	end
 	populateAffix=function(id)
 		local found;for _,entry in ipairs(state.affixes) do if entry.id==id then found=entry end end
@@ -210,7 +215,7 @@ function Panel.Open(build,project,layout)
 	button(controls,"undo",308,204,124,"Undo currency",function() assert(#history > 0,"No currency action to undo"); state=table.remove(history);table.remove(actions);changedAffixes={};ui.draft(build,"workingCraft",draft.id);updateOptions();refresh() end)
 	button(controls,"history",232,390,200,"Item history",function()
 		require("Classes.CraftingHistoryControl").Open(model,state,history,actions,function(saved,count)
-			state=saved;for i=1,count do table.remove(history);table.remove(actions) end;updateOptions();refresh({"Restored an earlier working item."})
+			state=saved;for i=1,count do table.remove(history);table.remove(actions) end;changed();updateOptions();refresh({"Restored an earlier working item."})
 		end)
 	end)
 	button(controls,"compareItem",16,238,200,"Before / after",function()
@@ -252,9 +257,9 @@ function Panel.Open(build,project,layout)
 				assert(values.gainMin >= 0 and values.gainMax >= values.gainMin and values.gainMax <= 100,"Invalid Intangibility gain range")
 			end
 			if #targets > 0 then values.preferredTargets=copyTable(targets) end
-			craft.allflame=values;configured[craft.method]=craft;main:ClosePopup();refresh({"Allflame settings enabled for "..simulator.labels[craft.method]})
+			craft.allflame=values;configured[craft.method]=craft;changed();main:ClosePopup();refresh({"Allflame settings enabled for "..simulator.labels[craft.method]})
 		end)
-		button(popup,"disable",232,228,200,"Use ordinary currency",function() craft.allflame=nil;configured[craft.method]=craft;main:ClosePopup() end)
+		button(popup,"disable",232,228,200,"Use ordinary currency",function() craft.allflame=nil;configured[craft.method]=craft;changed();main:ClosePopup() end)
 		button(popup,"close",448,228,116,"Cancel",function() main:ClosePopup() end)
 		updateProfile();main:OpenPopup(660,280,"Allflame settings",popup,nil,nil,"close")
 	end)
@@ -277,7 +282,7 @@ function Panel.Open(build,project,layout)
 				local ids,seen={},{};for i=1,4 do local value=popup["fossil"..i]:GetSelValue();if value.id then
 					assert(not seen[value.id],"Choose each fossil only once");seen[value.id]=true;ids[#ids+1]=value.id
 				end end
-				assert(#ids > 0,"Choose at least one fossil"); configured.fossil={method="fossil",fossils=ids,tangledOutcome=popup.tangled:GetSelValueByKey("id")}; main:ClosePopup()
+				assert(#ids > 0,"Choose at least one fossil"); configured.fossil={method="fossil",fossils=ids,tangledOutcome=popup.tangled:GetSelValueByKey("id")};changed();main:ClosePopup()
 			end)
 		elseif method == "awakener" or method == "recombine" or method == "recombine_predictable" then
 			edit(popup,"donor",16,36,608,170,"","Paste the donor item",24000)
@@ -299,7 +304,7 @@ function Panel.Open(build,project,layout)
 					craft.selectedMods=selected;craft.reportedSuccessChance=assert(tonumber(popup.chance.buf),"Enter the game's displayed success percentage")
 					assert(craft.reportedSuccessChance >= 0 and craft.reportedSuccessChance <= 100,"Success percentage must be between 0 and 100")
 				end
-				configured[method]=craft;main:ClosePopup()
+				configured[method]=craft;changed();main:ClosePopup()
 			end)
 		else error("Select a fossil, Awakener's Orb or recombination first") end
 		button(popup,"close",508,260,116,"Cancel",function() main:ClosePopup() end)
@@ -313,7 +318,7 @@ function Panel.Open(build,project,layout)
 	controls.target=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,282,416,24},mods)
 	button(controls,"targetPicker",16,188,416,"Find target modifiers",function()
 		require("Classes.CraftingModifierControl").Open(model,copyTable(state),{choose=pickTarget,canAlternative=function() return #targets>0 end,alternative=function(id)
-			local group=assert(targets[#targets],"Add a target group first");assert(require("Modules.CraftingModifiers").scope(simulator.context(model,state).byId[id])==(group.scope or "explicit"),"Choose the same explicit/implicit scope, or create a separate group");for _,value in ipairs(group.anyOf) do if value==id then return end end;assert(#group.anyOf<30,"Use up to thirty alternatives per group");group.anyOf[#group.anyOf+1]=id;refresh()
+			local group=assert(targets[#targets],"Add a target group first");assert(require("Modules.CraftingModifiers").scope(simulator.context(model,state).byId[id])==(group.scope or "explicit"),"Choose the same explicit/implicit scope, or create a separate group");for _,value in ipairs(group.anyOf) do if value==id then return end end;assert(#group.anyOf<30,"Use up to thirty alternatives per group");group.anyOf[#group.anyOf+1]=id;changed();refresh()
 		end,present=function(id)
 			assert(not state.destroyed and not state.veil,"Reset destruction or finish the unveil first")
 			local next=copyTable(state);if next.rarity=="NORMAL" then next.rarity="RARE" end
@@ -323,14 +328,14 @@ function Panel.Open(build,project,layout)
 	button(controls,"addTarget",16,310,132,"Add target",function()
 		assert(#targets < 6,"Use up to six target groups")
 		local id=controls.target:GetSelValueByKey("val");local kind=model.byId[id].type
-		targets[#targets+1]={anyOf={id},scope=(kind == "Exarch" or kind == "Eater" or kind == "Corrupted") and "implicit" or "explicit"}; refresh()
+		targets[#targets+1]={anyOf={id},scope=(kind == "Exarch" or kind == "Eater" or kind == "Corrupted") and "implicit" or "explicit"};changed();refresh()
 	end)
 	button(controls,"alternative",160,310,132,"Add alternative",function()
 		local group=assert(targets[#targets],"Add a target group first")
 		assert(#group.anyOf < 30,"Use up to thirty alternatives per group")
-		group.anyOf[#group.anyOf+1]=controls.target:GetSelValueByKey("val"); refresh()
+		group.anyOf[#group.anyOf+1]=controls.target:GetSelValueByKey("val");changed();refresh()
 	end)
-	button(controls,"clearTargets",304,310,128,"Clear targets",function() targets={}; refresh() end)
+	button(controls,"clearTargets",304,310,128,"Clear targets",function() targets={};changed();refresh() end)
 	label(controls,"trialsLabel",16,354,"Trials / action budget per trial")
 	edit(controls,"trials",16,374,130,24,"200","Trials",5)
 	edit(controls,"budget",162,374,130,24,"20","Action budget",5)
@@ -385,7 +390,7 @@ function Panel.Open(build,project,layout)
 		local books={};for _,project in ipairs(build.savers.CraftingProjects.projects) do if project.id~=draft.id and project.priceBook and next(project.priceBook.values) then books[#books+1]=project end end
 		local crafts={action()};for _,step in ipairs(draft.nativeRecipe and draft.nativeRecipe.steps or {}) do crafts[#crafts+1]=step end
 		require("Classes.CraftingPricesControl").Open(simulator.context(model,state),state,crafts,draft.priceBook,controls.currency.buf,function(book)
-			if controls.currency.buf~=book.currency then controls.currency:SetText(book.currency,true) end
+			if controls.currency.buf~=book.currency then controls.currency:SetText(book.currency);updateCurrency() end
 			draft.priceBook=book;if draft.run then draft.run.settings.currency=book.currency end;draft=copyTable(build.savers.CraftingProjects:Upsert(draft))
 			ui.kept(build,"craftingPrices");refresh({"Resource prices kept in this build. Use build Save to persist."})
 		end,books)
@@ -402,16 +407,16 @@ function Panel.Open(build,project,layout)
 		require("Classes.CraftingRecipeControl").Open(recipe,action(),function(result) draft.nativeRecipe=result;build.savers.CraftingProjects:Upsert(draft);refresh({"Recipe kept. Use build Save to persist."}) end,simulator.context(model,state))
 	end)
 	button(controls,"targetConditions",16,650,416,"Target counts, rolls and item properties",function()
-		require("Classes.CraftingTargetControl").Open(targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;refresh() end,0)
+		require("Classes.CraftingTargetControl").Open(targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;changed();refresh() end,0)
 	end)
 	controls.targetConditions.width=200;controls.targetConditions.label="Item properties"
 	button(controls,"targetGroups",232,226,200,"Edit target groups",function()
-		require("Classes.CraftingTargetGroupsControl").Open(model,state,targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;refresh() end)
+		require("Classes.CraftingTargetGroupsControl").Open(model,state,targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;changed();refresh() end)
 	end)
 	local function showFossilComparison()
 		assert(lastFossilComparison,"Run a fossil comparison first")
 		require("Classes.CraftingFossilCompareControl").Open(lastFossilComparison,function(ids)
-			configured.fossil={method="fossil",fossils=ids};controls.method:SelByValue("fossil","val");updateOptions()
+			configured.fossil={method="fossil",fossils=ids};changed();controls.method:SelByValue("fossil","val");updateOptions()
 			refresh({"Selected fossil combination. No currency was spent; the item is unchanged."})
 		end)
 	end
@@ -497,7 +502,7 @@ function Panel.Open(build,project,layout)
 		button(popup,"moreTrials",16,resultHeight-42,220,"Run more trials",function()
 			assert(request,"Run a fresh simulation to capture its setup")
 			request.options.trials=math.min(2000,math.floor(20000/request.options.maxActions),math.max(32,result.trials*4))
-			controls.trials:SetText(tostring(request.options.trials));main:ClosePopup();startSimulation(request)
+			controls.trials:SetText(tostring(request.options.trials),true);main:ClosePopup();startSimulation(request)
 		end)
 		popup.moreTrials.enabled=function() return request~=nil and not tasks.job and result.trials<math.min(2000,math.floor(20000/request.options.maxActions)) end
 		popup.moreTrials.tooltipText=request and "Repeat this captured recipe, item, targets, seed and prices with more trials. Only the trial count changes." or "Run a fresh simulation to capture the setup for this older result."
@@ -536,13 +541,14 @@ function Panel.Open(build,project,layout)
 	controls.resourcePrices.enabled=function() return require("Modules.CraftingTasks").job==nil end
 	controls.currency.enabled=function() return not draft.priceBook or not next(draft.priceBook.values) end
 	controls.currency.showDisabledValue=true
-	controls.currency.changeFunc=function()
+	updateCurrency=function()
 		if draft.priceBook and not next(draft.priceBook.values) then draft.priceBook.currency=controls.currency.buf end
 		priceOverrides={};controls.price:SetText("");controls.baseCost:SetText("")
 		if draft.run then
 			draft.run.priceOverrides={};draft.run.settings.price="";draft.run.settings.baseCost="";draft.run.settings.currency=controls.currency.buf
 		end
 	end
+	controls.currency.changeFunc=updateCurrency
 	controls.currency.tooltipText="Saved resource quotes use this common unit. Change it through Resource prices. Changing units clears action overrides and base cost."
 	controls.price.tooltipText=function() return "Optional total price of "..actionName()..". It applies when that action executes, including inside saved recipes." end
 	controls.runRecipe.enabled=function() return not tasks.job and draft.nativeRecipe~=nil end
@@ -680,6 +686,15 @@ function Panel.Open(build,project,layout)
 	if restored then controls.method:SelByValue(restored.method or "alchemy","val");controls.resultSummary.list=restored.resultRows or controls.resultSummary.list
 	elseif draft.preferredMethod then controls.method:SelByValue(draft.preferredMethod,"val") end
 	updateOptions();refresh()
+	-- Hook edits after restoring controls so viewing a saved craft stays clean.
+	for _,key in ipairs({"trials","budget","price","currency","baseCost","seed"}) do
+		local control=controls[key];local previous=control.changeFunc
+		control.changeFunc=function(...)
+			if previous then previous(...) end
+			changed()
+		end
+	end
+	ready=true
 	if inspectedId then populateAffix(inspectedId) end
 	for key,control in pairs(controls) do if key~="stage" then control.layoutAudit="crafting-workbench" end end
 	if layout then layout.mount(width,height,"Crafting workbench",controls) else main:OpenPopup(width,height,"Crafting workbench",controls,nil,nil,"close") end

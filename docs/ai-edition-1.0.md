@@ -56,11 +56,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `aaf5f42c30b2265325f0cb0e0065029a6afd96d9`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43411481294),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43411481303)).
-It passed 1,186 Lua tests, 45 Node tests, the real MCP save/reopen workflow and
-807 source-stable UI states without audit failures. All 2,424 updater file hashes
+The latest verified checkpoint is `c7830b6f1fa315186e3fea38a906acf2ed704c59`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43417642565),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43417642562)).
+It passed 1,196 Lua tests, 46 Node tests, the real MCP save/reopen workflow and
+831 source-stable UI states without audit failures. All 2,424 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
@@ -230,6 +230,11 @@ an edit carries compatible working drafts and removal undo forward without chang
 the original build's undo state. Saved recipes use their own starting state even
 after manual working-item edits. Native screens cover empty lists, restoration,
 inventory and large-text removal notices.
+
+The next save-state review covers target edits, simulation fields and accepted
+advanced configurations. Merely opening or navigating a saved craft stays clean,
+as do cancelled dialogs and directly kept resource quotes. Other unfinished
+settings keep their working-draft marker when quotes are saved.
 
 Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies
