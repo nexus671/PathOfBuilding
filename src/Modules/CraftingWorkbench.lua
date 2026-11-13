@@ -40,7 +40,7 @@ function M.itemArt(item)
 	return "Assets/icon_"..(slots[item.type] or "weapon")..".png",84,84
 end
 function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
-	options=options or {};local header=options.header or 180;local artSize=options.artSize or 84;local propertyX=artSize+26
+	options=options or {};local weaponItem=model.item.base.weapon~=nil;local header=(options.header or 180)+(weaponItem and 22 or 0);local artSize=options.artSize or 84;local propertyX=artSize+26
 	local art,artWidth,artHeight,artPath
 	local function setArt(item)
 		local path,width,height=M.itemArt(item)
@@ -72,15 +72,23 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 		text(cx+propertyX,cy+67,16,"Item level "..item.itemLevel)
 		text(cx+propertyX,cy+89,16,"Quality: +"..(state.quality or item.quality or 0).."%")
 		text(cx+propertyX,cy+111,16,self.defences or "",nil,w-propertyX-16)
+		if self.weaponStats then
+			local weapon=self.weaponStats
+			local dps=string.format("Weapon DPS %.1f | phys %.1f | ele %.1f",weapon.TotalDPS or 0,weapon.PhysicalDPS or 0,weapon.ElementalDPS or 0)
+			if (weapon.ChaosDPS or 0)>0 then dps=dps..string.format(" | chaos %.1f",weapon.ChaosDPS) end
+			text(cx+propertyX,cy+111,16,dps,nil,w-propertyX-16)
+			text(cx+propertyX,cy+133,16,string.format("%.2f attacks/s | %.2f%% crit",weapon.AttackRate or 0,weapon.CritChance or 0),nil,w-propertyX-16)
+		end
+		local extra=weaponItem and 22 or 0
 		local sockets=state.sockets or item.sockets or {}
 		for i,socket in ipairs(sockets) do
 			local sx=cx+propertyX+(i-1)*24
-			if i>1 and socket.group == sockets[i-1].group then box(sx-9,cy+139,12,3,"^xA68B59") end
-			box(sx,cy+133,14,14,"^xA68B59")
-			box(sx+2,cy+135,10,10,({R="^xE07070",G="^x70BB70",B="^x7070EE",W="^xEEEEEE"})[socket.color] or "^xC8C8C8")
+			if i>1 and socket.group == sockets[i-1].group then box(sx-9,cy+139+extra,12,3,"^xA68B59") end
+			box(sx,cy+133+extra,14,14,"^xA68B59")
+			box(sx+2,cy+135+extra,10,10,({R="^xE07070",G="^x70BB70",B="^x7070EE",W="^xEEEEEE"})[socket.color] or "^xC8C8C8")
 		end
-		if (header>=212 or options.compact) and self.slotSummary then text(cx+propertyX,cy+158,14,self.slotSummary,"^xA6B3C6",w-propertyX-16) end
-		if (header>=212 or options.compact) and self.influenceSummary then text(cx+propertyX,cy+176,12,self.influenceSummary,"^xD3B987",w-propertyX-16) end
+		if (header>=212 or options.compact) and self.slotSummary then text(cx+propertyX,cy+158+extra,14,self.slotSummary,"^xA6B3C6",w-propertyX-16) end
+		if (header>=212 or options.compact) and self.influenceSummary then text(cx+propertyX,cy+176+extra,12,self.influenceSummary,"^xD3B987",w-propertyX-16) end
 		if not options.compact then text(cx+16,cy+header-21,14,state.destroyed and "Undo or reset to continue" or onClick and self:IsEnabled() and "Click the item to apply the selected currency" or "Item preview","^xD3B987") end
 	end
 	if options.compact then
@@ -97,18 +105,19 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 		end
 	end
 	local function refresh()
-		local state=getState();local lines={}
+		local state=getState();local lines={};card.defences=nil;card.weaponStats=nil;card.influenceSummary=nil
 		if state.destroyed then wrap(lines,"This item was destroyed.","^xE07070",w-30)
 		else
 			local context=simulator.context(model,state)
 			card.preview=context.item;setArt(context.item)
 			local item=simulator.toItem(model,state)
 			local defences={}
-			for _,property in ipairs({"Armour","Evasion","EnergyShield"}) do
+			for _,property in ipairs({"Armour","Evasion","EnergyShield","Ward"}) do
 				local value=item.armourData and item.armourData[property]
 				if value and value>0 then defences[#defences+1]=(property == "EnergyShield" and "ES" or property)..": "..math.floor(value) end
 			end
 			card.defences=#defences>0 and table.concat(defences," / ") or nil
+			card.weaponStats=item.weaponData and item.weaponData[options.slot and options.slot:match("^Weapon 2") and 2 or 1]
 			if #(item.implicitModLines or {})>0 then wrap(lines,"Implicit modifiers","^xA6B3C6",w-30) end
 			for _,line in ipairs(item.implicitModLines or {}) do wrap(lines,itemLib.formatModLine(line,false) or line.line,"^x8888FF",w-30) end
 			if #(item.enchantModLines or {})>0 then wrap(lines,"Enchantments","^xA6B3C6",w-30) end

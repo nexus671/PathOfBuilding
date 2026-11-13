@@ -164,6 +164,21 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(main.popups[1].controls.intro.label:find("Applied Harvest",1,true),"Harvest enchantment was not applied")
 	ui:choose("page","Target conditions");ui:click("targetConditions");ui:choose("harvestEnchant","LifeBodyEnchant","val");frame("crafting-harvest-goal");ui:click("keep")
 	ui:choose("page","Emulate item");ui:click("undo");frame("crafting-harvest-undone");ui:click("close")
+	local swordRaw="Rarity: NORMAL\nRusted Sword\nItem Level: 86\nQuality: 20\nSockets: R-G-B"
+	local swordProject={id="weapon-ui",title="Local weapon properties",slot="Weapon 1",startingItem=swordRaw,goals={},steps={}}
+	require("Classes.CraftingSimulatorControl").Open(build,swordProject)
+	local baseWeapon=main.popups[1].controls.item.weaponStats;assert(baseWeapon and baseWeapon.PhysicalDPS>0 and baseWeapon.CritChance>0,"Weapon properties are missing")
+	frame("crafting-weapon-properties")
+	ui:click("settings");ui:text("paletteSearch","replace quality");ui:click("paletteUse");ui:choose("option",require("Modules.CraftingEnchants").label("WeaponCriticalEnchant"),"label");ui:click("apply")
+	local enchantedWeapon=main.popups[1].controls.item.weaponStats
+	assert(enchantedWeapon.CritChance>baseWeapon.CritChance and enchantedWeapon.PhysicalDPS<baseWeapon.PhysicalDPS,"The weapon preview missed the quality enchantment tradeoff")
+	frame("crafting-weapon-enchanted")
+	local swordModel=sim.model(swordRaw);local swordState=sim.perform(swordRaw,{method="harvest_enchant",enchantId="WeaponCriticalEnchant"},1).state
+	require("Classes.CraftingItemComparisonControl").Open({title="Before enchantment",baseItem=swordRaw,state=swordModel.initial,slot="Weapon 1"},{title="After enchantment",baseItem=swordRaw,state=swordState,slot="Weapon 1"})
+	frame("crafting-weapon-comparison");ui:click("close");ui:click("close")
+	require("Classes.CraftingSimulatorControl").Open(build,{id="ward-ui",title="Ward properties",slot="Helmet",startingItem="Rarity: NORMAL\nRunic Helm\nItem Level: 86",goals={},steps={}})
+	assert(main.popups[1].controls.item.defences:find("Ward:",1,true),"Ward is missing from the item card")
+	frame("crafting-ward-properties");ui:click("close")
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

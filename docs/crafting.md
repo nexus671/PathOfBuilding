@@ -15,6 +15,8 @@ Plain item copies can be imported when their complete modifier identities and ro
 
 The item card groups prefixes and suffixes, shows slot usage, and marks fractured (**F**) and crafted (**C**) modifiers. Click a modifier to inspect its ranges, tags and required level beside the item, select a relevant action, or use it as a target. Group tiers compare required levels within the eligible modifier group; special modifiers keep their data names.
 
+Weapon cards show native local DPS, its damage-type breakdown, attacks per second and critical chance. Armour cards include Ward. These properties also appear in saved-item comparisons; **Preview in build** calculates their character effects.
+
 **Settings** contains advanced method configuration, **Allflame settings**, and **Edit hypothetical item**. The Craft tab keeps the currency tray, selected action, apply/undo and history controls together.
 
 Search **Find currencies** for **replace quality** to apply a Harvest quality enchantment. The choices show the required Lifeforce amount and colour. The new enchantment replaces the previous one; affixes, socket colours and quality remain. **Targets → Item properties** can require a particular Harvest enchantment. These goals and enchanted inventory items also travel through MCP and saved projects.

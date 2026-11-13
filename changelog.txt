@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Added native weapon DPS, speed, critical chance and Ward to crafting item cards and comparisons.
 * Made the crafting rules version visible on the workbench, with one-click coverage details.
 * Updated Atlas map-supply wording for current strategies while retaining older saved notes.
 * Avoided duplicate recovery trials while loading AI proposal candidates, retaining complete final calculations.

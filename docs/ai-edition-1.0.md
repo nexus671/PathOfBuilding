@@ -24,6 +24,7 @@ The installed application and personal builds are outside this release workspace
 - [x] Edit target groups directly, with clear AND/OR and property requirements.
 - [x] Inspect recipe branches visually and edit routes without numeric guesswork.
 - [x] Keep experimental items in a named local inventory.
+- [x] Show native weapon DPS, attack rate, critical chance and Ward in item comparisons.
 - [x] Compare methods and explore success/budget and spending distributions.
 - [x] Apply quality enchantments with native item state, recipe goals and resource costs.
 - [ ] Review incomplete socket, corruption and league mechanics against sources.
@@ -55,7 +56,7 @@ placeholder that pretends to provide those results offline.
 The published preview passed exact-commit CI with 1,116 Lua tests, 42 Node tests,
 the real MCP save/reopen workflow and 642 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `361a5b3894ed978998c0343f27c7618e06da8e0a`.
+against commit `5945883dd103ceecde7e171a09f9b9dac1527572`.
 
 That preview includes the native colour wheel, brightness/opacity controls,
 exact RGBA input and Ruthless validation. Native input tests also exposed and
@@ -63,11 +64,16 @@ fixed campaign fields rejecting numeric entry. It also includes 14
 client-derived Harvest quality enchantments, goals, native import/export and
 resource costs. It also fixes repeated socket-count preparation costs when
 linking an item that already has the requested count, and removes duplicate
-recovery trials during AI candidate loading. The next review refreshes Atlas
-map-supply wording, exposes the crafting rules version and bounds catalogue
-trimming for direct callers. The Atlas changes passed 642 source-stable UI states;
-the later Rules button passed nine focused native states, including hover and
-coverage navigation, at all three sizes. Exact-commit CI is still required.
+recovery trials during AI candidate loading. Atlas map-supply wording and the
+visible Rules button are included. The real MCP workflow now discovers and
+applies a Harvest enchantment, prices its recipe, reviews two gear guides and
+preserves them through save/reopen and portable bundle import.
+
+The next review adds native weapon properties and Ward to item cards and
+comparisons, including the selected equipment slot. Local validation passed
+1,116 Lua tests and 654 source-stable UI states without audit failures, including
+the weapon quality tradeoff and Ward at all three sizes. Exact-commit CI remains
+required for that display change.
 The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.

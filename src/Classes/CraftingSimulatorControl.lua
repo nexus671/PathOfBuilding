@@ -70,7 +70,7 @@ function Panel.Open(build,project,layout)
 	local itemWidth=math.min(540,width-leftWidth-64)
 	local itemX=leftWidth+32+math.floor((width-leftWidth-48-itemWidth)/2)
 	label(controls,"intro",16,64,"Select a currency, then click your item to craft.")
-	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=196,artSize=96,compact=true,selectedAffix=function() return inspectedId end,changedAffixes=function() return changedAffixes end})
+	local refreshItem=workbench.item(controls,"item",itemX,112,itemWidth,height-184,model,function() return state end,function() controls.apply:Click() end,{header=196,artSize=96,compact=true,slot=draft.slot,selectedAffix=function() return inspectedId end,changedAffixes=function() return changedAffixes end})
 	controls.targetSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,244,416,height-312},nil,{})
 	local function refresh(extra)
 		if inspectedId then local exists;for _,entry in ipairs(state.affixes) do if entry.id==inspectedId then exists=true end end;if not exists then inspectedId=nil end end
@@ -518,7 +518,7 @@ function Panel.Open(build,project,layout)
 	end
 	local function inventoryChanged(project) if project.id==draft.id then draft.inventory=copyTable(project.inventory) end end
 	button(controls,"inventory",leftWidth+32,54,math.floor((width-leftWidth-60)/2),"Item inventory",function()
-		require("Classes.CraftingInventoryControl").Open(build,{current={baseItem=draft.startingItem,state=copyTable(state),title="Working item"},change=inventoryChanged,resume=function(project)
+		require("Classes.CraftingInventoryControl").Open(build,{current={baseItem=draft.startingItem,state=copyTable(state),title="Working item",slot=draft.slot},change=inventoryChanged,resume=function(project)
 			if layout then layout.openWorkbench(project) else Panel.Open(build,project) end
 		end})
 	end)
