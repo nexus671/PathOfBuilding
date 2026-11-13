@@ -27,6 +27,12 @@ describe("Current crafting reference workflows",function()
 		local unsupported=sim.model("Rarity: NORMAL\nPrismatic Tincture\nItem Level: 85")
 		assert.are.equal(false,pcall(sim.allflameProfile,unsupported,unsupported.initial,{method="alchemy",allflame={auto=true}}))
 	end)
+	it("marks the Allflame model as historical in crafting inspection",function()
+		local availability=sim.catalog(raw,"",1).allflameAvailability
+		assert.are.equal("historical",availability.status);assert.are.equal("3.29",availability.dataPatch)
+		assert.are.equal("3.30",availability.asOfPatch);assert.is_false(availability.availableInCore)
+		assert.matches("not return to core",availability.reason);assert.matches("4013527",availability.source)
+	end)
 	it("charges derived Allflame costs once and consumes an existing imprint",function()
 		local craft={method="alchemy",allflame={auto=true,upgradeTier=2}}
 		local result=sim.simulate(raw,{steps={craft},targets={},requirements={minAffixes=4}},{trials=10,maxActions=1,prices={alchemy=1,dead_mans_sulphur=0.001},currency="chaos"})

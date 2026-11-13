@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Marked Allflame crafting as historical 3.29 content in the workbench and AI inspection.
 * Updated full prefix and suffix lock ingredient costs for 3.30 item types.
 * Updated standard Orb of Annulment previews for the 3.30 attack and caster blocker change.
 * Added the 3.30 white-socket bench craft, with corrupted-item costs and deterministic previews.

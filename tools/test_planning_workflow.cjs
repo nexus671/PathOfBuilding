@@ -59,6 +59,7 @@ async function main(){
   const modifier=inspected.crafting.nativeEngine.modifiers[0].id;
   const bodyRaw='Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20\nSockets: W W W W W W';
   const bodyInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'life',limit:20},'inspected');
+  assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.status,'historical');assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.availableInCore,false);assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.asOfPatch,'3.30');
   const enchantService=bodyInspection.crafting.nativeEngine.harvestEnchants.find(entry=>entry.id==='LifeBodyEnchant');
   assert.ok(bodyInspection.crafting.nativeEngine.nativeStats.Armour>0);
   assert.ok(enchantService);assert.deepEqual(enchantService.components,{wild_lifeforce:3250});

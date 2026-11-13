@@ -242,27 +242,28 @@ function Panel.Open(build,project,layout)
 		local entries={};for _,entry in ipairs(state.affixes) do local id=entry.id;entries[#entries+1]={id=id,label=table.concat(model.byId[id]," / "),category=model.byId[id].type,details=function() return inspect.modDetails(model,id,entry) end} end
 		browser.Open(inspect.slots(model,state),entries,{action="Use as target",choose=function(entry) pickTarget(entry.id);controls.page:SelByValue("Target conditions") end})
 	end)
-	button(controls,"allflame",16,410,416,"Allflame settings",function()
+	button(controls,"allflame",16,410,416,"Allflame settings (3.29)",function()
 		local craft=action();local profile=craft.allflame or {};local popup={}
-		popup.mode=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,296,24},{"Current game data","Observed override"})
-		popup.mode:SelByValue(profile.outcomes and not profile.auto and "Observed override" or "Current game data")
+		popup.mode=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,296,24},{"3.29 client data","Observed override"})
+		popup.mode:SelByValue(profile.outcomes and not profile.auto and "Observed override" or "3.29 client data")
 		popup.upgrade=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{328,28,300,24},{{label="Ship: basic",val=0},{label="Ship: one upgrade",val=1},{label="Ship: fully upgraded",val=2}})
 		popup.upgrade:SelByValue(profile.upgradeTier or 2,"val")
 		popup.preview=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,70,628,100},nil,{})
-		local function automatic() return popup.mode:GetSelValue() == "Current game data" end
+		local function automatic() return popup.mode:GetSelValue() == "3.29 client data" end
 		local function updateProfile()
 			local copy=copyTable(craft);copy.allflame={auto=true,upgradeTier=popup.upgrade:GetSelValueByKey("val")}
 			local ok,value=pcall(simulator.allflameProfile,model,state,copy)
 			popup.preview.list=rows(ok and {value.outcomes.." ghost outcomes",string.format("Intangibility gain: %d-%d%% | Sulphur: %d",value.gainMin,value.gainMax,value.sulphur),"Choose the ship upgrades you have unlocked."} or {tostring(value):match("^[^\n]+")})
 		end
 		popup.upgrade.selFunc=updateProfile;popup.preview.shown=automatic;popup.upgrade.enabled=automatic
-		edit(popup,"outcomes",16,80,140,24,tostring(profile.outcomes or ""),"Max outcomes 1-4",12)
+		edit(popup,"outcomes",16,80,140,24,tostring(profile.outcomes or ""),"Outcomes 1-4",12)
 		edit(popup,"gainMin",172,80,140,24,tostring(profile.gainMin or ""),"Min gain %",12)
 		edit(popup,"gainMax",328,80,140,24,tostring(profile.gainMax or ""),"Max gain %",12)
 		edit(popup,"sulphur",16,120,296,24,tostring(profile.sulphur or ""),"Dead Man's Sulphur cost",12)
 		for _,key in ipairs({"outcomes","gainMin","gainMax","sulphur"}) do popup[key].shown=function() return not automatic() end end
-		label(popup,"policy",16,184,"Recipes prefer the most matching target groups; ties keep the first.")
-		button(popup,"use",16,228,200,"Use Allflame settings",function()
+		ui.description(popup,"historical",16,178,628,36,{"Allflame is not core in 3.30. These settings model historical or hypothetical crafting."},14)
+		label(popup,"policy",16,222,"Recipes prefer the most matching target groups; ties keep the first.")
+		button(popup,"use",16,266,200,"Use Allflame settings",function()
 			local values
 			if automatic() then
 				values={auto=true,upgradeTier=popup.upgrade:GetSelValueByKey("val")}
@@ -275,9 +276,9 @@ function Panel.Open(build,project,layout)
 			if #targets > 0 then values.preferredTargets=copyTable(targets) end
 			craft.allflame=values;configured[craft.method]=craft;changed();main:ClosePopup();refresh({"Allflame settings enabled for "..simulator.labels[craft.method]})
 		end)
-		button(popup,"disable",232,228,200,"Use ordinary currency",function() craft.allflame=nil;configured[craft.method]=craft;changed();main:ClosePopup() end)
-		button(popup,"close",448,228,116,"Cancel",function() main:ClosePopup() end)
-		updateProfile();main:OpenPopup(660,280,"Allflame settings",popup,nil,nil,"close")
+		button(popup,"disable",232,266,200,"Use ordinary currency",function() craft.allflame=nil;configured[craft.method]=craft;changed();main:ClosePopup() end)
+		button(popup,"close",448,266,116,"Cancel",function() main:ClosePopup() end)
+		updateProfile();main:OpenPopup(660,318,"Allflame settings (3.29)",popup,nil,nil,"close")
 	end)
 	button(controls,"configure",16,231,416,"Configure fossil combination / donor item",function()
 		local method=controls.method:GetSelValueByKey("val")
@@ -607,7 +608,7 @@ function Panel.Open(build,project,layout)
 	controls.keepRecipe.enabled=function() return #actions>0 and not state.destroyed and not state.veil end
 	controls.manual.enabled=function() return not state.destroyed and not state.veil end
 	controls.allflame.enabled=function() return simulator.supportsAllflame(controls.method:GetSelValueByKey("val")) end
-	controls.allflame.tooltipText=function() return controls.allflame:IsEnabled() and "Configure client data or an observed Allflame profile for this currency." or "Allflame is not modeled for this action. Choose a supported itemised currency." end
+	controls.allflame.tooltipText=function() return controls.allflame:IsEnabled() and "Historical 3.29 Allflame model; Allflame is not core in 3.30." or "Allflame is not modeled for this action. Choose a supported itemised currency." end
 	controls.fossilResults.tooltipText="Reopen the captured comparison. Rerun after changing the item, targets or quotes."
 	controls.fossilResults.enabled=function() return lastFossilComparison~=nil and require("Modules.CraftingTasks").job==nil end
 	controls.optimize.tooltipText=function() return targetReason() or "Set targets or item properties, then select Fossil resonator. Settings / Configure chooses multiple candidates. Comparisons use ordinary fossil crafts." end
