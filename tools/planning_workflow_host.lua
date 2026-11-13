@@ -7,12 +7,17 @@ io.stderr:write("Native workflow: installing UI recorder\n")
 local json=require("dkjson")
 local bridge=require("Modules.DesktopBuildBridge")
 local ui=require("Modules.HeadlessUI").install({width=1024,height=768})
+local function frame()
+	-- Each native frame replaces the recorder's previous draw commands.
+	-- Calling OnFrame directly retains every tree draw across the whole workflow.
+	ui:frame(function() runCallback("OnFrame") end)
+end
 io.stdout:setvbuf("no")
 main.userPath=directory;main.buildPath=directory;main.defaultBuildPath=directory;main.disableDevAutoSave=true
 newBuild()
 io.stderr:write("Native workflow: calculating fixture\n")
 build.buildName="MCP workflow fixture";build.characterLevel=80;build.characterLevelAutoMode=false
-build.buildFlag=true;runCallback("OnFrame");ui:bind(build)
+build.buildFlag=true;frame();ui:bind(build)
 bridge.enable(build)
 io.stderr:write("Native workflow: bridge ready\n")
 local function respond(value) io.stdout:write("WORKFLOW\t"..json.encode(value).."\n") end
@@ -21,14 +26,14 @@ for line in io.lines() do
 	local command=assert(json.decode(line))
 	local ok,result=xpcall(function()
 		if command.kind=="tick" then
-			for i=1,command.frames or 1 do runCallback("OnFrame");bridge.poll(build,true) end
+			for i=1,command.frames or 1 do frame();bridge.poll(build,true) end
 		elseif command.kind=="request-test" then bridge.connectionTest={nonce="workflow-connection-test",requestedAt=os.time()};bridge.publishState()
 		elseif command.kind=="connection-proof" then return {client=bridge.client and bridge.client.name,tested=bridge.connectionTest and bridge.connectionTest.passed,synced=bridge.client and bridge.client.contextRevision==bridge.contextRevision}
 		elseif command.kind=="apply" then
 			assert(bridge.prepared,"Expected a pending native review")
 			build.viewMode="CONFIG";ui:bind(build);ui:click("aiBuild");ui:click("review");ui:click("apply")
 			assert(not main.popups[1],"Native apply did not finish")
-			build=main.modes.BUILD;ui:bind(build);runCallback("OnFrame");bridge.refresh(build)
+			build=main.modes.BUILD;ui:bind(build);frame();bridge.refresh(build)
 		elseif command.kind=="save-reopen" then
 			build.viewMode="CONFIG";ui:bind(build);ui:click("aiBuild");ui:click("nav_crafting");ui:click("native")
 			ui:click("currency_alchemy");ui:click("item");ui:click("keepWorking")
@@ -45,13 +50,13 @@ for line in io.lines() do
 		elseif command.kind=="bundle-roundtrip" then
 			build.viewMode="CONFIG";ui:bind(build);ui:click("aiBuild");ui:click("nav_tools");ui:text("search","bundle");ui:click("choose");ui:click("export");ui:click("paste");ui:click("review")
 			assert(bridge.prepared and bridge.prepared.mode=="new","Bundle did not prepare a new build")
-			ui:click("apply");build=main.modes.BUILD;ui:bind(build);runCallback("OnFrame")
+			ui:click("apply");build=main.modes.BUILD;ui:bind(build);frame()
 			assert(not build.dbFileName and #build.savers.AtlasPlans.plans==2 and build.savers.CraftingProjects.projects[1].run,"Bundle import lost saved metadata or reused the source file")
 			local body=build.savers.CraftingProjects.projects[2]
 			assert(body and body.id=="body-enchant" and body.nativeRecipe.requirements.harvestEnchant=="LifeBodyEnchant" and body.inventory[1].state.harvestEnchant=="LifeBodyEnchant","Bundle import lost the second gear guide or its enchantment")
 		elseif command.kind=="quit" then bridge.disable(build);return {quit=true}
 		else error("Unknown host command") end
-		return {revision=bridge.revision(build),status=bridge.status and bridge.status.status,life=build.calcsTab.calcsOutput.LifeUnreserved}
+		return {revision=bridge.revision(build),status=bridge.status and bridge.status.status,life=build.calcsTab.calcsOutput.LifeUnreserved,drawCommands=#ui.commands}
 	end,debug.traceback)
 	respond({id=command.id,ok=ok,result=ok and result or nil,error=not ok and tostring(result) or nil})
 	if command.kind=="quit" then break end

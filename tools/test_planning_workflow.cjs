@@ -35,7 +35,13 @@ async function main(){
   const initialized=await rpc('initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'planning-workflow-test',version:'1'}});assert.ok(initialized.result);
   children[1].stdin.write(JSON.stringify({jsonrpc:'2.0',method:'notifications/initialized'})+'\n');
   async function call(name,args={}){const response=await rpc('tools/call',{name,arguments:args});assert.ok(!response.error,JSON.stringify(response));assert.ok(!response.result.isError,JSON.stringify(response));return response.result.structuredContent;}
-  async function host(kind,frames){const response=await native.send({kind,frames});assert.ok(response.ok,response.error);return response.result;}
+  async function host(kind,frames){
+    const response=await native.send({kind,frames});assert.ok(response.ok,response.error);
+    // The fixture draws about 9,200 commands per frame. Leave room for larger
+    // views, while rejecting accumulation across the 24-frame polling batches.
+    if(kind==='tick') assert.ok(response.result.drawCommands<100000,'Native recorder retained earlier frames');
+    return response.result;
+  }
   async function queued(name,args,status){diagnostics.push('Workflow request: '+name);const request=await call(name,args);let result;for(let i=0;i<100;i++){await host('tick',24);result=await call('get_proposal_status');assert.equal(result.proposal.id,request.id);if(result.proposal.status===status) return result.proposal;assert.notEqual(result.proposal.status,'failed',JSON.stringify(result.proposal));}assert.fail(JSON.stringify(result.proposal));}
   let context=(await call('get_build_context')).context;const baseLife=context.stats.LifeUnreserved;
   await host('request-test');await call('get_build_connection');await host('tick',1);

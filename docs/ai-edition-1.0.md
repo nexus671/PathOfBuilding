@@ -197,6 +197,14 @@ survive checkpoint save/reopen. Local review passed 1,174 Lua tests, 45 Node
 tests, the real MCP workflow and 780 source-stable UI states without audit
 failures. Exact-commit CI remains required.
 
+The first preview 24 CI run passed the Lua, Node, UI and ModCache checks but
+timed out during the MCP filter test. A Linux reproduction exposed draw commands
+accumulating in the headless test host across polling frames. The host now uses
+the recorder's frame boundary and the workflow rejects unbounded command counts.
+The instrumented full workflow passed with at most 13,054 retained commands,
+versus 5.77 million before the diagnostic run was stopped. This fixes the test
+host; it does not establish sustained desktop performance. Fresh CI is required.
+
 Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies
 incomplete mechanics and model assumptions; this is not a full-parity release.
