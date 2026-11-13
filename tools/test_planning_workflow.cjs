@@ -88,6 +88,13 @@ async function main(){
   assert.deepEqual(corruptedWhiteInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='socket_white_bench').components,{'Metadata/Items/Currency/CurrencyConvertToNormal':1,'Metadata/Items/Currency/CurrencyCorrupt':1});
   const exactWhite=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:whiteService.action,initialState:corruptedWhiteState,targets:[],options:{requirements:{socketColours:'WWWWWW'}}},'crafted');
   assert.equal(exactWhite.nativeCrafting.successChance,100);assert.equal(exactWhite.nativeCrafting.sampled,false);
+  const recombinationDonor=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:{method:'divine'},seed:1,initialState:{rarity:'MAGIC',affixes:[{id:'LocalIncreasedPhysicalDamageReductionRating1',range:0.5}]}},'crafted');
+  const evasionRaw='Rarity: NORMAL\nZodiac Leather\nItem Level: 70';
+  const recombined=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:evasionRaw,action:{method:'recombine',donorItem:recombinationDonor.nativeCrafting.itemText},seed:1,initialState:{rarity:'MAGIC',affixes:[{id:'IncreasedLife0',range:0.5}]}},'crafted');
+  assert.match(recombined.nativeCrafting.itemText,/Zodiac Leather/);assert.match(recombined.nativeCrafting.itemText,/Item Level: 70/);
+  const recombinedNext=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:evasionRaw,action:{method:'regal'},seed:1,initialState:recombined.nativeCrafting.state},'crafted');
+  assert.match(recombinedNext.nativeCrafting.itemText,/Zodiac Leather/);assert.match(recombinedNext.nativeCrafting.itemText,/Item Level: 70/);
+  const rejectedClasses=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:'Rarity: NORMAL\nRusted Sword\nItem Level: 86',action:{method:'recombine',donorItem:'Rarity: NORMAL\nRusted Spike\nItem Level: 86'}},'failed');assert.match(rejectedClasses.error,/same item class/);
   const annulRaw='Rarity: NORMAL\nDriftwood Wand\nItem Level: 86';
   for(const [id,blocker] of [['LocalAddedChaosDamage1','bench:731'],['GlobalChaosSpellGemsLevel1','bench:732']]) {
     const initialState={rarity:'RARE',affixes:[{id,range:0.5},{id:blocker,range:0.5,crafted:true}]};

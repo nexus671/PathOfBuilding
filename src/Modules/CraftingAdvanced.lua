@@ -679,7 +679,8 @@ function A.extend(M,api)
 		local seenGroups={}
 		for _,entry in ipairs(state.affixes or {}) do
 			for _,group in ipairs(groups(model,entry.id)) do assert(not seenGroups[group],"State has conflicting modifier groups");seenGroups[group]=true end
-			if model.special[entry.id] or influenced(model,entry.id) or entry.fractured or state.baseItem and model.item:GetModSpawnWeight(model.byId[entry.id],model.extraTags) > 0 then permitted.affixes[#permitted.affixes+1]=copyTable(entry) end
+			local mod=model.byId[entry.id]
+			if model.special[entry.id] or influenced(model,entry.id) or entry.fractured or state.baseItem and mod.weightKey and model.item:GetModSpawnWeight(mod,model.extraTags) > 0 then permitted.affixes[#permitted.affixes+1]=copyTable(entry) end
 		end
 		local old=model.initial; model.initial=permitted
 		local ok,result=pcall(originalValidate,model,state); model.initial=old; assert(ok,result)

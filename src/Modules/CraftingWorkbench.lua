@@ -194,6 +194,7 @@ end
 function M.hint(method,state,model)
 	local available,reason=M.available(method,state,model)
 	if available and method=="annul" then return "3.30: remove a random modifier. Attack/caster roll blockers do not protect it; fractures and prefix/suffix locks still apply." end
+	if available and method=="recombine" then return "3.30 uses the chosen base's item level. Count odds for one-to-three modifiers still use older estimates." end
 	if available and method=="socket_white_bench" then return "3.30 bench: turn sockets white for one Scouring Orb, plus one Vaal Orb on corrupted items." end
 	if available and method=="harvest_enchant" then return "Replace the enchantment with a quality bonus. Options show the Lifeforce cost." end
 	return available and (descriptions[method] or "Choose the craft options, then apply to the item.") or reason

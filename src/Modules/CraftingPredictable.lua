@@ -8,7 +8,7 @@ function P.extend(M,A,api)
 	local function prepare(model,input,craft)
 		model=M.context(model,input)
 		local donor=M.model(assert(craft.donorItem,"Paste a donor item"))
-		assert(model.item.type == donor.item.type and model.item.base.subType == donor.item.base.subType,"Recombination requires the same item class and subtype")
+		assert(M.sameRecombinationClass(model.item,donor.item),"Recombination requires the same item class")
 		assert(model.item.type ~= "Jewel" and model.item.type ~= "Flask" and model.item.type ~= "Tincture" and not model.item.synthesised and not donor.item.synthesised,"This predictable model supports non-synthesised equipment")
 		for _,state in ipairs({input,donor.initial}) do assert(not state.corrupted and not state.mirrored and not state.destroyed and not state.veil,"Use uncorrupted, non-mirrored items without a pending unveil") end
 		local selected=assert(craft.selectedMods,"Choose modifiers from each item")

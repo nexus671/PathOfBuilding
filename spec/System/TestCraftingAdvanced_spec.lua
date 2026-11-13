@@ -295,7 +295,7 @@ describe("Advanced native crafting", function()
 		local donor=copyTable(donorModel.initial);donor.rarity="MAGIC";donor.affixes={{id=suffix,range=0.25}}
 		local result=sim.action(model,input,{method="recombine",donorItem=sim.toItem(donorModel,donor).raw},function() return 0.8 end)
 		assert.are.equal("Cone Helmet",sim.toItem(model,result).baseName)
-		assert.are.equal(80,sim.toItem(model,result).itemLevel)
+		assert.are.equal(70,sim.toItem(model,result).itemLevel)
 		assert.are.equal(2,#result.affixes)
 		sim.validateState(model,result)
 		local next=sim.perform(raw,{method="regal"},55,result)

@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Updated recombination to preserve the selected base's level and exclude incompatible rollable modifiers before drawing counts; permit different defence bases in the same item class.
 * Marked Allflame crafting as historical 3.29 content in the workbench and AI inspection.
 * Updated full prefix and suffix lock ingredient costs for 3.30 item types.
 * Updated standard Orb of Annulment previews for the 3.30 attack and caster blocker change.

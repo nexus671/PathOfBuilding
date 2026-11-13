@@ -53,7 +53,7 @@ Select an icon in the currency tray, then click the item card or **Apply to item
 
 The engine covers core currencies, bench modifiers, essences, fossils, Harvest tag crafts and resistance swaps, fractures, influence slams, Awakener, Dominance, veiled choices, Bestiary, Eldritch crafting, quality, catalysts, selected Ducats, corruption and selected tainted currencies. Jewels, flasks and tinctures have their own affix limits; flasks and tinctures remain magic. Cluster jewels need a known small-passive skill.
 
-Unpredictable recombination can choose either base, and later actions continue on that base. Its probability model is experimental. See [coverage and assumptions](crafting-coverage.md) for missing or incomplete methods.
+Unpredictable recombination can choose either base, retains that base's item level, and later actions continue on that base. Its count table predates the 3.30 changes for pools of one to three modifiers, so those estimates are not current odds. See [coverage and assumptions](crafting-coverage.md) for missing or incomplete methods.
 
 Use a blank base or item text PoB can identify. Unresolved explicit modifiers are rejected. If an imported implicit cannot be identified, the workbench explains which calculations are unavailable. Try advanced item text with modifier ranges or another starting item. MCP clients can also supply a known structured implicit state.
 

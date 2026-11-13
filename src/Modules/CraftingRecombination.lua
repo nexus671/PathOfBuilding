@@ -5,6 +5,14 @@ local countWeights={{100},{41,59},{0,67,33},{0,39,52,10},{0,11,59,31},{0,0,43,57
 function R.extend(M,A,api)
 	M.methods[#M.methods+1]="recombine";M.labels.recombine="Unpredictable recombination (experimental)";table.sort(M.methods)
 	local action,toItem,validate,pool,capacities,matches,options=M.action,M.toItem,M.validateState,M.pool,M.capacities,M.matches,M.actionOptions
+	function M.sameRecombinationClass(left,right)
+		local class=require("Modules.CraftingBenchCosts").class
+		local function recombinationClass(item)
+			if item.type=="One Handed Sword" and item.base.subType=="Thrusting" then return "Thrusting Sword" end
+			return class(item)
+		end
+		return recombinationClass(left)==recombinationClass(right)
+	end
 	local function context(model,state)
 		if not state.baseItem or state.baseItem == model.baseIdentity then return model end
 		assert(type(state.baseItem) == "string" and #state.baseItem <= 24000,"Invalid recombined base")
@@ -12,7 +20,7 @@ function R.extend(M,A,api)
 		local derived=model.recombinedModels[state.baseItem]
 		if not derived then
 			derived=M.model(state.baseItem)
-			assert(derived.item.type == model.item.type and derived.item.base.subType == model.item.base.subType,"Recombined base must have the same item class and subtype")
+			assert(M.sameRecombinationClass(derived.item,model.item),"Recombined base must have the same item class")
 			derived.initial.origin=model.initial.origin
 			derived.baseIdentity=state.baseItem
 			-- A request can introduce at most twenty recipe donors; bound the cache too.
@@ -57,20 +65,25 @@ function R.extend(M,A,api)
 		assert(not current.item.synthesised and current.item.type ~= "Jewel" and current.item.type ~= "Flask" and current.item.type ~= "Tincture","This recombination model supports non-synthesised equipment")
 		local donor=M.model(assert(craft.donorItem,"Paste a donor item"));local other=donor.initial
 		assert(not other.corrupted and not other.mirrored and not donor.item.synthesised,"Donor must be uncorrupted, non-mirrored and non-synthesised")
-		assert(current.item.type == donor.item.type and current.item.base.subType == donor.item.base.subType,"Recombination requires the same item class and subtype")
+		assert(M.sameRecombinationClass(current.item,donor.item),"Recombination requires the same item class")
 		local host=random() < 0.5 and 1 or 2
-		local level=math.min(math.max(current.item.itemLevel,donor.item.itemLevel),math.floor((current.item.itemLevel+donor.item.itemLevel)/2)+2)
 		local chosen=host == 1 and current or donor
 		local state=copyTable(host == 1 and input or other)
 		state.imprint=nil;state.origin=model.initial.origin;state.affixes={};state.rarity="RARE"
-		state.baseItem=toItem(chosen,host == 1 and input or other).raw:gsub("Item Level: %d+","Item Level: "..level)
+		state.baseItem=toItem(chosen,host == 1 and input or other).raw
 		local base=context(model,state)
 		local pools={Prefix={},Suffix={}}
 		for source,from in ipairs({{model=current,state=input},{model=donor,state=other}}) do
 			for _,entry in ipairs(from.state.affixes) do
 				if not entry.fractured or source == host then
-					local mod=from.model.byId[entry.id]
-					pools[mod.type][#pools[mod.type]+1]={entry=entry,source=source,exclusive=exclusive(from.model,entry),natural=naturalCraft(from.model,entry)}
+					local mod=from.model.byId[entry.id];local natural=naturalCraft(from.model,entry)
+					local sourceMod=natural and from.model.byId[natural] or mod
+					local special=exclusive(from.model,entry)
+					-- Non-rollable modifiers remain transferable and share the exclusive limit.
+					if not special and not entry.fractured and (not sourceMod.weightKey or from.model.item:GetModSpawnWeight(sourceMod,from.model.extraTags)<=0) then special=true end
+					local target=base.byId[entry.id];local targetNatural=natural and base.byId[natural] or not natural and target
+					local eligible=special or entry.fractured or target and targetNatural and targetNatural.weightKey and base.item:GetModSpawnWeight(targetNatural,base.extraTags)>0
+					if eligible then pools[mod.type][#pools[mod.type]+1]={entry=entry,source=source,exclusive=special,natural=natural} end
 				end
 			end
 		end
@@ -95,8 +108,8 @@ function R.extend(M,A,api)
 					local legal=mod and (not candidate.exclusive or not hasExclusive)
 					if legal then for _,group in ipairs(groups(base,entry.id)) do if used[group] then legal=false end end end
 					-- Native spawn tags enforce defence, attribute-base and influence restrictions.
-					local natural=candidate.natural and base.byId[candidate.natural] or mod
-					if legal and not candidate.exclusive and not entry.fractured and base.item:GetModSpawnWeight(natural,base.extraTags) <= 0 then legal=false end
+					local natural=candidate.natural and base.byId[candidate.natural] or not candidate.natural and mod
+					if legal and not candidate.exclusive and not entry.fractured and (not natural or not natural.weightKey or base.item:GetModSpawnWeight(natural,base.extraTags) <= 0) then legal=false end
 					if legal then eligible[#eligible+1]=candidate end
 				end
 				if #eligible == 0 then break end
@@ -112,6 +125,6 @@ function R.extend(M,A,api)
 		for _,kind in ipairs({"Armour","Evasion","EnergyShield","Ward"}) do if base.item.base.armour and base.item.base.armour[kind.."BaseMin"] then state.percentiles[kind]=random() end end
 		return state
 	end
-	M.limits[#M.limits+1]="Unpredictable recombination is experimental: rounded count tables are normalized and eligible entries are chosen uniformly. Exclusive modifiers contribute at most one count per side under 3.26 observations. Exclusive-only side ordering is unresolved and rejected. Hidden weights remain uncertain."
+	M.limits[#M.limits+1]="Unpredictable recombination uses the 3.30 chosen-base item level and excludes incompatible rollable modifiers before counts. Its older empirical count table is not updated for the 3.30 changes to one-to-three modifier pools; estimates for those pools are not current odds. Exclusive-only side ordering and hidden weights remain uncertain."
 end
 return R

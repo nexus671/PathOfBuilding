@@ -297,6 +297,17 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	end
 
 	do
+		local left=sim.model("Rarity: NORMAL\nZodiac Leather\nItem Level: 70");local right=sim.model("Rarity: NORMAL\nPlate Vest\nItem Level: 86")
+		local leftState=sim.validateState(left,{rarity="MAGIC",affixes={{id="IncreasedLife0",range=0.5}}})
+		local rightState=sim.validateState(right,{rarity="MAGIC",affixes={{id="LocalIncreasedPhysicalDamageReductionRating1",range=0.5}}})
+		local donor=sim.toItem(right,rightState).raw
+		require("Classes.CraftingSimulatorControl").Open(build,{id="recombine-330-ui",title="Armour and evasion bases",slot="Body Armour",startingItem=sim.toItem(left,leftState).raw,goals={},steps={}})
+		ui:click("settings");ui:text("paletteSearch","Unpredictable recombination");ui:click("paletteUse");ui:click("tab_settings");ui:click("configure");ui:text("donor",donor);frame("crafting-recombine-330-donor");ui:click("use");ui:text("seed","1");ui:click("tab_craft")
+		local hints={};for _,row in ipairs(main.popups[1].controls.actionHint.list) do hints[#hints+1]=row[1] end;assert(table.concat(hints," "):find("older estimates",1,true),"Recombination did not flag outdated count odds")
+		frame("crafting-recombine-330-warning");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Unpredictable",1,true),"Cross-defence recombination failed");frame("crafting-recombine-330-result");ui:click("close")
+	end
+
+	do
 		local hybridRaw="Rarity: NORMAL\nIron Hat\nItem Level: 86";local m=sim.model(hybridRaw);local state=copyTable(m.initial)
 		state.rarity="RARE";state.affixes={{id="LocalBaseArmourAndLife1",range={0,1}}}
 		require("Classes.CraftingSimulatorControl").Open(build,{id="independent-affix-ui",title="Independent modifier rolls",slot="Helmet",startingItem=sim.toItem(m,state).raw,goals={},steps={}})
