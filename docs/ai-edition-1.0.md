@@ -28,6 +28,7 @@ The installed application and personal builds are outside this release workspace
 - [x] Use native weapon and defence minimums as saved crafting goals and recipe stop conditions.
 - [x] Compare methods and explore success/budget and spending distributions.
 - [x] Save per-resource quotes, reuse them across gear guides and share them with native/MCP simulations.
+- [x] Report modeled ingredient and service quantities separately from spending, with an illustrated resource browser.
 - [x] Apply quality enchantments with native item state, recipe goals and resource costs.
 - [ ] Review incomplete socket, corruption and league mechanics against sources.
 - [x] Keep empirical assumptions visible; never present unknown weights as facts.
@@ -56,11 +57,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `c7830b6f1fa315186e3fea38a906acf2ed704c59`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43417642565),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43417642562)).
-It passed 1,196 Lua tests, 46 Node tests, the real MCP save/reopen workflow and
-831 source-stable UI states without audit failures. All 2,424 updater file hashes
+The latest verified checkpoint is `d1c10329e43b9e85427c87b6c4422a28caac8bb2`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43419172693),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43419172586)).
+It passed 1,200 Lua tests, 46 Node tests, the real MCP save/reopen workflow and
+840 source-stable UI states without audit failures. All 2,424 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working

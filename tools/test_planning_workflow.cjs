@@ -91,6 +91,8 @@ async function main(){
   const usedAction=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[{method:'alchemy'}],targets:[],requirements:{minAffixes:1}},options:{trials:2,maxActions:1,priceBook:scopeBook,actionPrices:{alchemy:7}}},'crafted');
   assert.equal(usedAction.nativeCrafting.meanCost,7);assert.equal(usedAction.nativeCrafting.actionPriceOverridesApplied,2);
   const freeAction=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:scopeRecipe,options:{trials:2,maxActions:1,priceBook:scopeBook,actionPrices:{[scopeBench.id]:0}}},'crafted');assert.equal(freeAction.nativeCrafting.meanCost,0);
+  assert.deepEqual(freeAction.nativeCrafting.resourceUsage,unusedAction.nativeCrafting.resourceUsage);
+  assert.deepEqual(usedAction.nativeCrafting.resourceUsage,[{key:alchemyCurrency,name:"Orb of Alchemy",kind:"resource",amount:2,meanPerTrial:1}]);
   const globalPrice=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:scopeRecipe,options:{trials:2,maxActions:1,priceBook:scopeBook,prices:{alchemy:5},actionPrices:{alchemy:7}}},'crafted');assert.equal(globalPrice.nativeCrafting.meanCost,5);
   const serviceCatalog=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'bench_reroll',limit:10},'inspected');
   assert.equal(serviceCatalog.crafting.nativeEngine.benchServiceCosts.length,2);

@@ -463,6 +463,8 @@ function M.simulate(raw,recipe,options)
 	end
 	local successes,totalCost,totalActions,totalExecuted=0,0,0,0
 	local spent,missing,errors,times={},{},{},{}
+	local resourceUsage={}
+	local pricing=require("Modules.CraftingPrices")
 	local actionPriceUses=0
 	local actionHistogram,costHistogram,costSamples,successfulCosts,routes={},{},{},{},{}
 	local budgetExhausted,destroyedTrials=0,0
@@ -491,7 +493,18 @@ function M.simulate(raw,recipe,options)
 				local setupKey=(M.priceKey or priceKey)(step)
 				local actionPrice=options.actionPrices and options.actionPrices[setupKey]
 				if actionPrice~=nil then actionPriceUses=actionPriceUses+1 end
-				local components=(actionPrice~=nil or options.prices and options.prices[setupKey]~=nil) and {[setupKey]=1} or M.components and M.components(step,before,model) or {[setupKey]=1}
+				local ingredients=M.components and M.components(step,before,model) or {[setupKey]=1}
+				local context=M.context(model,before)
+				for key,amount in pairs(ingredients) do
+					local canonical=pricing.key(key,context)
+					local entry=resourceUsage[canonical]
+					if not entry then
+						local name,_,kind=pricing.describe(canonical,context)
+						entry={key=canonical,name=name,kind=kind=="Whole action" and "service" or "resource",amount=0};resourceUsage[canonical]=entry
+					end
+					entry.amount=entry.amount+amount
+				end
+				local components=(actionPrice~=nil or options.prices and options.prices[setupKey]~=nil) and {[setupKey]=1} or ingredients
 				for key,amount in pairs(components) do
 					spent[key]=(spent[key] or 0)+amount
 					local price=actionPrice~=nil and actionPrice or options.prices and options.prices[key]
@@ -539,9 +552,10 @@ function M.simulate(raw,recipe,options)
 		return result
 	end
 	local distribution={};for _,bucket in pairs(actionHistogram) do distribution[#distribution+1]=bucket end;table.sort(distribution,function(a,b) return a.actions < b.actions end)
+	local usage={};for _,entry in pairs(resourceUsage) do entry.meanPerTrial=entry.amount/trials;usage[#usage+1]=entry end;table.sort(usage,function(a,b) return a.key<b.key end)
 	assert(totalExecuted > 0 or successes > 0,"Recipe could not execute a supported action; inspect its starting rarity and open affixes")
 	local result={trials=trials,successes=successes,successChance=successes/trials*100,confidenceLow=low,confidenceHigh=high,seed=seed,maxActions=maxActions,
-		meanActions=totalActions/trials,currencySpent=spent,unpriced=missing,transitionErrors=errors,limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
+		meanActions=totalActions/trials,currencySpent=spent,resourceUsage=usage,unpriced=missing,transitionErrors=errors,limitations=copyTable(M.limits),sampleSuccess=sampleSuccess,sampleItem=not sample.destroyed and not sample.veil and M.toItem(model,sample).raw or nil,sampleState=sample,
 		engineVersion=2,dataPatch=M.dataPatch,sourceVersion=launch.versionNumber,treeVersion=latestTreeVersion,costCurrency=options.currency or "supplied price units",
 		baseCost=baseCost,retainedSuccesses=retained,retentionLimit=retain,affixDistribution=affixDistribution,propertyDistribution=propertyDistribution,actionDistribution=distribution,successfulActionQuantiles=quantiles(times),routeCounts=routes,budgetExhausted=budgetExhausted,destroyedTrials=destroyedTrials}
 	if not next(missing) then

@@ -343,6 +343,8 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:text("price","7");ui:text("budget","1");ui:text("trials","2000");ui:click("simulate")
 		assert(not main.popups[1].controls.simulate:IsEnabled() and not main.popups[1].controls.runRecipe:IsEnabled());frame("crafting-simulation-running")
 		finish();assert(summary("resultSummary"):find("Mean spent: 7.00 chaos",1,true));frame("crafting-action-override-applied")
+		assert(summary("resultSummary"):find("Orb of Alchemy: 2000 total",1,true));main.popups[1].controls.resultSummary.controls.scrollBar:SetOffset(10000);frame("crafting-resource-usage");main.popups[1].controls.resultSummary.controls.scrollBar:SetOffset(0)
+		ui:click("distribution");frame("crafting-resource-results");ui:click("resources");assert(main.popups[1].title=="Crafting resources used");frame("crafting-resource-browser");ui:text("search","alchemy");frame("crafting-resource-search");ui:click("close");ui:click("close")
 		ui:click("compareRecipes");ui:text("price1","many");ui:click("run");assert(main.popups[1].title=="Compare recipes");frame("crafting-comparison-invalid-price");ui:click("close")
 		assert(main.popups[1].controls.price1.buf=="many");ui:text("price1","7");ui:click("run");finish()
 		assert(summary("results"):find("Mean spent: 7.00 chaos",1,true) and summary("results"):find("Mean spent: 1.00 chaos",1,true));frame("crafting-property-action-comparison")

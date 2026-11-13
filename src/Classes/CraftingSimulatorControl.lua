@@ -357,7 +357,14 @@ function Panel.Open(build,project,layout)
 			lines[#lines+1]=result.actionPriceOverridesApplied>0 and "Includes selected-action price overrides." or "Selected-action override was not used by this recipe."
 		elseif result.priceOverridesSupplied then lines[#lines+1]="Includes resource price overrides." end
 		lines[#lines+1]="Result uses the captured starting state."
-		for key,count in pairsSortByKey(result.currencySpent) do lines[#lines+1]=pricing.describe(key,simulator.context(model,state))..": "..count.." total uses" end
+		if result.resourceUsage then
+			lines[#lines+1]="Modeled ingredients and services (all trials)"
+			for _,entry in ipairs(result.resourceUsage) do lines[#lines+1]=string.format("%s%s: %.12g total | %.3g per trial",entry.kind=="service" and "Service: " or "",entry.name,entry.amount,entry.meanPerTrial) end
+			if #result.resourceUsage==0 then lines[#lines+1]="No resources or services used." end
+			lines[#lines+1]="Starting-item cost is separate. Price overrides do not change quantities."
+		else
+			for key,count in pairsSortByKey(result.currencySpent) do lines[#lines+1]=pricing.describe(key,simulator.context(model,state))..": "..count.." priced uses" end
+		end
 		for message,count in pairsSortByKey(result.transitionErrors) do lines[#lines+1]="Failed transitions: "..count.." | "..message end
 		refresh(lines)
 	end
@@ -482,7 +489,20 @@ function Panel.Open(build,project,layout)
 		end
 		popup.results=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,284,828,resultHeight-398},nil,lines)
 		local kept={};for i,entry in ipairs(result.retainedSuccesses or {}) do kept[#kept+1]={label="Successful item "..i.." (trial "..entry.trial..")",val=i} end
-		popup.item=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,resultHeight-84,540,24},kept)
+		button(popup,"resources",16,resultHeight-84,176,"Resources used",function()
+			local entries={}
+			for _,entry in ipairs(result.resourceUsage) do
+				local _,icon=pricing.describe(entry.key)
+				entries[#entries+1]={id=entry.key,label=entry.name.." | "..string.format("%.12g used",entry.amount),icon=icon,category=entry.kind=="service" and "Services" or "Ingredients",
+					details={entry.name,string.format("Total used: %.12g",entry.amount),string.format("Mean per trial: %.6g",entry.meanPerTrial),"Across all "..result.trials.." trials, including failed and capped trials.",
+						entry.kind=="service" and "Service units only: no verified ingredient breakdown is available." or "Modeled ingredient quantities from executed actions.",
+						"Price overrides change spending, not these quantities. Starting-item costs are separate."}}
+			end
+			browser.Open("Crafting resources used",entries)
+		end)
+		popup.resources.enabled=result.resourceUsage and #result.resourceUsage>0 or false
+		popup.resources.tooltipText=not result.resourceUsage and "Rerun this older simulation to record ingredient usage." or #result.resourceUsage==0 and "No modeled resources or services were used in this run." or "Browse captured ingredients and service quantities with currency artwork."
+		popup.item=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{208,resultHeight-84,348,24},kept)
 		button(popup,"preview",572,resultHeight-84,272,"Preview retained item",function()
 			local index=assert(popup.item:GetSelValueByKey("val"),"No successful items retained")
 			local entry=copyTable(draft);entry.targetItem=result.retainedSuccesses[index].itemText

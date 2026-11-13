@@ -75,6 +75,19 @@ Jobs run in the background. **Cancel crafting job** stops them. Results include 
 
 Verified bench recipes use their actual ingredients. Unmatched services keep a whole-action price. **Action override** replaces the total for the selected action only; other recipe steps retain their resource quotes. The result says when an override was unused. **Base cost** adds the starting-item cost to every trial. Spending divided by observed successes is a model estimate, not a guaranteed game cost. Zero observed successes does not establish impossibility.
 
+Results list modeled ingredients and service uses separately from spending, with
+totals and averages across all trials. A total-price override changes spending,
+not the number of currencies, fossils or Sulphur used. Rejected transitions use
+no resources; executed crafts still count when their outcome fails or destroys
+the item. Starting-item costs remain separate. Open **Results / distribution →
+Resources used** to browse currencies with artwork, search by name and inspect
+each quantity. A **Service** entry means the model has no verified ingredient
+breakdown for that action.
+
+MCP simulation results expose the same list in `resourceUsage`, with `key`,
+`name`, `kind`, `amount` and `meanPerTrial`. The older `currencySpent` field
+retains its costing buckets for compatibility.
+
 Crafted-mod removal uses one Orb of Scouring. The supported one-mod and three-mod bench reforges use eight and three Chaos Orbs respectively, following the pinned recipe data. Their normal item prerequisites still apply.
 
 **Explore charts** shows cumulative success by actions or supplied spending, and distributions of completed-trial actions/spending. Hover to inspect, click to pin, or copy the data as CSV. **Compare recipes → Compare charts** overlays captured routes. Failed and capped trials stay in the denominator; unpriced routes are omitted from spending charts.

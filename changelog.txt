@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Separated modeled ingredient and service quantities from price overrides in crafting results and MCP, with per-trial averages and an illustrated resource browser.
 * Marked unfinished crafting targets, run settings and advanced options as working drafts while keeping restored views and saved quote changes clean.
 * Added crafting-project removal and undo, including inventory, quotes, checkpoints, order and working-draft restoration.
 * Added reviewed MCP project removals with clear change summaries, and preserved compatible drafts and removal undo through AI edits.
