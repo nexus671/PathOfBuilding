@@ -19,7 +19,8 @@ function M.parse(raw,area)
 	local markers={};for line in raw:gmatch("[^\n]+") do markers[line]=true end
 	local mapped={normal="Normal",magic="Magic",rare="Rare",unique="Unique",relic="Unique",currency="Normal",gem="Normal",quest="Normal"}
 	local item={BaseType=base,Class=class,Rarity=assert(mapped[rarity:lower()],"Unsupported clipboard rarity"),AreaLevel=area,
-		Identified=not markers.Unidentified,Corrupted=markers.Corrupted==true,Mirrored=markers.Mirrored==true}
+		Identified=not markers.Unidentified,Corrupted=markers.Corrupted==true or markers["Twice Corrupted"]==true,
+		TwiceCorrupted=markers["Twice Corrupted"]==true,Mirrored=markers.Mirrored==true}
 	for key,field in pairs({ItemLevel="Item Level",Quality="Quality",StackSize="Stack Size",MapTier="Map Tier"}) do
 		local value=tonumber(raw:match(field..":%s*([%+%-]?%d+)"));assert(not value or value==value and math.abs(value)<=1e9,"Invalid clipboard "..field);item[key]=value
 	end

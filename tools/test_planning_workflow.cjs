@@ -256,6 +256,9 @@ async function main(){
   assert.ok(generated.profile.rules.some(rule=>rule.origin==='craft:helmet'));
   const tested=await queued('test_loot_filter',{baseRevision:context.revision,profile:generated.profile,sample:{BaseType:'Iron Hat',Rarity:'Rare',ItemLevel:86}},'tested');assert.equal(tested.result.action,'Show');
   const socketProfile={id:'socket-rules',title:'Socket comparisons',preset:'early_maps',strictness:2,rules:[{id:'socket-rule',title:'Socket rule',enabled:true,text:'Hide\n SocketGroup > 5GGG'}]};
+  const twiceFilter={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n TwiceCorrupted True'}]};
+  const twiceDrop=await queued('test_loot_filter',{baseRevision:context.revision,profile:twiceFilter,sample:{BaseType:'Iron Hat',Rarity:'Rare',TwiceCorrupted:true}},'tested');assert.equal(twiceDrop.result.action,'Hide');
+  const unknownTwice=await queued('test_loot_filter',{baseRevision:context.revision,profile:twiceFilter,sample:{BaseType:'Iron Hat',Rarity:'Rare'}},'tested');assert.equal(unknownTwice.result.status,'unknown');
   const socketTest=await queued('test_loot_filter',{baseRevision:context.revision,profile:socketProfile,sample:{BaseType:'Plate Vest',Rarity:'Normal',SocketGroup:'GGGRRW'}},'tested');assert.equal(socketTest.result.action,'Hide');assert.equal(socketTest.result.ruleTitle,'Socket rule');
   const invalidSocketSample=await queued('test_loot_filter',{baseRevision:context.revision,profile:socketProfile,sample:{BaseType:'Plate Vest',Rarity:'Normal',SocketGroup:'GGGRRW?'}},'tested');assert.equal(invalidSocketSample.result.status,'unknown');assert.match(invalidSocketSample.result.reasons[0],/Invalid socket colours/);
   const mixedSocketProfile={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n Sockets 6 RGB'}]};

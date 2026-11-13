@@ -9,7 +9,7 @@ M.actions={SetTextColor=true,SetBorderColor=true,SetBackgroundColor=true,SetFont
 M.numeric={AreaLevel=true,ItemLevel=true,DropLevel=true,Quality=true,LinkedSockets=true,Sockets=true,Width=true,Height=true,StackSize=true,GemLevel=true,MapTier=true,
 	BaseArmour=true,BaseEvasion=true,BaseEnergyShield=true,BaseWard=true,BaseDefencePercentile=true,EnchantmentPassiveNum=true,CorruptedMods=true,
 	HasEaterOfWorldsImplicit=true,HasSearingExarchImplicit=true,UnidentifiedItemTier=true,MemoryStrands=true}
-M.booleans={Identified=true,Corrupted=true,Mirrored=true,FracturedItem=true,SynthesisedItem=true,ShaperItem=true,ElderItem=true,ShapedMap=true,ElderMap=true,
+M.booleans={Identified=true,Corrupted=true,TwiceCorrupted=true,Mirrored=true,FracturedItem=true,SynthesisedItem=true,ShaperItem=true,ElderItem=true,ShapedMap=true,ElderMap=true,
 	BlightedMap=true,UberBlightedMap=true,Replica=true,Scourged=true,HasImplicitMod=true,AnyEnchantment=true,HasCruciblePassiveTree=true,Foulborn=true,Fated=true,Exceptional=true,TransfiguredGem=true,AlternateQuality=true,Imbued=true,Vestigial=true,ZanaMemory=true,MirageMap=true}
 M.strings={Class=true,BaseType=true,HasInfluence=true,HasExplicitMod=true,HasEnchantment=true,EnchantmentPassiveNode=true,Prophecy=true,ArchnemesisMod=true,GemQualityType=true}
 local rarity={Normal=0,Magic=1,Rare=2,Unique=3}
