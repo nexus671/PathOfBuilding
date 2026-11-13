@@ -147,7 +147,7 @@ function M.connectOptimized(plan,targets,avoid,options)
 	local best,additions,baseline;local attempts=0;local seen={}
 	local function try(order)
 		local signature=table.concat(order,",");if seen[signature] then return end;seen[signature]=true;attempts=attempts+1
-		local ok,value,added=pcall(M.connect,plan,order,avoid,options.checkpoint and function(progress) progress.order=attempts;progress.orders=math.min(#targets+1,32);options.checkpoint(progress) end)
+		local ok,value,added=pcall(M.connect,plan,order,avoid,options.checkpoint and function(progress) progress.order=attempts;progress.orders=math.min(#targets+2,33);options.checkpoint(progress) end)
 		if attempts==1 and ok then baseline=#added end
 		if ok and (not best or #added<#additions) then best,additions=value,added end
 	end
@@ -155,6 +155,30 @@ function M.connectOptimized(plan,targets,avoid,options)
 	local reversed={};for i=#targets,1,-1 do reversed[#reversed+1]=targets[i] end;try(reversed)
 	-- Bound order exploration; distribute rotations across larger desired sets.
 	for trial=1,math.min(#targets-1,30) do local offset=math.floor(trial*#targets/math.min(#targets,31));local order={};for i=1,#targets do order[i]=targets[(i+offset-1)%#targets+1] end;try(order) end
+	-- Also grow a route toward the nearest remaining target at each step. Its
+	-- order can differ from every rotation and often shares more of the path.
+	local remaining={};for _,id in ipairs(targets) do remaining[id]=true end
+	local set=copyTable(allocated);local nearest={}
+	while next(remaining) do
+		local previous,queue={},sorted(set);local found
+		for _,id in ipairs(queue) do previous[id]=false;if remaining[id] and not found then found=id end end
+		local index=1
+		while not found and index<=#queue do
+			if options.checkpoint and index%128==0 then options.checkpoint({order=attempts+1,orders=math.min(#targets+2,33),target=#nearest+1,targets=#targets}) end
+			local current=queue[index];index=index+1
+			for _,id in ipairs(tree.nodes[current].links) do
+				if previous[id]==nil and not blocked[id] then
+					previous[id]=current;queue[#queue+1]=id
+					if remaining[id] then found=id;break end
+				end
+			end
+		end
+		if not found then break end
+		nearest[#nearest+1]=found;remaining[found]=nil
+		local cursor=found;while not set[cursor] do set[cursor]=true;cursor=previous[cursor] end
+		if options.checkpoint then options.checkpoint({order=attempts+1,orders=math.min(#targets+2,33),target=#nearest,targets=#targets}) end
+	end
+	if not next(remaining) then try(nearest) end
 	assert(best,"Atlas targets cannot be connected within this budget and exclusions")
 	return best,additions,{attempts=attempts,originalCost=baseline,cost=#additions,saved=baseline and baseline-#additions or nil,heuristic=true}
 end

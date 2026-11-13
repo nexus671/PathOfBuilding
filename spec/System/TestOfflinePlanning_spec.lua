@@ -64,6 +64,32 @@ describe("Offline planning refinements",function()
 		local result=sim.optimizeFossils(raw,{}, {fossils={fossil},maxSockets=1,trials=4,requirements={socketColours="R"}})
 		assert.equal(1,#result.combinations);assert.is_nil(result.combinations[1].error);assert.equal(0,result.combinations[1].successChance)
 	end)
+	it("finds a nearest-target route when rotations exceed the point budget",function()
+		originalGraph=atlas.tree("3.27.0")
+		local links={{2,3,7},{1,9,12,14},{1,4,5,6,9,10},{3},{3,7,12},{3,12},{1,5,8,11},{7,12},{2,3,10},{3,9,13},{7},{2,5,6,8},{10},{2}}
+		local tree={start=1,maxPoints=14,nodes={}};for id,list in ipairs(links) do tree.nodes[id]={id=id,links=list} end;atlas.cache["3.27.0"]=tree
+		local targets={8,12,6,13,9};local plan={id="test",title="Test",version="3.27.0",budget=7,nodes={},notes=""}
+		assert.is_false(pcall(atlas.connect,plan,targets))
+		assert.is_false(pcall(atlas.connect,plan,{9,13,6,12,8}))
+		for offset=1,#targets-1 do
+			local order={};for i=1,#targets do order[i]=targets[(i+offset-1)%#targets+1] end
+			assert.is_false(pcall(atlas.connect,plan,order))
+		end
+		local result,added,routing=atlas.connectOptimized(plan,targets)
+		assert.equal(7,#result.nodes);assert.equal(7,#added);assert.is_nil(routing.originalCost)
+		local nearestCheckpoint=false
+		local job=coroutine.create(function() return atlas.connectOptimized(plan,targets,nil,{checkpoint=function(progress)
+			if progress.order==7 then nearestCheckpoint=true end;coroutine.yield()
+		end}) end)
+		while coroutine.status(job)~="dead" do local ok,err=coroutine.resume(job);assert.is_true(ok,tostring(err)) end
+		assert.is_true(nearestCheckpoint)
+		for _,id in ipairs(targets) do assert.is_truthy(isValueInTable(result.nodes,id)) end
+		assert.same({},plan.nodes)
+		plan.nodes={2};plan.budget=14
+		local avoided=atlas.connectOptimized(plan,targets,{7})
+		assert.is_truthy(isValueInTable(avoided.nodes,2));assert.is_nil((isValueInTable(avoided.nodes,7)))
+		assert.same(avoided,atlas.connectOptimized(plan,targets,{7}))
+	end)
 	it("compares Atlas orders without changing existing allocations or exclusions",function()
 		originalGraph=atlas.tree("3.27.0")
 		local links={{2,3},{1,4},{1,4,5},{2,3},{3}}

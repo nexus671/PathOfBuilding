@@ -218,6 +218,11 @@ async function main(){
   const independentAffix=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:raw,action:{method:'quality'},initialState:{rarity:'RARE',affixes:[{id:'LocalBaseArmourAndLife1',range:[0,1]}]},seed:1},'crafted');
   assert.match(independentAffix.nativeCrafting.itemText,/\+23 to maximum Life/);assert.deepEqual(independentAffix.nativeCrafting.state.affixes[0].range,[0,1]);
   const starterAtlas={id:'starter-atlas',title:'Starter Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'starter'}};
+  const atlasSearch=await queued('search_atlas_nodes',{baseRevision:context.revision,version:'3.29.1',query:'Essence',limit:10},'atlas');
+  const atlasTargets=atlasSearch.atlas.matches.slice(0,3).map(node=>node.id);assert.equal(atlasTargets.length,3);
+  const atlasRoute=await queued('plan_atlas_tree',{baseRevision:context.revision,plan:starterAtlas,targets:atlasTargets,optimize:true},'atlas');
+  assert.ok(atlasRoute.atlas.routing.heuristic);assert.ok(atlasRoute.atlas.routing.attempts>=1);
+  assert.ok(atlasTargets.every(id=>atlasRoute.atlas.plan.nodes.includes(id)));assert.equal((await call('get_build_context')).context.revision,context.revision);
   await queued('propose_atlas_plan',{baseRevision:context.revision,plan:starterAtlas},'review');await host('apply');context=(await call('get_build_context')).context;
   const finalAtlas={id:'final-atlas',title:'Final Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'final',previousId:'starter-atlas'},strategy:{maps:'Chosen maps',scarabs:'Supplied consumables',requirements:'Unlocks complete',avoid:'Reflect',setupCost:{amount:25,currency:'chaos',source:'Workflow quote',quotedAt:1700000000}}};
   await queued('propose_atlas_plan',{baseRevision:context.revision,plan:finalAtlas},'review');await host('apply');context=(await call('get_build_context')).context;

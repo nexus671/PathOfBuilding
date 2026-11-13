@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview55" />
+	<Version number="2.67.2-ai.preview56" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="1e882a7fa01e10bf9947e245aab00cac31f406c9" />
+	<File name="changelog.txt" part="default" sha1="ce8b6489e13e02cd228956a0bb8207e7f14b4494" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1442,7 +1442,7 @@
 	<File name="LaunchServer.lua" part="program" sha1="f15bdfbedaf887e19556490dce49b720f8365379" />
 	<File name="Modules/AddImplicitPopup.lua" part="program" sha1="f68d391d10b95c0feef70b7e8e82326a745dcb3b" />
 	<File name="Modules/AtlasArt.lua" part="program" sha1="1d3d01aa76eb489f2f5fa6f6852d0860b5429c84" />
-	<File name="Modules/AtlasPlanner.lua" part="program" sha1="c07c47fa389c4905ffff1d67d994fe3fbe2f045f" />
+	<File name="Modules/AtlasPlanner.lua" part="program" sha1="28a3be6a4ce721c2f0f698a18f357643fa8c3990" />
 	<File name="Modules/AtlasStrategy.lua" part="program" sha1="f671d6c64944239684a2d175ec187f927d4880fd" />
 	<File name="Modules/AtlasTargets.lua" part="program" sha1="0847c6e61d2308fd37c7890648ee1163e0e22751" />
 	<File name="Modules/Build.lua" part="program" sha1="972e8291b2ac3360e6914e39ab7db209e78e97d8" />
