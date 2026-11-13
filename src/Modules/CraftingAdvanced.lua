@@ -429,11 +429,13 @@ function A.extend(M,api)
 			assert(#candidates > 0,"No compatible other attribute tier");entry.id=candidates[math.floor(random()*#candidates)+1]
 		elseif method == "harvest_reforge" then
 			assert(state.rarity == "RARE" and tags[action.tag],"Select a supported Harvest tag on a rare item")
+			if M.hasPartialLock(model,state) then api.selectPartialLocks(model,state,random) end
 			api.clear(model,state); state.rollBlock={attack=f.attack,caster=f.caster}
 			append(model,state,random,{tag=action.tag}); state.rollBlock=nil; fill(model,state,random)
 		elseif method == "harvest_augment" then
 			assert(state.rarity == "RARE" and tags[action.tag] and action.tag ~= "influence","Select a supported Harvest augment tag on a rare item")
 			assert(not baseInfluences(state),"Harvest augment requires a non-influenced item")
+			if M.hasPartialLock(model,state) then api.selectPartialLocks(model,state,random) end
 			-- Harvest adds first, then removes one of the original removable affixes.
 			local added=append(model,state,random,{tag=action.tag})
 			local last=table.remove(state.affixes); remove(model,state,random); state.affixes[#state.affixes+1]=last
@@ -625,7 +627,7 @@ function A.extend(M,api)
 			local old,group=nil,-1;for _,socket in ipairs(state.sockets) do local value=socket.group;if value ~= old then group=group+1;old=value end;socket.group=group end
 			if method == "binding" then assert(state.rarity == "NORMAL","Binding requires a normal item"); state.rarity="RARE"; fill(model,state,random) end
 		end
-		state.rollBlock=nil; return state
+		api.clearPartialLocks(state);state.rollBlock=nil; return state
 	end
 	function M.validateState(model,state)
 		-- Validate supported properties before the legacy affix and range checks.
@@ -844,7 +846,7 @@ function A.extend(M,api)
 		"Current coverage includes core currencies, ordinary jewels/flasks/tinctures, bench crafts, essences, weighted fossils, Harvest tag crafts, influence slams, Awakener, fractures, veiled choices, Bestiary, Eldritch crafts, base implicit/defence rerolls and deterministic socket/link bench crafts.",
 		"Tangled Fossils require a revealed resonator outcome. Automatic predictable recombination odds, unique generation and many 3.30 rules are not implemented.",
 		"The standard Orb of Annulment uses the announced 3.30 attack/caster blocker rule. Other modifier data and unsupported 3.30 crafting changes remain pinned to 3.29.3.6.",
-		"Partial locks use uniform random selection from all modifiers on the protected side, including fractures; group conflicts and other interactions are assumptions. Core affix actions and independent socket, quality, implicit and enchantment crafts are supported; other interactions are rejected.",
+		"Partial locks use uniform random selection from all modifiers on the protected side, including fractures; group conflicts and other interactions are assumptions. Core affix actions, Harvest reforge/augment, and independent socket, quality, implicit and enchantment crafts are supported; other interactions are rejected.",
 		"Full prefix/suffix lock prices and the bench Chance-to-Alteration cost change use 3.30 rules; other bench costs remain pinned to 3.29.3.6.",
 		"Rare modifier counts and Eldritch Chaos counts are model assumptions. Numeric display rolls and sampling intervals do not establish exact in-game odds.",
 		"Every result is a separate hypothetical item. Costs use supplied prices; no game currency is spent."}

@@ -309,7 +309,11 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 		local odds=build.craftingAnalyses["partial-lock-ui"].results.odds.result
 		assert(not jobs.job and odds.sampled==false and odds.successChance==100 and odds.warnings[1].code=="partial_lock_model","Partial lock odds were not disclosed")
-		ui:choose("page","Simulate recipe");frame("crafting-partial-lock-odds");ui:click("close")
+		ui:choose("page","Simulate recipe");frame("crafting-partial-lock-odds")
+		ui:choose("page","Emulate item");ui:click("settings");ui:text("paletteSearch",sim.labels.harvest_reforge);assert(main.popups[1].controls.paletteUse:IsEnabled(),"Harvest reforge was blocked by a partial lock")
+		ui:click("paletteUse");ui:choose("option","fire","label");ui:click("apply")
+		assert(main.popups[1].controls.intro.label:find("Applied Harvest",1,true),"Harvest reforge did not apply")
+		frame("crafting-partial-lock-harvest");ui:click("close")
 	end
 
 	do

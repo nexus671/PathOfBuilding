@@ -74,7 +74,15 @@ function C.extend(M)
 		end
 		if not sampled then return calculate(raw,craft,targets,initialState) end
 		-- A calculator always applies its action, even when the input already matches.
-		M.perform(raw,craft,options.seed,initialState)
+		local partialHarvest=false
+		if method=="harvest_reforge" or method=="harvest_augment" then
+			local model=M.model(raw);local state=initialState and M.validateState(model,initialState) or model.initial
+			partialHarvest=M.hasPartialLock(M.context(model,state),state)
+		end
+		-- Partial-lock selection can make only some attempts invalid. Let the
+		-- simulator report those transition errors instead of rejecting the
+		-- entire calculation based on one arbitrarily seeded preflight.
+		if not partialHarvest then M.perform(raw,craft,options.seed,initialState) end
 		local result=M.simulate(raw,{steps={craft},targets=targets,initialState=initialState,requirements=options.requirements,requiredGroups=options.requiredGroups},
 			{trials=options.trials or 1000,maxActions=1,seed=options.seed,forceFirstAction=true,checkpoint=options.checkpoint})
 		result.sampled=true;result.outcomes={}

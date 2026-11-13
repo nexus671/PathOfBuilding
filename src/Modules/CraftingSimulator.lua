@@ -13,16 +13,17 @@ function M.withTreeContext(result,version)
 	result.latestAvailableTreeVersion=latestTreeVersion
 	return result
 end
+local partialWarningMessage="Partial locks assume uniform selection; Harvest augment selects protection before adding. Some interactions remain unsupported."
 function M.actionWarnings(action)
 	local result={}
-	if action.method=="bench" and type(action.modId)=="string" and action.modId:match("^bench:partial%-") then result[#result+1]={code="partial_lock_model",message="Partial locks use assumed uniform selection; some interactions remain unsupported."} end
+	if action.method=="bench" and type(action.modId)=="string" and action.modId:match("^bench:partial%-") then result[#result+1]={code="partial_lock_model",message=partialWarningMessage} end
 	if action.method=="recombine" then result[#result+1]={code="recombination_count_odds",message="Recombination uses older count odds; 3.30 odds are not verified."} end
 	if action.allflame or action.method=="ducat_kishara" then result[#result+1]={code="allflame_historical",message="Allflame is historical and did not return to core in 3.30."} end
 	return result
 end
 local function partialWarning(warnings)
 	for _,warning in ipairs(warnings) do if warning.code=="partial_lock_model" then return warnings end end
-	warnings[#warnings+1]={code="partial_lock_model",message="Partial locks use assumed uniform selection; some interactions remain unsupported."}
+	warnings[#warnings+1]={code="partial_lock_model",message=partialWarningMessage}
 	return warnings
 end
 function M.recipeWarnings(recipe)
@@ -240,6 +241,9 @@ local function selectPartialLocks(model,state,random)
 		end
 	end end
 end
+local function clearPartialLocks(state)
+	for _,entry in ipairs(state.affixes) do partialSelected[entry]=nil end
+end
 function M.annulCandidates(model,state)
 	local f=flags(model,state);local eligible={}
 	for index,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then eligible[#eligible+1]=index end end
@@ -264,7 +268,7 @@ function M.partialAnnulBranches(model,state)
 		local shadow=copyState(state);local cursor=0
 		selectPartialLocks(model,shadow,function() cursor=cursor+1;return assert(draws[cursor],"Missing partial-lock draw") end)
 		local eligible=M.annulCandidates(model,shadow)
-		for _,entry in ipairs(shadow.affixes) do partialSelected[entry]=nil end
+		clearPartialLocks(shadow)
 		if #eligible==0 then invalid=true;return end
 		for i,index in ipairs(eligible) do
 			local branch=result[index]
@@ -369,7 +373,7 @@ function M.action(model,input,action,random)
 		target=math.min(target,M.capacities(model,state).total)
 		while #state.affixes < target do add(model,state,random) end
 	else error("Unsupported crafting action: "..tostring(method)) end
-	for _,entry in ipairs(state.affixes) do partialSelected[entry]=nil end
+	clearPartialLocks(state)
 	state.rollBlock=nil
 	return state
 end
@@ -580,7 +584,7 @@ function M.simulate(raw,recipe,options)
 		if options.checkpoint then options.checkpoint({trial=trial,trials=trials,successes=successes}) end
 		local state=copyState(model.initial)
 		local random=rng(encounter.seed(seed,trial,31))
-		local at,actions,cost=1,0,baseCost
+		local at,actions,cost,trialExecuted=1,0,baseCost,0
 		while at <= #recipe.steps and actions < maxActions and not state.destroyed and (options.forceFirstAction and actions == 0 or not M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups)) do
 			local step=recipe.steps[at]
 			local route=routes[at] or {visits=0,success=0,failure=0,executed=0};routes[at]=route;route.visits=route.visits+1
@@ -593,6 +597,7 @@ function M.simulate(raw,recipe,options)
 				local ok,nextState=pcall(M.action,model,state,step,random)
 				if not ok then local message=tostring(nextState):match("[^:]+$") or tostring(nextState); errors[message]=(errors[message] or 0)+1; break end
 				state=nextState
+				trialExecuted=trialExecuted+1
 				route.executed=route.executed+1
 				totalExecuted=totalExecuted+1
 				local setupKey=(M.priceKey or priceKey)(step)
@@ -626,7 +631,7 @@ function M.simulate(raw,recipe,options)
 				local key=step.onFailureAction=="stop" and "stopped" or "salvaged";recovery[key]=recovery[key]+1;at=#recipe.steps+1
 			else at=success and (step.onSuccess or at+1) or (step.onFailure or at+1) end
 		end
-		local hit=M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups)
+		local hit=(not options.forceFirstAction or trialExecuted>0) and M.matches(state,recipe.targets,recipe.rarity,model,recipe.requirements,recipe.requiredGroups)
 		if hit then successes=successes+1; times[#times+1]=actions end
 		if hit and #retained < retain then retained[#retained+1]={trial=trial,actions=actions,cost=not next(missing) and cost or nil,state=copyTable(state),itemText=M.toItem(model,state).raw} end
 		local fractures=0
@@ -711,7 +716,7 @@ function M.capacities(model,state)
  prefix,suffix=math.max(0,prefix),math.max(0,suffix)
  return {Prefix=prefix,Suffix=suffix,total=prefix+suffix}
 end
-require("Modules.CraftingAdvanced").extend(M,{counts=counts,flags=flags,clear=clear,protected=protected,add=add,integer=integer,priceKey=priceKey})
+require("Modules.CraftingAdvanced").extend(M,{counts=counts,flags=flags,clear=clear,protected=protected,selectPartialLocks=selectPartialLocks,clearPartialLocks=clearPartialLocks,add=add,integer=integer,priceKey=priceKey})
 require("Modules.CraftingCalculator").extend(M)
 do
 	local calculate=M.calculate
@@ -731,7 +736,7 @@ do
 	end
 end
 -- Extensions register state prerequisites once for both execution and browsing.
-local partialLockActions={bench=true,remove_crafted=true,annul=true,chaos=true,alteration=true,scour=true,divine=true,exalt=true,augmentation=true,regal=true,
+local partialLockActions={bench=true,remove_crafted=true,annul=true,chaos=true,alteration=true,scour=true,divine=true,exalt=true,augmentation=true,regal=true,harvest_reforge=true,harvest_augment=true,
 	socket_bench=true,socket_white_bench=true,socket_colour_bench=true,chromatic=true,omen_connections=true,omen_trichromatism=true,tainted_chromatic=true,tainted_jeweller=true,tainted_fusing=true,
 	quality=true,tainted_quality=true,catalyst=true,tainted_catalyst=true,blessed=true,sacred=true,harvest_enchant=true,eldritch_implicit=true,conflict=true}
 function M.methodReason(model,state,method)

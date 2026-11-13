@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Model Harvest reforges and augments with experimental partial affix locks.
 * Enumerate partial-lock Annulment outcomes under the stated uniform-selection model.
 * Allow independent socket, quality, implicit and enchantment crafts while an experimental partial lock is present.
 * Add experimental 3.30 partial prefix and suffix locks for core crafting actions.

@@ -82,6 +82,42 @@ describe("3.30 partial affix locks",function()
 		local state={rarity="RARE",affixes={{id="bench:partial-suffix-2",crafted=true,range=0.5},{id="bench:partial-prefix-1",crafted=true,range=0.5},{id=multi,crafted=true,range=0.5}}}
 		assert.is_nil(sim.partialAnnulBranches(model,state))
 	end)
+	it("counts failed Harvest transitions as failures even when the input already matches",function()
+		local model=sim.model(raw);local prefix
+		for _,entry in ipairs(model.mods) do if entry.mod.type=="Prefix" then prefix=entry.id;break end end
+		local state=sim.validateState(model,{rarity="RARE",affixes={{id=prefix,range=0.5}}})
+		local locked=sim.perform(raw,{method="bench",modId=id},1,state).state
+		local original=sim.action;local calls=0
+		sim.action=function(modelArg,stateArg,craftArg,randomArg)
+			if craftArg.method=="harvest_reforge" then calls=calls+1;if calls==1 then error("modeled selection unavailable") end end
+			return original(modelArg,stateArg,craftArg,randomArg)
+		end
+		local ok,result=pcall(sim.calculate,raw,{method="harvest_reforge",tag="fire"},{{anyOf={prefix}}},locked,{trials=10})
+		sim.action=original;assert.is_true(ok,tostring(result))
+		assert.are.equal(9,result.successes);assert.is_truthy(next(result.transitionErrors));assert.is_true(result.sampled)
+	end)
+	it("reports real branch-dependent Harvest failures without rejecting valid branches",function()
+		local model=sim.model(raw);local ids,groups={},{}
+		for _,entry in ipairs(model.mods) do if entry.mod.type=="Prefix" and not groups[entry.mod.group] then
+			ids[#ids+1]=entry.id;groups[entry.mod.group]=true;if #ids==3 then break end
+		end end
+		local input={rarity="RARE",affixes={{id=ids[1],range=0.5,fractured=true},{id=ids[2],range=0.5},{id=ids[3],range=0.5}}}
+		local fracturedRaw=sim.toItem(model,input).raw;local fracturedModel=sim.model(fracturedRaw)
+		local locked=sim.perform(fracturedRaw,{method="bench",modId="bench:partial-prefix-2"},1,fracturedModel.initial).state
+		local seed;local encounter=require("Modules.CalcEncounter")
+		for candidate=1,1000 do
+			local value=encounter.seed(candidate,1,31);value=value*16807%2147483647;local first=value/2147483647
+			value=value*16807%2147483647;local second=value/2147483647
+			if first>=1/3 and second>=1/2 then seed=candidate;break end
+		end
+		assert.is_not_nil(seed)
+		assert.is_false(pcall(sim.perform,fracturedRaw,{method="harvest_reforge",tag="defences"},seed,locked))
+		local result=sim.calculate(fracturedRaw,{method="harvest_reforge",tag="defences"},{{anyOf={ids[1]},fractured=true}},locked,{trials=100,seed=seed})
+		assert.is_true(result.successes>0 and result.successes<100);assert.is_truthy(next(result.transitionErrors))
+		local failures=0;for _,count in pairs(result.transitionErrors) do failures=failures+count end
+		assert.are.equal(100-failures,result.successes)
+		assert.are.equal(result.successes,result.currencySpent["harvest_reforge:defences"])
+	end)
 	it("enumerates two-lock selections without counting permutations twice",function()
 		local model=sim.model(raw);local ids,groups={},{}
 		for _,entry in ipairs(model.mods) do if entry.mod.type=="Prefix" and not groups[entry.mod.group] then
@@ -121,6 +157,17 @@ describe("3.30 partial affix locks",function()
 			local rerolledItem=sim.perform(raw,{method="chaos"},17,item.state)
 			local kept={};for _,entry in ipairs(rerolledItem.state.affixes) do kept[entry.id]=true end
 			assert.is_true(kept[ids[1]]);assert.is_true(kept[ids[2]])
+			if side=="Prefix" then
+				local before=copyTable(item.state)
+				for _,method in ipairs({"harvest_reforge","harvest_augment"}) do
+					local result=sim.perform(raw,{method=method,tag="fire"},19,item.state)
+					local remaining={};for _,entry in ipairs(result.state.affixes) do remaining[entry.id]=true end
+					assert.is_true(remaining[ids[1]]);assert.is_true(remaining[ids[2]])
+					assert.are.equal("partial_lock_model",result.warnings[1].code);assert.are.same(before,item.state)
+					assert.is_truthy(result.warnings[1].message:find("before adding",1,true))
+					assert.are.equal(#result.state.affixes,#sim.annulCandidates(model,result.state))
+				end
+			end
 		end
 	end)
 end)
