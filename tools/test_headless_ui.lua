@@ -263,6 +263,35 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		frame("crafting-independent-affix-lines");ui:click("close")
 	end
 
+	do
+		local priceRaw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20\nSockets: W W W W W W"
+		local priced={id="priced-ui",title="Enchanted six-link budget",slot="Body Armour",startingItem=priceRaw,goals={},steps={},preferredMethod="omen_connections",nativeRecipe={steps={{method="harvest_enchant",enchantId="LifeBodyEnchant"},{method="omen_connections"}},targets={},requirements={links=6,harvestEnchant="LifeBodyEnchant"}}}
+		require("Classes.CraftingSimulatorControl").Open(build,priced)
+		ui:click("tab_simulate");ui:click("resourcePrices");frame("crafting-resource-prices")
+		ui:text("search","Omen of Connections");ui:text("price","2");assert(not main.popups[1].controls.currency:IsEnabled())
+		ui:text("search","Orb of Fusing");ui:text("price","0.25")
+		ui:text("search","Wild Crystallised Lifeforce");ui:text("price","0.1");ui:text("source","Local reference quotes")
+		frame("crafting-resource-quote");ui:choose("mode","Quoted resources");ui:text("search","");frame("crafting-resource-priced-list")
+		ui:click("keep");assert(main.popups[1].title=="Crafting workbench","Keeping prices left the resource editor open")
+		ui:text("trials","6");ui:text("budget","2");ui:click("runRecipe")
+		local jobs=require("Modules.CraftingTasks");for i=1,100 do if not jobs.job then break end;jobs.tick(build) end;assert(not jobs.job)
+		local lines={};for _,row in ipairs(main.popups[1].controls.resultSummary.list) do lines[#lines+1]=row[1] end
+		assert(table.concat(lines," "):find("Mean spent: 327.25 chaos",1,true),"The saved resource quotes were not used")
+		frame("crafting-resource-price-simulation")
+		ui:click("resourcePrices");ui:click("reset");assert(main.popups[1].controls.currency:IsEnabled());ui:text("currency","divine")
+		frame("crafting-resource-unit-reset");ui:click("close")
+		assert(main.popups[1].controls.currency.buf=="chaos","Cancelling the price edit changed saved units")
+		ui:click("compareRecipes");for i=1,3 do ui:choose("route"..i,2,"val") end;assert(not main.popups[1].controls.price1:IsEnabled())
+		ui:click("run");for i=1,200 do if not jobs.job then break end;jobs.tick(build) end;assert(not jobs.job)
+		lines={};for _,row in ipairs(main.popups[1].controls.results.list) do lines[#lines+1]=row[1] end
+		assert(table.concat(lines," "):find("327.25 chaos",1,true),"Recipe comparison ignored saved quotes")
+		frame("crafting-resource-price-comparison");ui:click("close");ui:click("close")
+		require("Classes.CraftingSimulatorControl").Open(build,{id="price-copy-ui",title="Helmet quote reuse",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",goals={},steps={}})
+		ui:click("tab_simulate");ui:click("resourcePrices");assert(main.popups[1].controls.copy:IsEnabled());ui:click("copy");ui:click("keep")
+		assert(main.popups[1].controls.source.buf=="Local reference quotes","Copying quotes lost their source")
+		ui:text("search","Orb of Alchemy");ui:text("price","1.5");frame("crafting-resource-copy-quote");ui:click("keep");ui:click("close")
+	end
+
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

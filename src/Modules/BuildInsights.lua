@@ -28,7 +28,7 @@ function M.snapshot(build)
 		result.skills[#result.skills+1] = (group.label or "").." ["..(group.slot or "unassigned").."] "..table.concat(names," + ")..(group.enabled == false and " (disabled)" or "")..(group.includeInFullDPS and " [Full DPS]" or "").." main="..tostring(group.mainActiveSkill or 1)
 	end
 	result.mainGroup = build.mainSocketGroup
-	result.craftingProjects = copyTable(build.savers.CraftingProjects.projects)
+	result.craftingProjects = require("Modules.CraftingProjects").copy(build.savers.CraftingProjects.projects)
 	result.journey = build.savers.BuildJourney and copyTable(build.savers.BuildJourney.data)
 	result.lootFilters = copyTable(build.savers.LootFilters.data)
 	result.atlasPlans = copyTable(build.savers.AtlasPlans.plans)

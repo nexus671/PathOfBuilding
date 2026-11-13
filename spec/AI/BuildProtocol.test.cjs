@@ -413,3 +413,14 @@ test('queues native item stat goals with decimal thresholds and rejects unknown 
     assert.throws(()=>f.call('simulate_crafting',{...base,recipe:{...recipe,requirements:{nativeStats}}}),/arguments/);
   }
 });
+
+
+test('queues saved resource quotes with crafting guides and simulations', t => {
+  const f=fixture(t);const priceBook={currency:'chaos',source:'Manual test quote',quotedAt:1700000000,values:{wild_lifeforce:0.1,exalt:0}};
+  const project={...craftingProject(),priceBook};f.call('propose_crafting_plan',{baseRevision:f.state.revision,project});
+  let queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(queued.proposal.operations[0].project.priceBook,priceBook);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  f.call('simulate_crafting',{baseRevision:f.state.revision,itemText:project.startingItem,recipe:{steps:[{method:'alchemy'}],targets:[],requirements:{minAffixes:1}},options:{priceBook}});
+  queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(queued.options.priceBook,priceBook);
+  assert.throws(()=>f.call('propose_crafting_plan',{baseRevision:f.state.revision,project:{...project,priceBook:{...priceBook,values:{exalt:-1}}}}),/arguments/);
+});

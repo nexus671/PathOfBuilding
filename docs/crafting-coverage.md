@@ -22,6 +22,21 @@ The independent engine targets current PoE 1 using PoB modifiers and an immutabl
 | Allflame | Client-derived currency profiles, ship upgrades, class/level-scaled Sulphur costs, independent ghost previews, Intangibility collapse, preferred-target selection, conditional finite-outcome calculation | Gain intervals are sampled uniformly; collapse and selection remain model assumptions. An observed override is available. Existing imprints are consumed. |
 | Planning | Rich targets including native weapon/defence minimums, linked socket-colour counts and specific fractures/crafted flags, manual starting-item edits, bounded routes/loops, background jobs, cancellation, starting-item costs, percentiles, final-affix/property distributions, retained successes, finite-outcome enumeration with cancellable sampled fallback, fossil comparison | No globally cheapest policy guarantee. |
 
+## Saved resource prices
+
+Each gear project can store a price book with a common unit, source, quote time
+and resource values. The native **Resource prices** editor uses bundled currency
+art and can copy quotes from another gear project. It does not fetch live prices
+or convert currencies. Clear quotes before changing their unit. Changing the
+unit also clears action overrides and the starting-item cost.
+
+Simulations, recipe comparisons and fossil optimization share these quotes,
+including through MCP's `priceBook` option. Explicit `prices` entries override
+the corresponding resource; a selected action override prices the complete
+action. Zero is free and missing is unknown. Bench services and other actions
+without verified ingredient quantities remain whole-action quotes. Quote dates
+are preserved when editing or copying unless explicitly changed.
+
 ## Assumptions
 
 - Rare affix counts use 4/5/6 with weights 8/3/1; magic counts use one/two equally. Eldritch Chaos uses two/three on the affected side equally.

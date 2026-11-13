@@ -18,8 +18,8 @@ describe("Connected planning workflows",function()
 		local proposal={mode="edit",title="Background life",baseRevision=bridge.revision(build),operations={{type="equip_item",slot="Helmet",text="Rarity: RARE\nTrial Hat\nIron Hat\n+100 to maximum Life"}}}
 		local expected=bridge.prepare(build,proposal);local worker=require("Modules.PlanningWorker");local originalMain,originalCache=main,GlobalCache
 		local job=worker.new(build,function(checkpoint) return bridge.prepare(build,proposal,checkpoint) end);local result
-		for i=1,100 do local done,ok,value=worker.resume(job);assert.equal(originalMain,main);assert.equal(originalCache,GlobalCache);assert.is_true(ok);if done then result=value;break end end
-		assert.is_true(job.slices>1);assert.same(expected.after,result.after);assert.equal(proposal.baseRevision,bridge.revision(build))
+		for i=1,10000 do local done,ok,value=worker.resume(job);assert.equal(originalMain,main);assert.equal(originalCache,GlobalCache);assert.is_true(ok);if done then result=value;break end end
+		assert.is_truthy(result,"Background calculation did not complete within the bounded resume count");assert.is_true(job.slices>1);assert.same(expected.after,result.after);assert.equal(proposal.baseRevision,bridge.revision(build))
 	end)
 	it("records observed timings and resets only the requested build",function()
 		local perf=require("Modules.PlanningPerformance");perf.clear(build);perf.record(build,"Calculation",0.01);perf.record(build,"Calculation",0.03)

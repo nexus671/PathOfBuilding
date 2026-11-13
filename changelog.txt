@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Added visual saved resource quotes with currency art, source/date metadata and reuse between gear projects, simulations, recipe comparisons and MCP.
+* Kept action price overrides with their selected action and prevented accidental price-unit relabelling.
 * Reduced AI snapshot pauses by avoiding active-item reparses and repeated XML parsing while preserving native save data and revision guards.
 * Preserved independent rolls across multi-line affixes in native items, imports, comparisons and crafting previews.
 * Added Omen-assisted linking, exact socket calculations and discoverable socket-service costs through MCP.

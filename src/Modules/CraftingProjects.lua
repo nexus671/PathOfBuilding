@@ -33,6 +33,7 @@ function M.validate(project)
 		assert(type(step) == "table","Invalid crafting step")
 		result.steps[#result.steps+1] = {action=text(step.action,1000,"step action"),stopWhen=text(step.stopWhen,500,"stop condition",true),onFailure=text(step.onFailure,500,"failure route",true),done=step.done == true}
 	end
+	if project.priceBook then result.priceBook=require("Modules.CraftingPrices").validate(project.priceBook) end
 	if project.nativeRecipe then result.nativeRecipe=require("Modules.CraftingSimulator").validateRecipe(project.nativeRecipe) end
 	if project.preferredMethod then
 		local valid=false;for _,method in ipairs(require("Modules.CraftingSimulator").methods) do if project.preferredMethod==method then valid=true end end
@@ -49,6 +50,15 @@ function M.validate(project)
 		assert(type(sim.trials) == "number" and sim.trials == math.floor(sim.trials) and type(sim.successes) == "number" and sim.successes == math.floor(sim.successes),"Simulation counts must be integers")
 		result.simulation = {source="Craft of Exile (supplied result)",patch=text(sim.patch,40,"simulation patch"),observedAt=number(sim.observedAt,0,4102444800,"simulation time"),
 			trials=number(sim.trials,1,1e9,"simulation trials"),successes=number(sim.successes,0,sim.trials,"simulation successes"),notes=text(sim.notes,4000,"simulation notes",true)}
+	end
+	return result
+end
+
+-- Preserve JSON dictionary shape after the generic native table copy.
+function M.copy(projects)
+	local result=copyTable(projects)
+	for _,project in ipairs(result) do
+		if project.priceBook then project.priceBook=require("Modules.CraftingPrices").validate(project.priceBook) end
 	end
 	return result
 end
@@ -88,7 +98,7 @@ function M.new(build)
 			local target=M.item(entry.targetItem)
 			assert(target.type == start.type and build.itemsTab:IsItemValidForSlot(target,entry.slot),"Crafting target must use the same item class and equipment slot")
 		end
-		local replacement=copyTable(self.projects)
+		local replacement=M.copy(self.projects)
 		local found=false
 		for index,existing in ipairs(replacement) do if existing.id == entry.id then
 			if not entry.run and existing.run and entry.startingItem==existing.startingItem then entry.run=copyTable(existing.run) end
@@ -149,6 +159,10 @@ function M.lines(project)
 		lines[#lines+1]=string.format("%d. [%s] %s",index,step.done and "done" or "todo",step.action)
 		if step.stopWhen and step.stopWhen ~= "" then lines[#lines+1]="   Stop when: "..step.stopWhen end
 		if step.onFailure and step.onFailure ~= "" then lines[#lines+1]="   On failure: "..step.onFailure end
+	end
+	if project.priceBook then
+		local quote=project.priceBook;local count=0;for _ in pairs(quote.values) do count=count+1 end
+		lines[#lines+1]=string.format("Resource quotes: %d in %s | %s | %s",count,quote.currency,quote.source,os.date("%Y-%m-%d",quote.quotedAt))
 	end
 	if project.estimate then local q=project.estimate; lines[#lines+1]=string.format("Estimated total: %.2f %s | %s | quote age %.0fh",q.amount,q.currency,q.source,math.max(0,os.time()-q.quotedAt)/3600) end
 	if project.simulation then local s=project.simulation; lines[#lines+1]=string.format("Supplied CoE result: %.0f / %.0f successes | patch %s | observed %.0fh ago",s.successes,s.trials,s.patch,math.max(0,os.time()-s.observedAt)/3600); lines[#lines+1]="External result recorded as supplied; PoB has not rerun or verified this simulation." end

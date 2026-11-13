@@ -294,7 +294,7 @@ function M.capture(build)
 	local context = {revision=M.revision(build),name=build.buildName,level=build.characterLevel,className=build.spec.curClassName,ascendancy=build.spec.curAscendClassName,
 		stats=stats(build),items={},skills={},passives={},masteries=copyTable(build.spec.masterySelections),config=copyTable(build.configTab.input),
 		warnings=copyTable(build.controls.warnings.lines),slots={},plan=M.plan,audit=insights.audit(build),encounter=insights.diagnose(build),
-		craftingProjects=copyTable(build.savers.CraftingProjects.projects),craftingWarning=build.savers.CraftingProjects.warning,
+		craftingProjects=require("Modules.CraftingProjects").copy(build.savers.CraftingProjects.projects),craftingWarning=build.savers.CraftingProjects.warning,
 		lootFilters=copyTable(build.savers.LootFilters.data),lootFilterWarning=build.savers.LootFilters.warning,
 		journey=copyTable(build.savers.BuildJourney.data),journeyWarning=build.savers.BuildJourney.warning,
 		journeyBudget=require("Modules.BuildJourney").budget(build.savers.BuildJourney.data),nextActions=require("Modules.BuildJourney").next(build.savers.BuildJourney.data,build),

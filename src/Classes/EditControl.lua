@@ -283,6 +283,12 @@ function EditClass:Draw(viewPort, noTooltip)
 		textX = textX + DrawStringWidth(textHeight, self.font, self.prompt) + textHeight/2
 	end
 	if not enabled then
+		if self.showDisabledValue then
+			SetViewport(x + 2, y + 2, width - 4, height - 4)
+			SetDrawColor(self.textCol)
+			DrawString(textX - x - 2, textY - y - 2, "LEFT", textHeight, self.font, self.buf)
+			SetViewport()
+		end
 		return
 	end
 	if mOver and not noTooltip then

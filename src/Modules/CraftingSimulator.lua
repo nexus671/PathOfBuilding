@@ -413,6 +413,12 @@ end
 
 function M.simulate(raw,recipe,options)
 	options=options or { }
+	local suppliedPrices=options.prices and next(options.prices)~=nil or false
+	if options.priceBook or options.prices then options=copyTable(options) end
+	if options.priceBook then
+		options.priceBook=require("Modules.CraftingPrices").validate(options.priceBook)
+		options.currency=options.currency or options.priceBook.currency
+	end
 	recipe=M.validateRecipe(recipe)
 	local trials=integer(options.trials or 200,1,2000,"trial count")
 	local baseCost=options.baseCost or 0
@@ -426,6 +432,9 @@ function M.simulate(raw,recipe,options)
 	for key,value in pairs(options.prices or { }) do assert(type(key) == "string" and type(value) == "number" and value == value and value >= 0 and value <= 1e12,"Invalid currency price") end
 	local model=M.model(raw)
 	if options.initialState or recipe.initialState then model.initial=M.validateState(model,options.initialState or recipe.initialState) end
+	if options.priceBook or options.prices then
+		options.prices=require("Modules.CraftingPrices").forSimulation(options.priceBook,options.currency,M.context(model,model.initial),options.prices)
+	end
 	local available={ }
 	for _,entry in ipairs(model.mods) do available[entry.id]=true end
 	for _,entry in ipairs(model.bench) do available[entry.id]=true end
@@ -528,6 +537,7 @@ function M.simulate(raw,recipe,options)
 		result.meanCost=totalCost/trials;result.costPerSuccess=successes>0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts)
 		result.costDistribution={};for _,bucket in pairs(costHistogram) do result.costDistribution[#result.costDistribution+1]=bucket end;table.sort(result.costDistribution,function(a,b) return a.cost<b.cost end)
 	else for _,entry in ipairs(retained) do entry.cost=nil end end
+	if options.priceBook then result.priceSource=options.priceBook.source;result.priceQuotedAt=options.priceBook.quotedAt;result.priceOverridesSupplied=suppliedPrices end
 	result.recovery=recovery
 	return result
 end

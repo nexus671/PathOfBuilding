@@ -76,7 +76,7 @@ def main():
     assert hashlib.sha256(raw).hexdigest() == crafting["hashes"]["base_items.json"], "Pinned export changed"
     bases = json.loads(raw)
     wanted = set(METHODS.values())
-    wanted.add("Glassblower's Bauble")
+    wanted.update({"Potent Chaotic Resonator", "Powerful Chaotic Resonator", "Prime Chaotic Resonator", "Glassblower's Bauble", "Wild Crystallised Lifeforce", "Vivid Crystallised Lifeforce", "Sacred Crystallised Lifeforce"})
     entries = {key: value for key, value in bases.items() if value.get("visual_identity", {}).get("dds_file")
                and (value["name"] in wanted or value["item_class"] == "StackableCurrency" and
                     any(word in value["name"] for word in ("Essence of", "Fossil", "Catalyst", "Eldritch Ember", "Eldritch Ichor", "Resonator", "Whetstone", "Exalted Orb")))}

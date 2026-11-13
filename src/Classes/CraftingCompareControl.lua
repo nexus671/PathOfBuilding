@@ -19,23 +19,29 @@ function M.Open(build,raw,state,targets,requirements,requiredGroups,current,save
 		end
 	end
 	ui.label(controls,"intro",16,26,"Compare recipes with the same item, targets, seed, trials and action budget.",14)
-	ui.label(controls,"hint",16,50,"Optional prices apply to the single-action routes. Saved recipes need all prices to report a cost.",14)
+	ui.label(controls,"hint",16,50,"Prices in "..settings.currency..". Saved quotes apply to every route; action overrides apply to single actions.",14)
 	for i=1,3 do
 		controls["route"..i]=new("DropDownControl"):DropDownControl(ui.anchor,{16,82+(i-1)*38,width-218,26},entries)
 		controls["route"..i]:SelByValue(math.min(i,#entries),"val")
-		controls["price"..i]=new("EditControl"):EditControl(ui.anchor,{width-186,82+(i-1)*38,170,26},"","Price / action",nil,12)
+		controls["price"..i]=new("EditControl"):EditControl(ui.anchor,{width-186,82+(i-1)*38,170,26},"","Action override",nil,16)
+		local drop,input=controls["route"..i],controls["price"..i];local overrides={};local previous=drop:GetSelValueByKey("val")
+		drop.selFunc=function() overrides[previous]=input.buf;previous=drop:GetSelValueByKey("val");input:SetText(overrides[previous] or "") end
+		input.enabled=function() return recipes[drop:GetSelValueByKey("val")].priceKey~=nil end
+		input.tooltipText="Override the complete price of one selected action. Saved recipes use their ingredient prices."
 	end
 	controls.results=new("TextListControl"):TextListControl(ui.anchor,{16,206,width-32,height-280},nil,ui.rows({"Choose up to three routes and run the comparison.","Missing prices remain unknown. Sampling intervals do not measure model uncertainty."},width-62))
 	controls.run=new("ButtonControl"):ButtonControl(ui.anchor,{16,height-48,180,28},"Compare recipes",function()
 		local captured={}
 		for i=1,3 do local route=copyTable(recipes[controls["route"..i]:GetSelValueByKey("val")]);local price=controls["price"..i].buf
-			if price~="" then route.price=assert(tonumber(price),"Enter a valid unit price");assert(route.price>=0,"Prices cannot be negative") end;captured[#captured+1]=route
+			if route.priceKey and price~="" then route.price=assert(tonumber(price),"Enter a valid unit price");assert(route.price>=0,"Prices cannot be negative") end;captured[#captured+1]=route
 		end
 		local job=tasks.start(build,function(checkpoint)
 			local results={}
 			for i,route in ipairs(captured) do
-				local prices=route.priceKey and route.price and {[route.priceKey]=route.price} or nil
-				local options={initialState=copyTable(state),trials=settings.trials,maxActions=settings.budget,seed=settings.seed,currency=settings.currency,prices=prices,checkpoint=function(progress) checkpoint({route=i,trial=progress.trial,trials=progress.trials}) end}
+				local prices=settings.prices and copyTable(settings.prices) or {}
+				if route.priceKey and route.price~=nil then prices[route.priceKey]=route.price end
+				if not next(prices) then prices=nil end
+				local options={initialState=copyTable(state),trials=settings.trials,maxActions=settings.budget,seed=settings.seed,currency=settings.currency,priceBook=settings.priceBook,prices=prices,checkpoint=function(progress) checkpoint({route=i,trial=progress.trial,trials=progress.trials}) end}
 				local ok,result=pcall(sim.simulate,raw,route.recipe,options);results[#results+1]={label=route.label,result=ok and result or nil,error=not ok and tostring(result):match("[^\n]+") or nil}
 			end
 			return results

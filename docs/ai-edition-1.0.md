@@ -27,6 +27,7 @@ The installed application and personal builds are outside this release workspace
 - [x] Show native weapon DPS, attack rate, critical chance and Ward in item comparisons.
 - [x] Use native weapon and defence minimums as saved crafting goals and recipe stop conditions.
 - [x] Compare methods and explore success/budget and spending distributions.
+- [x] Save per-resource quotes, reuse them across gear guides and share them with native/MCP simulations.
 - [x] Apply quality enchantments with native item state, recipe goals and resource costs.
 - [ ] Review incomplete socket, corruption and league mechanics against sources.
 - [x] Keep empirical assumptions visible; never present unknown weights as facts.
@@ -55,10 +56,10 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `c5360517937c9ece451f614a338f98eeb9473a5b`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43377191381),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43377191348)).
-It passed 1,151 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
+The latest verified checkpoint is `1d599ac216fd920f23776d768a5cf4c4aa417703`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43381146749),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43381146782)).
+It passed 1,155 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
 711 source-stable UI states without audit failures. All 2,412 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
@@ -113,7 +114,7 @@ bounded, variable measurements do not establish sustained desktop
 responsiveness or exclude a performance regression. Snapshot creation and
 occasional initialization pauses still need attention.
 
-The current review replaces full active-item reparsing during AI snapshots with
+Preview 20 replaces full active-item reparsing during AI snapshots with
 read-only capture. Unusual range normalization uses an isolated native parse;
 regular native file saves keep their existing path. Revision hashing uses the
 captured tree while retaining legacy XML normalization and hashes. It also
@@ -132,9 +133,23 @@ planning benchmark measured a 101 ms snapshot, 3.79 seconds synchronous,
 calculations. These bounded timings do not prove sustained desktop responsiveness.
 
 Local validation passed 1,155 Lua tests, the full MCP workflow and 711
-source-stable UI states without audit failures. Exact-commit CI remains required.
+source-stable UI states without audit failures. Exact-commit CI passed, and its
+artifact source hashes were verified.
 
-Add a native per-resource price editor and repeat cross-tool performance and
-recovery checks. Close source-verified socket, corruption and league gaps without
+The current review adds a native resource-price editor with searchable currency
+artwork, recipe-resource and quoted-resource views, source/date metadata and
+copying between gear projects. Quotes persist in builds and portable bundles.
+Native simulation, recipe comparison, fossil optimization and MCP use the same
+resource aliases and explicit action-override rules. Zero means free; a missing
+quote remains unknown. Unit changes require clearing quotes rather than
+relabeling their values. Bench and other aggregate prices are labelled as whole
+actions; the editor does not invent ingredient quantities or fetch live prices.
+
+Local review passed 1,162 Lua tests, 44 Node tests, ModCache regeneration and
+the real MCP workflow. Regression checks cover zero/missing prices, aliases for
+all six influence currencies, overrides, project reuse and empty dictionaries.
+The final source-stable UI pass and exact-commit CI remain required.
+
+Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies
 incomplete mechanics and model assumptions; this is not a full-parity release.

@@ -1615,6 +1615,30 @@
       "height": 78,
       "sha256": "62c51f4170d9147fb5ee093ff8475faf2e1a6ddcc34ff9c8d7d02fbaa048c9d0"
     },
+    "Metadata/Items/Currency/HarvestSeedBoss": {
+      "name": "Sacred Crystallised Lifeforce",
+      "path": "Assets/Crafting/Currency/ec958b158d2e3ac7c8f6.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Harvest/SacredLifeforce.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "58287face31cfd529c10abfee0f1a08a91231541f7876d8da8c1ad06bc489810"
+    },
+    "Metadata/Items/Currency/HarvestSeedGreen": {
+      "name": "Vivid Crystallised Lifeforce",
+      "path": "Assets/Crafting/Currency/2c3bd8deb4588cba4d36.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Harvest/VividLifeforce.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "f67fd776f0ad2ed1e316d387faad15226973a0abd83b0c00265d043cab473e3a"
+    },
+    "Metadata/Items/Currency/HarvestSeedRed": {
+      "name": "Wild Crystallised Lifeforce",
+      "path": "Assets/Crafting/Currency/a77d834582d8163ba334.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Harvest/WildLifeforce.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c45b0dcb0a2842e6193e5e196c2a62d3f10effb6e63a09e38f4f9ba113cfd1f7"
+    },
     "Metadata/Items/Deepwater/DeepwaterAbyssCurrency": {
       "name": "Merrick's Ducat",
       "path": "Assets/Crafting/Currency/38bcd1764d64bf1a27d0.png",
@@ -1695,6 +1719,30 @@
       "height": 78,
       "sha256": "f8a217d1a41f56c8ad32b527904e3840c6cf515193ec6484d750c9ac3ece4cec"
     },
+    "Metadata/Items/Delve/DelveSocketableCurrencyReroll2": {
+      "name": "Potent Chaotic Resonator",
+      "path": "Assets/Crafting/Currency/bac531293cd575cb8ea4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/Reroll2x1A.png",
+      "width": 78,
+      "height": 156,
+      "sha256": "83ee5b8df759e9176aebb692a34e931889ca0389dedeadf269a479c465253636"
+    },
+    "Metadata/Items/Delve/DelveSocketableCurrencyReroll3": {
+      "name": "Powerful Chaotic Resonator",
+      "path": "Assets/Crafting/Currency/45ad3fb17b5eddb71af3.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/Reroll2x2A.png",
+      "width": 156,
+      "height": 156,
+      "sha256": "5b544ce9bb6b472e0c74388165a59bec7eb91d7358d28196b4508db4b760e9a4"
+    },
+    "Metadata/Items/Delve/DelveSocketableCurrencyReroll4": {
+      "name": "Prime Chaotic Resonator",
+      "path": "Assets/Crafting/Currency/07d6c33c74e413a0ecf5.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/Reroll2x2C.png",
+      "width": 156,
+      "height": 156,
+      "sha256": "1ec9fc1428486d702b3c07fec8e92ce3a77ac0b5dfc33c6cef1ddb7bb7043320"
+    },
     "Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll1": {
       "name": "Primitive Chaotic Resonator",
       "path": "Assets/Crafting/Currency/fdfb73de27be38e4c61d.png",
@@ -1702,6 +1750,30 @@
       "width": 78,
       "height": 78,
       "sha256": "f8a217d1a41f56c8ad32b527904e3840c6cf515193ec6484d750c9ac3ece4cec"
+    },
+    "Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll2": {
+      "name": "Potent Chaotic Resonator",
+      "path": "Assets/Crafting/Currency/bac531293cd575cb8ea4.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/Reroll2x1A.png",
+      "width": 78,
+      "height": 156,
+      "sha256": "83ee5b8df759e9176aebb692a34e931889ca0389dedeadf269a479c465253636"
+    },
+    "Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll3": {
+      "name": "Powerful Chaotic Resonator",
+      "path": "Assets/Crafting/Currency/45ad3fb17b5eddb71af3.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/Reroll2x2A.png",
+      "width": 156,
+      "height": 156,
+      "sha256": "5b544ce9bb6b472e0c74388165a59bec7eb91d7358d28196b4508db4b760e9a4"
+    },
+    "Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll4": {
+      "name": "Prime Chaotic Resonator",
+      "path": "Assets/Crafting/Currency/07d6c33c74e413a0ecf5.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Delve/Reroll2x2C.png",
+      "width": 156,
+      "height": 156,
+      "sha256": "1ec9fc1428486d702b3c07fec8e92ce3a77ac0b5dfc33c6cef1ddb7bb7043320"
     }
   },
   "methods": {

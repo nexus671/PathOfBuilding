@@ -14,10 +14,14 @@ function M.validate(raw,run,models)
 		assert(simulator.toItem(model,result).base,"Invalid checkpoint item")
 		return result
 	end
-	local result={schemaVersion=1,state=state(run.state),initial=state(run.initial),history={},actions={},configured={},settings={},sequence=run.sequence,targets=run.targets or {},requirements=run.requirements,requiredGroups=run.requiredGroups,page=run.page or "Emulate item",method=run.method or "alchemy",seed=run.seed or "104729"}
+	local result={schemaVersion=1,state=state(run.state),initial=state(run.initial),history={},actions={},configured={},settings={},priceOverrides={},sequence=run.sequence,targets=run.targets or {},requirements=run.requirements,requiredGroups=run.requiredGroups,page=run.page or "Emulate item",method=run.method or "alchemy",seed=run.seed or "104729"}
 	assert(type(result.sequence)=="number" and result.sequence>=0 and result.sequence<=1e9 and result.sequence==math.floor(result.sequence),"Invalid craft sequence")
 	for _,key in ipairs({"page","method","seed"}) do assert(type(result[key])=="string" and #result[key]<=80,"Invalid checkpoint setting") end
 	for _,key in ipairs({"trials","budget","price","currency","baseCost"}) do local v=run.settings and run.settings[key];if v then assert(type(v)=="string" and #v<=80,"Invalid checkpoint setting");result.settings[key]=v end end
+	for key,value in pairs(run.priceOverrides or {}) do
+		assert(type(key)=="string" and #key<=240 and type(value)=="string" and #value<=80,"Invalid saved action price")
+		result.priceOverrides[key]=value
+	end
 	assert(type(run.history)=="table" and type(run.actions)=="table","Invalid checkpoint history")
 	for _,s in ipairs(run.history) do result.history[#result.history+1]=state(s) end
 	local targetRecipe=simulator.validateRecipe({steps={{method="alchemy"}},targets=result.targets,requirements=result.requirements or {minAffixes=0},requiredGroups=result.requiredGroups})
