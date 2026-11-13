@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Correct loot-filter previews for socket rules that mix count and colour alternatives.
 * Record the selected build tree as context for crafting results instead of labelling the newest available tree as the selected one.
 * Keep historical Allflame and unverified recombination-odds notes with crafting results, comparisons, charts and AI responses.
 * Updated recombination to preserve the selected base's level and exclude incompatible rollable modifiers before drawing counts; permit different defence bases in the same item class.

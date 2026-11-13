@@ -88,17 +88,29 @@ function M.condition(c,item)
 	if not c.known then return nil,"Unsupported condition "..c.keyword end
 	local value=item[c.keyword];if value==nil then return nil,"Missing "..c.keyword end
 	local op=c.operator;local values=c.values
-	if c.keyword=="SocketGroup" or c.keyword=="Sockets" and not tonumber(values[1]) then
-		if c.keyword=="Sockets" then value=item.SocketColours or value end
+	if c.keyword=="Sockets" then
+		local count=tonumber(value);local colours=item.SocketColours or (not count and type(value)=="string" and value or nil);local unknown
+		local negative=op=="!" or op=="!="
+		for _,pattern in ipairs(values) do
+			local number=tonumber(pattern);local pass
+			if number then
+				if count then pass=compare(count,number,op) else unknown="Invalid Sockets" end
+			elseif type(colours)~="string" then unknown="Supply socket colours for Sockets"
+			elseif colours:find("[^RGBWAD%s%-]") then unknown="Invalid socket colours for Sockets"
+			else pass=socketMatch(colours,pattern,op) end
+			if pass~=nil and (negative and not pass or not negative and pass) then return not negative end
+		end
+		if unknown then return nil,unknown end
+		return negative
+	end
+	if c.keyword=="SocketGroup" then
 		if type(value)~="string" then return nil,"Supply socket colours for "..c.keyword end
 		if value:find("[^RGBWAD%s%-]") then return nil,"Invalid socket colours for "..c.keyword end
 		for _,pattern in ipairs(values) do
-			if c.keyword=="SocketGroup" then
-				-- Abyss and Delve sockets cannot link to other sockets, even when
-				-- a manually entered sample places them inside a group.
-				local separated=value:gsub("([AD])"," %1 ")
-				for group in separated:gmatch("[^ ]+") do if socketMatch(group,pattern,op) then return true end end
-			elseif socketMatch(value,pattern,op) then return true end
+			-- Abyss and Delve sockets cannot link to other sockets, even when
+			-- a manually entered sample places them inside a group.
+			local separated=value:gsub("([AD])"," %1 ")
+			for group in separated:gmatch("[^ ]+") do if socketMatch(group,pattern,op) then return true end end
 		end;return false
 	elseif M.numeric[c.keyword] or c.keyword=="Rarity" then
 		value=c.keyword=="Rarity" and rarity[value] or tonumber(value)
