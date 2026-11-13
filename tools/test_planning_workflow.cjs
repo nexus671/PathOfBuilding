@@ -76,6 +76,10 @@ async function main(){
   assert.ok(rgbService.available && !rgbService.deterministic);assert.equal(rgbService.guaranteedColours,'RGB');
   const rgbAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:rgbService.action},'crafted');
   for(const colour of ['R','G','B'])assert.ok(rgbAction.nativeCrafting.state.sockets.some(socket=>socket.color===colour));
+  const invalidSockets={rarity:'NORMAL',affixes:[],sockets:[{color:'R',group:0},{color:'G',group:1},{color:'B',group:0}]};
+  const rejectedSockets=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:{method:'chromatic'},initialState:invalidSockets,targets:[],options:{requirements:{socketColours:'RB',linkedColours:true},trials:2}},'failed');
+  assert.match(rejectedSockets.error,/contiguous group/);
+  assert.equal((await call('get_build_context')).context.revision,context.revision);
   const twiceRaw='Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W-W-W\nTwice Corrupted';
   const twiceAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:twiceRaw,action:{method:'tainted_chromatic'}},'crafted');
   assert.equal(twiceAction.nativeCrafting.state.corrupted,true);assert.equal(twiceAction.nativeCrafting.state.twiceCorrupted,true);

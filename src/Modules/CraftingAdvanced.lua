@@ -646,7 +646,14 @@ function A.extend(M,api)
 		end
 		if state.sockets then
 			assert(type(state.sockets) == "table" and #state.sockets <= (model.item.base.socketLimit or 0),"Invalid socket count")
-			for _,socket in ipairs(state.sockets) do assert(contains({"R","G","B","W","A"},socket.color),"Invalid socket colour");api.integer(socket.group,0,6,"socket group") end
+			local ended,previous={},nil
+			for _,socket in ipairs(state.sockets) do
+				assert(contains({"R","G","B","W","A"},socket.color),"Invalid socket colour");api.integer(socket.group,0,6,"socket group")
+				if socket.group~=previous then
+					assert(not ended[socket.group],"Linked sockets must form a contiguous group")
+					if previous~=nil then ended[previous]=true end;previous=socket.group
+				end
+			end
 		end
 		if state.implicits then
 			assert(type(state.implicits) == "table" and #state.implicits <= 2 and not baseInfluences(state),"Invalid Eldritch implicit state")
