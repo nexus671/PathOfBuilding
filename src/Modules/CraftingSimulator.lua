@@ -207,6 +207,11 @@ local function add(model,state,random)
 	error("Could not select a modifier")
 end
 local function protected(entry,mod,f) return entry.fractured or mod.type == "Prefix" and f.prefixes or mod.type == "Suffix" and f.suffixes end
+function M.annulCandidates(model,state)
+	local f=flags(model,state);local eligible={}
+	for index,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then eligible[#eligible+1]=index end end
+	return eligible
+end
 local function clear(model,state,ignoreMeta)
 	local f=ignoreMeta and {} or flags(model,state)
 	for i=#state.affixes,1,-1 do if not protected(state.affixes[i],model.byId[state.affixes[i].id],f) then table.remove(state.affixes,i) end end
@@ -269,8 +274,7 @@ function M.action(model,input,action,random)
 		add(model,state,random)
 	elseif method == "annul" then
 		assert(state.rarity ~= "NORMAL","Annulment requires a magic or rare item")
-		local eligible={ }
-		for index,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then eligible[#eligible+1]=index end end
+		local eligible=M.annulCandidates(model,state)
 		assert(#eligible > 0,"No modifier can be removed")
 		table.remove(state.affixes,eligible[math.floor(random()*#eligible)+1])
 	elseif method == "scour" then

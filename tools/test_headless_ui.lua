@@ -284,8 +284,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	do
 		local raw="Rarity: NORMAL\nDriftwood Wand\nItem Level: 86";local model=sim.model(raw)
 		local state=sim.validateState(model,{rarity="RARE",affixes={{id="LocalAddedChaosDamage1",range=0.5},{id="bench:731",range=0.5,crafted=true}}})
-		require("Classes.CraftingSimulatorControl").Open(build,{id="annul-330-ui",title="Annul with attack blocker",slot="Weapon 1",startingItem=sim.toItem(model,state).raw,goals={},steps={}})
+		require("Classes.CraftingSimulatorControl").Open(build,{id="annul-330-ui",title="Annul with attack blocker",slot="Weapon 1",startingItem=sim.toItem(model,state).raw,goals={},steps={},nativeRecipe={steps={},targets={{anyOf={"LocalAddedChaosDamage1"}}}}})
 		ui:click("currency_annul");local hints={};for _,row in ipairs(main.popups[1].controls.actionHint.list) do hints[#hints+1]=row[1] end;assert(table.concat(hints," "):find("3.30",1,true),"Annulment did not explain the 3.30 rule")
+		ui:choose("page","Craft settings");ui:click("exact");local jobs=require("Modules.CraftingTasks")
+		for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
+		local odds=build.craftingAnalyses["annul-330-ui"].results.odds.result
+		assert(not jobs.job and odds.sampled==false and odds.successChance==50,"Annulment odds did not enumerate the two outcomes")
+		ui:choose("page","Simulate recipe");frame("crafting-annul-exact-odds");ui:choose("page","Emulate item")
 		frame("crafting-annul-330-rule");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Orb of Annulment",1,true));frame("crafting-annul-330-applied");ui:click("close")
 	end
 

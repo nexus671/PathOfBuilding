@@ -64,6 +64,10 @@ async function main(){
   assert.ok(attributeBench);assert.deepEqual(attributeBench.components,{'Metadata/Items/Currency/CurrencyRerollMagic':3});assert.ok(attributeBench.costSources.includes('GGG 3.30 patch notes'));
   const attributePlan=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[{method:'bench',modId:attributeBench.id}],targets:[],requirements:{minAffixes:1}},options:{trials:2,maxActions:1,currency:'chaos',prices:{'Metadata/Items/Currency/CurrencyRerollMagic':0.5}}},'crafted');
   assert.equal(attributePlan.nativeCrafting.meanCost,1.5);assert.equal(attributePlan.nativeCrafting.currencySpent['Metadata/Items/Currency/CurrencyRerollMagic'],6);
+  const annulOddsRaw='Rarity: NORMAL\nDriftwood Wand\nItem Level: 86';
+  const annulOddsState={rarity:'RARE',affixes:[{id:'LocalAddedChaosDamage1',range:0.5},{id:'bench:731',range:0.5,crafted:true}]};
+  const annulOdds=await queued('calculate_crafting',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'annul'},initialState:annulOddsState,targets:[{anyOf:['LocalAddedChaosDamage1']}]},'crafted');
+  assert.equal(annulOdds.nativeCrafting.sampled,false);assert.equal(annulOdds.nativeCrafting.successChance,50);assert.equal(annulOdds.nativeCrafting.outcomes.length,2);
   assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.status,'historical');assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.availableInCore,false);assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.asOfPatch,'3.30');
   const enchantService=bodyInspection.crafting.nativeEngine.harvestEnchants.find(entry=>entry.id==='LifeBodyEnchant');
   assert.ok(bodyInspection.crafting.nativeEngine.nativeStats.Armour>0);
