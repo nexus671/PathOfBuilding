@@ -123,12 +123,15 @@ function M.EditSample(item,save)
 	local fields={"BaseType","Class","Rarity","ItemLevel","AreaLevel","UnidentifiedItemTier","SocketGroup","Sockets","SocketColours","LinkedSockets","StackSize","GemLevel","MapTier","Quality","Fated","Identified","Corrupted","TwiceCorrupted","FracturedItem","HasInfluence"}
 	for i,key in ipairs(fields) do local x=16+((i-1)%3)*(w/3);local y=28+math.floor((i-1)/3)*56;ui.label(c,key.."Label",x,y,key:gsub("(%l)(%u)","%1 %2"),14)
 		local value=item[key];if type(value)=="table" then value=table.concat(value," ") end
-		c[key]=new("EditControl"):EditControl(ui.anchor,{x,y+18,w/3-32,24},tostring(value==nil and "" or value),nil,nil,240)
+		if parser.booleans[key] then
+			c[key]=new("DropDownControl"):DropDownControl(ui.anchor,{x,y+18,w/3-32,24},{"Unknown","Yes","No"})
+			c[key]:SelByValue(value==nil and "Unknown" or value and "Yes" or "No")
+		else c[key]=new("EditControl"):EditControl(ui.anchor,{x,y+18,w/3-32,24},tostring(value==nil and "" or value),nil,nil,240) end
 	end
 	button(c,"useSample",16,h-48,140,"Test drop",function() attempt(function()
-		local nextItem=copyTable(item);for _,key in ipairs(fields) do local v=c[key].buf
+		local nextItem=copyTable(item);for _,key in ipairs(fields) do local v=parser.booleans[key] and c[key]:GetSelValue() or c[key].buf
 			if parser.numeric[key] then local n=v~="" and tonumber(v);assert(v=="" or n and n==n and math.abs(n)<1e9,"Enter a finite number for "..key);nextItem[key]=n or nil
-			elseif parser.booleans[key] then assert(v=="true" or v=="false" or v=="","Use true or false for "..key);if v=="" then nextItem[key]=nil else nextItem[key]=v=="true" end
+			elseif parser.booleans[key] then if v=="Unknown" then nextItem[key]=nil else nextItem[key]=v=="Yes" end
 			elseif key=="HasInfluence" then nextItem[key]=parser.tokens(v)
 			else nextItem[key]=v~="" and v or nil end
 		end;save(nextItem);main:ClosePopup()
