@@ -148,7 +148,7 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 			end
 			if #state.affixes == 0 then wrap(lines,"No explicit modifiers","^xAAAAAA",w-30) end
 			if state.veil then wrap(lines,"Veiled modifier - select Unveil to reveal choices","^xD3B987",w-30) end
-			if state.corrupted then wrap(lines,"Corrupted","^xE07070",w-30) end
+			if state.corrupted then wrap(lines,state.twiceCorrupted and "Twice Corrupted" or "Corrupted","^xE07070",w-30) end
 			if (state.intangibility or 0)>0 then wrap(lines,"Intangibility: "..state.intangibility.."%","^xD3B987",w-30) end
 			if (state.memoryStrands or 0)>0 then wrap(lines,"Memory strands: "..state.memoryStrands,"^xD3B987",w-30) end
 		end

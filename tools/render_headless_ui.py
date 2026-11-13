@@ -1,5 +1,5 @@
 """Render headless draw records with PoB's bundled bitmap fonts (requires Pillow)."""
-# cspell:ignore putalpha getchannel LANCZOS
+# cspell:ignore putalpha getchannel getpixel LANCZOS
 import argparse
 import functools
 import json
@@ -130,7 +130,6 @@ def render(frame):
                             and a["y"]+a["height"] >= b["y"]+b["height"] for a, b in ((first, second), (second, first)))
             if overlap_x > 1 and overlap_y > 1 and not contained:
                 audit["controlOverlaps"].append([first["key"], second["key"]])
-    background = []
     commands = sorted(frame["commands"], key=lambda c: (c["layer"], c["sublayer"], c["order"]))
     for command in commands:
         clip = command["clip"]
@@ -153,7 +152,6 @@ def render(frame):
         if command["kind"] == "rect":
             rect = [command[k] for k in ("x", "y", "width", "height")]
             draw.rectangle((rect[0], rect[1], rect[0] + rect[2] - 1, rect[1] + rect[3] - 1), fill=rgba(command["color"]))
-            background.append((rect, clip, command["color"]))
             if command.get("asset"):
                 asset = bundled_texture(command["asset"])
                 texture = rect_texture(asset, command.get("uv"), (max(1, round(rect[2])), max(1, round(rect[3]))))
@@ -171,7 +169,10 @@ def render(frame):
             x, y, height = command["x"], command["y"], command["height"]
             scale = height / command["fontHeight"]
             color, index = command["color"], 0
-            critical = any(contains(r, x + 1, y + height / 2) for r in frame.get("regions", []))
+            # Native tooltips and expanded lists use the overlay sublayer. They
+            # can cover neighbouring controls, but must still fit their viewport.
+            overlay = command["sublayer"] >= 100
+            critical = overlay or any(contains(r, x + 1, y + height / 2) for r in frame.get("regions", []))
             if critical and y >= clip[1] and y + height <= clip[1] + clip[3]:
                 if x < clip[0] or x + command["width"] > clip[0] + clip[2] + 1:
                     audit["horizontalClipping"].append(command["text"])
@@ -179,7 +180,7 @@ def render(frame):
             center_y = y + height / 2
             containers = [c for c in frame.get("controls", []) if c["width"] >= 40 and c["height"] <= 40
                           and contains([c["x"], c["y"], c["width"], c["height"]], center_x, center_y)]
-            if containers and contains(clip, center_x, center_y):
+            if not overlay and containers and contains(clip, center_x, center_y):
                 control = min(containers, key=lambda c: c["width"] * c["height"])
                 intentional_clip = (clip[0] >= control["x"] and clip[1] >= control["y"]
                                     and clip[0] + clip[2] <= control["x"] + control["width"]
@@ -206,11 +207,12 @@ def render(frame):
                     continue
                 if critical and not char.isspace() and tuple(color) not in checked_colors:
                     checked_colors.add(tuple(color))
+                    # Sample the composited background: native tooltips use a
+                    # translucent black fill over controls and colour swatches.
+                    sample_x, sample_y = math.floor(x), math.floor(y + height / 2)
                     shade = [18 / 255, 18 / 255, 18 / 255, 1]
-                    for rect, region, candidate in reversed(background):
-                        if contains(rect, x, y + height / 2) and contains(region, x, y + height / 2) and candidate[3] >= 0.95:
-                            shade = candidate
-                            break
+                    if 0 <= sample_x < canvas.width and 0 <= sample_y < canvas.height:
+                        shade = [channel / 255 for channel in canvas.getpixel((sample_x, sample_y))]
                     if contrast(color, shade) < 3:
                         audit["lowContrast"].append(command["text"])
                 x += left * scale

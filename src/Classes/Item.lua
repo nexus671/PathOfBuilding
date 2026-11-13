@@ -498,6 +498,7 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 	self.quality = nil
 	self.tinctureValues = nil
 	self.tinctureImportedQuality = nil
+	self.twiceCorrupted = nil
 	self.rawLines = { }
 	-- Find non-blank lines and trim whitespace
 	for line in raw:gmatch("%s*([^\n]*%S)") do
@@ -622,6 +623,9 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 			self.mirrored = true
 		elseif line == "Corrupted" then
 			self.corrupted = true
+		elseif line == "Twice Corrupted" then
+			self.corrupted = true
+			self.twiceCorrupted = true
 		elseif line == "Fractured Item" then
 			self.fractured = true
 		elseif line == "Synthesised Item" then
@@ -2090,7 +2094,7 @@ function ItemClass:BuildRaw()
 		t_insert(rawLines, "Fractured Item")
 	end
 	if self.corrupted or self.scourge then
-		t_insert(rawLines, "Corrupted")
+		t_insert(rawLines, self.corrupted and self.twiceCorrupted and "Twice Corrupted" or "Corrupted")
 	end
 	if self.foilType then
 		t_insert(rawLines, "Foil Unique" .. " (" .. self.foilType .. ")")

@@ -66,13 +66,19 @@ def main():
     assert result.returncode == 0, result.stdout
     assert source_hashes() == hashes, "Source files changed during UI capture; repeat against stable sources"
     paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 876, f"Expected 876 UI frames, found {len(paths)}"
+    assert len(paths) == 894, f"Expected 894 UI frames, found {len(paths)}"
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         failures = [failure for failure in pool.map(render_frame, paths) if failure]
+    tooltip = json.loads((directory / "expected-audit-tooltip.json").read_text())
+    assert any(c["kind"] == "text" and c["sublayer"] == 100 and "Alt+3" in c["text"] for c in tooltip["commands"]), "Native tooltip fixture did not draw its overlay"
+    image, audit = render(tooltip)
+    image.save(directory / "expected-audit-tooltip.png")
+    assert not any(audit[key] for key in ("lowContrast", "horizontalClipping", "controlClipping", "controlOverlaps")), "Native tooltip was incorrectly treated as control content"
     negative = json.loads((directory / "expected-audit-failures.json").read_text())
     image, audit = render(negative)
     image.save(directory / "expected-audit-failures.png")
-    assert audit["lowContrast"] and audit["horizontalClipping"] and audit["controlOverlaps"], "UI audits failed to detect the deliberate bad fixture"
+    assert audit["lowContrast"] and audit["horizontalClipping"] and audit["controlClipping"] and audit["controlOverlaps"], "UI audits failed to detect the deliberate bad fixture"
+    assert "Overlay outside the viewport" in audit["horizontalClipping"], "Overlay text escaped the viewport audit"
     try:
         revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
         dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).splitlines()

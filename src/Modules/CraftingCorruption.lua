@@ -12,6 +12,7 @@ function C.extend(M,A,api)
 	end
 	function M.model(raw)
 		local model=originalModel(raw)
+		model.initial.twiceCorrupted=model.item.twiceCorrupted or nil
 		model.corruptions={}
 		for id,mod in pairs(data.itemMods.Corrupted) do if mod.level <= model.item.itemLevel and weight(model,id) > 0 then
 			model.corruptions[#model.corruptions+1]={id=id,weight=weight(model,id)};model.special[id]=true
@@ -38,12 +39,23 @@ function C.extend(M,A,api)
 	end
 	function M.decorateItem(model,state,item)
 		originalDecorate(model,state,item)
+		local twice=state.twiceCorrupted
+		if twice==nil and state.corrupted~=false then
+			if model.initial then twice=model.initial.twiceCorrupted else twice=model.item.twiceCorrupted end
+		end
+		item.twiceCorrupted=twice or nil
 		if state.corruptedImplicits then
 			item.implicitModLines={}
 			for _,entry in ipairs(state.corruptedImplicits) do for _,line in ipairs(M.rolledLines(model.byId[entry.id],entry.range)) do item.implicitModLines[#item.implicitModLines+1]={line=line} end end
 		end
 	end
 	function M.validateState(model,state)
+		assert(type(state)=="table","Invalid crafting state")
+		-- Missing markers inherit the starting text; explicit false is a manual override.
+		if state.corrupted==nil and model.initial.corrupted then state=copyTable(state);state.corrupted=true end
+		if state.twiceCorrupted==nil and state.corrupted and model.initial.twiceCorrupted then state=copyTable(state);state.twiceCorrupted=true end
+		assert(state.twiceCorrupted==nil or type(state.twiceCorrupted)=="boolean","Invalid twice-corruption marker")
+		assert(not state.twiceCorrupted or state.corrupted==true,"Twice Corrupted items must also be Corrupted")
 		assert(state.destroyed == nil or type(state.destroyed) == "boolean","Invalid destruction flag")
 		if state.destroyed then assert(type(state.affixes) == "table" and #state.affixes == 0,"Destroyed items cannot retain usable affixes") end
 		if state.corruptedImplicits then
@@ -106,5 +118,6 @@ function C.extend(M,A,api)
 	end
 	M.limits[#M.limits+1]="The equipment Vaal model includes the four outcome branches and current non-white socket conversion. Rare-brick socket/link rerolls are not modeled; tainted affix outcomes use a 50/50 assumption."
 	M.limits[#M.limits+1]="Locus models destruction and paired implicits for ordinary equipment. Its rare outcome assumes equal influence selection. Fractured, synthesised, meta-modified and special transformation bases are excluded."
+	M.limits[#M.limits+1]="The 3.30 Twice Corrupted marker is recognised and preserved. This does not add 3.30 second-corruption outcomes to the 3.29 crafting rules."
 end
 return C

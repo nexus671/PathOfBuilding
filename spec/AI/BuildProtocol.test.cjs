@@ -337,6 +337,16 @@ test('queues advanced crafting states and rejects untyped execution data', t => 
   assert.throws(()=>f.call('apply_crafting_action',{...args,action:{method:'recombine',donorItem:'item',path:'elsewhere'}}),/arguments/);
 });
 
+test('preserves typed twice-corruption flags in crafting requests', t => {
+  const f=fixture(t);
+  const args={baseRevision:f.state.revision,itemText:craftingProject().startingItem,action:{method:'tainted_chromatic'},initialState:{rarity:'NORMAL',affixes:[],corrupted:true,twiceCorrupted:true}};
+  f.call('apply_crafting_action',args);
+  const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+  assert.deepEqual(queued.initialState,args.initialState);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  assert.throws(()=>f.call('apply_crafting_action',{...args,initialState:{...args.initialState,twiceCorrupted:'true'}}),/arguments/);
+});
+
 test('queues property-only recipes, exact odds and bounded fossil optimization', t => {
   const f=fixture(t);const base={baseRevision:f.state.revision,itemText:craftingProject().startingItem};
   f.call('simulate_crafting',{...base,recipe:{steps:[{method:'quality',maxAttempts:20,untilRequirements:{minQuality:20}}],targets:[],requirements:{minQuality:20}},options:{trials:10,maxActions:20}});

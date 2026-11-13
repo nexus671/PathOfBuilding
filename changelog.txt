@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Preserved Twice Corrupted items through importing, tainted crafting, hypothetical editing, saved projects and MCP.
+* Fixed headless UI audits attributing tooltip text to neighbouring buttons, while retaining viewport and control-clipping checks.
 * Added Omen of Trichromatism with currency artwork, RGB guarantees, input checks, recipe and MCP support, and both ingredient costs.
 * Disabled unsupported Allflame profiles before editing, with an explanatory tooltip.
 * Separated modeled ingredient and service quantities from price overrides in crafting results and MCP, with per-trial averages and an illustrated resource browser.

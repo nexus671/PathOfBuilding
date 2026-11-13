@@ -659,17 +659,45 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:click("close");ui:click("native");assert(w.controls.trials.buf=="37" and not require("Modules.PlanningUI").hasDraft(build,"workingCraft",p.id));frame("crafting-settings-reopened-clean")
 	end
 
+	do
+		local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W-W-W\nTwice Corrupted"
+		local p={id="twice-corruption",title="Twice Corrupted helmet",slot="Helmet",startingItem=raw,goals={},steps={},preferredMethod="tainted_chromatic"}
+		build.savers.CraftingProjects:Upsert(p)
+		local w=build.planningWorkspace;w:Show("crafting",{kind="workbench",project=p});ui:frame();frame("crafting-twice-imported")
+		ui:click("apply");assert(w.cache.crafting.layout.snapshot().state.twiceCorrupted);frame("crafting-twice-tainted")
+		ui:click("tab_settings");ui:click("manual");frame("crafting-twice-editor")
+		ui:choose("corrupted","Corrupted");ui:click("keep");assert(w.cache.crafting.layout.snapshot().state.twiceCorrupted==false);frame("crafting-twice-downgraded")
+		ui:click("manual");ui:choose("corrupted","Uncorrupted");ui:click("keep");frame("crafting-twice-uncorrupted")
+		ui:click("keepWorking");local xml=build:SaveDB("Twice corruption UI");loadBuildFromXML(xml,"Twice corruption UI");ui:bind(build)
+		local saved;for _,entry in ipairs(build.savers.CraftingProjects.projects) do if entry.id==p.id then saved=entry end end
+		assert(saved.run.state.twiceCorrupted==false and saved.run.state.corrupted==false)
+		build.viewMode="PLANNER";build.planningWorkspace:Show("crafting",{kind="workbench",project=saved});frame("crafting-twice-reopened")
+	end
 	ui:restore()
 end
 -- These checks exercise the audit itself: raw uncoloured list text inherits the
 -- background colour, and an oversized line must be detected as clipped.
 local ui=UI.install({width=1024,height=768})
+local hint=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,100,24},"Hover",function() end)
+hint.tooltipText="Alt+3 | Tab: move focus | Enter: activate";hint.layoutAudit="overlay-fixture"
+local neighbour=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{184,28,100,24},"Neighbour",function() end);neighbour.layoutAudit="overlay-fixture"
+main:OpenPopup(600,200,"Audit tooltip",{hint=hint,neighbour=neighbour})
+ui:frame();local hx,hy=hint:GetPos();ui.cursorX=hx+30;ui.cursorY=hy+10
+ui:frame():write(directory.."/../expected-audit-tooltip.json")
+main.popups={};ui.cursorX=-100;ui.cursorY=-100
 main:OpenPopup(600,200,"Audit controls",{details=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,560,120},nil,
 	{{height=18,"Unreadable regression fixture"},{height=18,colorCodes.NORMAL..string.rep("Oversized ",20)}})})
 for i=1,2 do
 	local control=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{16+(i-1)*90,156,140,24},"Overlap fixture",function() end)
 	control.layoutAudit="negative-fixture";control.anchor.other=main.popups[1];main.popups[1].controls["overlap"..i]=control
 end
+local overflow=new("ButtonControl"):ButtonControl({"TOPLEFT",nil,"TOPLEFT"},{16,120,80,24},"A button label extending outside its control",function() end)
+overflow.layoutAudit="negative-fixture";overflow.anchor.other=main.popups[1];main.popups[1].controls.overflow=overflow
+local overlay=new("Control"):Control(nil,{0,0,0,0})
+function overlay:Draw()
+	SetDrawLayer(nil,100);SetDrawColor(1,1,1);DrawString(1010,250,"LEFT",14,"VAR","Overlay outside the viewport");SetDrawLayer(nil,0)
+end
+main.popups[1].controls.overlay=overlay
 ui:frame():write(directory.."/../expected-audit-failures.json")
 ui:restore();main.popups={}
 print("HEADLESS_UI_OK",frames)

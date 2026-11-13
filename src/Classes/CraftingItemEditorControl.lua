@@ -65,10 +65,14 @@ function Panel.Open(model,input,onKeep)
 	edit("quality",212,260,180,state.quality or model.item.quality or 0,nil)
 	edit("intangibility",408,260,160,state.intangibility or 0,nil)
 	edit("memoryStrands",584,260,176,state.memoryStrands or 0,nil)
-	controls.corrupted=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,308,376,24},{"Uncorrupted","Corrupted"})
-	controls.corrupted:SelByValue(state.corrupted and "Corrupted" or "Uncorrupted")
+	controls.corrupted=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,308,376,24},{"Uncorrupted","Corrupted","Twice Corrupted"})
+	controls.corrupted:SelByValue(state.twiceCorrupted and "Twice Corrupted" or state.corrupted and "Corrupted" or "Uncorrupted")
+	local hint=require("Modules.PlanningUI").description(controls,"corruptionHint",16,340,744,20,{"Marker only. This editor does not roll second-corruption outcomes."},14)
+	hint.shown=function() return controls.corrupted:GetSelValue()=="Twice Corrupted" end
 	local function applyProperties()
-		local candidate=copyTable(state);candidate.rarity=controls.rarity:GetSelValue();candidate.corrupted=controls.corrupted:GetSelValue() == "Corrupted"
+		local candidate=copyTable(state);candidate.rarity=controls.rarity:GetSelValue();candidate.corrupted=controls.corrupted:GetSelValue() ~= "Uncorrupted"
+		if controls.corrupted:GetSelValue()=="Twice Corrupted" then candidate.twiceCorrupted=true
+		elseif state.twiceCorrupted~=nil or model.initial.twiceCorrupted then candidate.twiceCorrupted=false end
 		for _,key in ipairs({"quality","intangibility","memoryStrands"}) do candidate[key]=assert(tonumber(controls[key].buf),"Invalid "..key) end
 		commit(candidate)
 	end

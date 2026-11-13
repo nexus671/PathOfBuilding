@@ -76,6 +76,11 @@ async function main(){
   assert.ok(rgbService.available && !rgbService.deterministic);assert.equal(rgbService.guaranteedColours,'RGB');
   const rgbAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:rgbService.action},'crafted');
   for(const colour of ['R','G','B'])assert.ok(rgbAction.nativeCrafting.state.sockets.some(socket=>socket.color===colour));
+  const twiceRaw='Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W-W-W\nTwice Corrupted';
+  const twiceAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:twiceRaw,action:{method:'tainted_chromatic'}},'crafted');
+  assert.equal(twiceAction.nativeCrafting.state.corrupted,true);assert.equal(twiceAction.nativeCrafting.state.twiceCorrupted,true);
+  assert.ok(twiceAction.nativeCrafting.itemText.includes('Twice Corrupted'));
+  assert.equal((await call('get_build_context')).context.revision,context.revision);
   const rgbPlan=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[rgbService.action,linkAction],targets:[],requirements:{socketColours:'RGB',linkedColours:true,links:6}},options:{trials:4,maxActions:2,currency:'chaos',prices:{'Metadata/Items/Currency/AncestralOmenOnChromaticAddWhiteSockets':2,'Metadata/Items/Currency/CurrencyRerollSocketColours':0.5,'Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks':2,'Metadata/Items/Currency/CurrencyRerollSocketLinks':0.25}}},'crafted');
   assert.equal(rgbPlan.nativeCrafting.successes,4);assert.equal(rgbPlan.nativeCrafting.meanCost,4.75);assert.equal(rgbPlan.nativeCrafting.resourceUsage.length,4);
   assert.ok(rgbPlan.nativeCrafting.resourceUsage.every(entry=>entry.amount===4));
