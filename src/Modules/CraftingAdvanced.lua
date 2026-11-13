@@ -609,6 +609,7 @@ function A.extend(M,api)
 			end
 			assert(next(state.percentiles),"This armour has no base defence variance")
 		elseif method == "socket_bench" or method == "binding" then
+			for _,socket in ipairs(state.sockets or {}) do assert(socket.color~="A","Abyssal sockets need a separate socket model") end
 			local limit=model.item.base.socketLimit or 0
 			assert(limit > 0,"This base cannot have equipment sockets")
 			local count=method == "binding" and math.min(4,limit) or api.integer(action.count,2,limit,"socket count")
@@ -645,15 +646,21 @@ function A.extend(M,api)
 			end
 		end
 		if state.sockets then
-			assert(type(state.sockets) == "table" and #state.sockets <= (model.item.base.socketLimit or 0),"Invalid socket count")
-			local ended,previous={},nil
+			local base=model.item.base;local intrinsic=type(base.implicit)=="string" and tonumber(base.implicit:match("Has (%d+) Abyssal Sockets?")) or 0
+			local limit=math.max(base.socketLimit or 0,model.item.abyssalSocketCount or 0,intrinsic or 0)
+			assert(type(state.sockets) == "table" and #state.sockets <= limit,"Invalid socket count")
+			local ended,previous,previousColour,ordinary={},nil,nil,0
 			for _,socket in ipairs(state.sockets) do
 				assert(contains({"R","G","B","W","A"},socket.color),"Invalid socket colour");api.integer(socket.group,0,6,"socket group")
+				if socket.color~="A" then ordinary=ordinary+1 end
+				if socket.group==previous then assert(socket.color~="A" and previousColour~="A","Abyssal sockets cannot be linked") end
 				if socket.group~=previous then
 					assert(not ended[socket.group],"Linked sockets must form a contiguous group")
 					if previous~=nil then ended[previous]=true end;previous=socket.group
 				end
+				previousColour=socket.color
 			end
+			assert(ordinary <= (base.socketLimit or 0),"Invalid ordinary socket count")
 		end
 		if state.implicits then
 			assert(type(state.implicits) == "table" and #state.implicits <= 2 and not baseInfluences(state),"Invalid Eldritch implicit state")

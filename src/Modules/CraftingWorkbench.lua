@@ -83,9 +83,10 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 		local sockets=state.sockets or item.sockets or {}
 		for i,socket in ipairs(sockets) do
 			local sx=cx+propertyX+(i-1)*24
-			if i>1 and socket.group == sockets[i-1].group then box(sx-9,cy+139+extra,12,3,"^xA68B59") end
+			if i>1 and socket.color~="A" and sockets[i-1].color~="A" and socket.group == sockets[i-1].group then box(sx-9,cy+139+extra,12,3,"^xA68B59") end
 			box(sx,cy+133+extra,14,14,"^xA68B59")
-			box(sx+2,cy+135+extra,10,10,({R="^xE07070",G="^x70BB70",B="^x7070EE",W="^xEEEEEE"})[socket.color] or "^xC8C8C8")
+			box(sx+2,cy+135+extra,10,10,({R="^xE07070",G="^x70BB70",B="^x7070EE",W="^xEEEEEE",A="^x205B42"})[socket.color] or "^xC8C8C8")
+			if socket.color=="A" then text(sx+3,cy+133+extra,12,"A","^xFFFFFF",8) end
 		end
 		if (header>=212 or options.compact) and self.slotSummary then text(cx+propertyX,cy+158+extra,14,self.slotSummary,"^xA6B3C6",w-propertyX-16) end
 		if (header>=212 or options.compact) and self.influenceSummary then text(cx+propertyX,cy+176+extra,12,self.influenceSummary,"^xD3B987",w-propertyX-16) end

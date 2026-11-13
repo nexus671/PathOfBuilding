@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Treat Abyss and Delve sockets as unlinked in filter previews, and prevent Abyss sockets from producing false linked crafting targets.
+* Preserve a Stygian Vise's Abyss socket when continuing or saving a craft.
 * Reject non-contiguous socket groups in imported crafting states so linked-colour targets cannot report a false match.
 * Show unresolved implicit warnings directly in the crafting workbench, including for keyboard navigation, while retaining prior results.
 * Explain ambiguous imported implicits before starting a crafting calculation, preserve valid structured Eldritch overrides, and clarify the per-trial action limit in results.

@@ -88,7 +88,11 @@ function M.condition(c,item)
 		if c.keyword=="Sockets" then value=item.SocketColours or value end
 		if type(value)~="string" then return nil,"Supply socket colours for "..c.keyword end
 		for _,pattern in ipairs(values) do
-			if c.keyword=="SocketGroup" then for group in value:gmatch("[^ ]+") do if socketMatch(group,pattern,op) then return true end end
+			if c.keyword=="SocketGroup" then
+				-- Abyss and Delve sockets cannot link to other sockets, even when
+				-- a manually entered sample places them inside a group.
+				local separated=value:gsub("([AD])"," %1 ")
+				for group in separated:gmatch("[^ ]+") do if socketMatch(group,pattern,op) then return true end end
 			elseif socketMatch(value,pattern,op) then return true end
 		end;return false
 	elseif M.numeric[c.keyword] or c.keyword=="Rarity" then

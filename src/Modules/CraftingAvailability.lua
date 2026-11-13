@@ -46,6 +46,9 @@ function M.check(method,state,model)
 		if #(state.sockets or {})==0 then return false,"Add sockets before using this action." end
 		for _,entry in ipairs(state.sockets) do if entry.color=="A" then return false,"Abyssal sockets need a separate socket model." end end
 	end
+	if method=="socket_bench" or method=="binding" then
+		for _,entry in ipairs(state.sockets or {}) do if entry.color=="A" then return false,"Abyssal sockets need a separate socket model." end end
+	end
 	if method=="socket_bench" and (item.base.socketLimit or 0)<2 then return false,"This base has no supported socket-count or link craft." end
 	if method=="socket_colour_bench" and #(state.sockets or {})<2 then return false,"Requires at least two sockets." end
 	if method=="tainted_fusing" then

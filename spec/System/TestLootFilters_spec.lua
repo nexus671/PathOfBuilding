@@ -3,6 +3,17 @@ describe("Build-owned loot filters",function()
 	local parser=require("Modules.LootFilterParser")
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() main.popups={} end)
+	it("never treats Abyss or Delve sockets as links in simulated drops",function()
+		local function action(condition,item)
+			return parser.simulate(parser.parse("Show\n "..condition.."\nHide"),item).action
+		end
+		assert.equal("Hide",action("SocketGroup RG",{SocketGroup="RAG"}))
+		assert.equal("Hide",action("SocketGroup >= 2",{SocketGroup="AA"}))
+		assert.equal("Hide",action("SocketGroup DD",{SocketGroup="DD"}))
+		assert.equal("Show",action("SocketGroup A",{SocketGroup="RAG"}))
+		assert.equal("Show",action("SocketGroup 2RR",{SocketGroup="RRAG"}))
+		assert.equal("Show",action("Sockets RAG",{Sockets=3,SocketColours="RAG"}))
+	end)
 	it("applies first-match ordering, Continue styles and exact/partial names",function()
 		local raw='Show\n BaseType "Iron"\n SetTextColor 255 0 0\n Continue\nHide\n BaseType == "Iron Hat"\n SetFontSize 25\nShow'
 		local result=parser.simulate(parser.parse(raw),{BaseType="Iron Hat"})

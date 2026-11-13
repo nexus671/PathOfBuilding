@@ -80,6 +80,16 @@ async function main(){
   const rejectedSockets=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:{method:'chromatic'},initialState:invalidSockets,targets:[],options:{requirements:{socketColours:'RB',linkedColours:true},trials:2}},'failed');
   assert.match(rejectedSockets.error,/contiguous group/);
   assert.equal((await call('get_build_context')).context.revision,context.revision);
+  const abyssSockets={rarity:'NORMAL',affixes:[],sockets:[{color:'R',group:0},{color:'A',group:0}]};
+  const rejectedAbyss=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:{method:'chromatic'},initialState:abyssSockets,targets:[],options:{requirements:{links:2},trials:2}},'failed');
+  assert.match(rejectedAbyss.error,/Abyssal sockets cannot be linked/);
+  assert.equal((await call('get_build_context')).context.revision,context.revision);
+  const stygianRaw='Rarity: NORMAL\nStygian Vise\nItem Level: 86\nSockets: A\nImplicits: 1\nHas 1 Abyssal Socket';
+  const stygian=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:stygianRaw,action:{method:'alchemy'}},'crafted');
+  assert.equal(stygian.nativeCrafting.state.sockets[0].color,'A');
+  const stygianAgain=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:stygianRaw,action:{method:'chaos'},initialState:stygian.nativeCrafting.state},'crafted');
+  assert.equal(stygianAgain.nativeCrafting.state.sockets[0].color,'A');
+  assert.equal((await call('get_build_context')).context.revision,context.revision);
   const twiceRaw='Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W-W-W\nTwice Corrupted';
   const twiceAction=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:twiceRaw,action:{method:'tainted_chromatic'}},'crafted');
   assert.equal(twiceAction.nativeCrafting.state.corrupted,true);assert.equal(twiceAction.nativeCrafting.state.twiceCorrupted,true);

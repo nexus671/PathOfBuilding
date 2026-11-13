@@ -205,7 +205,7 @@ def render(frame):
                 if char == "\t":
                     x = math.ceil(x + (width + left + right) * scale * 4)
                     continue
-                if critical and not char.isspace() and tuple(color) not in checked_colors:
+                if critical and contains(clip, x, y + height / 2) and not char.isspace() and tuple(color) not in checked_colors:
                     checked_colors.add(tuple(color))
                     # Sample the composited background: native tooltips use a
                     # translucent black fill over controls and colour swatches.

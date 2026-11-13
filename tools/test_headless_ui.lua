@@ -697,6 +697,16 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		local text={};for _,row in ipairs(w.controls.resultSummary.list) do text[#text+1]=StripEscapes(row[1]) end
 		assert(table.concat(text," "):find("could not be identified uniquely",1,true));frame("crafting-unknown-implicit-inline-warning")
 	end
+	do
+		local raw="Rarity: NORMAL\nStygian Vise\nItem Level: 86\nSockets: A\nImplicits: 1\nHas 1 Abyssal Socket"
+		local p={id="stygian-ui",title="Stygian craft",slot="Belt",startingItem=raw,goals={},steps={},preferredMethod="alchemy"}
+		build.savers.CraftingProjects:Upsert(p);local w=build.planningWorkspace;w:Show("crafting",{kind="workbench",project=p});ui:frame()
+		ui:click("currency_alchemy");ui:click("item");ui:click("keepItem");ui:click("keepWorking")
+		local xml=build:SaveDB("Stygian UI");loadBuildFromXML(xml,"Stygian UI");ui:bind(build)
+		local saved;for _,entry in ipairs(build.savers.CraftingProjects.projects) do if entry.id==p.id then saved=entry end end
+		assert(saved.run.state.sockets[1].color=="A" and saved.inventory[1].state.sockets[1].color=="A")
+		build.viewMode="PLANNER";build.planningWorkspace:Show("crafting",{kind="workbench",project=saved});frame("crafting-stygian-abyss-socket")
+	end
 	ui:restore()
 end
 -- These checks exercise the audit itself: raw uncoloured list text inherits the

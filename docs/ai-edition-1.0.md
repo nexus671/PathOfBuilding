@@ -57,10 +57,10 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `f52d02928b0066521cb5cdb4395f98acf03d7ebb`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43445729464),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43445729568)).
-It passed 1,235 Lua tests, 48 Node tests, the real MCP save/reopen workflow and
+The latest verified checkpoint is `4d410c005d95f84adf7f19cdb76f8669ebdc775f`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43447147022),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43447146999)).
+It passed 1,237 Lua tests, 48 Node tests, the real MCP save/reopen workflow and
 906 source-stable UI states without audit failures. All 2,426 updater file hashes
 and every CI artifact source hash were verified against that commit.
 

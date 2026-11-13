@@ -281,6 +281,18 @@ function M.action(model,input,action,random)
 	return state
 end
 
+local function gemSocketGroups(sockets)
+ local groups,previous={},nil
+ for _,socket in ipairs(sockets) do
+  if socket.color == "A" then previous=nil
+  else
+   if previous ~= socket.group then groups[#groups+1]={};previous=socket.group end
+   local group=groups[#groups];group[#group+1]=socket
+  end
+ end
+ return groups
+end
+
 function M.matches(state,targets,rarity,model,requirements,requiredGroups)
  if state.veil or state.destroyed then return false end
  if rarity and state.rarity ~= rarity then return false end
@@ -317,16 +329,16 @@ function M.matches(state,targets,rarity,model,requirements,requiredGroups)
   if requirements.socketColours then
    local groups={};local needed={}
    for color in requirements.socketColours:gmatch(".") do needed[color]=(needed[color] or 0)+1 end
-   for _,socket in ipairs(state.sockets or model.item.sockets or {}) do
-    local key=requirements.linkedColours and socket.group or 0;groups[key]=groups[key] or {};local colors=groups[key];colors[socket.color]=(colors[socket.color] or 0)+1
-   end
+   local sockets=state.sockets or model.item.sockets or {}
+   local segments=requirements.linkedColours and gemSocketGroups(sockets) or {sockets}
+   for _,segment in ipairs(segments) do local colors={};groups[#groups+1]=colors;for _,socket in ipairs(segment) do colors[socket.color]=(colors[socket.color] or 0)+1 end end
    local matched=false
    for _,colors in pairs(groups) do local enough=true;for color,count in pairs(needed) do if (colors[color] or 0)<count then enough=false end end;if enough then matched=true;break end end
    if not matched then return false end
   end
   if requirements.links then
-   local groups={}; local best=0
-   for _,socket in ipairs(state.sockets or model.item.sockets or {}) do groups[socket.group]=(groups[socket.group] or 0)+1;best=math.max(best,groups[socket.group]) end
+   local best=0
+   for _,group in ipairs(gemSocketGroups(state.sockets or model.item.sockets or {})) do best=math.max(best,#group) end
    if best < requirements.links then return false end
   end
  end
