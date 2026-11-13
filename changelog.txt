@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Avoided duplicate recovery trials while loading AI proposal candidates, retaining complete final calculations.
 * Added Harvest quality enchantments with native item previews, recipe goals, saved state and Lifeforce costs.
 * Fixed socket-bench preparation costs being charged again when the input already has the requested socket count.
 * Added a colour wheel, brightness/opacity controls and exact RGBA input to filter appearance editors.

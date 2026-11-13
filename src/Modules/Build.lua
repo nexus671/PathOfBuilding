@@ -721,7 +721,9 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	-- Build calculation output tables
 	wipeGlobalCache()
 	self.outputRevision = 1
-	self.calcsTab:BuildOutput()
+	-- Proposal candidates recalculate after their operations. Keep the initial
+	-- core output, but defer recovery trials that would immediately be discarded.
+	self.calcsTab:BuildOutput(self.planningDeferInitialRecovery)
 	self:RefreshStatList()
 	self.buildFlag = false
 

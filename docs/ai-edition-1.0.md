@@ -52,19 +52,20 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,107 Lua tests, 41 Node tests,
-the real MCP save/reopen workflow and 630 source-stable UI frames without audit
+The published preview passed exact-commit CI with 1,115 Lua tests, 42 Node tests,
+the real MCP save/reopen workflow and 642 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `651e892487b61e77e2c86aab069ea3d5fc94c3f7`.
+against commit `18136096378682aa33a96e595606797e4ad3cd98`.
 
 That preview includes the native colour wheel, brightness/opacity controls,
 exact RGBA input and Ruthless validation. Native input tests also exposed and
-fixed campaign fields rejecting numeric entry. The next review adds 14
+fixed campaign fields rejecting numeric entry. It also includes 14
 client-derived Harvest quality enchantments, goals, native import/export and
 resource costs. It also fixes repeated socket-count preparation costs when
-linking an item that already has the requested count. Local validation passed
-1,115 Lua tests, 42 Node tests, the real MCP workflow and 642 source-stable UI
-states without audit failures. Exact-commit CI is still required for that batch.
+linking an item that already has the requested count. The next review removes
+duplicate recovery trials during AI candidate loading. Local validation passed
+1,116 Lua tests, the real MCP workflow and 642 source-stable UI states without
+audit failures. Exact-commit CI is still required for that performance change.
 The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.
@@ -73,7 +74,14 @@ A read-only saved-build benchmark confirmed reversible tree edits and exposed a
 false revision change caused by reordered derived full-DPS rows; the regression
 is fixed. Foreground allocation plus recalculation measured 63-179 ms across five
 edits while recovery completed separately. Proposal preparation still takes
-several seconds on that build. These checks do not mark the release complete.
+several seconds on that build. An isolated comparison of the new candidate-load
+path measured 7.1 seconds before and 5.7 seconds after, with all 708 numeric
+outputs identical. An earlier comparison measured 6.7 versus 4.7 seconds. These
+bounded checks do not establish sustained UI performance or mark the release complete.
+The final native benchmark returned identical synchronous/background results:
+3.8 seconds synchronously, 4.6 seconds in the worker, and 236 ms to snapshot.
+Its slowest worker slice was 137 ms, so long initialization slices still need
+attention even though the total calculation now does less work.
 
 Next: close source-verified socket/corruption/league gaps and repeat cross-tool performance,
 recovery and layout checks. The coverage guide continues to identify incomplete

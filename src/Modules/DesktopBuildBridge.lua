@@ -190,7 +190,9 @@ function M.prepare(build, proposal, checkpoint, sourceXML, frozen)
 		local candidate = LoadModule("Modules/Build")
 		proxy.modes.BUILD = candidate
 		candidate.planningCheckpoint=yieldingCheckpoint
+		candidate.planningDeferInitialRecovery=true
 		candidate:Init(nil,proposal.mode == "new" and title or build.buildName,source)
+		candidate.planningDeferInitialRecovery=nil
 		assert(candidate.abortSave == false,"Unable to initialize proposed build")
 		candidate.planningCheckpoint=yieldingCheckpoint
 		checkpoint("Apply candidate changes")

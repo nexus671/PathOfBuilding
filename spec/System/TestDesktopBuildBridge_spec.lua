@@ -48,6 +48,38 @@ describe("Desktop build proposals", function()
 		assert.are.equal(nil,prepared.candidate.dbFileName)
 	end)
 
+	it("runs recovery trials only for the finished candidate in synchronous and background previews",function()
+		local input=build.configTab.input
+		input.simulateRecovery=true;input.recoverySimulationTrials=1;input.recoverySimulationWindow=1
+		input.recoverySimulationCompareSet=nil
+		build.configTab:BuildModList();build.calcsTab:BuildOutput()
+		local revision=bridge.revision(build);local cache=_G.GlobalCache
+		local request=proposal({{type="equip_item",slot="Helmet",text="Rarity: RARE\nRecovery Hat\nIron Hat\n+100 to maximum Life"}})
+		local time=require("Modules.CalcTime");local survival=time.survival;local calls=0
+		time.survival=function(config) calls=calls+1;return survival(config) end
+		local ok,synchronous,background=pcall(function()
+			local synchronous=bridge.prepare(build,request)
+			assert.are.equal(2,calls)
+			calls=0
+			local worker=require("Modules.PlanningWorker");local frozen=bridge.freeze(build)
+			local job=worker.new(build,function(checkpoint) return bridge.prepare(build,request,checkpoint,nil,frozen) end)
+			for _=1,10000 do
+				local done,success,result=worker.resume(job);assert.is_true(success)
+				if done then return synchronous,result end
+			end
+			error("Background preview did not finish")
+		end)
+		time.survival=survival
+		assert.is_true(ok,tostring(synchronous));assert.are.equal(2,calls)
+		assert.are.same(synchronous.after,background.after)
+		assert.is_number(background.after.RecoverySimulationSurvivalChance)
+		assert.is_true(background.after.LifeUnreserved>background.before.LifeUnreserved)
+		assert.is_nil(background.candidate.calcsTab.recoveryJob)
+		assert.is_nil(background.candidate.calcsTab.calcsOutput.RecoverySimulationPending)
+		assert.is_nil(background.candidate.planningDeferInitialRecovery)
+		assert.are.equal(revision,bridge.revision(build));assert.are.equal(cache,_G.GlobalCache)
+	end)
+
 	it("rejects stale revisions before preparing or applying", function()
 		local request = proposal({{type="set_character",level=90}})
 		local prepared = bridge.prepare(build,request)
