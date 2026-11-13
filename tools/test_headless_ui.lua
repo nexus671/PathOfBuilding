@@ -308,7 +308,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:click("currency_annul");ui:choose("page","Craft settings");ui:click("exact");local jobs=require("Modules.CraftingTasks")
 		for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 		local odds=build.craftingAnalyses["partial-lock-ui"].results.odds.result
-		assert(not jobs.job and odds.sampled and odds.successChance==100 and odds.warnings[1].code=="partial_lock_model","Partial lock odds were not disclosed")
+		assert(not jobs.job and odds.sampled==false and odds.successChance==100 and odds.warnings[1].code=="partial_lock_model","Partial lock odds were not disclosed")
 		ui:choose("page","Simulate recipe");frame("crafting-partial-lock-odds");ui:click("close")
 	end
 

@@ -10,6 +10,24 @@ function C.extend(M)
 			M.validateRecipe({steps={craft},targets=targets,requirements=options.requirements,requiredGroups=options.requiredGroups})
 			local model=M.model(raw);local state=initialState and M.validateState(model,initialState) or model.initial
 			if M.context then model=M.context(model,state) end
+			if M.hasPartialLock(model,state) then
+				local branches=M.partialAnnulBranches(model,state)
+				if branches then
+					local outcomes,success={},0
+					for _,branch in ipairs(branches) do
+						local draw=0;local result=M.action(model,state,craft,function()
+							draw=draw+1;if draw<=#branch.draws then return branch.draws[draw] end
+							assert(draw==#branch.draws+1,"Unexpected Annulment draw");return branch.removalDraw
+						end)
+						local hit=M.matches(result,targets,nil,model,options.requirements,options.requiredGroups)
+						if hit then success=success+branch.probability end
+						local entry=state.affixes[branch.index];local mod=model.byId[entry.id]
+						outcomes[#outcomes+1]={id=entry.id,chance=100*branch.probability,weight=branch.probability,matches=hit,text="Remove: "..table.concat(mod," / "),state=result}
+					end
+					return {exactFor="One Annulment under the model's uniform lock-selection and removal assumptions",sampled=false,successChance=100*success,totalWeight=1,matchingWeight=success,
+						outcomes=outcomes,sampleState=outcomes[1].state,sampleItem=M.toItem(model,outcomes[1].state).raw,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
+				end
+			end
 			if not M.hasPartialLock(model,state) then
 			local choices=M.annulCandidates(model,state);local count=#choices
 			assert(state.rarity~="NORMAL","Annulment requires a magic or rare item")

@@ -58,14 +58,40 @@ describe("3.30 partial affix locks",function()
 		assert.is_false(allowed);assert.matches("not yet modeled",reason)
 		assert.is_false(pcall(sim.perform,raw,{method="fossil",fossils={"Metadata/Items/Currency/CurrencyDelveCraftingLife"}},1,locked.state))
 		local result=sim.calculate(raw,{method="annul"},{{anyOf={prefixes[1]}}},locked.state,{trials=1000})
-		assert.is_true(result.sampled);assert.is_true(result.successChance>68 and result.successChance<82,"Observed chance: "..result.successChance)
+		assert.is_false(result.sampled);assert.are.near(75,result.successChance,1e-9);assert.are.equal(3,#result.outcomes)
+		local chances={};for _,outcome in ipairs(result.outcomes) do chances[outcome.id]=outcome.chance end
+		assert.are.near(25,chances[prefixes[1]],1e-9);assert.are.near(25,chances[prefixes[2]],1e-9);assert.are.near(50,chances[id],1e-9)
 		assert.are.equal("partial_lock_model",result.warnings[1].code)
+		local fractured=copyTable(locked.state);fractured.affixes[1].fractured=true
+		local fracturedRaw=sim.toItem(model,fractured).raw;local fracturedModel=sim.model(fracturedRaw)
+		local fracturedOdds=sim.calculate(fracturedRaw,{method="annul"},{{anyOf={prefixes[1]},fractured=true}},fracturedModel.initial)
+		assert.is_false(fracturedOdds.sampled);assert.are.near(100,fracturedOdds.successChance,1e-9)
+		local fracturedChances={};for _,outcome in ipairs(fracturedOdds.outcomes) do fracturedChances[outcome.id]=outcome.chance end
+		assert.is_nil(fracturedChances[prefixes[1]]);assert.are.near(25,fracturedChances[prefixes[2]],1e-9);assert.are.near(75,fracturedChances[id],1e-9)
 		local project={id="partial-lock",title="Partial lock guide",slot="Body Armour",startingItem=sim.toItem(model,state).raw,goals={},steps={},nativeRecipe={steps={{method="bench",modId=id},{method="annul"}},targets={{anyOf={prefixes[1]}}}}}
 		local store=build.savers.CraftingProjects;store:Upsert(project);local xml={};store:Save(xml)
 		local restored=require("Modules.CraftingProjects").new(build);restored:Load(xml)
 		assert.is_nil(restored.warning);assert.are.equal(id,restored.projects[1].nativeRecipe.steps[1].modId)
 		local replay=sim.simulate(restored.projects[1].startingItem,restored.projects[1].nativeRecipe,{trials=20,maxActions=2,forceFirstAction=true})
 		assert.are.equal("partial_lock_model",replay.warnings[1].code)
+	end)
+	it("does not invent an outcome when every modifier may be protected",function()
+		local model=sim.model(raw);local multi
+		for _,entry in ipairs(model.bench) do if entry.mod[1]=="Can have up to 3 Crafted Modifiers" then multi=entry.id;break end end
+		assert.is_not_nil(multi)
+		local state={rarity="RARE",affixes={{id="bench:partial-suffix-2",crafted=true,range=0.5},{id="bench:partial-prefix-1",crafted=true,range=0.5},{id=multi,crafted=true,range=0.5}}}
+		assert.is_nil(sim.partialAnnulBranches(model,state))
+	end)
+	it("enumerates two-lock selections without counting permutations twice",function()
+		local model=sim.model(raw);local ids,groups={},{}
+		for _,entry in ipairs(model.mods) do if entry.mod.type=="Prefix" and not groups[entry.mod.group] then
+			ids[#ids+1]=entry.id;groups[entry.mod.group]=true;if #ids==3 then break end
+		end end
+		local initial=sim.validateState(model,{rarity="RARE",affixes={{id=ids[1],range=0.5},{id=ids[2],range=0.5},{id=ids[3],range=0.5}}})
+		local locked=sim.perform(raw,{method="bench",modId="bench:partial-prefix-2"},1,initial)
+		local odds=sim.calculate(raw,{method="annul"},{{anyOf={ids[1]}}},locked.state)
+		assert.is_false(odds.sampled);assert.are.near(100*5/6,odds.successChance,1e-9)
+		local sum=0;for _,outcome in ipairs(odds.outcomes) do sum=sum+outcome.chance end;assert.are.near(100,sum,1e-9)
 	end)
 	it("preserves partial locks through jewellery quality and implicit rolls",function()
 		local ring="Rarity: NORMAL\nGold Ring\nItem Level: 86";local model=sim.model(ring);local prefix

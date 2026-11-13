@@ -77,7 +77,7 @@ async function main(){
   const partialSocketed=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'socket_bench',count:3},initialState:partialApplied.nativeCrafting.state},'crafted');
   assert.deepEqual(partialSocketed.nativeCrafting.state.affixes,partialApplied.nativeCrafting.state.affixes);assert.equal(partialSocketed.nativeCrafting.state.sockets.length,3);
   const partialOdds=await queued('calculate_crafting',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'annul'},initialState:partialSocketed.nativeCrafting.state,targets:[{anyOf:['LocalAddedChaosDamage1']}],options:{trials:10}},'crafted');
-  assert.equal(partialOdds.nativeCrafting.sampled,true);assert.equal(partialOdds.nativeCrafting.successChance,100);assert.equal(partialOdds.nativeCrafting.warnings[0].code,'partial_lock_model');
+  assert.equal(partialOdds.nativeCrafting.sampled,false);assert.equal(partialOdds.nativeCrafting.successChance,100);assert.equal(partialOdds.nativeCrafting.warnings[0].code,'partial_lock_model');
   assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.status,'historical');assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.availableInCore,false);assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.asOfPatch,'3.30');
   const enchantService=bodyInspection.crafting.nativeEngine.harvestEnchants.find(entry=>entry.id==='LifeBodyEnchant');
   assert.ok(bodyInspection.crafting.nativeEngine.nativeStats.Armour>0);

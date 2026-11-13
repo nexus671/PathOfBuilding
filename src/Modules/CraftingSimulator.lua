@@ -245,6 +245,38 @@ function M.annulCandidates(model,state)
 	for index,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then eligible[#eligible+1]=index end end
 	return eligible
 end
+-- Enumerate partial-lock selections using the same selection routine as an
+-- action. Return nil if a selection leaves no removable modifier: that case
+-- needs the normal transition-error handling rather than a fabricated outcome.
+function M.partialAnnulBranches(model,state)
+	local f=flags(model,state);local sizes={}
+	for _,side in ipairs({"Prefix","Suffix"}) do if f[side] then
+		local n=0;for _,entry in ipairs(state.affixes) do if model.byId[entry.id].type==side then n=n+1 end end
+		for i=1,math.min(f[side],n) do sizes[#sizes+1]=n-i+1 end
+	end end
+	local result,draws={},{};local invalid=false
+	local function visit(depth,probability)
+		if depth<=#sizes then
+			local n=sizes[depth]
+			for i=1,n do draws[depth]=(i-0.5)/n;visit(depth+1,probability/n) end
+			draws[depth]=nil;return
+		end
+		local shadow=copyState(state);local cursor=0
+		selectPartialLocks(model,shadow,function() cursor=cursor+1;return assert(draws[cursor],"Missing partial-lock draw") end)
+		local eligible=M.annulCandidates(model,shadow)
+		for _,entry in ipairs(shadow.affixes) do partialSelected[entry]=nil end
+		if #eligible==0 then invalid=true;return end
+		for i,index in ipairs(eligible) do
+			local branch=result[index]
+			if not branch then branch={index=index,probability=0,draws=copyTable(draws),removalDraw=(i-0.5)/#eligible};result[index]=branch end
+			branch.probability=branch.probability+probability/#eligible
+		end
+	end
+	visit(1,1)
+	if invalid then return nil end
+	local ordered={};for _,branch in pairs(result) do ordered[#ordered+1]=branch end
+	table.sort(ordered,function(a,b) return a.index<b.index end);return ordered
+end
 local function clear(model,state,ignoreMeta)
 	local f=ignoreMeta and {} or flags(model,state)
 	for i=#state.affixes,1,-1 do if not protected(state.affixes[i],model.byId[state.affixes[i].id],f) then table.remove(state.affixes,i) end end
