@@ -79,10 +79,56 @@ describe("State-aware crafting choices",function()
 			if base~="Small Life Flask" then states[#states+1]=sim.perform(m.raw,{method="alchemy"},104729).state end
 			for _,input in ipairs(states) do for _,method in ipairs(sim.methods) do if check(method,input,m) then
 				local options=sim.actionOptions(m,input,method)
-				if #options>0 then local ok,message=pcall(sim.action,m,input,options[1].action,function() return 0.5 end);assert.is_true(ok,base.." / "..input.rarity.." / "..method..": "..tostring(message));attempted=attempted+1 end
+				if method~="awakener" and method~="recombine" and method~="recombine_predictable" then local ok,message=pcall(sim.action,m,input,options[1] and options[1].action or {method=method},function() return 0.5 end);assert.is_true(ok,base.." / "..input.rarity.." / "..method..": "..tostring(message));attempted=attempted+1 end
 			end end end
 		end
-		assert.is_true(attempted>=100)
+		assert.is_true(attempted>=300)
+	end)
+	it("rejects missing state prerequisites before consuming randomness",function()
+		local m=model();local rare=sim.perform(m.raw,{method="alchemy"},104729).state
+		local cases={{"unravelling",m.initial},{"remembrance",rare},{"dominance",rare},{"beast_influence",rare},{"ducat_rotmother",rare},{"ducat_merrick",rare},{"ducat_genteel",m.initial},{"beast_prefix_suffix",m.initial},{"beast_suffix_prefix",m.initial},{"veiled_orb",state(m,"RARE")}}
+		for _,case in ipairs(cases) do
+			local before=copyTable(case[2]);local available,reason=check(case[1],case[2],m)
+			assert.is_false(available);assert.is_truthy(reason)
+			local calls=0;local ok,message=pcall(sim.action,m,case[2],{method=case[1]},function() calls=calls+1;return 0.5 end)
+			assert.is_false(ok);assert.is_truthy(tostring(message):find(reason,1,true));assert.are.equal(0,calls);assert.are.same(before,case[2])
+		end
+		local ring=model("Coral Ring");assert.is_false(check("binding",ring.initial,ring))
+	end)
+	it("retains eligible memory, Ducat and influenced armour crafts",function()
+		local m=model();assert.is_true(check("remembrance",m.initial,m))
+		local strands=copyTable(m.initial);strands.memoryStrands=50
+		assert.is_true(check("unravelling",strands,m));assert.is_true(pcall(sim.perform,m.raw,{method="unravelling"},1,strands))
+		local belt=model("Leather Belt");local rare=sim.perform(belt.raw,{method="alchemy"},12).state
+		assert.is_true(check("ducat_rotmother",rare,belt));assert.is_true(pcall(sim.perform,belt.raw,{method="ducat_rotmother"},12,rare))
+		local abyss=model("Murderous Eye Jewel");local jewel=sim.perform(abyss.raw,{method="alchemy"},12).state
+		assert.is_true(check("ducat_merrick",jewel,abyss));assert.is_true(pcall(sim.perform,abyss.raw,{method="ducat_merrick"},12,jewel))
+		local armour=state(m,"RARE",{{id="IgnitingConfluxInfluence1",range=0.5},{id="SpellAddedChaosDamageInfluence1",range={0.5,0.5}}});armour.influences={"basilisk"}
+		assert.is_true(check("dominance",armour,m));assert.is_true(pcall(sim.perform,m.raw,{method="dominance"},1,armour))
+	end)
+	it("preserves locked source affixes during Bestiary conversion",function()
+		local m=model();local lock
+		for _,entry in ipairs(m.bench) do if entry.mod[1]=="Prefixes Cannot Be Changed" then lock=entry.id end end
+		local input=state(m,"RARE",{{id=natural(m,"IncreasedLife"),range=0.5}})
+		input=sim.perform(m.raw,{method="bench",modId=lock},1,input).state
+		assert.is_true(check("beast_prefix_suffix",input,m))
+		local result=sim.perform(m.raw,{method="beast_prefix_suffix"},1,input).state
+		assert.are.equal(#input.affixes+1,#result.affixes);assert.are.same(input.affixes[1],result.affixes[1])
+	end)
+	it("materializes independent implicit ranges without changing their saved rolls",function()
+		local lines=sim.rolledLines({"Adds (1-3) to (4-6) Fire Damage","+(10-20) to maximum Life"},{0,1,0.5})
+		assert.are.same({"Adds 1 to 6 Fire Damage","+15 to maximum Life"},lines)
+		local m=model("Rusted Sword")
+		for _,method in ipairs({"vaal","locus"}) do for seed=1,10 do
+			local result=sim.perform(m.raw,{method=method},seed)
+			if result.state.corruptedImplicits then
+				local before=copyTable(result.state);local expected={}
+				for _,entry in ipairs(result.state.corruptedImplicits) do for _,line in ipairs(sim.rolledLines(m.byId[entry.id],entry.range)) do expected[#expected+1]=line end end
+				local item=new("Item"):Item(result.itemText);assert.are.equal(#expected,#item.implicitModLines)
+				for i,line in ipairs(expected) do assert.are.equal(line,item.implicitModLines[i].line) end
+				assert.are.same(before,result.state)
+			end
+		end end
 	end)
 	it("keeps a valid selected option when the emulator changes to a shorter list",function()
 		newBuild();local m=model("Plate Vest")

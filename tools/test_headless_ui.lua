@@ -219,6 +219,25 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		frame("crafting-essence-options-applied");ui:click("close")
 	end
 
+	do
+		local beltRaw="Rarity: NORMAL\nLeather Belt\nItem Level: 86"
+		require("Classes.CraftingSimulatorControl").Open(build,{id="ducat-menu-ui",title="Rotmother input requirements",slot="Belt",startingItem=beltRaw,goals={},steps={}})
+		ui:click("settings");ui:text("paletteSearch",sim.labels.ducat_rotmother);local panel=main.popups[1]
+		assert(not panel.controls.paletteUse:IsEnabled(),"Rotmother accepts a normal belt")
+		ui:key("RETURN");assert(main.popups[1]==panel and panel.controls.paletteSearch:IsShown(),"Enter bypassed Rotmother requirements")
+		frame("crafting-ducat-rarity-unavailable");ui:click("paletteBack");ui:click("currency_alchemy");ui:click("item")
+		ui:click("settings");ui:text("paletteSearch",sim.labels.ducat_rotmother);assert(main.popups[1].controls.paletteUse:IsEnabled());ui:click("paletteUse");ui:click("apply")
+		assert(main.popups[1].controls.intro.label:find("Applied Rotmother",1,true),"Rotmother did not apply to the rare belt")
+		frame("crafting-ducat-rarity-applied");ui:click("close")
+	end
+
+	do
+		require("Classes.CraftingSimulatorControl").Open(build,{id="corruption-ranges-ui",title="Independent corruption rolls",slot="Weapon 1",startingItem="Rarity: NORMAL\nRusted Sword\nItem Level: 86",goals={},steps={}})
+		ui:click("tab_settings");ui:text("seed","8");ui:click("tab_craft");ui:click("currency_vaal");ui:click("item")
+		assert(main.popups[1].controls.intro.label:find("Applied Vaal",1,true),"A multi-range corruption did not apply")
+		frame("crafting-corruption-independent-ranges");ui:click("close")
+	end
+
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

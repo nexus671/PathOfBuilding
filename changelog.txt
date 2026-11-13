@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Fixed item previews for independently rolled corrupted and Eldritch implicits and Blessed Orb ranges.
+* Shared crafting prerequisites between menus and execution for Bestiary, Ducats, memory currencies and Dominance.
 * Matched bench, Essence and Harvest choices to the current item, retained valid selections and exposed availability through MCP.
 * Cleared the planning header at narrow widths and included file actions in overlap audits.
 * Separated the compact item-property form from modifier-group controls without changing saved targets.

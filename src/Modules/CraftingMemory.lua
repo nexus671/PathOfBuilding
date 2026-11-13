@@ -5,6 +5,14 @@ local costs={transmute=8,augmentation=8,alteration=8,regal=16,alchemy=50,exalt=1
 local foulborn={foulborn_augmentation="augmentation",foulborn_regal="regal",foulborn_exalt="exalt"}
 local function family(id) return id:gsub("_+$",""):gsub("Maven.*$",""):gsub("%d+$","") end
 function Memory.extend(M,A,api)
+	for _,method in ipairs({"remembrance","unravelling"}) do
+		local selected=method
+		M.methodChecks[method]=function(model,state)
+			if model.item.type=="Jewel" or model.item.type=="Flask" or model.item.type=="Tincture" then return "Memory currency requires ordinary equipment" end
+			if selected=="remembrance" and state.rarity~="NORMAL" then return "Remembrance requires a normal item" end
+			if selected=="unravelling" and (state.memoryStrands or 0)<=0 then return "No memory strands to consume" end
+		end
+	end
 	M.methods[#M.methods+1]="remembrance";M.labels.remembrance="Orb of Remembrance (measured distribution)"
 	M.methods[#M.methods+1]="unravelling";M.labels.unravelling="Orb of Unravelling (experimental)";table.sort(M.methods)
 	for method,base in pairs(foulborn) do M.methods[#M.methods+1]=method;M.labels[method]="Foulborn "..M.labels[base] end;table.sort(M.methods)

@@ -1,7 +1,7 @@
 -- cspell:ignore RGBW
 -- Independent, bounded crafting model using PoB's game-data modifier tables.
 local encounter = require("Modules.CalcEncounter")
-local M = { }
+local M = {methodChecks={}}
 M.methods = {"transmute","alteration","augmentation","regal","alchemy","chaos","exalt","annul","scour","divine","bench","remove_crafted","essence"}
 M.labels = {transmute="Orb of Transmutation",alteration="Orb of Alteration",augmentation="Orb of Augmentation",regal="Regal Orb",alchemy="Orb of Alchemy",chaos="Chaos Orb",exalt="Exalted Orb",annul="Orb of Annulment",scour="Orb of Scouring",divine="Divine Orb",bench="Crafting bench",remove_crafted="Remove crafted modifiers",essence="Essence"}
 M.limits = {"Experimental PoE 1 model, not a complete game crafting implementation.",
@@ -52,6 +52,21 @@ local function counts(model,state)
 		for _,tag in ipairs(mod.tags or { }) do result.tags[tag]=true end
 	end
 	return result
+end
+
+-- A modifier can roll several ranges across several lines. Native mod-line
+-- serialization accepts a scalar range only, so materialize each rolled line.
+function M.rolledLines(mod,range)
+	local lines,index={},0
+	for _,line in ipairs(mod) do
+		local values=range
+		if type(range)=="table" then
+			values={}
+			for _ in line:gmatch("%(%-?%d+%.?%d*%-%-?%d+%.?%d*%)") do index=index+1;values[#values+1]=range[index] or 0.5 end
+		end
+		lines[#lines+1]=itemLib.applyRange(line,values or 0.5)
+	end
+	return lines
 end
 
 function M.toItem(model,state)
@@ -563,4 +578,14 @@ function M.capacities(model,state)
 end
 require("Modules.CraftingAdvanced").extend(M,{counts=counts,flags=flags,clear=clear,protected=protected,add=add,integer=integer,priceKey=priceKey})
 require("Modules.CraftingCalculator").extend(M)
+-- Extensions register state prerequisites once for both execution and browsing.
+function M.methodReason(model,state,method)
+	local check=M.methodChecks[method]
+	if check then return check(M.context(model,state),state) end
+end
+local transition=M.action
+function M.action(model,state,craft,random)
+	if type(state)=="table" and type(craft)=="table" then local reason=M.methodReason(model,state,craft.method);assert(not reason,reason) end
+	return transition(model,state,craft,random)
+end
 return M

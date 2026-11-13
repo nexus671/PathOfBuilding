@@ -234,6 +234,95 @@ function A.extend(M,api)
 	end
 	local function baseInfluences(state) return #(state.influences or {}) > 0 end
 	local function fractured(state) for _,entry in ipairs(state.affixes) do if entry.fractured then return true end end end
+	local function metaCandidates(model,state)
+		local c,f=api.counts(model,state),api.flags(model,state)
+		if not (c.crafted==0 or f.multipleCrafts and c.crafted<3) then return {},"Remove existing crafted modifiers or allow multiple crafted modifiers first" end
+		local result={}
+		for _,entry in ipairs(model.bench) do local mod=entry.mod
+			if #mod==1 and contains({"Prefixes Cannot Be Changed","Suffixes Cannot Be Changed","Cannot roll Attack Modifiers","Cannot roll Caster Modifiers","Can have up to 3 Crafted Modifiers"},mod[1]) and c[mod.type]<cap(model,state)[mod.type] and not c.groups[mod.group] then result[#result+1]=entry.id end
+		end
+		return result,#result==0 and "No legal crafted meta modifier" or nil
+	end
+	local function ducatSource(model,method)
+		local result={}
+		if method=="ducat_rotmother" then
+			for id,mod in pairs(data.itemMods.Ducat) do if mod.level<=model.item.itemLevel then
+				local weight=0;for i,key in ipairs(mod.weightKey) do if key=="deepwater_hazard_belt" then weight=mod.weightVal[i] end end
+				if weight>0 then result[#result+1]={id=id,mod=mod,weight=weight} end
+			end end
+		elseif method=="ducat_cyaxan" then
+			for id,mod in pairs(data.itemMods.Mercenary) do local weight=model.item:GetModSpawnWeight(mod);if mod.level<=model.item.itemLevel and weight>0 then result[#result+1]={id=id,mod=mod,weight=weight} end end
+		else
+			for id,mod in pairs(data.beastCraft) do if contains(mod.weightKey,"deepwater_pantheon_aspect") then result[#result+1]={id=id,mod=mod,weight=100} end end
+		end
+		table.sort(result,function(a,b) return a.id<b.id end);return result
+	end
+	local function genteelCandidates(model,state)
+		if api.flags(model,state).suffixes then return {},{},"Suffixes are locked" end
+		local eligible,choices={},{};local any=false
+		for i,entry in ipairs(state.affixes) do if not entry.fractured and contains({"Strength","Dexterity","Intelligence"},model.byId[entry.id].group) then
+			eligible[#eligible+1]=i;local from=model.byId[entry.id].group;local candidates={}
+			for _,to in ipairs({"Strength","Dexterity","Intelligence"}) do if to~=from then
+				local id=entry.id:gsub(from,to)
+				if model.byId[id] then
+					local valid=true;for _,other in ipairs(state.affixes) do for _,group in ipairs(groups(model,other.id)) do if contains(groups(model,id),group) then valid=false end end end
+					if valid then candidates[#candidates+1]=id end
+				end
+			end end
+			choices[i]=candidates;any=any or #candidates>0
+		end end
+		return eligible,choices,#eligible==0 and "No single-attribute modifier to change" or not any and "No compatible other attribute tier" or nil
+	end
+	M.methodChecks.beast_meta=function(model,state) local _,reason=metaCandidates(model,state);return reason end
+	M.methodChecks.beast_influence=function(model,state)
+		if state.rarity~="RARE" or not baseInfluences(state) then return "Choose an influence already present on this rare item" end
+		if #state.affixes>=cap(model,state).total then return "There is no open modifier slot" end
+	end
+	for _,method in ipairs({"ducat_rotmother","ducat_cyaxan","ducat_brinehook"}) do
+		local selected=method
+		M.methodChecks[method]=function(model,state)
+			local f=api.flags(model,state)
+			if selected=="ducat_rotmother" and (model.item.type~="Belt" or state.rarity~="RARE") then return "Rotmother requires a rare belt" end
+			if selected=="ducat_cyaxan" and (state.rarity~="RARE" or f.prefixes or f.suffixes or f.attack or f.caster) then return "Cyaxan requires a rare item without meta modifiers in this model" end
+			if selected=="ducat_rotmother" and (f.prefixes or f.suffixes or f.attack or f.caster) then return "Remove meta modifiers before using Rotmother in this model" end
+			if selected=="ducat_brinehook" and model.item.type=="Jewel" then return "Pantheon Aspects require equipment" end
+			local prepared=copyTable(state)
+			if selected=="ducat_cyaxan" then api.clear(model,prepared,true) elseif selected=="ducat_brinehook" and prepared.rarity=="NORMAL" then prepared.rarity="MAGIC" end
+			if #pool(model,prepared,{source=ducatSource(model,selected),fixedWeights=selected~="ducat_cyaxan"})==0 then return "No legal modifier is available for this craft" end
+		end
+	end
+	M.methodChecks.ducat_merrick=function(model,state)
+		if model.item.type~="Jewel" or model.item.base.subType~="Abyss" or state.rarity~="RARE" then return "Merrick requires a rare Abyssal Jewel" end
+	end
+	M.methodChecks.ducat_genteel=function(model,state) local _,_,reason=genteelCandidates(model,state);return reason end
+	M.methodChecks.dominance=function(model,state)
+		if not contains({"Helmet","Body Armour","Gloves","Boots"},model.item.type) or state.rarity~="RARE" then return "Dominance requires rare influenced armour" end
+		local count=0;for _,entry in ipairs(state.affixes) do if influenced(model,entry.id) then count=count+1 end end
+		if count<2 or fractured(state) then return "Dominance requires at least two influenced modifiers" end
+	end
+	for _,method in ipairs({"beast_prefix_suffix","beast_suffix_prefix"}) do
+		local selected=method
+		M.methodChecks[method]=function(model,state)
+			if state.rarity~="RARE" then return "Bestiary conversion requires a rare item" end
+			local from=selected=="beast_prefix_suffix" and "Prefix" or "Suffix";local to=from=="Prefix" and "Suffix" or "Prefix"
+			if api.counts(model,state)[to]>=cap(model,state)[to] then return "No open affix for this conversion" end
+			local f=api.flags(model,state)
+			if not (from=="Prefix" and f.prefixes or from=="Suffix" and f.suffixes) then
+				local found=false;for _,entry in ipairs(state.affixes) do if model.byId[entry.id].type==from and not api.protected(entry,model.byId[entry.id],f) then found=true;break end end
+				if not found then return "No removable modifier for this craft" end
+			end
+		end
+	end
+	M.methodChecks.binding=function(model) if (model.item.base.socketLimit or 0)==0 then return "This base cannot have equipment sockets" end end
+	M.methodChecks.veiled_orb=function(model,state)
+		if #model.veiled==0 then return "This base has no supported veiled modifiers" end
+		local f=api.flags(model,state);local removable=false
+		for _,entry in ipairs(state.affixes) do
+			if contains(model.byId[entry.id].modTags,"unveiled_mod") then return "The item already has an unveiled modifier" end
+			if not api.protected(entry,model.byId[entry.id],f) then removable=true end
+		end
+		if not removable then return "No removable modifier for this craft" end
+	end
 	function M.resistanceReason(model,state,from,to)
 		if from==to or not contains({"fire","cold","lightning"},from) or not contains({"fire","cold","lightning"},to) then return "Choose different elemental resistance types" end
 		if api.flags(model,state).suffixes then return "Suffixes are locked" end
@@ -287,7 +376,7 @@ function A.extend(M,api)
 		if state.quality then item.quality=state.quality end
 		if state.sockets then item.sockets=copyTable(state.sockets) end
 		for kind,value in pairs(state.percentiles or {}) do item.armourData[kind.."BasePercentile"]=value end
-		if state.baseImplicitRanges then for i,range in ipairs(state.baseImplicitRanges) do if item.implicitModLines[i] then item.implicitModLines[i].range=range end end end
+		if state.baseImplicitRanges then for i,range in ipairs(state.baseImplicitRanges) do if item.implicitModLines[i] then item.implicitModLines[i].line=itemLib.applyRange(item.implicitModLines[i].line,range);item.implicitModLines[i].range=nil end end end
 		if state.vendorImplicit then
 			for _,line in ipairs(assert(model.byId[state.vendorImplicit],"Unknown vendor implicit")) do item.implicitModLines[#item.implicitModLines+1]={line=line} end
 		end
@@ -295,7 +384,7 @@ function A.extend(M,api)
 			item.implicitModLines={}
 			for _,entry in ipairs(state.implicits) do
 				local mod=model.byId[entry.id]
-				for _,line in ipairs(mod) do item.implicitModLines[#item.implicitModLines+1]={line=line,range=entry.range or 0.5,exarch=entry.side == "Exarch",eater=entry.side == "Eater"} end
+				for _,line in ipairs(M.rolledLines(mod,entry.range)) do item.implicitModLines[#item.implicitModLines+1]={line=line,exarch=entry.side == "Exarch",eater=entry.side == "Eater"} end
 			end
 		end
 	end
@@ -311,14 +400,8 @@ function A.extend(M,api)
 		if method == "annul" then remove(model,state,random,{attackProtection=true}); return state end
 		if not methods[method] then return originalAction(model,state,action,random) end
 		if method == "beast_meta" then
-			local c=api.counts(model,state)
-			assert(c.crafted == 0 or f.multipleCrafts and c.crafted < 3,"Remove existing crafted modifiers or allow multiple crafted modifiers first")
-			local candidates={}
-			for _,entry in ipairs(model.bench) do
-				local mod=entry.mod
-				if #mod == 1 and contains({"Prefixes Cannot Be Changed","Suffixes Cannot Be Changed","Cannot roll Attack Modifiers","Cannot roll Caster Modifiers","Can have up to 3 Crafted Modifiers"},mod[1]) and c[mod.type] < cap(model,state)[mod.type] and not c.groups[mod.group] then candidates[#candidates+1]=entry.id end
-			end
-			assert(#candidates > 0,"No legal crafted meta modifier")
+			local candidates,reason=metaCandidates(model,state)
+			assert(not reason,reason)
 			return M.action(model,state,{method="bench",modId=candidates[math.floor(random()*#candidates)+1]},random)
 		elseif method == "beast_influence" then
 			assert(state.rarity == "RARE" and contains(state.influences,action.influence),"Choose an influence already present on this rare item")
@@ -326,37 +409,21 @@ function A.extend(M,api)
 		elseif method == "ducat_rotmother" then
 			assert(model.item.type == "Belt" and state.rarity == "RARE","Rotmother requires a rare belt")
 			assert(not (f.prefixes or f.suffixes or f.attack or f.caster),"Remove meta modifiers before using Rotmother in this model")
-			local source={}
-			for id,mod in pairs(data.itemMods.Ducat) do if mod.level <= model.item.itemLevel then
-				local weight=0;for i,key in ipairs(mod.weightKey) do if key == "deepwater_hazard_belt" then weight=mod.weightVal[i] end end
-				if weight > 0 then source[#source+1]={id=id,mod=mod,weight=weight} end
-			end end
-			table.sort(source,function(a,b) return a.id < b.id end);append(model,state,random,{source=source,fixedWeights=true})
+			append(model,state,random,{source=ducatSource(model,method),fixedWeights=true})
 		elseif method == "ducat_cyaxan" then
 			assert(state.rarity == "RARE" and not (f.prefixes or f.suffixes or f.attack or f.caster),"Cyaxan requires a rare item without meta modifiers in this model")
-			api.clear(model,state,true);local source={}
-			for id,mod in pairs(data.itemMods.Mercenary) do local weight=model.item:GetModSpawnWeight(mod);if mod.level <= model.item.itemLevel and weight > 0 then source[#source+1]={id=id,mod=mod,weight=weight} end end
-			table.sort(source,function(a,b) return a.id < b.id end);append(model,state,random,{source=source});fill(model,state,random)
+			api.clear(model,state,true);append(model,state,random,{source=ducatSource(model,method)});fill(model,state,random)
 		elseif method == "ducat_brinehook" then
 			assert(model.item.type ~= "Jewel","Pantheon Aspects require equipment")
-			local source={};for id,mod in pairs(data.beastCraft) do if contains(mod.weightKey,"deepwater_pantheon_aspect") then source[#source+1]={id=id,mod=mod,weight=100} end end
-			table.sort(source,function(a,b) return a.id < b.id end)
 			if state.rarity == "NORMAL" then state.rarity="MAGIC" end
-			append(model,state,random,{source=source,fixedWeights=true})
+			append(model,state,random,{source=ducatSource(model,method),fixedWeights=true})
 		elseif method == "ducat_merrick" then
 			assert(model.item.type == "Jewel" and model.item.base.subType == "Abyss" and state.rarity == "RARE","Merrick requires a rare Abyssal Jewel")
 			state.corrupted=true;append(model,state,random);state.imprint=nil
 		elseif method == "ducat_genteel" then
-			assert(not f.suffixes,"Suffixes are locked")
-			local eligible={};for i,entry in ipairs(state.affixes) do if not entry.fractured and contains({"Strength","Dexterity","Intelligence"},model.byId[entry.id].group) then eligible[#eligible+1]=i end end
-			assert(#eligible > 0,"No single-attribute modifier to change")
-			local entry=state.affixes[eligible[math.floor(random()*#eligible)+1]];local from=model.byId[entry.id].group;local candidates={}
-			for _,to in ipairs({"Strength","Dexterity","Intelligence"}) do if to ~= from then
-				local id=entry.id:gsub(from,to);if model.byId[id] then
-					local valid=true;for _,other in ipairs(state.affixes) do for _,group in ipairs(groups(model,other.id)) do if contains(groups(model,id),group) then valid=false end end end
-					if valid then candidates[#candidates+1]=id end
-				end
-			end end
+			local eligible,choices,reason=genteelCandidates(model,state)
+			assert(not reason,reason)
+			local index=eligible[math.floor(random()*#eligible)+1];local entry=state.affixes[index];local candidates=choices[index]
 			assert(#candidates > 0,"No compatible other attribute tier");entry.id=candidates[math.floor(random()*#candidates)+1]
 		elseif method == "harvest_reforge" then
 			assert(state.rarity == "RARE" and tags[action.tag],"Select a supported Harvest tag on a rare item")

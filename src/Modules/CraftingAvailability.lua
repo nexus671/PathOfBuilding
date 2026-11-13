@@ -16,6 +16,7 @@ function M.check(method,state,model)
 	if state.corrupted and not tainted and method~="socket_bench" and method~="socket_colour_bench" and method~="beast_talisman_fracture" and method~="ducat_tzamoto" then return false,"Requires an uncorrupted item." end
 	model=sim.context(model,state);local item=model.item;local kind=item.type
 	if (kind=="Flask" or kind=="Tincture") and not flask[method] and method~="ducat_tzamoto" and method~="ducat_kishara" then return false,"This method is unavailable for flasks and tinctures." end
+	local reason=sim.methodReason(model,state,method);if reason then return false,reason end
 	if normal[method] and state.rarity~="NORMAL" then return false,"Requires a normal item." end
 	if magic[method] and state.rarity~="MAGIC" then return false,"Requires a magic item." end
 	if rare[method] and state.rarity~="RARE" then return false,"Requires a rare item." end

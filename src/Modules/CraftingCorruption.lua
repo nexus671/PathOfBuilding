@@ -40,7 +40,7 @@ function C.extend(M,A,api)
 		originalDecorate(model,state,item)
 		if state.corruptedImplicits then
 			item.implicitModLines={}
-			for _,entry in ipairs(state.corruptedImplicits) do for _,line in ipairs(model.byId[entry.id]) do item.implicitModLines[#item.implicitModLines+1]={line=line,range=entry.range} end end
+			for _,entry in ipairs(state.corruptedImplicits) do for _,line in ipairs(M.rolledLines(model.byId[entry.id],entry.range)) do item.implicitModLines[#item.implicitModLines+1]={line=line} end end
 		end
 	end
 	function M.validateState(model,state)
