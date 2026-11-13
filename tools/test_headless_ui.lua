@@ -182,6 +182,21 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	require("Classes.CraftingSimulatorControl").Open(build,{id="ward-ui",title="Ward properties",slot="Helmet",startingItem="Rarity: NORMAL\nRunic Helm\nItem Level: 86",goals={},steps={}})
 	assert(main.popups[1].controls.item.defences:find("Ward:",1,true),"Ward is missing from the item card")
 	frame("crafting-ward-properties");ui:click("close")
+	for count=1,2 do
+		local sockets=count==1 and "W" or "W-W"
+		require("Classes.CraftingSimulatorControl").Open(build,{id="socket-options-ui",title="Socket bench availability",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: "..sockets,goals={},steps={}})
+		ui:click("settings");ui:text("paletteSearch","non-white");local panel=main.popups[1]
+		if count==1 then
+			assert(not panel.controls.paletteUse:IsEnabled(),"A bench with no valid socket option is selectable")
+			ui:key("RETURN");assert(main.popups[1]==panel and panel.controls.paletteSearch:IsShown(),"Enter bypassed an unavailable action")
+			frame("crafting-socket-bench-unavailable");ui:click("paletteBack")
+		else
+			assert(panel.controls.paletteUse:IsEnabled(),"A valid two-socket bench is unavailable")
+			ui:key("RETURN");ui:click("apply");assert(main.popups[1].controls.intro.label:find("Applied Bench:",1,true),"The valid bench did not apply")
+			frame("crafting-socket-bench-applied")
+		end
+		ui:click("close")
+	end
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

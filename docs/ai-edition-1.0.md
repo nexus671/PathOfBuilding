@@ -54,10 +54,10 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,116 Lua tests, 42 Node tests,
-the real MCP save/reopen workflow and 654 source-stable UI frames without audit
+The published preview passed exact-commit CI with 1,119 Lua tests, 42 Node tests,
+the real MCP save/reopen workflow and 660 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `d6ff864fa4a6b5e0399cee4ccd14594b686547cd`.
+against commit `c02a2d5610998de9519b7d69e40fc18536ac9b21`.
 
 That preview includes the native colour wheel, brightness/opacity controls,
 exact RGBA input and Ruthless validation. Native input tests also exposed and
@@ -70,12 +70,13 @@ visible Rules button are included. The real MCP workflow now discovers and
 applies a Harvest enchantment, prices its recipe, reviews two gear guides and
 preserves them through save/reopen and portable bundle import.
 
-That preview also shows native weapon properties and Ward in item cards and
-comparisons, including the selected equipment slot. The next review catches
-invalid Atlas setup costs, keeps edited values in place and removes Lua source
-locations from validation messages. Local validation passed 1,119 Lua tests and
-660 source-stable UI states. The later wording improvement also passed six
-focused invalid-entry and correction states. Exact-commit CI remains required.
+That preview also shows native weapon properties and Ward in item comparisons,
+keeps invalid forms editable and explains input errors without Lua source paths.
+The next review disables the non-white socket bench when no count option exists
+and adds consistent ellipses to long build/save-status labels. Native input checks
+confirm Enter cannot select the unavailable action and a valid two-socket craft
+still applies. Local validation passed 1,120 Lua tests and 666 source-stable UI
+states. Exact-commit CI remains required.
 The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.

@@ -14,6 +14,15 @@ describe("Crafting action preconditions",function()
 		state.intangibility=50;assert.is_true(check("ducat_tzamoto",state,model));state.corrupted=false
 		state=sim.perform(raw,{method="veiled_orb"},104729,state).state;assert.is_true(check("unveil",state,model));assert.is_false(check("annul",state,model))
 	end)
+	it("offers the non-white socket bench only when it has a valid count option",function()
+		local model=sim.model("Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W");local state=model.initial
+		local allowed,reason=check("socket_colour_bench",state,model)
+		assert.is_false(allowed);assert.are.equal("Requires at least two sockets.",reason)
+		assert.are.equal(0,#sim.actionOptions(model,state,"socket_colour_bench"));assert.is_true(check("chromatic",state,model))
+		state=sim.perform(model.raw,{method="socket_bench",count=2},1).state
+		assert.is_true(check("socket_colour_bench",state,model));assert.are.equal(1,#sim.actionOptions(model,state,"socket_colour_bench"))
+		state.corrupted=true;assert.is_true(check("socket_colour_bench",state,model))
+	end)
 	it("uses the proper class restrictions and bundled quality currency artwork",function()
 		local model=sim.model("Rarity: NORMAL\nSmall Life Flask\nItem Level: 20");assert.is_true(check("quality",model.initial,model));assert.is_false(check("alchemy",model.initial,model));assert.is_false(check("catalyst",model.initial,model))
 		local art=require("Modules.CraftingWorkbench");local path=art.icon("quality",{},model);local file=assert(io.open("Assets/Crafting/currencies.json"));local manifest=assert(require("dkjson").decode(file:read("*a")));file:close();local expected

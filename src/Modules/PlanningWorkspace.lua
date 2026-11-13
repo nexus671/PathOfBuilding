@@ -26,9 +26,9 @@ function M.new(build)
 	local context=new("Control"):Control({"TOPLEFT",anchor,"TOPLEFT"},{822,10,function() return math.max(0,self.viewport.width-838) end,28})
 	function context:Draw()
 		local x,y=self:GetPos();local w=self:GetSize();local title=build.buildName or "Untitled build"
-		local status=require("Modules.PlanningUI").saveStatus(build)
-		while #title>0 and DrawStringWidth(13,"VAR",title)>w do title=title:sub(1,-2) end
-		while #status>0 and DrawStringWidth(12,"VAR",status)>w do status=status:sub(1,-2) end
+		if w<DrawStringWidth(13,"VAR","...") then return end
+		local ui=require("Modules.PlanningUI");local status=ui.saveStatus(build)
+		title=ui.fit(title,w,13);status=ui.fit(status,w,12)
 		SetDrawColor("^x9BA9BA");DrawString(x+w,y,"RIGHT_X",13,"VAR",title);DrawString(x+w,y+15,"RIGHT_X",12,"VAR",status)
 	end
 	self.nav.controls.nav_context=context
