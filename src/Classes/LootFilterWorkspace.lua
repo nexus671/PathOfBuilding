@@ -68,14 +68,18 @@ function M.Open(build,source,layout,controller)
 		end end
 		require("Classes.PlanningBrowserControl").Open("Matched filter rules",entries,{action="Edit matched rule",choose=function(entry) main:ClosePopup();editRule(entry.rule,keepRule) end,closeOnChoose=false})
 	end
-	local function updateSelection(entry)
-		selectedEntry=entry;selected=entry and entry.rule.id;item=entry and copyTable(entry.sample) or item;if parsed then result=parser.simulate(parsed,item) end
+	local function updateDetail()
 		if c.detail then local lines={}
-			if entry then
-				lines={entry.rule.title,entry.category.." / "..entry.tier,(entry.rule.enabled==false and "Disabled. The base preset still applies." or entry.base and "Base preset. Editing creates a personal override." or entry.rule.origin and "Linked to "..entry.rule.origin or "Personal rule"),tostring(#entry.block.conditions).." matching conditions",result and result.action=="Unknown" and "Add missing sample properties to resolve this drop." or "Preview uses this profile's complete filter."}
+			if selectedEntry then
+				local entry=selectedEntry
+				lines={entry.rule.title,entry.category.." / "..entry.tier,(entry.rule.enabled==false and "Disabled. The base preset still applies." or entry.base and "Base preset. Editing creates a personal override." or entry.rule.origin and "Linked to "..entry.rule.origin or "Personal rule"),tostring(#entry.block.conditions).." matching conditions",result and result.action=="Unknown" and (result.reasons[1] or "Resolve the sample properties to preview this drop.") or "Preview uses this profile's complete filter."}
 			else lines={"Choose a rule or a drop to inspect it.","Personal rules take priority over the base preset."} end
 			c.detail.list=ui.rows(lines,c.detail.width-28,14)
 		end
+	end
+	local function updateSelection(entry)
+		selectedEntry=entry;selected=entry and entry.rule.id;item=entry and copyTable(entry.sample) or item;if parsed then result=parser.simulate(parsed,item) end
+		updateDetail()
 	end
 	local function card(key,x,y,width,title,value,caption,icon)
 		local control=new("Control"):Control(ui.anchor,{x,y,width,74});c[key]=control
@@ -236,7 +240,7 @@ function M.Open(build,source,layout,controller)
 		c.appearance.width=math.floor((detailW-12)/2);c.appearance.label="Appearance"
 		button(c,"openSource",detailX+math.floor((detailW-12)/2)+12,h-110,math.floor((detailW-12)/2),"Open source",function() require("Modules.LootFilterDependencies").open(build,layout,assert(selectedRule().origin)) end)
 		c.openSource.enabled=function() return selectedRule() and selectedRule().origin~=nil end;c.openSource.tooltipText="Open the craft, gear, resource, skill guide or Atlas plan that generated this pickup."
-		button(c,"sampleEdit",detailX,h-72,detailW,"Test sample properties",function() controller.EditSample(item,function(next) rememberSample(next);compile() end) end)
+		button(c,"sampleEdit",detailX,h-72,detailW,"Test sample properties",function() controller.EditSample(item,function(next) rememberSample(next);compile();updateDetail() end) end)
 		refreshList()
 	elseif page=="Simulate" then
 		local left=208;local groundX=240;local groundW=w-256

@@ -62,6 +62,9 @@ function M.parse(raw)
 					if not ({["="]=true,["=="]=true,["!="]=true,["!"]=true,[">="]=true,["<="]=true,[">"]=true,["<"]=true})[op] then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid operator "..op} end
 					if M.booleans[key] and (key~="TransfiguredGem" and t[1]~="True" and t[1]~="False" or op~="=" and op~="==" and op~="!" and op~="!=") then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid boolean "..key} end
 					if key=="UnidentifiedItemTier" then local n=tonumber(t[1]);if not n or n<0 or n>5 or n~=math.floor(n) then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="UnidentifiedItemTier must be 0 to 5"} end end
+					if key=="SocketGroup" or key=="Sockets" then for _,value in ipairs(t) do
+						if value=="" or not value:match("^%d*[RGBWAD]*$") and not (key=="Sockets" and tonumber(value)) then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid socket pattern for "..key};break end
+					end end
 					if M.numeric[key] and key~="Sockets" then for _,value in ipairs(t) do local n=tonumber(value);if not n or n~=n or math.abs(n)==math.huge then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid numeric value for "..key};break end end end
 				end
 			end
@@ -88,6 +91,7 @@ function M.condition(c,item)
 	if c.keyword=="SocketGroup" or c.keyword=="Sockets" and not tonumber(values[1]) then
 		if c.keyword=="Sockets" then value=item.SocketColours or value end
 		if type(value)~="string" then return nil,"Supply socket colours for "..c.keyword end
+		if value:find("[^RGBWAD%s%-]") then return nil,"Invalid socket colours for "..c.keyword end
 		for _,pattern in ipairs(values) do
 			if c.keyword=="SocketGroup" then
 				-- Abyss and Delve sockets cannot link to other sockets, even when

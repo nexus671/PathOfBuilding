@@ -26,6 +26,17 @@ describe("Build-owned loot filters",function()
 		assert.equal("Show",action("Sockets < 6GGG",{Sockets=5,SocketColours="GGGGR"}))
 		assert.equal("Hide",action("Sockets > 5GGG",{Sockets=6,SocketColours="GGRRRW"}))
 	end)
+	it("rejects malformed socket patterns and explains invalid sample colours",function()
+		for _,condition in ipairs({"SocketGroup XYZ","SocketGroup 3RGBx","Sockets 5GR?",'SocketGroup ""'}) do
+			local parsed=parser.parse("Hide\n "..condition.."\nShow")
+			assert.equal("invalid",parser.simulate(parsed,{SocketGroup="RGB",Sockets=3,SocketColours="RGB"}).status)
+		end
+		local result=parser.simulate(parser.parse("Hide\n SocketGroup RGB\nShow"),{SocketGroup="RGB?"})
+		assert.equal("unknown",result.status);assert.equal("Unknown",result.action);assert.matches("Invalid socket colours",result.reasons[1])
+		result=parser.simulate(parser.parse("Hide\n Sockets RGB\nShow"),{Sockets=3,SocketColours="RGB?"})
+		assert.equal("unknown",result.status);assert.equal("Unknown",result.action)
+		assert.equal("Hide",parser.simulate(parser.parse("Hide\n SocketGroup RGB\nShow"),{SocketGroup="R-G-B"}).action)
+	end)
 	it("applies first-match ordering, Continue styles and exact/partial names",function()
 		local raw='Show\n BaseType "Iron"\n SetTextColor 255 0 0\n Continue\nHide\n BaseType == "Iron Hat"\n SetFontSize 25\nShow'
 		local result=parser.simulate(parser.parse(raw),{BaseType="Iron Hat"})

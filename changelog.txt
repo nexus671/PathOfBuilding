@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Explain invalid socket rules and test-drop colours instead of showing a misleading filter preview; refresh the explanation when the sample changes.
 * Correct socket and link comparisons in loot filter previews when rules specify both a count and colours.
 * Treat Abyss and Delve sockets as unlinked in filter previews, and prevent Abyss sockets from producing false linked crafting targets.
 * Preserve a Stygian Vise's Abyss socket when continuing or saving a craft.
