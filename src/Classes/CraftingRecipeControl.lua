@@ -36,7 +36,7 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 			list[#list+1]={label=i..". "..require("Modules.CraftingWorkbench").actionLabel(step,model),val=i}
 			routes[#routes+1]={label="Step "..i,val=i}
 			local function route(target) return target>#draft.steps and "Finish" or "Step "..target end
-			lines[#lines+1]={height=92,textSize=16,x=44,card=true,step=i,selected=i==selected,iconPath=require("Modules.CraftingWorkbench").icon(step.method),
+			lines[#lines+1]={height=92,textSize=16,x=44,card=true,step=i,selected=i==selected,iconPath=require("Modules.CraftingWorkbench").icon(step.method,step,model),
 				subtitle=string.format("Success -> %s | Failure -> %s",route(step.onSuccess or i+1),step.onFailureAction and step.onFailureAction~="route" and require("Classes.CraftingRecoveryControl").labels[step.onFailureAction] or route(step.onFailure or i+1)),
 				detail=(step.untilTargets or step.untilRequirements) and "Repeat until target conditions match" or "Continue after one successful action",
 				"^7"..string.format("%d. %s | up to %d attempts",i,require("Modules.CraftingWorkbench").actionLabel(step,model),step.maxAttempts or 1)}
@@ -86,6 +86,7 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		for _,count in ipairs({1,3}) do entries[#entries+1]={id="bench-reroll-"..count,label="Bench: reroll "..count.." modifier"..(count==1 and "" or "s"),category="Bench",icon=workbench.icon("bench_reroll"),action={method="bench_reroll",count=count},
 			details={"Add this bench action to the recipe without changing the working item.","The item must have enough removable modifiers when this step runs."}} end
 		if model then
+			entries[#entries+1]={id="fossil-combination",label="Fossil combination",category="Fossils",configure="fossil",details={"Choose up to four fossils for this recipe step.","The item must meet the fossil requirements when this step runs."}}
 			for _,entry in ipairs(model.bench or {}) do
 				local action={method="bench",modId=entry.id};local label=workbench.actionLabel(action,model)
 				entries[#entries+1]={id=entry.id,label=label,search=entry.id,category="Bench",action=action,details={label,"Uses a bench-crafted slot. Item requirements and conflicts are checked when this step runs."}}
@@ -102,8 +103,10 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 				entries[#entries+1]={id=method..":"..tag,label=label,category="Harvest",action=action,details={label,"A legal modifier and item state are required when this step runs."}}
 			end
 		end end
-		require("Classes.PlanningBrowserControl").Open("Add a recipe step",entries,{action="Add step",choose=function(entry)
-			draft.steps[#draft.steps+1]=copyTable(entry.action);selected=#draft.steps;refresh()
+		require("Classes.PlanningBrowserControl").Open("Add a recipe step",entries,{action="Add step",closeOnChoose=false,choose=function(entry)
+			main:ClosePopup()
+			local function append(action) draft.steps[#draft.steps+1]=copyTable(action);selected=#draft.steps;refresh() end
+			if entry.configure=="fossil" then require("Classes.CraftingFossilControl").Open(model,nil,append) else append(entry.action) end
 		end})
 	end)
 	button(controls,"close",728,642,116,"Close",function() main:ClosePopup() end)

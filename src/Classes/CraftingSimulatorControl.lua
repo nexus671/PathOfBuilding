@@ -295,23 +295,8 @@ function Panel.Open(build,project,layout)
 		local method=controls.method:GetSelValueByKey("val")
 		local popup={}
 		if method == "fossil" then
-			local choices={{label="None"}}; for _,entry in ipairs(model.fossils) do choices[#choices+1]={label=entry.name,id=entry.id} end
-			for i=1,4 do
-				popup["fossil"..i]=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,26+i*34,608,24},choices)
-				local id=configured.fossil and configured.fossil.fossils and configured.fossil.fossils[i];if id then popup["fossil"..i]:SelByValue(id,"id") end
-			end
-			local outcomes={};for id,fossil in pairs(require("Modules.CraftingAdvanced").data().fossils) do if id:find("RandomFossilOutcome",1,true) then
-				local descriptions={};for _,text in pairsSortByKey(fossil.descriptions) do descriptions[#descriptions+1]=text end
-				outcomes[#outcomes+1]={label=table.concat(descriptions," / "),id=id}
-			end end;table.sort(outcomes,function(a,b) return a.label < b.label end);table.insert(outcomes,1,{label="No revealed Tangled outcome"})
-			popup.tangled=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,210,608,24},outcomes)
-			if configured.fossil and configured.fossil.tangledOutcome then popup.tangled:SelByValue(configured.fossil.tangledOutcome,"id") end
-			button(popup,"use",16,260,180,"Use combination",function()
-				local ids,seen={},{};for i=1,4 do local value=popup["fossil"..i]:GetSelValue();if value.id then
-					assert(not seen[value.id],"Choose each fossil only once");seen[value.id]=true;ids[#ids+1]=value.id
-				end end
-				assert(#ids > 0,"Choose at least one fossil"); configured.fossil={method="fossil",fossils=ids,tangledOutcome=popup.tangled:GetSelValueByKey("id")};changed();main:ClosePopup()
-			end)
+			require("Classes.CraftingFossilControl").Open(model,configured.fossil,function(craft) configured.fossil=craft;changed() end)
+			return
 		elseif method == "awakener" or method == "recombine" or method == "recombine_predictable" then
 			edit(popup,"donor",16,36,608,170,"","Paste the donor item",24000)
 			if method == "recombine_predictable" then

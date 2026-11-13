@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Configure fossil combinations directly in crafting recipes.
 * Add base-specific bench crafts, Essences and tagged Harvest actions directly to recipes.
 * Add common currency and bench reroll steps directly to crafting recipes.
 * Show bench reroll choices only when the working item has a possible removal sequence.

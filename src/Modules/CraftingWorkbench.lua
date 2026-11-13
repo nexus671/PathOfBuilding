@@ -173,6 +173,10 @@ function M.actionLabel(action,model)
 	if action.method=="bench_reroll" and (action.count==1 or action.count==3) then return "Bench: reroll "..action.count.." modifier"..(action.count==1 and "" or "s") end
 	if model and action.method=="bench" and model.byId[action.modId] then return "Bench: "..table.concat(model.byId[action.modId]," / ") end
 	if model and action.method=="essence" then for _,entry in ipairs(model.essences or {}) do if entry.id==action.essenceId then return entry.name end end end
+	if model and action.method=="fossil" and action.fossils then
+		local names={};for _,id in ipairs(action.fossils) do for _,entry in ipairs(model.fossils or {}) do if entry.id==id then names[#names+1]=entry.name;break end end end
+		if #names==#action.fossils and #names>0 then return "Fossils: "..table.concat(names,", ") end
+	end
 	if (action.method=="harvest_reforge" or action.method=="harvest_augment") and action.tag then return (simulator.labels[action.method] or action.method).." ("..action.tag..")" end
 	return simulator.labels[action.method] or action.method
 end
