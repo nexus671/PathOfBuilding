@@ -71,6 +71,17 @@ end
 function B.cost(model,id,lookup)
 	local mod=model.byId[id]
 	if not mod or not id:match("^bench:") then return end
-	return lookupEntry(signature(table.concat(mod,"\n"),mod.level,mod.type,B.class(model.item)),lookup)
+	local cost,sources=lookupEntry(signature(table.concat(mod,"\n"),mod.level,mod.type,B.class(model.item)),lookup)
+	if not cost then return end
+	if not lookup and #mod==1 and (mod[1]=="Prefixes Cannot Be Changed" or mod[1]=="Suffixes Cannot Be Changed") then
+		local item=model.item;local kind=item.type;local extra,amount
+		if data.weaponTypeInfo[kind] then extra,amount="CurrencyRerollDefences",1
+		elseif item.base.armour or kind=="Quiver" then extra,amount="CurrencyRerollImplicit",4
+		elseif kind=="Ring" or kind=="Amulet" or kind=="Belt" then extra,amount="CurrencyAddModToRare",8 end
+		-- Unknown classes must not inherit the old, cheaper 3.29 price.
+		if not extra then return end
+		return {["Metadata/Items/Currency/CurrencyModValues"]=4,["Metadata/Items/Currency/"..extra]=amount},{"GGG 3.30 patch notes"}
+	end
+	return cost,sources
 end
 return B

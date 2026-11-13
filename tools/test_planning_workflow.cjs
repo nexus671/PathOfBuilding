@@ -131,6 +131,12 @@ async function main(){
   const benchInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'maximum Life',limit:100},'inspected');
   const benchService=benchInspection.crafting.nativeEngine.bench.find(entry=>entry.id==='bench:1');
   assert.equal(benchService.ingredientCostsKnown,true);assert.deepEqual(benchService.components,{'Metadata/Items/Currency/CurrencyRerollMagic':1});
+  const lockInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'Prefixes Cannot Be Changed',limit:10},'inspected');
+  const lockService=lockInspection.crafting.nativeEngine.bench.find(entry=>entry.id==='bench:728');
+  assert.deepEqual(lockService.components,{'Metadata/Items/Currency/CurrencyModValues':4,'Metadata/Items/Currency/CurrencyRerollImplicit':4});assert.deepEqual(lockService.costSources,['GGG 3.30 patch notes']);
+  const lockRecipe={steps:[{method:'bench',modId:'bench:728'}],targets:[],initialState:{rarity:'RARE',affixes:[{id:'AttackerTakesDamage1',range:0.5}]},requirements:{minAffixes:2}};
+  const lockBudget=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:lockRecipe,options:{trials:2,maxActions:1,currency:'chaos',prices:{'Metadata/Items/Currency/CurrencyModValues':10,'Metadata/Items/Currency/CurrencyRerollImplicit':2}}},'crafted');
+  assert.equal(lockBudget.nativeCrafting.meanCost,48);assert.equal(lockBudget.nativeCrafting.currencySpent['Metadata/Items/Currency/CurrencyRerollImplicit'],8);
   const benchBudget=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[{method:'bench',modId:'bench:1'}],targets:[],requirements:{minAffixes:1}},options:{trials:2,maxActions:1,priceBook:{currency:'chaos',source:'Workflow bench quotes',quotedAt:1700000000,values:{'Metadata/Items/Currency/CurrencyRerollMagic':0.5}}}},'crafted');
   assert.equal(benchBudget.nativeCrafting.meanCost,0.5);assert.equal(benchBudget.nativeCrafting.currencySpent['Metadata/Items/Currency/CurrencyRerollMagic'],2);
   const alchemyCurrency='Metadata/Items/Currency/CurrencyUpgradeToRare';

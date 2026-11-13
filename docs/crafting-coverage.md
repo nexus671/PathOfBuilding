@@ -1,7 +1,7 @@
 <!-- cspell:ignore Siveran Katakohi Ukatoa -->
 # Crafting coverage and rules
 
-The independent engine uses PoB modifiers and an immutable [RePoE export](https://github.com/repoe-fork/repoe-fork.github.io/tree/ae6d85a5c36857e08819852ab8732239294aba59), version **3.29.3.6**. The white-socket bench craft and standard Orb of Annulment use the announced 3.30 rules. Other 3.30 crafting changes and modifier data are not yet incorporated; it does not yet provide complete Craft of Exile parity.
+The independent engine uses PoB modifiers and an immutable [RePoE export](https://github.com/repoe-fork/repoe-fork.github.io/tree/ae6d85a5c36857e08819852ab8732239294aba59), version **3.29.3.6**. The white-socket bench craft, standard Orb of Annulment and full prefix/suffix lock costs use the announced 3.30 rules. Other 3.30 crafting changes and modifier data are not yet incorporated; it does not yet provide complete Craft of Exile parity.
 
 | Area | Included | Limits |
 | --- | --- | --- |

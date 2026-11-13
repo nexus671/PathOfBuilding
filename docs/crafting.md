@@ -27,6 +27,8 @@ Search **Find currencies** for **white sockets** to use the 3.30 bench craft. It
 
 The standard Orb of Annulment uses the 3.30 rule: **Cannot roll Attack/Caster Modifiers** does not protect those modifiers from removal. Fractures and prefix/suffix locks still protect their applicable modifiers. Other 3.30 crafting changes are not yet fully modelled.
 
+Full **Prefixes/Suffixes Cannot Be Changed** crafts use the 3.30 ingredient costs: four Divine Orbs plus one Sacred Orb for weapons, four Blessed Orbs for armour and quivers, or eight Exalted Orbs for jewellery. Saved action-price overrides still replace the calculated total when used.
+
 Find **Omen of Trichromatism (RGB)** in **Find currencies** to use one Omen and one
 Chromatic Orb together. It guarantees at least one red, green and blue socket on
 an uncorrupted item with at least three ordinary sockets, preserving their links.

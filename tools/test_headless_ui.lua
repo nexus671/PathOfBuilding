@@ -286,6 +286,17 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	end
 
 	do
+		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86";local model=sim.model(raw)
+		local state=sim.validateState(model,{rarity="RARE",affixes={{id="AttackerTakesDamage1",range=0.5}}})
+		local divine="Metadata/Items/Currency/CurrencyModValues";local blessed="Metadata/Items/Currency/CurrencyRerollImplicit"
+		local p={id="meta-cost-ui",title="Prefix lock budget",slot="Body Armour",startingItem=sim.toItem(model,state).raw,goals={},steps={},nativeRecipe={steps={{method="bench",modId="bench:728"}},targets={},requirements={minAffixes=2}},priceBook={currency="chaos",source="Test quotes",quotedAt=1700000000,values={[divine]=10,[blessed]=2}}}
+		require("Classes.CraftingSimulatorControl").Open(build,p);ui:click("tab_simulate");ui:click("resourcePrices");ui:choose("mode","Recipe resources");frame("crafting-meta-330-resources");ui:click("close")
+		ui:text("trials","2");ui:text("budget","1");ui:click("runRecipe");local jobs=require("Modules.CraftingTasks");for i=1,200 do if not jobs.job then break end;jobs.tick(build) end;assert(not jobs.job)
+		local lines={};for _,row in ipairs(main.popups[1].controls.resultSummary.list) do lines[#lines+1]=row[1] end;assert(table.concat(lines," "):find("Mean spent: 48.00 chaos",1,true),"3.30 lock ingredient costs were not included")
+		frame("crafting-meta-330-budget");ui:click("close")
+	end
+
+	do
 		local hybridRaw="Rarity: NORMAL\nIron Hat\nItem Level: 86";local m=sim.model(hybridRaw);local state=copyTable(m.initial)
 		state.rarity="RARE";state.affixes={{id="LocalBaseArmourAndLife1",range={0,1}}}
 		require("Classes.CraftingSimulatorControl").Open(build,{id="independent-affix-ui",title="Independent modifier rolls",slot="Helmet",startingItem=sim.toItem(m,state).raw,goals={},steps={}})
