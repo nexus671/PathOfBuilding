@@ -102,17 +102,28 @@ function Panel.Open(build,project,layout)
 	controls.method=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,84,416,24},methods)
 	label(controls,"optionLabel",16,124,"Action options (dropdown search is available)")
 	controls.option=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,144,416,24},{})
+	local stateAwareOptions={bench=true,essence=true,harvest_reforge=true,harvest_augment=true,harvest_resistance=true}
 	local function updateOptions()
 		local method=controls.method:GetSelValueByKey("val")
-		controls.option:SetList(simulator.actionOptions(model,state,method))
+		local previous=controls.option:GetSelValue()
+		local reference=stateAwareOptions[method] and configured[method] or previous and previous.action
+		local choices=simulator.actionOptions(model,state,method);local selected=1;local found=false
+		for i,choice in ipairs(choices) do if tableDeepEquals(choice.action,reference) then selected=i;found=true;break end end
+		controls.option:SetList(choices)
+		if #choices>0 then controls.option:SetSel(selected,true) else controls.option.selIndex=1 end
+		if #choices>0 and stateAwareOptions[method] and (not configured[method] or not found) then
+			local old=configured[method];configured[method]=copyTable(choices[selected].action)
+			if old and old.allflame and old.allflame.auto then configured[method].allflame=copyTable(old.allflame) end
+		end
 	end
 	controls.method.selFunc=updateOptions
 	controls.option.enabled=function() return #controls.option.list > 0 end
 	controls.option.selFunc=function()
 		local method=controls.method:GetSelValueByKey("val");local previous=configured[method]
-		configured[method]=nil
-		if previous and previous.allflame and previous.allflame.auto then
-			configured[method]=copyTable(controls.option:GetSelValue().action);configured[method].allflame=copyTable(previous.allflame)
+		local selected=controls.option:GetSelValue()
+		configured[method]=stateAwareOptions[method] and selected and copyTable(selected.action) or nil
+		if previous and previous.allflame and previous.allflame.auto and selected then
+			configured[method]=copyTable(selected.action);configured[method].allflame=copyTable(previous.allflame)
 		end
 	end
 	label(controls,"seedLabel",16,184,"Seed")

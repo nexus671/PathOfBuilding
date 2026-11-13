@@ -1,6 +1,7 @@
-VERSION[ai][2026/11/12]
+VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Matched bench, Essence and Harvest choices to the current item, retained valid selections and exposed availability through MCP.
 * Cleared the planning header at narrow widths and included file actions in overlap audits.
 * Separated the compact item-property form from modifier-group controls without changing saved targets.
 * Reduced long AI preparation pauses with cooperative parsing, control creation and calculation stages.

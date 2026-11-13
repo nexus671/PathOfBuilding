@@ -11,7 +11,7 @@ Plain item copies can be imported when their complete modifier identities and ro
 
 ## Emulate an item
 
-**Find currencies** opens search beside the working item. Filter by category, favorite actions, and select one to return to the tray. Search takes keyboard focus; arrow keys browse results and Enter selects an available action. Escape clears focus first, then returns to the tray. Hover a currency for its purpose and current prerequisites.
+**Find currencies** opens search beside the working item. Filter by category, favorite actions, and select one to return to the tray. Search takes keyboard focus; arrow keys browse results and Enter selects an available action. Escape clears focus first, then returns to the tray. Hover a currency for its purpose and current prerequisites. Bench, Essence and Harvest choices follow the working item's slots, modifiers and rarity. The selected choice is retained while valid; a changed item cannot leave the dropdown pointing at a removed choice.
 
 The item card groups prefixes and suffixes, shows slot usage, and marks fractured (**F**) and crafted (**C**) modifiers. Click a modifier to inspect its ranges, tags and required level beside the item, select a relevant action, or use it as a target. Group tiers compare required levels within the eligible modifier group; special modifiers keep their data names.
 
@@ -107,6 +107,8 @@ Enable the desktop connection and reconnect the client after updating.
 | `optimize_crafting_fossils` | Compare combinations from up to eight candidates. |
 | `cancel_crafting_simulation` | Cancel using the job request ID. |
 | `propose_crafting_plan` | Propose a saved project and equipment preview for review. |
+
+`inspect_crafting_item` keeps the full queried bench and Essence catalogues and adds `available` and `unavailableReason` for the supplied state. `harvestOptions` gives current reforge, augment and resistance-swap choices. Pass the returned state when inspecting the next step. An unavailable choice may still be useful later in a recipe after an earlier step changes the item.
 
 Poll `get_proposal_status` for results. Requests allow at most 2,000 trials, 2,000 actions per trial and 20,000 budgeted actions overall. Results include seeds, versions and limitations. Simulation options accept `baseCost` and `retainSuccesses` (0-100); retained successes are the first successful trials. MCP never automatically equips an outcome or saves the build.
 

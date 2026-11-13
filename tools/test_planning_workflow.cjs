@@ -46,6 +46,8 @@ async function main(){
   assert.equal((await call('get_build_context')).context.stats.LifeUnreserved,baseLife,'Proposal changed the live fixture before UI apply');
   await host('apply');context=(await call('get_build_context')).context;assert.ok(context.stats.LifeUnreserved>baseLife);
   const inspected=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:raw,query:'maximum Life',limit:20},'inspected');assert.ok(inspected.crafting.nativeEngine.modifiers.length);
+  assert.equal(inspected.crafting.nativeEngine.harvestOptions.find(entry=>entry.method==='harvest_reforge').available,false);
+  assert.ok(inspected.crafting.nativeEngine.bench.every(entry=>typeof entry.available==='boolean'));
   assert.ok(inspected.crafting.nativeEngine.modifierTable.rows.some(row=>row.tier && row.groups.length && row.chance>0));
   const modifier=inspected.crafting.nativeEngine.modifiers[0].id;
   const bodyRaw='Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20';
@@ -68,6 +70,9 @@ async function main(){
   await queued('propose_atlas_plan',{baseRevision:context.revision,plan:finalAtlas},'review');await host('apply');context=(await call('get_build_context')).context;
   const recipe={steps:[{method:'alchemy',onFailureAction:'stop',recoveryNotes:'Stop at the recorded budget'}],targets:[{anyOf:[modifier]}]};
   const simulated=await queued('simulate_crafting',{baseRevision:context.revision,itemText:raw,recipe,options:{trials:4,maxActions:1,seed:104729}},'crafted');assert.ok(simulated.nativeCrafting);
+  const rareInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:raw,initialState:simulated.nativeCrafting.sampleState,query:'life',limit:20},'inspected');
+  const reforgeChoice=rareInspection.crafting.nativeEngine.harvestOptions.find(entry=>entry.method==='harvest_reforge');
+  assert.equal(reforgeChoice.available,true);assert.ok(reforgeChoice.options.some(entry=>entry.action.tag==='life'));
   const project={id:'helmet',title:'Life helmet',slot:'Helmet',startingItem:raw,targetItem:item(200),goals:['More maximum Life'],steps:[{action:'Apply an Orb of Alchemy',stopWhen:'Target modifiers match',onFailure:'Stop at the recorded budget and reconsider'}],nativeRecipe:recipe};
   project.inventory=[{id:'blank-base',title:'Reusable helmet base',slot:'Helmet',baseItem:raw,at:1700000000,state:inspected.crafting.nativeEngine.initialState}];
   await queued('propose_crafting_plan',{baseRevision:context.revision,project},'review');await host('apply');context=(await call('get_build_context')).context;

@@ -197,6 +197,28 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		end
 		ui:click("close")
 	end
+	do
+		local menuRaw="Rarity: NORMAL\nIron Hat\nItem Level: 86"
+		require("Classes.CraftingSimulatorControl").Open(build,{id="harvest-menu-ui",title="Harvest input requirements",slot="Helmet",startingItem=menuRaw,goals={},steps={}})
+		ui:click("settings");ui:text("paletteSearch",sim.labels.harvest_reforge);local panel=main.popups[1]
+		assert(not panel.controls.paletteUse:IsEnabled(),"Harvest reforge accepts a normal item")
+		ui:key("RETURN");assert(main.popups[1]==panel and panel.controls.paletteSearch:IsShown(),"Enter bypassed the Harvest rarity requirement")
+		frame("crafting-harvest-rarity-unavailable");ui:click("paletteBack");ui:click("currency_alchemy");ui:click("item")
+		ui:click("settings");ui:text("paletteSearch",sim.labels.harvest_reforge);assert(main.popups[1].controls.paletteUse:IsEnabled());ui:click("paletteUse")
+		assert(#main.popups[1].controls.option.list>0,"The rare item has no Harvest choices");ui:choose("option","life","label");ui:click("apply")
+		assert(main.popups[1].controls.intro.label:find("Applied Harvest",1,true),"A valid Harvest reforge did not apply")
+		frame("crafting-harvest-options-applied");ui:click("close")
+		local magic=sim.perform(menuRaw,{method="transmute"},7)
+		require("Classes.CraftingSimulatorControl").Open(build,{id="essence-menu-ui",title="Essence input requirements",slot="Helmet",startingItem=magic.itemText,goals={},steps={}})
+		ui:click("settings");ui:text("paletteSearch",sim.labels.essence);panel=main.popups[1]
+		assert(not panel.controls.paletteUse:IsEnabled(),"An Essence accepts a magic item")
+		ui:key("RETURN");assert(main.popups[1]==panel and panel.controls.paletteSearch:IsShown(),"Enter bypassed the Essence rarity requirement")
+		frame("crafting-essence-rarity-unavailable");ui:text("paletteSearch",sim.labels.scour);ui:click("paletteUse");ui:click("apply")
+		ui:click("settings");ui:text("paletteSearch",sim.labels.essence);assert(main.popups[1].controls.paletteUse:IsEnabled());ui:click("paletteUse");ui:click("apply")
+		assert(main.popups[1].controls.intro.label:find("Applied Essence",1,true),"An Essence did not apply after scouring the item")
+		frame("crafting-essence-options-applied");ui:click("close")
+	end
+
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

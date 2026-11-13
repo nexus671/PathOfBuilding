@@ -55,19 +55,27 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `e62df5e0f4c1bbff363b6d6471a7cdd6f8c19012`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43363224937),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43363225079)).
-It passed 1,133 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
+The latest verified checkpoint is `8cdcce32d4d65fcd2039b9748ec0cdad8920aebc`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43364585684),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43364585785)).
+It passed 1,134 Lua tests, 43 Node tests, the real MCP save/reopen workflow and
 675 source-stable UI states without audit failures. All 2,411 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
-The current review clears overlapping character controls from the planning
-header, gives the build name and save status more room, and includes native file
-actions in overlap audits. Character controls return on the Build page. Focused
-tests and native input at three widths pass. Full local validation passed 1,134
-Lua tests, the real MCP workflow and 675 source-stable UI states without audit
-failures. Exact-commit CI remains required.
+The current review makes bench, Essence and Harvest choices reflect the working
+item. Bench and Essence execution share their precondition helpers with the
+menus; Harvest choices use the native eligible pool. Resistance swaps exclude
+fractures, locked suffixes, conflicting groups and missing tiers. Valid selections
+survive list changes and switching currencies. MCP retains future planning IDs
+while reporting current availability and reasons.
+
+The initial seven-base diagnostic found 54 invalid offered first choices;
+the corrected probe applied all 105 offered first choices without errors. A
+bounded availability benchmark measured at most 0.6 ms mean per check. Focused
+engine, catalogue and native selection tests pass. Full local validation passed
+1,140 Lua tests and 687 source-stable UI states without audit failures. The real
+MCP workflow verifies availability metadata on both normal and rare inputs.
+Exact-commit CI remains required.
 
 A read-only saved-build benchmark returned identical synchronous/background
 results in 3.9 seconds each, with a 251 ms snapshot and an 18 ms worst worker
@@ -76,7 +84,7 @@ the added checkpoints. These bounded measurements do not establish sustained
 desktop responsiveness. Snapshot creation and occasional initialization pauses
 still need attention.
 
-Complete the header regression checks, then repeat cross-tool performance and
+Complete the current availability regression checks, then repeat cross-tool performance and
 recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies
 incomplete mechanics and model assumptions; this is not a full-parity release.

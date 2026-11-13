@@ -234,6 +234,46 @@ function A.extend(M,api)
 	end
 	local function baseInfluences(state) return #(state.influences or {}) > 0 end
 	local function fractured(state) for _,entry in ipairs(state.affixes) do if entry.fractured then return true end end end
+	function M.resistanceReason(model,state,from,to)
+		if from==to or not contains({"fire","cold","lightning"},from) or not contains({"fire","cold","lightning"},to) then return "Choose different elemental resistance types" end
+		if api.flags(model,state).suffixes then return "Suffixes are locked" end
+		local matches={}
+		for i,entry in ipairs(state.affixes) do if not entry.fractured and model.byId[entry.id].group==from:gsub("^%l",string.upper).."Resistance" then matches[#matches+1]=i end end
+		if #matches==0 then return "No swappable single-element resistance" end
+		for _,index in ipairs(matches) do
+			local id=state.affixes[index].id:gsub(from:gsub("^%l",string.upper),to:gsub("^%l",string.upper))
+			if not model.byId[id] then return "No matching resistance tier on this base" end
+			for _,entry in ipairs(state.affixes) do if model.byId[entry.id].group==model.byId[id].group then return "That resistance group is already present" end end
+		end
+		return nil,matches
+	end
+	function M.resistanceOptions(model,state)
+		local result={}
+		for _,from in ipairs({"fire","cold","lightning"}) do for _,to in ipairs({"fire","cold","lightning"}) do
+			if not M.resistanceReason(model,state,from,to) then result[#result+1]={label=from.." to "..to,action={method="harvest_resistance",from=from,to=to}} end
+		end end
+		return result,#result==0 and (api.flags(model,state).suffixes and "Suffixes are locked." or "No swappable single-element resistance is available.") or nil
+	end
+	function M.harvestChoices(model,state,method)
+		if state.rarity~="RARE" then return {},"Requires a rare item." end
+		local augment=method=="harvest_augment"
+		if augment and baseInfluences(state) then return {},"Harvest augment requires a non-influenced item." end
+		local prepared=copyTable(state);local f=api.flags(model,state)
+		if augment then
+			local removable=false
+			for _,entry in ipairs(state.affixes) do if not api.protected(entry,model.byId[entry.id],f) then removable=true;break end end
+			if not removable then return {},"Requires an original modifier that can be removed." end
+		else api.clear(model,prepared);prepared.rollBlock={attack=f.attack,caster=f.caster} end
+		local entries=pool(model,prepared);local result={}
+		for tag in pairs(tags) do if not augment or tag~="influence" then
+			local found=false
+			if prepared.memoryActive or prepared.memoryFoulborn then found=#pool(model,prepared,{tag=tag})>0
+			else for _,entry in ipairs(entries) do if hasTag(model,entry.id,tag) then found=true;break end end end
+			if found then result[#result+1]={label=tag,action={method=method,tag=tag}} end
+		end end
+		table.sort(result,function(a,b) return a.label<b.label end)
+		return result,#result==0 and "No legal modifier is available for this craft." or nil
+	end
 	function M.decorateItem(model,state,item)
 		if #item.implicitModLines == 0 and not item.corrupted and not item.synthesised and type(item.base.implicit) == "string" then
 			for line in item.base.implicit:gmatch("[^\n]+") do item.implicitModLines[#item.implicitModLines+1]={line=line,range=0.5} end
@@ -269,7 +309,6 @@ function A.extend(M,api)
 			assert(contains({"transmute","alteration","augmentation","annul","scour","divine","blessed"},method),"This method is unavailable for flasks and tinctures")
 		end
 		if method == "annul" then remove(model,state,random,{attackProtection=true}); return state end
-		if method == "essence" then assert(not (f.prefixes or f.suffixes or f.attack or f.caster),"Remove meta modifiers before applying an essence") end
 		if not methods[method] then return originalAction(model,state,action,random) end
 		if method == "beast_meta" then
 			local c=api.counts(model,state)
@@ -488,15 +527,9 @@ function A.extend(M,api)
 				while api.counts(model,state)[kind] < target do append(model,state,random,{type=kind}) end
 			end
 		elseif method == "harvest_resistance" then
-			assert(action.from ~= action.to and contains({"fire","cold","lightning"},action.from) and contains({"fire","cold","lightning"},action.to),"Choose different elemental resistance types")
-			assert(not f.suffixes,"Suffixes are locked")
-			local matches={}
-			for i,entry in ipairs(state.affixes) do if not entry.fractured and model.byId[entry.id].group == action.from:gsub("^%l",string.upper).."Resistance" then matches[#matches+1]=i end end
-			assert(#matches > 0,"No swappable single-element resistance")
+			local reason,matches=M.resistanceReason(model,state,action.from,action.to);assert(not reason,reason)
 			local index=matches[math.floor(random()*#matches)+1]; local old=state.affixes[index]
 			local id=old.id:gsub(action.from:gsub("^%l",string.upper),action.to:gsub("^%l",string.upper))
-			assert(model.byId[id],"No matching resistance tier on this base")
-			for _,entry in ipairs(state.affixes) do assert(model.byId[entry.id].group ~= model.byId[id].group,"That resistance group is already present") end
 			old.id=id
 		elseif method == "blessed" then
 			assert(#model.item.implicitModLines > 0 and not state.implicits,"No base implicit to reroll")
@@ -577,22 +610,39 @@ function A.extend(M,api)
 		result.dataPatch=A.data().patch
 		result.initialState=copyTable(state)
 		result.nativeStats=require("Modules.CraftingItemStats").values(M,model,state)
+		local available=require("Modules.CraftingAvailability").check
+		for _,catalog in ipairs({{method="bench",rows=result.bench},{method="essence",rows=result.essences}}) do
+			local allowed,reason=available(catalog.method,state,model)
+			for _,entry in ipairs(catalog.rows) do
+				local why=reason
+				if allowed then
+					if catalog.method=="bench" then why=M.benchReason(model,state,entry.id) else why=M.essenceReason(model,state,entry.id) end
+				end
+				entry.available=not why;entry.unavailableReason=why or nil
+			end
+		end
+		result.harvestOptions={}
+		for _,method in ipairs({"harvest_reforge","harvest_augment","harvest_resistance"}) do
+			local allowed,reason=available(method,state,model);local choices=allowed and M.actionOptions(model,state,method) or {};local selected={}
+			for i=1,math.max(0,math.min(limit or 50,#choices)) do selected[i]=copyTable(choices[i]) end
+			result.harvestOptions[#result.harvestOptions+1]={method=method,available=allowed,unavailableReason=not allowed and reason or nil,options=selected,total=#choices}
+		end
 		if model.unresolvedEldritch then result.importWarning="At least one imported Eldritch implicit has an ambiguous tier; supply a structured implicit state before changing Eldritch implicits or using dominance." end
 		return result
 	end
 	function M.actionOptions(model,state,method)
 		local result={}
 		local function option(label,values) values.method=method; result[#result+1]={label=label,action=values} end
-		if method == "bench" then for _,entry in ipairs(model.bench) do option(table.concat(entry.mod," / "),{modId=entry.id}) end
-		elseif method == "essence" then for _,entry in ipairs(model.essences) do option(entry.name,{essenceId=entry.id}) end
+		if method == "bench" then for _,entry in ipairs(model.bench) do if not M.benchReason(model,state,entry.id) then option(table.concat(entry.mod," / "),{modId=entry.id}) end end
+		elseif method == "essence" then for _,entry in ipairs(model.essences) do if not M.essenceReason(model,state,entry.id) then option(entry.name,{essenceId=entry.id}) end end
 		elseif method == "fossil" then for _,entry in ipairs(model.fossils) do option(entry.name,{fossils={entry.id}}) end
-		elseif method == "harvest_reforge" or method == "harvest_augment" then for tag in pairs(tags) do if method ~= "harvest_augment" or tag ~= "influence" then option(tag,{tag=tag}) end end
+		elseif method == "harvest_reforge" or method == "harvest_augment" then result=M.harvestChoices(model,state,method)
 		elseif method == "influence_exalt" or method == "beast_influence" then for key in pairs(influences) do if method == "influence_exalt" or contains(state.influences,key) then option(key,{influence=key}) end end
 		elseif method == "unveil" then for _,id in ipairs(state.veil and state.veil.choices or {}) do option(table.concat(model.byId[id]," / "),{modId=id}) end
 		elseif method == "beast_aspect" then for id,mod in pairs(data.beastCraft) do if id:find("AspectCrafted",1,true) and not contains(mod.weightKey,"deepwater_pantheon_aspect") then option(table.concat(mod," / "),{modId=id}) end end
 		elseif method == "bench_reroll" then option("Reroll one random modifier",{count=1}); option("Reroll three random modifiers",{count=3})
 		elseif method == "eldritch_implicit" then for _,side in ipairs({"Exarch","Eater"}) do for tier=1,4 do option(side.." | "..({"Lesser","Greater","Grand","Exceptional"})[tier],{side=side,tier=tier}) end end
-		elseif method == "harvest_resistance" then for _,from in ipairs({"fire","cold","lightning"}) do for _,to in ipairs({"fire","cold","lightning"}) do if from ~= to then option(from.." to "..to,{from=from,to=to}) end end end
+		elseif method == "harvest_resistance" then result=M.resistanceOptions(model,state)
 		elseif method == "socket_bench" then for count=2,(model.item.base.socketLimit or 0) do option(count.." sockets (added sockets white)",{count=count}); option("Set "..count.." sockets and link them",{count=count,linked=true}) end
 		end
 		table.sort(result,function(a,b) return a.label < b.label end)

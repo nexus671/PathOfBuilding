@@ -187,6 +187,41 @@ local function clear(model,state,ignoreMeta)
 	for i=#state.affixes,1,-1 do if not protected(state.affixes[i],model.byId[state.affixes[i].id],f) then table.remove(state.affixes,i) end end
 end
 
+local function benchReason(model,state,id,c,f)
+	local mod=model.byId[id]
+	if not mod then return "Unknown bench modifier" end
+	if not id:match("^bench:") then return "Select a bench modifier" end
+	if c.crafted >= (f.multipleCrafts and 3 or 1) then return "Crafted modifier limit reached" end
+	if c.groups[mod.group] then return "A modifier from this group is already present" end
+	if c[mod.type] >= M.capacities(model,state)[mod.type] then return "No open affix for this bench craft" end
+end
+function M.benchReason(model,state,id)
+	return benchReason(model,state,id,counts(model,state),flags(model,state))
+end
+function M.benchAvailable(model,state)
+	local c,f=counts(model,state),flags(model,state)
+	if c.crafted >= (f.multipleCrafts and 3 or 1) then return false,"Remove a crafted modifier or allow more crafted modifiers first." end
+	if c.total >= M.capacities(model,state).total then return false,"There is no open modifier slot." end
+	for _,entry in ipairs(model.bench) do if not benchReason(model,state,entry.id,c,f) then return true end end
+	return false,"No legal bench modifier is available for this item."
+end
+function M.essenceReason(model,state,id)
+	local selected
+	for _,entry in ipairs(model.essences) do if entry.id==id then selected=entry;break end end
+	if not selected then return "This essence cannot be used on this base" end
+	local f=flags(model,state)
+	if f.prefixes or f.suffixes or f.attack or f.caster then return "Remove meta modifiers before applying an essence" end
+	if not (state.rarity=="NORMAL" or state.rarity=="RARE" and (selected.tier>=5 or selected.type>0)) then return "This essence cannot be used on the current rarity" end
+	local mod=model.byId[selected.modId]
+	for _,entry in ipairs(state.affixes) do if mod.group and entry.fractured and model.byId[entry.id].group==mod.group then return "The essence modifier conflicts with a fractured modifier" end end
+	return nil,selected
+end
+function M.essenceAvailable(model,state)
+	if state.rarity=="MAGIC" then return false,"Essences require a normal or eligible rare item." end
+	for _,entry in ipairs(model.essences) do if not M.essenceReason(model,state,entry.id) then return true end end
+	return false,"No supported Essence can modify this item in its current state."
+end
+
 function M.action(model,input,action,random)
 	local state=copyState(input)
 	local method=action.method
@@ -222,21 +257,15 @@ function M.action(model,input,action,random)
 		assert(state.rarity ~= "NORMAL","Divine requires a magic or rare item")
 		for _,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then entry.range=M.rollRange(model.byId[entry.id],random) end end
 	elseif method == "bench" then
-		local mod=assert(model.byId[action.modId],"Unknown bench modifier")
-		assert(action.modId:match("^bench:"),"Select a bench modifier")
-		assert(c.crafted < (f.multipleCrafts and 3 or 1),"Crafted modifier limit reached")
-		assert(not c.groups[mod.group],"A modifier from this group is already present")
-		assert(c[mod.type] < M.capacities(model,state)[mod.type],"No open affix for this bench craft")
+		local reason=M.benchReason(model,state,action.modId);assert(not reason,reason)
+		local mod=model.byId[action.modId]
 		if state.rarity == "NORMAL" then state.rarity="MAGIC" end
 		state.affixes[#state.affixes+1]={id=action.modId,range=M.rollRange(mod,random),crafted=true}
 	elseif method == "remove_crafted" then
 		assert(c.crafted > 0,"The item has no crafted modifiers")
 		for i=#state.affixes,1,-1 do if state.affixes[i].crafted then table.remove(state.affixes,i) end end
 	elseif method == "essence" then
-		local selected
-		for _,entry in ipairs(model.essences) do if entry.id == action.essenceId then selected=entry; break end end
-		assert(selected,"This essence cannot be used on this base")
-		assert(state.rarity == "NORMAL" or state.rarity == "RARE" and (selected.tier >= 5 or selected.type > 0),"This essence cannot be used on the current rarity")
+		local reason,selected=M.essenceReason(model,state,action.essenceId);assert(not reason,reason)
 		clear(model,state,true); state.rarity="RARE"
 		local mod=model.byId[selected.modId]
 		assert(not counts(model,state).groups[mod.group],"The essence modifier conflicts with a fractured modifier")
