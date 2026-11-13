@@ -1,4 +1,5 @@
 // A real MCP stdio client drives an isolated native host and explicit UI review.
+// cspell:ignore GGGRRW
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -183,6 +184,8 @@ async function main(){
   generated.profile.palettes=[{id:'gold',title:'Gold highlights',appearance:generated.profile.appearance,theme:'default',categoryStyles:generated.profile.categoryStyles}];
   assert.ok(generated.profile.rules.some(rule=>rule.origin==='craft:helmet'));
   const tested=await queued('test_loot_filter',{baseRevision:context.revision,profile:generated.profile,sample:{BaseType:'Iron Hat',Rarity:'Rare',ItemLevel:86}},'tested');assert.equal(tested.result.action,'Show');
+  const socketProfile={id:'socket-rules',title:'Socket comparisons',preset:'early_maps',strictness:2,rules:[{id:'socket-rule',title:'Socket rule',enabled:true,text:'Hide\n SocketGroup > 5GGG'}]};
+  const socketTest=await queued('test_loot_filter',{baseRevision:context.revision,profile:socketProfile,sample:{BaseType:'Plate Vest',Rarity:'Normal',SocketGroup:'GGGRRW'}},'tested');assert.equal(socketTest.result.action,'Hide');assert.equal(socketTest.result.ruleTitle,'Socket rule');
   const exported=await queued('export_loot_filter',{baseRevision:context.revision,profile:generated.profile},'exported');assert.ok(exported.filter.includes('PoB rule:'));assert.ok(exported.filter.includes('Frayed Thread'));
   assert.ok(exported.filter.includes('# PoB rule: Campaign /'));assert.ok(exported.filter.includes('Crude Bow'));
   await queued('propose_loot_filters',{title:'Keep pickup plan',baseRevision:context.revision,filters:{schemaVersion:1,activeId:'mapping',profiles:[generated.profile]}},'review');await host('apply');context=(await call('get_build_context')).context;

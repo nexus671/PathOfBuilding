@@ -1,3 +1,4 @@
+-- cspell:ignore RRAG GGGRRW GGGGR GGGRR GGRRRW
 describe("Build-owned loot filters",function()
 	local filters=require("Modules.LootFilters")
 	local parser=require("Modules.LootFilterParser")
@@ -13,6 +14,17 @@ describe("Build-owned loot filters",function()
 		assert.equal("Show",action("SocketGroup A",{SocketGroup="RAG"}))
 		assert.equal("Show",action("SocketGroup 2RR",{SocketGroup="RRAG"}))
 		assert.equal("Show",action("Sockets RAG",{Sockets=3,SocketColours="RAG"}))
+	end)
+	it("compares socket counts separately from minimum colours",function()
+		local function action(condition,item)
+			return parser.simulate(parser.parse("Show\n "..condition.."\nHide"),item).action
+		end
+		assert.equal("Show",action("SocketGroup > 5GGG",{SocketGroup="GGGRRW"}))
+		assert.equal("Show",action("SocketGroup <= 5GGG",{SocketGroup="GGGGR"}))
+		assert.equal("Hide",action("SocketGroup == 5GGG",{SocketGroup="GGGGR"}))
+		assert.equal("Show",action("SocketGroup == 5GGG",{SocketGroup="GGGRR"}))
+		assert.equal("Show",action("Sockets < 6GGG",{Sockets=5,SocketColours="GGGGR"}))
+		assert.equal("Hide",action("Sockets > 5GGG",{Sockets=6,SocketColours="GGRRRW"}))
 	end)
 	it("applies first-match ordering, Continue styles and exact/partial names",function()
 		local raw='Show\n BaseType "Iron"\n SetTextColor 255 0 0\n Continue\nHide\n BaseType == "Iron Hat"\n SetFontSize 25\nShow'
