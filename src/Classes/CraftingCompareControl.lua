@@ -7,14 +7,14 @@ function M.Open(build,raw,state,targets,requirements,requiredGroups,current,save
 	local controls={};local width=math.min(960,main.screenW-40);local height=math.min(660,main.screenH-60)
 	local model=sim.model(raw);local entries={};local recipes={};local chartResults
 	local function add(label,recipe,priceKey) recipes[#recipes+1]={label=label,recipe=recipe,priceKey=priceKey};entries[#entries+1]={label=label,val=#recipes} end
-	local selected=copyTable(current);selected.maxAttempts=math.min(200,settings.budget);selected.untilTargets=copyTable(targets);selected.untilRequirements=requirements and copyTable(requirements)
+	local selected=copyTable(current);selected.maxAttempts=math.min(200,settings.budget);selected.untilTargets=#targets>0 and copyTable(targets) or nil;selected.untilRequirements=requirements and copyTable(requirements)
 	add("Selected action",{steps={selected},targets=copyTable(targets),requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups},sim.priceKey(selected))
 	if saved then local recipe=copyTable(saved);recipe.targets=copyTable(targets);recipe.requirements=requirements and copyTable(requirements);recipe.requiredGroups=requiredGroups;add("Saved recipe",recipe) end
 	for _,method in ipairs({"alchemy","chaos","alteration","essence","fossil","harvest_reforge"}) do
 		local available=require("Modules.CraftingWorkbench").available(method,state,model)
 		local ok,options=pcall(sim.actionOptions,model,state,method)
 		if available and ok and (#options==0 or method~="fossil") then
-			local action=copyTable(options[1] and options[1].action or {method=method});action.maxAttempts=math.min(200,settings.budget);action.untilTargets=copyTable(targets);action.untilRequirements=requirements and copyTable(requirements)
+			local action=copyTable(options[1] and options[1].action or {method=method});action.maxAttempts=math.min(200,settings.budget);action.untilTargets=#targets>0 and copyTable(targets) or nil;action.untilRequirements=requirements and copyTable(requirements)
 			add(sim.labels[method],{steps={action},targets=copyTable(targets),requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups},sim.priceKey(action))
 		end
 	end
@@ -31,18 +31,26 @@ function M.Open(build,raw,state,targets,requirements,requiredGroups,current,save
 	end
 	controls.results=new("TextListControl"):TextListControl(ui.anchor,{16,206,width-32,height-280},nil,ui.rows({"Choose up to three routes and run the comparison.","Missing prices remain unknown. Sampling intervals do not measure model uncertainty."},width-62))
 	controls.run=new("ButtonControl"):ButtonControl(ui.anchor,{16,height-48,180,28},"Compare recipes",function()
-		local captured={}
-		for i=1,3 do local route=copyTable(recipes[controls["route"..i]:GetSelValueByKey("val")]);local price=controls["price"..i].buf
-			if route.priceKey and price~="" then route.price=assert(tonumber(price),"Enter a valid unit price");assert(route.price>=0,"Prices cannot be negative") end;captured[#captured+1]=route
-		end
+		local ok,captured=pcall(function()
+			local routes={}
+			for i=1,3 do
+				local route=copyTable(recipes[controls["route"..i]:GetSelValueByKey("val")]);local price=controls["price"..i].buf
+				if route.priceKey and price~="" then
+					route.price=assert(tonumber(price),"Enter a valid action price")
+					require("Modules.CraftingPrices").actionOverride(route.priceKey,route.price)
+				end
+				routes[#routes+1]=route
+			end
+			return routes
+		end)
+		if not ok then main:OpenMessagePopup("Compare recipes",ui.errorText(captured));return end
 		local job=tasks.start(build,function(checkpoint)
 			local results={}
 			for i,route in ipairs(captured) do
-				local prices=settings.prices and copyTable(settings.prices) or {}
-				if route.priceKey and route.price~=nil then prices[route.priceKey]=route.price end
-				if not next(prices) then prices=nil end
-				local options={initialState=copyTable(state),trials=settings.trials,maxActions=settings.budget,seed=settings.seed,currency=settings.currency,priceBook=settings.priceBook,prices=prices,checkpoint=function(progress) checkpoint({route=i,trial=progress.trial,trials=progress.trials}) end}
-				local ok,result=pcall(sim.simulate,raw,route.recipe,options);results[#results+1]={label=route.label,result=ok and result or nil,error=not ok and tostring(result):match("[^\n]+") or nil}
+				local prices=settings.prices and copyTable(settings.prices)
+				local actionPrices=require("Modules.CraftingPrices").actionOverride(route.priceKey,route.price)
+				local options={initialState=copyTable(state),trials=settings.trials,maxActions=settings.budget,seed=settings.seed,currency=settings.currency,priceBook=settings.priceBook,prices=prices,actionPrices=actionPrices,checkpoint=function(progress) checkpoint({route=i,trial=progress.trial,trials=progress.trials}) end}
+				local ok,result=pcall(sim.simulate,raw,route.recipe,options);results[#results+1]={label=route.label,result=ok and result or nil,error=not ok and ui.errorText(result) or nil}
 			end
 			return results
 		end,function(results)

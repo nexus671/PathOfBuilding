@@ -19,7 +19,7 @@ function M.validate(raw,run,models)
 	for _,key in ipairs({"page","method","seed"}) do assert(type(result[key])=="string" and #result[key]<=80,"Invalid checkpoint setting") end
 	for _,key in ipairs({"trials","budget","price","currency","baseCost"}) do local v=run.settings and run.settings[key];if v then assert(type(v)=="string" and #v<=80,"Invalid checkpoint setting");result.settings[key]=v end end
 	for key,value in pairs(run.priceOverrides or {}) do
-		assert(type(key)=="string" and #key<=240 and type(value)=="string" and #value<=80,"Invalid saved action price")
+		assert(type(key)=="string" and #key<=1024 and type(value)=="string" and #value<=80,"Invalid saved action price")
 		result.priceOverrides[key]=value
 	end
 	assert(type(run.history)=="table" and type(run.actions)=="table","Invalid checkpoint history")

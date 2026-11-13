@@ -15,21 +15,30 @@ local function equalCosts(a,b)
 	for key,value in pairs(b) do if a[key]~=value then return false end end
 	return true
 end
+local function serviceKey(operation,value,class)
+	return "service\0"..operation.."\0"..tostring(value).."\0"..class
+end
 function B.index(data)
 	local result={}
+	local function add(key,cost,id)
+		local entry=result[key]
+		if not entry then result[key]={cost=cost,sources={[id]=true}}
+		else entry.sources[id]=true;if not equalCosts(entry.cost,cost) then entry.ambiguous=true end end
+	end
 	for _,service in ipairs(data.bench) do
 		local id=service.actions.add_explicit_mod
 		local mod=id and (data.benchMods or {})[id]
 		if mod and (mod.generation_type=="prefix" or mod.generation_type=="suffix") then
 			for _,class in ipairs(service.item_classes) do
 				local key=signature(mod.text,mod.required_level,mod.generation_type,class)
-				local entry=result[key]
-				if not entry then result[key]={cost=service.cost,sources={[id]=true}}
-				else
-					entry.sources[id]=true
-					if not equalCosts(entry.cost,service.cost) then entry.ambiguous=true end
-				end
+				add(key,service.cost,id)
 			end
+		end
+		for _,operation in ipairs({"remove_crafted_mods","reroll_rare_mods"}) do
+			local value=service.actions[operation]
+			if value then for _,class in ipairs(service.item_classes) do
+				add(serviceKey(operation,value,class),service.cost,operation..":"..tostring(value))
+			end end
 		end
 	end
 	return result
@@ -37,19 +46,31 @@ end
 function B.class(item)
 	local subtype=item.base.subType
 	if subtype=="Warstaff" or subtype=="Rune Dagger" then return subtype end
+	if item.type=="Jewel" and subtype=="Abyss" then return "AbyssJewel" end
+	if item.type=="Fishing Rod" then return "FishingRod" end
 	local class=item.type:gsub("One Handed","One Hand"):gsub("Two Handed","Two Hand")
 	return class
 end
-function B.cost(model,id,lookup)
-	local mod=model.byId[id]
-	if not mod or not id:match("^bench:") then return end
+local function lookupEntry(key,lookup)
 	if not lookup then
 		if not index then index=B.index(require("Modules.CraftingAdvanced").data()) end
 		lookup=index
 	end
-	local entry=lookup[signature(table.concat(mod,"\n"),mod.level,mod.type,B.class(model.item))]
+	local entry=lookup[key]
 	if not entry or entry.ambiguous then return end
 	local sources={};for source in pairs(entry.sources) do sources[#sources+1]=source end;table.sort(sources)
 	return copyTable(entry.cost),sources
+end
+function B.service(model,action)
+	local operation,value
+	if action.method=="remove_crafted" then operation,value="remove_crafted_mods",true
+	elseif action.method=="bench_reroll" then operation,value="reroll_rare_mods",action.count
+	else return end
+	return lookupEntry(serviceKey(operation,value,B.class(model.item)))
+end
+function B.cost(model,id,lookup)
+	local mod=model.byId[id]
+	if not mod or not id:match("^bench:") then return end
+	return lookupEntry(signature(table.concat(mod,"\n"),mod.level,mod.type,B.class(model.item)),lookup)
 end
 return B

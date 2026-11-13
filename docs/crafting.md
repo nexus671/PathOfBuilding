@@ -73,7 +73,9 @@ Jobs run in the background. **Cancel crafting job** stops them. Results include 
 
 **Simulate → Resource prices** lists the currencies needed by the selected action and saved recipe. Enter prices per unit, add a source and quote date, or copy quotes from another project. Saved quotes also work through MCP. Zero means free; blank means unknown. Changing the common unit clears action overrides and the starting-item cost rather than converting them.
 
-Verified bench recipes use their actual ingredients. Unmatched services keep a whole-action price. **Action override** replaces the price of the selected action; **Base cost** adds the starting-item cost to every trial. Spending divided by observed successes is a model estimate, not a guaranteed game cost. Zero observed successes does not establish impossibility.
+Verified bench recipes use their actual ingredients. Unmatched services keep a whole-action price. **Action override** replaces the total for the selected action only; other recipe steps retain their resource quotes. The result says when an override was unused. **Base cost** adds the starting-item cost to every trial. Spending divided by observed successes is a model estimate, not a guaranteed game cost. Zero observed successes does not establish impossibility.
+
+Crafted-mod removal uses one Orb of Scouring. The supported one-mod and three-mod bench reforges use eight and three Chaos Orbs respectively, following the pinned recipe data. Their normal item prerequisites still apply.
 
 **Explore charts** shows cumulative success by actions or supplied spending, and distributions of completed-trial actions/spending. Hover to inspect, click to pin, or copy the data as CSV. **Compare recipes → Compare charts** overlays captured routes. Failed and capped trials stay in the denominator; unpriced routes are omitted from spending charts.
 
@@ -97,13 +99,23 @@ Keeping a recipe marks the build unsaved. Use normal build **Save** to persist i
 
 ## Compare recipes
 
-The desktop **Simulate → Compare recipes** view compares up to three supported routes with the same captured item, final targets, seed, trial count and action budget. Saved resource quotes apply to every route. Action overrides apply to single-action routes; a saved recipe needs prices for every executed ingredient to report a cost. Results include success intervals, mean actions, spending when known, and failed transitions. **Cancel comparison** stops the job. These are bounded model experiments, not guaranteed game costs.
+The desktop **Simulate → Compare recipes** view compares up to three supported routes with the same captured item, final targets, seed, trial count and action budget. Saved resource quotes apply to every route. Action overrides apply to single-action routes; a saved recipe needs prices for every executed ingredient to report a cost. Results include success intervals, mean actions, spending when known, and failed transitions. **Cancel comparison** stops the job. Invalid action prices keep the comparison form open. Property-only goals work without a modifier-target group. These are bounded model experiments, not guaranteed game costs.
 
 **Rules** opens a browser searchable by mechanic, with assumptions alongside implemented actions. Advanced actions still validate item-specific prerequisites when applied.
 
 ## Use AI through MCP
 
 Enable the desktop connection and reconnect the client after updating.
+
+For `simulate_crafting`, a structured starting state belongs in `recipe.initialState`.
+`options.priceBook` supplies saved quotes; `options.prices` overrides shared
+resource prices. Use `options.actionPrices` for action totals, for example
+`{"alchemy":7}`. Inspection and fossil results expose `priceKey`; simulations
+list `stepPriceKeys`. Use those keys rather than constructing them yourself.
+The result reports how many action overrides were actually used. These
+fields also work in fossil optimization, whose initial state is in
+`options.initialState`.
+
 
 | Tool | Purpose |
 | --- | --- |

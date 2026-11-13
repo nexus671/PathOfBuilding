@@ -676,7 +676,7 @@ function A.extend(M,api)
 		local modifiers=require("Modules.CraftingModifiers");local inspection=modifiers.inspect(model,state);local rows=modifiers.filter(inspection,query,nil,nil,nil,"Eligible first")
 		result.modifierTable={total=#rows,totalWeight=inspection.totalWeight,note=inspection.note,rows={}}
 		for i=1,math.min(limit or 50,#rows) do result.modifierTable.rows[i]=copyTable(rows[i]) end
-		result.fossils=model.fossils; result.harvestTags=copyTable(tags); result.influences=copyTable(influences)
+		result.fossils=copyTable(model.fossils);for _,entry in ipairs(result.fossils) do entry.priceKey=M.priceKey({method="fossil",fossils={entry.id}}) end; result.harvestTags=copyTable(tags); result.influences=copyTable(influences)
 		result.veiled={}; for i=1,math.min(limit or 50,#model.veiled) do local entry=model.veiled[i]; result.veiled[#result.veiled+1]={id=entry.id,text=table.concat(entry.mod," / "),weight=entry.weight,type=entry.mod.type} end
 		result.potentialInfluenced={}
 		for _,entry in ipairs(model.influencePool) do if influenced(model,entry.id) and #result.potentialInfluenced < (limit or 50) and (entry.id.." "..table.concat(entry.mod," / ")):lower():find((query or ""):lower(),1,true) then
@@ -695,16 +695,25 @@ function A.extend(M,api)
 					if catalog.method=="bench" then why=M.benchReason(model,state,entry.id) else why=M.essenceReason(model,state,entry.id) end
 				end
 				entry.available=not why;entry.unavailableReason=why or nil
+				entry.priceKey=entry.id
 				if catalog.method=="bench" then
 					local cost,sources=require("Modules.CraftingBenchCosts").cost(M.context(model,state),entry.id)
 					entry.components=cost or {[entry.id]=1};entry.ingredientCostsKnown=cost~=nil;entry.costSources=sources
 				end
 			end
 		end
+		result.benchServiceCosts={}
+		for _,action in ipairs({{method="remove_crafted"},{method="bench_reroll",count=1},{method="bench_reroll",count=3}}) do
+			local label=M.labels[action.method]..(action.count and " / "..action.count or "")
+			if #result.benchServiceCosts<(limit or 50) and (action.method.." "..label):lower():find((query or ""):lower(),1,true) then
+				local cost,sources=require("Modules.CraftingBenchCosts").service(M.context(model,state),action)
+				result.benchServiceCosts[#result.benchServiceCosts+1]={action=action,label=label,priceKey=M.priceKey(action),components=cost or {[M.priceKey(action)]=1},ingredientCostsKnown=cost~=nil,costSources=sources}
+			end
+		end
 		result.harvestOptions={}
 		for _,method in ipairs({"harvest_reforge","harvest_augment","harvest_resistance"}) do
 			local allowed,reason=available(method,state,model);local choices=allowed and M.actionOptions(model,state,method) or {};local selected={}
-			for i=1,math.max(0,math.min(limit or 50,#choices)) do selected[i]=copyTable(choices[i]) end
+			for i=1,math.max(0,math.min(limit or 50,#choices)) do selected[i]=copyTable(choices[i]);selected[i].priceKey=M.priceKey(selected[i].action) end
 			result.harvestOptions[#result.harvestOptions+1]={method=method,available=allowed,unavailableReason=not allowed and reason or nil,options=selected,total=#choices}
 		end
 		if model.unresolvedEldritch then result.importWarning="At least one imported Eldritch implicit has an ambiguous tier; supply a structured implicit state before changing Eldritch implicits or using dominance." end
@@ -740,8 +749,9 @@ function A.extend(M,api)
 		return action.method
 	end
 	function M.components(action,state,model)
-		if action.method=="bench" and model then
-			local cost=require("Modules.CraftingBenchCosts").cost(state and M.context(model,state) or model,action.modId)
+		if model and (action.method=="bench" or action.method=="remove_crafted" or action.method=="bench_reroll") then
+			local context=state and M.context(model,state) or model;local bench=require("Modules.CraftingBenchCosts")
+			local cost=action.method=="bench" and bench.cost(context,action.modId) or bench.service(context,action)
 			if cost then return cost end
 		end
 		if action.method == "unveil" or action.method == "restore_imprint" then return {} end
@@ -780,10 +790,10 @@ function A.extend(M,api)
 		local result={combinations={},trialsPerCombination=trials,limitations={"Exhaustive over the supplied fossil subset only.","Subsets with complete prices and observed successes rank first by cost per observed success. Remaining subsets rank by sampled success chance; zero observations are not impossibility.","Nearby estimates with overlapping sampling intervals do not establish a reliable ordering."}}
 		for index,ids in ipairs(combinations) do
 			local action={method="fossil",fossils=ids}
-			local ok,simulation=pcall(M.simulate,raw,{steps={action},targets=targets,initialState=options.initialState,requirements=options.requirements,requiredGroups=options.requiredGroups},{trials=trials,maxActions=1,forceFirstAction=true,seed=((options.seed or 104729)+index-2)%2147483646+1,prices=options.prices,priceBook=options.priceBook,currency=options.currency,
+			local ok,simulation=pcall(M.simulate,raw,{steps={action},targets=targets,initialState=options.initialState,requirements=options.requirements,requiredGroups=options.requiredGroups},{trials=trials,maxActions=1,forceFirstAction=true,seed=((options.seed or 104729)+index-2)%2147483646+1,prices=options.prices,actionPrices=options.actionPrices,priceBook=options.priceBook,currency=options.currency,
 				checkpoint=options.checkpoint and function(progress) progress.combination=index;progress.combinations=#combinations;options.checkpoint(progress) end})
-			if ok then result.costCurrency=simulation.costCurrency;result.priceSource=simulation.priceSource;result.priceQuotedAt=simulation.priceQuotedAt end
-			result.combinations[#result.combinations+1]=ok and {fossils=ids,successChance=simulation.successChance,successes=simulation.successes,confidenceLow=simulation.confidenceLow,confidenceHigh=simulation.confidenceHigh,meanCost=simulation.meanCost,costPerSuccess=simulation.costPerSuccess,costCurrency=simulation.costCurrency,unpriced=simulation.unpriced} or {fossils=ids,error=tostring(simulation):match("^[^\n]+")}
+			if ok then result.costCurrency=simulation.costCurrency;result.priceSource=simulation.priceSource;result.priceQuotedAt=simulation.priceQuotedAt;result.resourcePriceOverridesSupplied=simulation.resourcePriceOverridesSupplied;result.actionPriceOverridesSupplied=simulation.actionPriceOverridesSupplied end
+			result.combinations[#result.combinations+1]=ok and {fossils=ids,priceKey=M.priceKey(action),successChance=simulation.successChance,successes=simulation.successes,confidenceLow=simulation.confidenceLow,confidenceHigh=simulation.confidenceHigh,meanCost=simulation.meanCost,costPerSuccess=simulation.costPerSuccess,costCurrency=simulation.costCurrency,unpriced=simulation.unpriced,actionPriceOverridesApplied=simulation.actionPriceOverridesApplied} or {fossils=ids,priceKey=M.priceKey(action),error=tostring(simulation):match("^[^\n]+")}
 		end
 		result.combinations=require("Modules.CraftingFossilResults").sort(result.combinations)
 		return result

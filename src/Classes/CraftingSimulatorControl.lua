@@ -327,19 +327,23 @@ function Panel.Open(build,project,layout)
 	edit(controls,"baseCost",308,438,124,24,"","Base cost",16)
 	local function showSimulation(recipe,fromInitial)
 		local budget=assert(tonumber(controls.budget.buf),"Invalid action budget")
-		local prices=pricing.resolve(nil,controls.currency.buf,simulator.context(model,fromInitial and initial or state),simulator.priceKey(action()),
+		local actionPrices=pricing.actionOverride(simulator.priceKey(action()),
 			controls.price.buf~="" and assert(tonumber(controls.price.buf),"Invalid action price") or nil)
 		local options={retainSuccesses=10,baseCost=controls.baseCost.buf ~= "" and assert(tonumber(controls.baseCost.buf),"Invalid starting item cost") or 0,trials=assert(tonumber(controls.trials.buf),"Invalid trial count"),maxActions=budget,seed=assert(tonumber(controls.seed.buf),"Invalid seed"),
-			initialState=copyTable(fromInitial and initial or state),prices=prices,priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf}
+			initialState=copyTable(fromInitial and initial or state),actionPrices=actionPrices,priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf}
 		local capturedRecipe=copyTable(recipe)
 		require("Modules.CraftingTasks").start(build,function(checkpoint)
 			options.checkpoint=checkpoint;return simulator.simulate(draft.startingItem,capturedRecipe,options)
 		end,function(result)
 			lastSimulation=result
-			local lines={string.format("Modeled successes: %d / %d (%.2f%%)",result.successes,result.trials,result.successChance),string.format("95%% sampling interval: %.2f%% to %.2f%%",result.confidenceLow,result.confidenceHigh),string.format("Mean attempted actions: %.2f",result.meanActions),"Result uses the captured starting state."}
+			local lines={string.format("Modeled successes: %d / %d (%.2f%%)",result.successes,result.trials,result.successChance),
+				result.meanCost~=nil and string.format("Mean spent: %.2f %s",result.meanCost,result.costCurrency) or "Cost unavailable: some executed actions have no supplied price.",
+				string.format("95%% sampling interval: %.2f%% to %.2f%%",result.confidenceLow,result.confidenceHigh),string.format("Mean attempted actions: %.2f",result.meanActions)}
 			if result.priceSource then lines[#lines+1]="Quotes: "..result.priceSource.." | "..os.date("%Y-%m-%d",result.priceQuotedAt) end
-			if result.priceOverridesSupplied then lines[#lines+1]="Includes explicit price overrides." end
-			if result.meanCost then lines[#lines+1]=string.format("Mean spent: %.2f %s",result.meanCost,result.costCurrency) else lines[#lines+1]="Cost unavailable: some executed actions have no supplied price." end
+			if result.actionPriceOverridesSupplied then
+				lines[#lines+1]=result.actionPriceOverridesApplied>0 and "Includes selected-action price overrides." or "Selected-action override was not used by this recipe."
+			elseif result.priceOverridesSupplied then lines[#lines+1]="Includes resource price overrides." end
+			lines[#lines+1]="Result uses the captured starting state."
 			for key,count in pairsSortByKey(result.currencySpent) do lines[#lines+1]=pricing.describe(key,simulator.context(model,state))..": "..count.." total uses" end
 			for message,count in pairsSortByKey(result.transitionErrors) do lines[#lines+1]="Failed transitions: "..count.." | "..message end
 			refresh(lines)

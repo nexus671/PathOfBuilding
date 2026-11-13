@@ -413,8 +413,10 @@ end
 
 function M.simulate(raw,recipe,options)
 	options=options or { }
+	for _,key in ipairs({"prices","actionPrices"}) do if options[key]~=nil then assert(type(options[key])=="table","Invalid supplied prices") end end
 	local suppliedPrices=options.prices and next(options.prices)~=nil or false
-	if options.priceBook or options.prices then options=copyTable(options) end
+	local suppliedActions=options.actionPrices and next(options.actionPrices)~=nil or false
+	if options.priceBook or options.prices or options.actionPrices then options=copyTable(options) end
 	if options.priceBook then
 		options.priceBook=require("Modules.CraftingPrices").validate(options.priceBook)
 		options.currency=options.currency or options.priceBook.currency
@@ -428,8 +430,14 @@ function M.simulate(raw,recipe,options)
 	local maxActions=integer(options.maxActions or 100,1,2000,"action budget")
 	assert(trials*maxActions <= 20000,"Use at most 20000 total budgeted actions per simulation")
 	local seed=integer(options.seed or 104729,1,2147483646,"seed")
-	if options.prices then assert(type(options.currency) == "string" and options.currency:match("%S"),"Specify a common currency for supplied prices") end
+	if suppliedPrices or suppliedActions then assert(type(options.currency) == "string" and options.currency:match("%S"),"Specify a common currency for supplied prices") end
 	for key,value in pairs(options.prices or { }) do assert(type(key) == "string" and type(value) == "number" and value == value and value >= 0 and value <= 1e12,"Invalid currency price") end
+	local actionPriceCount=0
+	for key,value in pairs(options.actionPrices or {}) do
+		assert(type(key)=="string" and #key>0 and #key<=1024 and not key:find("[%c]") and type(value)=="number" and value==value and value>=0 and value<=1e12,"Invalid action price")
+		actionPriceCount=actionPriceCount+1
+	end
+	assert(actionPriceCount<=100,"Use at most 100 action price overrides")
 	local model=M.model(raw)
 	if options.initialState or recipe.initialState then model.initial=M.validateState(model,options.initialState or recipe.initialState) end
 	if options.priceBook or options.prices then
@@ -455,6 +463,7 @@ function M.simulate(raw,recipe,options)
 	end
 	local successes,totalCost,totalActions,totalExecuted=0,0,0,0
 	local spent,missing,errors,times={},{},{},{}
+	local actionPriceUses=0
 	local actionHistogram,costHistogram,costSamples,successfulCosts,routes={},{},{},{},{}
 	local budgetExhausted,destroyedTrials=0,0
 	local recovery={restarts=0,stopped=0,salvaged=0}
@@ -480,10 +489,12 @@ function M.simulate(raw,recipe,options)
 				route.executed=route.executed+1
 				totalExecuted=totalExecuted+1
 				local setupKey=(M.priceKey or priceKey)(step)
-				local components=options.prices and options.prices[setupKey] ~= nil and {[setupKey]=1} or M.components and M.components(step,before,model) or {[setupKey]=1}
+				local actionPrice=options.actionPrices and options.actionPrices[setupKey]
+				if actionPrice~=nil then actionPriceUses=actionPriceUses+1 end
+				local components=(actionPrice~=nil or options.prices and options.prices[setupKey]~=nil) and {[setupKey]=1} or M.components and M.components(step,before,model) or {[setupKey]=1}
 				for key,amount in pairs(components) do
 					spent[key]=(spent[key] or 0)+amount
-					local price=options.prices and options.prices[key]
+					local price=actionPrice~=nil and actionPrice or options.prices and options.prices[key]
 					if price then cost=cost+price*amount else missing[key]=true end
 				end
 				if state.destroyed then break end
@@ -537,7 +548,12 @@ function M.simulate(raw,recipe,options)
 		result.meanCost=totalCost/trials;result.costPerSuccess=successes>0 and totalCost/successes or nil;result.spendingQuantiles=quantiles(costSamples);result.successfulSpendingQuantiles=quantiles(successfulCosts)
 		result.costDistribution={};for _,bucket in pairs(costHistogram) do result.costDistribution[#result.costDistribution+1]=bucket end;table.sort(result.costDistribution,function(a,b) return a.cost<b.cost end)
 	else for _,entry in ipairs(retained) do entry.cost=nil end end
-	if options.priceBook then result.priceSource=options.priceBook.source;result.priceQuotedAt=options.priceBook.quotedAt;result.priceOverridesSupplied=suppliedPrices end
+	if options.priceBook then result.priceSource=options.priceBook.source;result.priceQuotedAt=options.priceBook.quotedAt end
+	result.stepPriceKeys={}
+	for i,step in ipairs(recipe.steps) do result.stepPriceKeys[#result.stepPriceKeys+1]={step=i,method=step.method,priceKey=(M.priceKey or priceKey)(step)} end
+	result.priceOverridesSupplied=suppliedPrices or suppliedActions
+	result.resourcePriceOverridesSupplied=suppliedPrices
+	result.actionPriceOverridesSupplied=suppliedActions;result.actionPriceOverridesApplied=actionPriceUses
 	result.recovery=recovery
 	return result
 end
@@ -546,7 +562,7 @@ function M.perform(raw,action,seed,initialState)
 	local model=M.model(raw)
 	if initialState then model.initial=M.validateState(model,initialState) end
 	local state,details=M.action(model,model.initial,action,rng(encounter.seed(integer(seed or 104729,1,2147483646,"seed"),1,31)))
-	return {itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
+	return {priceKey=(M.priceKey or priceKey)(action),itemText=not state.veil and not state.destroyed and M.toItem(model,state).raw or nil,state=state,choices=details and details.choices,allflame=details and details.allflame,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
 end
 
 function M.catalog(raw,query,limit)

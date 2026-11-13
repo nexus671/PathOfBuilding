@@ -1,6 +1,11 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Isolated selected-action price overrides from shared currency quotes, preserving zero prices and reporting unused overrides through the UI and MCP.
+* Fixed property-only recipe comparisons and retained invalid action prices with clear errors.
+* Added verified ingredients for crafted-mod removal and one/three-modifier bench reforges, and made simulation costs easier to see.
+* Included resource/action override provenance in fossil comparisons and CSV exports, and exposed action price keys to MCP clients.
+* Preserved long four-fossil Allflame action-price keys across working-craft save and reopen.
 * Added verified bench ingredients to native resource quotes, recipe costs and MCP inspection, preserving unknown costs and action overrides.
 * Added a visual fossil comparison with artwork, cost/chance sorting, quote provenance, CSV export and selection without crafting.
 * Retained fossil configuration, rejected duplicate selections and stopped assuming unrevealed Tangled outcomes.

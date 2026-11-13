@@ -71,6 +71,13 @@ function M.forSimulation(book,currency,model,overrides)
 	for alias,id in pairs(M.aliases(model)) do if result[id]~=nil then result[alias]=result[id] end end
 	return next(result) and result or nil
 end
+function M.actionOverride(key,value)
+	if value==nil then return end
+	assert(type(key)=="string" and #key>0 and #key<=1024 and not key:find("[%c]"),"Choose an action before setting its price")
+	assert(type(value)=="number" and value==value and value>=0 and value<=1e12,"Invalid action price")
+	return {[key]=value}
+end
+-- Resource aliases share a unit quote; use actionOverride for an action total.
 function M.resolve(book,currency,model,overrideKey,override)
 	local overrides
 	if override~=nil then

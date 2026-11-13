@@ -22,7 +22,7 @@ function connection(child,prefix='') {
   });
   child.on('exit',code=>{const error=new Error(`Child exited ${code}: ${diagnostics.join('\n')}`);if(prefix && !didStart)rejectReady(error);for(const waiter of pending.values()){clearTimeout(waiter.timer);waiter.reject(error);}});
   child.on('error',error=>{if(prefix && !didStart)rejectReady(error);for(const waiter of pending.values()){clearTimeout(waiter.timer);waiter.reject(error);}});
-  return {started,send(body){return new Promise((resolve,reject)=>{const id=++next;pending.set(id,{resolve,reject,timer:setTimeout(()=>{pending.delete(id);reject(new Error('Workflow response timed out'));},60000)});child.stdin.write(JSON.stringify({id,...body})+'\n');});}};
+  return {started,send(body){return new Promise((resolve,reject)=>{const id=++next;pending.set(id,{resolve,reject,timer:setTimeout(()=>{pending.delete(id);reject(new Error(`Workflow response timed out: ${prefix ? 'native '+body.kind : body.method+(body.params?.name ? ' / '+body.params.name : '')}`));},60000)});child.stdin.write(JSON.stringify({id,...body})+'\n');});}};
 }
 async function main(){
   const environment={...process.env,LUA_PATH:'../runtime/lua/?.lua;../runtime/lua/?/init.lua;;'};
@@ -36,7 +36,7 @@ async function main(){
   children[1].stdin.write(JSON.stringify({jsonrpc:'2.0',method:'notifications/initialized'})+'\n');
   async function call(name,args={}){const response=await rpc('tools/call',{name,arguments:args});assert.ok(!response.error,JSON.stringify(response));assert.ok(!response.result.isError,JSON.stringify(response));return response.result.structuredContent;}
   async function host(kind,frames){const response=await native.send({kind,frames});assert.ok(response.ok,response.error);return response.result;}
-  async function queued(name,args,status){const request=await call(name,args);let result;for(let i=0;i<100;i++){await host('tick',24);result=await call('get_proposal_status');assert.equal(result.proposal.id,request.id);if(result.proposal.status===status) return result.proposal;assert.notEqual(result.proposal.status,'failed',JSON.stringify(result.proposal));}assert.fail(JSON.stringify(result.proposal));}
+  async function queued(name,args,status){diagnostics.push('Workflow request: '+name);const request=await call(name,args);let result;for(let i=0;i<100;i++){await host('tick',24);result=await call('get_proposal_status');assert.equal(result.proposal.id,request.id);if(result.proposal.status===status) return result.proposal;assert.notEqual(result.proposal.status,'failed',JSON.stringify(result.proposal));}assert.fail(JSON.stringify(result.proposal));}
   let context=(await call('get_build_context')).context;const baseLife=context.stats.LifeUnreserved;
   await host('request-test');await call('get_build_connection');await host('tick',1);
   const proof=await host('connection-proof');assert.equal(proof.client,'planning-workflow-test');assert.equal(proof.tested,true);assert.equal(proof.synced,true);
@@ -75,10 +75,28 @@ async function main(){
   assert.equal(benchService.ingredientCostsKnown,true);assert.deepEqual(benchService.components,{'Metadata/Items/Currency/CurrencyRerollMagic':1});
   const benchBudget=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[{method:'bench',modId:'bench:1'}],targets:[],requirements:{minAffixes:1}},options:{trials:2,maxActions:1,priceBook:{currency:'chaos',source:'Workflow bench quotes',quotedAt:1700000000,values:{'Metadata/Items/Currency/CurrencyRerollMagic':0.5}}}},'crafted');
   assert.equal(benchBudget.nativeCrafting.meanCost,0.5);assert.equal(benchBudget.nativeCrafting.currencySpent['Metadata/Items/Currency/CurrencyRerollMagic'],2);
+  const alchemyCurrency='Metadata/Items/Currency/CurrencyUpgradeToRare';
+  const scopeCatalog=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,limit:100},'inspected');
+  const scopeBench=scopeCatalog.crafting.nativeEngine.bench.find(entry=>entry.ingredientCostsKnown && entry.components[alchemyCurrency]===1);assert.ok(scopeBench);assert.equal(scopeBench.priceKey,scopeBench.id);
+  const scopeBook={currency:'chaos',source:'Action scope quotes',quotedAt:1700000000,values:{[alchemyCurrency]:1}};
+  const scopeRecipe={steps:[{method:'bench',modId:scopeBench.id}],targets:[],requirements:{minAffixes:1}};
+  const unusedAction=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:scopeRecipe,options:{trials:2,maxActions:1,priceBook:scopeBook,actionPrices:{alchemy:7}}},'crafted');
+  assert.equal(unusedAction.nativeCrafting.stepPriceKeys[0].priceKey,scopeBench.priceKey);assert.equal(unusedAction.nativeCrafting.meanCost,1);assert.equal(unusedAction.nativeCrafting.actionPriceOverridesApplied,0);
+  const usedAction=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[{method:'alchemy'}],targets:[],requirements:{minAffixes:1}},options:{trials:2,maxActions:1,priceBook:scopeBook,actionPrices:{alchemy:7}}},'crafted');
+  assert.equal(usedAction.nativeCrafting.meanCost,7);assert.equal(usedAction.nativeCrafting.actionPriceOverridesApplied,2);
+  const freeAction=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:scopeRecipe,options:{trials:2,maxActions:1,priceBook:scopeBook,actionPrices:{[scopeBench.id]:0}}},'crafted');assert.equal(freeAction.nativeCrafting.meanCost,0);
+  const globalPrice=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:scopeRecipe,options:{trials:2,maxActions:1,priceBook:scopeBook,prices:{alchemy:5},actionPrices:{alchemy:7}}},'crafted');assert.equal(globalPrice.nativeCrafting.meanCost,5);
+  const serviceCatalog=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'bench_reroll',limit:10},'inspected');
+  assert.equal(serviceCatalog.crafting.nativeEngine.benchServiceCosts.length,2);
+  for(const service of serviceCatalog.crafting.nativeEngine.benchServiceCosts)assert.equal(service.components['Metadata/Items/Currency/CurrencyRerollRare'],service.action.count===1?8:3);
+  const removedCraft=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{initialState:benchBudget.nativeCrafting.sampleState,steps:[{method:'remove_crafted'}],targets:[],requirements:{maxAffixes:0}},options:{trials:2,maxActions:1,priceBook:{currency:'chaos',source:'Removal quote',quotedAt:1700000000,values:{'Metadata/Items/Currency/CurrencyConvertToNormal':2}}}},'crafted');assert.equal(removedCraft.nativeCrafting.meanCost,2);
+  assert.equal((await call('get_build_context')).context.revision,context.revision,'Price tests changed the character');
   const fossilId='Metadata/Items/Currency/CurrencyDelveCraftingLife';
   const fossilQuotes={currency:'chaos',source:'Workflow fossil quotes',quotedAt:1700000000,values:{[fossilId]:1,'Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll1':2}};
   const fossilComparison=await queued('optimize_crafting_fossils',{baseRevision:context.revision,itemText:bodyRaw,targets:[],options:{fossils:[fossilId],maxSockets:1,trials:2,requirements:{minAffixes:1},priceBook:fossilQuotes}},'crafted');
   assert.equal(fossilComparison.nativeCrafting.combinations[0].meanCost,3);assert.equal(fossilComparison.nativeCrafting.costCurrency,'chaos');assert.equal(fossilComparison.nativeCrafting.priceSource,fossilQuotes.source);
+  const fossilAction=await queued('optimize_crafting_fossils',{baseRevision:context.revision,itemText:bodyRaw,targets:[],options:{fossils:[fossilId],maxSockets:1,trials:2,requirements:{minAffixes:1},priceBook:fossilQuotes,actionPrices:{['fossil:'+fossilId]:9}}},'crafted');
+  assert.equal(fossilAction.nativeCrafting.combinations[0].priceKey,'fossil:'+fossilId);assert.equal(fossilAction.nativeCrafting.combinations[0].meanCost,9);assert.equal(fossilAction.nativeCrafting.combinations[0].actionPriceOverridesApplied,2);
   const exactLinks=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:linkAction,targets:[],options:{requirements:{links:6}}},'crafted');
   assert.equal(exactLinks.nativeCrafting.successChance,100);assert.equal(exactLinks.nativeCrafting.sampled,false);assert.equal(exactLinks.nativeCrafting.outcomes.length,1);
   const steelRaw='Rarity: NORMAL\nSteel Ring\nItem Level: 86';

@@ -29,7 +29,7 @@ function E.extend(M,A,api)
 		result.harvestEnchants={};local search=(query or ""):lower()
 		for id,craft in pairs(E.data().crafts) do
 			if E.eligible(model,id) and (id.." "..E.label(id).." "..table.concat(craft.lines," ")):lower():find(search,1,true) then
-				result.harvestEnchants[#result.harvestEnchants+1]={id=id,label=E.label(id),lines=copyTable(craft.lines),action={method="harvest_enchant",enchantId=id},components=M.components({method="harvest_enchant",enchantId=id})}
+				result.harvestEnchants[#result.harvestEnchants+1]={id=id,label=E.label(id),lines=copyTable(craft.lines),action={method="harvest_enchant",enchantId=id},priceKey=M.priceKey({method="harvest_enchant",enchantId=id}),components=M.components({method="harvest_enchant",enchantId=id})}
 			end
 		end
 		table.sort(result.harvestEnchants,function(a,b) return a.id<b.id end)

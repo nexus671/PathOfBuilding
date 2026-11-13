@@ -32,8 +32,8 @@ unit also clears action overrides and the starting-item cost.
 
 Simulations, recipe comparisons and fossil optimization share these quotes,
 including through MCP's `priceBook` option. Explicit `prices` entries override
-the corresponding resource; a selected action override prices the complete
-action. Zero is free and missing is unknown. Bench services and other actions
+the corresponding shared resource. `actionPrices` instead prices only its
+matching action key; it does not change another step's ingredient quotes. Zero is free and missing is unknown. Bench services and other actions
 without verified ingredient quantities remain whole-action quotes. Quote dates
 are preserved when editing or copying unless explicitly changed.
 
@@ -43,6 +43,12 @@ Daggers and Warstaves. Conflicting costs and unmatched effects remain unknown;
 row numbers alone never identify a service. An explicit whole-action override
 still takes precedence. MCP inspection includes ingredients, source modifier
 IDs and whether a verified ingredient cost is available.
+
+Crafted-mod removal and the supported one/three-modifier bench reforges use
+client-exported service costs by command, parameter and item class. Inspection
+exposes these quantities under `benchServiceCosts`. A total action-price
+override retains precedence. Results and CSV exports identify supplied resource
+overrides and applied action overrides separately.
 
 Fossil comparison shows captured quotes, chance intervals and costs with real
 currency artwork. Fully priced subsets with observed successes rank first by

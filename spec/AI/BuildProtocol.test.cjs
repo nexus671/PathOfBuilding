@@ -424,3 +424,19 @@ test('queues saved resource quotes with crafting guides and simulations', t => {
   queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));assert.deepEqual(queued.options.priceBook,priceBook);
   assert.throws(()=>f.call('propose_crafting_plan',{baseRevision:f.state.revision,project:{...project,priceBook:{...priceBook,values:{exalt:-1}}}}),/arguments/);
 });
+
+
+test('queues exact action totals independently of resource quotes',t=>{
+  const f=fixture(t);const priceBook={currency:'chaos',source:'Saved quotes',quotedAt:1700000000,values:{alchemy:1}};
+  const base={baseRevision:f.state.revision,itemText:craftingProject().startingItem};
+  for(const name of ['simulate_crafting','optimize_crafting_fossils']){
+    const args=name==='simulate_crafting'?{...base,recipe:{steps:[{method:'alchemy'}],targets:[],requirements:{minAffixes:1}},options:{priceBook,actionPrices:{alchemy:7}}}:{...base,targets:[],options:{fossils:['life'],priceBook,actionPrices:{'fossil:life':0}}};
+    f.call(name,args);const queued=JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json')));
+    assert.deepEqual(queued.options.actionPrices,args.options.actionPrices);assert.deepEqual(queued.options.priceBook,priceBook);
+    fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+    assert.throws(()=>f.call(name,{...args,options:{...args.options,actionPrices:{alchemy:-1}}}),/arguments/);
+    assert.throws(()=>f.call(name,{...args,options:{...args.options,actionPrices:{alchemy:Infinity}}}),/arguments/);
+    const unquoted={...args.options,actionPrices:{alchemy:7}};delete unquoted.priceBook;delete unquoted.currency;
+    assert.throws(()=>f.call(name,{...args,options:unquoted}),/price currency/);
+  }
+});

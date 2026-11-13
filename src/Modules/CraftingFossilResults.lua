@@ -27,10 +27,10 @@ function F.csv(result)
 		for i,value in ipairs(values) do values[i]='"'..tostring(value):gsub('"','""')..'"' end
 		return table.concat(values,",")
 	end
-	local lines={row({"Fossils","Success chance (%)","95% low (%)","95% high (%)","Mean cost per trial","Cost per observed success","Unit","Status","Quote source","Quote time (UTC)"})}
+	local lines={row({"Fossils","Success chance (%)","95% low (%)","95% high (%)","Mean cost per trial","Cost per observed success","Unit","Status","Quote source","Quote time (UTC)","Resource overrides supplied","Action override uses"})}
 	for _,entry in ipairs(result.combinations) do
 		local status=entry.error and "Unavailable" or entry.meanCost==nil and "Cost unknown" or entry.successes==0 and "No observed successes" or "Modeled"
-		lines[#lines+1]=row({table.concat(F.names(entry)," + "),entry.successChance or "",entry.confidenceLow or "",entry.confidenceHigh or "",entry.meanCost or "",entry.costPerSuccess or "",entry.costCurrency or result.costCurrency or "",status,result.priceSource or "",result.priceQuotedAt and os.date("!%Y-%m-%dT%H:%M:%SZ",result.priceQuotedAt) or ""})
+		lines[#lines+1]=row({table.concat(F.names(entry)," + "),entry.successChance or "",entry.confidenceLow or "",entry.confidenceHigh or "",entry.meanCost or "",entry.costPerSuccess or "",entry.costCurrency or result.costCurrency or "",status,result.priceSource or "",result.priceQuotedAt and os.date("!%Y-%m-%dT%H:%M:%SZ",result.priceQuotedAt) or "",result.resourcePriceOverridesSupplied==nil and "" or result.resourcePriceOverridesSupplied and "yes" or "no",entry.actionPriceOverridesApplied or ""})
 	end
 	return table.concat(lines,"\r\n")
 end

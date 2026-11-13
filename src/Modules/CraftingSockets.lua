@@ -98,7 +98,7 @@ function S.extend(M,A,api)
 			local allowed,reason=available(method,state,model)
 			for _,choice in ipairs(choices) do
 				if #result.socketCrafts<(limit or 50) and (method.." "..choice.label):lower():find(query,1,true) then
-					result.socketCrafts[#result.socketCrafts+1]={method=method,label=choice.label,action=copyTable(choice.action),
+					result.socketCrafts[#result.socketCrafts+1]={method=method,label=choice.label,action=copyTable(choice.action),priceKey=M.priceKey(choice.action),
 						available=allowed,unavailableReason=not allowed and reason or nil,deterministic=true,components=M.components(choice.action,state)}
 				end
 			end

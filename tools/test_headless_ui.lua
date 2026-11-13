@@ -329,6 +329,35 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:click("close")
 	end
 
+	do
+		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86";local model=sim.model(raw);local alchemy="Metadata/Items/Currency/CurrencyUpgradeToRare";local action
+		for _,entry in ipairs(model.bench) do local cost=require("Modules.CraftingBenchCosts").cost(model,entry.id);if cost and cost[alchemy]==1 then action={method="bench",modId=entry.id};break end end
+		assert(action)
+		local p={id="action-price-ui",title="Separate action and currency quotes",slot="Body Armour",startingItem=raw,goals={},steps={},preferredMethod="alchemy",nativeRecipe={steps={action},targets={},requirements={minAffixes=1}},priceBook={currency="chaos",source="Action scope quotes",quotedAt=1700000000,values={[alchemy]=1}}}
+		require("Classes.CraftingSimulatorControl").Open(build,p);ui:click("tab_simulate");ui:text("trials","2");ui:text("budget","1");ui:text("price","7");ui:click("runRecipe")
+		local function finish() local jobs=require("Modules.CraftingTasks");for i=1,1000 do if not jobs.job then return end;jobs.tick(build) end;error("Action price job did not complete") end
+		local function summary(key) local lines={};for _,row in ipairs(main.popups[1].controls[key].list) do lines[#lines+1]=row[1] end;return table.concat(lines," ") end
+		finish();assert(summary("resultSummary"):find("Mean spent: 1.00 chaos",1,true));assert(summary("resultSummary"):find("override was not used",1,true));frame("crafting-action-override-unused")
+		ui:click("simulate");finish();assert(summary("resultSummary"):find("Mean spent: 7.00 chaos",1,true));frame("crafting-action-override-applied")
+		ui:click("compareRecipes");ui:text("price1","many");ui:click("run");assert(main.popups[1].title=="Compare recipes");frame("crafting-comparison-invalid-price");ui:click("close")
+		assert(main.popups[1].controls.price1.buf=="many");ui:text("price1","7");ui:click("run");finish()
+		assert(summary("results"):find("Mean spent: 7.00 chaos",1,true) and summary("results"):find("Mean spent: 1.00 chaos",1,true));frame("crafting-property-action-comparison")
+		ui:click("close");ui:click("close")
+		local life="Metadata/Items/Currency/CurrencyDelveCraftingLife";local key=sim.priceKey({method="fossil",fossils={life}})
+		local fossilResult=sim.optimizeFossils(raw,{}, {fossils={life},maxSockets=1,trials=2,requirements={minAffixes=1},priceBook={currency="chaos",source="Fossil action quotes",quotedAt=1700000000,values={[life]=1,["Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll1"]=2}},prices={["resonator:1"]=4},actionPrices={[key]=9}})
+		require("Classes.CraftingFossilCompareControl").Open(fossilResult);assert(summary("stats"):find("Mean / trial: 9 chaos",1,true))
+		assert(summary("names"):find("Resource + action overrides supplied",1,true));frame("crafting-fossil-action-quote");ui:click("copy")
+		assert(ui.clipboard:find('"Action override uses"',1,true));ui:click("close")
+		local state=sim.perform(raw,{method="alchemy"},1).state;local craft
+		for _,entry in ipairs(model.bench) do if not sim.benchReason(model,state,entry.id) then craft={method="bench",modId=entry.id};break end end;assert(craft)
+		state=sim.perform(raw,craft,1,state).state
+		local services={id="service-prices-ui",title="Bench service ingredients",slot="Body Armour",startingItem=raw,goals={},steps={},preferredMethod="bench_reroll",nativeRecipe={initialState=state,steps={{method="remove_crafted"}},targets={},requirements={maxAffixes=#state.affixes-1}},priceBook={currency="chaos",source="Bench service quotes",quotedAt=1700000000,values={["Metadata/Items/Currency/CurrencyRerollRare"]=1,["Metadata/Items/Currency/CurrencyConvertToNormal"]=2}}}
+		require("Classes.CraftingSimulatorControl").Open(build,services);ui:click("tab_simulate");ui:click("resourcePrices")
+		local list=main.popups[1].controls.resources.list;local names={};for _,row in ipairs(list) do names[#names+1]=row[1] end;names=table.concat(names," ")
+		assert(names:find("Chaos Orb",1,true) and names:find("Orb of Scouring",1,true));frame("crafting-bench-service-quotes");ui:click("close")
+		ui:text("trials","2");ui:text("budget","1");ui:click("runRecipe");finish();assert(summary("resultSummary"):find("Mean spent: 2.00 chaos",1,true));frame("crafting-bench-service-cost");ui:click("close")
+	end
+
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

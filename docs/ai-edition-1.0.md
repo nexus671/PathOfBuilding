@@ -56,11 +56,11 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `38c043e8b999435e7405ca8611782a75c2e76ea4`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43391224339),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43391224333)).
-It passed 1,162 Lua tests, 44 Node tests, the real MCP save/reopen workflow and
-732 source-stable UI states without audit failures. All 2,420 updater file hashes
+The latest verified checkpoint is `a61e641f9d564964a3c82972d9f50e69e0e69ed2`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43395931605),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43395931825)).
+It passed 1,169 Lua tests, 44 Node tests, the real MCP save/reopen workflow and
+759 source-stable UI states without audit failures. All 2,423 updater file hashes
 and every CI artifact source hash were verified against that commit.
 
 Preview 17 makes bench, Essence and Harvest choices reflect the working
@@ -164,7 +164,7 @@ path/to/build.xml 5`, run from `src` with the headless Lua environment, reports
 allocation, normal calculation and recovery-worker times. It restores each
 passive edit and checks the original revision without saving the supplied file.
 
-The current review adds source-matched bench ingredients and exposes them in
+Preview 23 adds source-matched bench ingredients and exposes them in
 native quotes, recipe costs and MCP inspection. Independent and runtime joins
 agree on 3,541 of 3,737 ordinary craft/class cases, plus 368 of 390 Rune Dagger
 and Warstaff cases. Other costs stay unknown. Conflicting quote aliases are
@@ -176,8 +176,26 @@ cost and chance sorting, explicit unknown costs, quote provenance and CSV export
 The mixed priced/unpriced ordering is consistent, and selection does not spend
 currency. Configuration retains existing choices, rejects duplicates and does
 not assume an unrevealed Tangled outcome. Local review passed 1,168 Lua tests,
-44 Node tests and the real MCP workflow; final visual and exact-commit CI gates
-remain required.
+44 Node tests and the real MCP workflow. Exact-commit CI passed 1,169 Lua tests
+and 759 source-stable UI states, including incomplete saved fossil configuration
+recovery. Updater and artifact source hashes were verified.
+
+The current review isolates action totals from shared resource quotes. The
+reproduced case changed an Alchemy-priced bench craft from 1 to 7 chaos even
+though the recipe never executed Alchemy. The scoped override leaves it at 1;
+an actual Alchemy action uses 7. Global resource-price overrides remain global,
+zero action totals remain free, and results report applied override counts.
+
+Native recipe comparisons now accept property-only goals, retain invalid price
+input with a readable error, and use the same scoped totals. Simulation cost is
+shown near the top of its summary. Crafted-mod removal and one/three-modifier
+bench reforges use pinned service quantities. The added regressions cover
+caller immutability, missing units, non-finite values, CSV provenance and exact
+fossil-subset overrides. Inspection, performed actions and simulation steps
+expose their price keys for MCP clients. Four-fossil Allflame override keys also
+survive checkpoint save/reopen. Local review passed 1,174 Lua tests, 45 Node
+tests, the real MCP workflow and 780 source-stable UI states without audit
+failures. Exact-commit CI remains required.
 
 Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies

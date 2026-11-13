@@ -34,6 +34,12 @@ function P.Open(result,onChoose)
 		selected=ordered[index];c.results.selectedKey=index
 		for _,row in ipairs(c.results.list) do row.selected=row.key==index end
 		c.names.list=ui.rows(fossil.names(selected),sideWidth-20,16)
+		local actionOverride=(selected.actionPriceOverridesApplied or 0)>0
+		local resourceOverride=result.resourcePriceOverridesSupplied
+		if actionOverride or resourceOverride then
+			local label=actionOverride and resourceOverride and "Resource + action overrides supplied" or actionOverride and "Action total override" or "Resource quote overrides supplied"
+			c.names.list[#c.names.list+1]={height=17,textSize=14,"^xDDBB78"..label}
+		end
 		local lines={}
 		if selected.error then lines={ui.errorText(selected.error)} else
 			lines={string.format("%.2f%% success (%d / %d)",selected.successChance,selected.successes,result.trialsPerCombination),string.format("95%% interval: %.2f-%.2f%%",selected.confidenceLow,selected.confidenceHigh)}
