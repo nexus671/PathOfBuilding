@@ -152,6 +152,7 @@ Effective DPS: Curses and enemy properties (such as resistances and status condi
 	-- Add sections from the CalcSections module
 	local sectionData = LoadModule("Modules/CalcSections")
 	for _, section in ipairs(sectionData) do
+		if self.build.planningCheckpoint then self.build.planningCheckpoint() end
 		self:NewSection(unpack(section))
 	end
 

@@ -68,6 +68,16 @@ describe("Finite combat windows", function()
 		options.window = options.window or 10
 		return time.survival(options)
 	end
+	it("preserves recovery results when suspended and resumed within a window",function()
+		local function run(checkpoint)
+			return simulate({window=20,interval=0.1,rates={Life=1},checkpoint=checkpoint,
+				hit=function(p) p.Life=p.Life-0.1;return p end})
+		end
+		local expected=run();local yields=0;local result
+		local thread=coroutine.create(function() return run(function() yields=yields+1;coroutine.yield() end) end)
+		while coroutine.status(thread)~="dead" do local ok,value=coroutine.resume(thread);assert.is_true(ok,tostring(value));result=value end
+		assert.is_true(yields>10);assert.are.same(expected,result)
+	end)
 
 	it("does not recover before a lethal first hit", function()
 		local result = simulate({ rates = { Life = 1000 }, hit = function(p) p.Life = p.Life - 100; return p end })

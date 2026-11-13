@@ -111,6 +111,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	end
 
 	self.abortSave = true
+	if self.planningCheckpoint then self.planningCheckpoint("Initialize build controls") end
 
 	wipeTable(self.controls)
 	self.secondaryAscendDropAltAscendancies = nil
@@ -2298,7 +2299,8 @@ end
 
 function buildMode:LoadDB(xmlText, fileName)
 	-- Parse the XML
-	local dbXML, errMsg = common.xml.ParseXML(xmlText)
+	if self.planningCheckpoint then self.planningCheckpoint("Parse build XML") end
+	local dbXML, errMsg = common.xml.ParseXML(xmlText, self.planningCheckpoint)
 	if errMsg and errMsg:match(".*file returns nil") then
 		main:OpenCloudErrorPopup(fileName)
 		return true

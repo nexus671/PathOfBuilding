@@ -1979,6 +1979,7 @@ function calcs.perform(env, skipEHP)
 	end
 
 	-- Calculate attributes and life/mana pools
+	if env.recoveryCheckpoint then env.recoveryCheckpoint() end
 	doActorAttribsConditions(env, env.player)
 	doActorLifeMana(env.player)
 	if env.minion then
@@ -3828,16 +3829,19 @@ function calcs.perform(env, skipEHP)
 	end
 
 	-- Defence/offence calculations
+	if env.recoveryCheckpoint then env.recoveryCheckpoint() end
 	calcs.defence(env, env.player)
 	if not skipEHP then
 		calcs.buildDefenceEstimations(env, env.player)
 	end
 
+	if env.recoveryCheckpoint then env.recoveryCheckpoint() end
 	calcs.triggers(env, env.player)
 	if not calcs.mirages(env) and calcs.offence(env, env.player, env.player.mainSkill) == false then
 		return false -- Rejected trigger-source probes are never cached
 	end
 
+	if env.recoveryCheckpoint then env.recoveryCheckpoint() end
 	if not skipEHP then calcs.recoveryOverTime(env, env.player) end
 
 	if env.minion then

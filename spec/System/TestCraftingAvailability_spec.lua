@@ -2,6 +2,24 @@ describe("Crafting action preconditions",function()
 	local sim=require("Modules.CraftingSimulator")
 	local check=require("Modules.CraftingAvailability").check
 	before_each(function() newBuild() end)
+	it("explains Aspect crafts without equipment or a free suffix",function()
+		local jewel=sim.model("Rarity: NORMAL\nCobalt Jewel\nItem Level: 86")
+		local allowed,reason=check("beast_aspect",jewel.initial,jewel);assert.is_false(allowed);assert.are.equal("Aspect crafts require equipment.",reason)
+		local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86";local model=sim.model(raw)
+		assert.is_true(check("beast_aspect",model.initial,model))
+		local full
+		for seed=1,100 do local state=sim.perform(raw,{method="alchemy"},seed).state;local count=0;for _,entry in ipairs(state.affixes) do if model.byId[entry.id].type=="Suffix" then count=count+1 end end;if count==3 then full=state;break end end
+		assert.is_truthy(full);allowed,reason=check("beast_aspect",full,model);assert.is_false(allowed);assert.are.equal("Requires an open suffix.",reason)
+	end)
+	it("requires actual defence variance for Sacred Orbs",function()
+		local model=sim.model("Rarity: NORMAL\nIron Hat\nItem Level: 86")
+		assert.is_true(check("sacred",model.initial,model))
+		-- A fixed-range native model must agree with the action's own precondition.
+		model.item.base=copyTable(model.item.base)
+		for _,property in ipairs({"Armour","Evasion","EnergyShield","Ward"}) do model.item.base.armour[property.."BaseMax"]=model.item.base.armour[property.."BaseMin"] end
+		assert.is_false(check("sacred",model.initial,model))
+		assert.is_false(pcall(sim.action,model,model.initial,{method="sacred"},function() return 0.5 end))
+	end)
 	it("explains missing rarities, implicit states, imprints, sockets and fractures",function()
 		local model=sim.model("Rarity: NORMAL\nIron Hat\nItem Level: 86");local state=model.initial
 		for _,method in ipairs({"chaos","fracture","conflict","restore_imprint","unveil","chromatic","remove_crafted"}) do local ok,why=check(method,state,model);assert.is_false(ok,method);assert.is_truthy(why,method) end

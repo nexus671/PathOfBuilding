@@ -174,6 +174,7 @@ function calcs.calcFullDPS(build, mode, override, specEnv)
 	local causticGroundSource = ""
 	
 	for _, activeSkill in ipairs(fullEnv.player.activeSkillList) do
+		if build.planningCheckpoint then build.planningCheckpoint() end
 		if activeSkill.socketGroup and activeSkill.socketGroup.includeInFullDPS then
 			local activeSkillCount, enabled = getActiveSkillCount(activeSkill)
 			if enabled then
@@ -402,15 +403,19 @@ end
 -- Build output for display in the side bar or calcs tab
 function calcs.buildOutput(build, mode, deferRecovery)
 	-- Build output for selected main skill
+	if build.planningCheckpoint then build.planningCheckpoint("Initialize "..mode.." calculation") end
 	local env, cachedPlayerDB, cachedEnemyDB, cachedMinionDB = calcs.initEnv(build, mode)
 	env.recoveryDeferred = deferRecovery
 	env.recoveryCheckpoint=build.planningCheckpoint
+	if build.planningCheckpoint then build.planningCheckpoint("Calculate "..mode.." stats") end
 	calcs.perform(env)
 
 	local output = env.player.output
 
 	-- Build output across all skills added to FullDPS skills
+	if build.planningCheckpoint then build.planningCheckpoint("Calculate full DPS") end
 	local fullDPS = calcs.calcFullDPS(build, "CALCULATOR", {}, { cachedPlayerDB = cachedPlayerDB, cachedEnemyDB = cachedEnemyDB, cachedMinionDB = cachedMinionDB, env = nil })
+	if build.planningCheckpoint then build.planningCheckpoint() end
 
 	-- Add Full DPS data to main `env`
 	env.player.output.SkillDPS = fullDPS.skills
@@ -419,6 +424,7 @@ function calcs.buildOutput(build, mode, deferRecovery)
 
 	if mode == "MAIN" then
 		for _, skill in ipairs(env.player.activeSkillList) do
+			if build.planningCheckpoint then build.planningCheckpoint() end
 			local uuid = cacheSkillUUID(skill, env)
 			if not GlobalCache.cachedData[mode][uuid] then
 				calcs.buildActiveSkill(env, mode, skill, uuid)

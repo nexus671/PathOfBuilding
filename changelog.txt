@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/12]
 
 --- AI Edition ---
+* Reduced long AI preparation pauses with cooperative parsing, control creation and calculation stages.
+* Explained unavailable Aspect and Sacred Orb crafts before execution.
 * Added native weapon and defence stat goals to crafting, recipe stop conditions and MCP inspection.
 * Disabled socket-bench choices without valid options and improved long build-name and save-status labels.
 * Invalid Atlas setup costs now keep the form open; crafting validation messages are clearer and preserve typed input.

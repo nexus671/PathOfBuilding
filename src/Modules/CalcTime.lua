@@ -342,7 +342,7 @@ function M.survival(config)
 	local checkpointSteps = 0
 	while t <= window do
 		checkpointSteps = checkpointSteps + 1
-		if config.checkpoint and checkpointSteps % 32 == 1 then config.checkpoint() end
+		if config.checkpoint and checkpointSteps % 8 == 1 then config.checkpoint() end
 		-- End ordinary leech at the full-pool boundary before simultaneous costs
 		-- or incoming hits can make the resource appear non-full again.
 		if config.leech then config.leech:rates(t, pools) end

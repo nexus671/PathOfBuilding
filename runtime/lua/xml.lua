@@ -32,13 +32,14 @@ end
 
 local xml = { }
 
-function xml.ParseXML(str)
+function xml.ParseXML(str, checkpoint)
 	str = str:gsub("<!%-%-.-%-%->", "") -- Strip comments
 	local top = { }
 	local stack = {top}
 	local i = 1
 	local content, cdata, ie, cs, elem, attrib, ce
 	while true do
+		if checkpoint then checkpoint() end
 		content, cdata, ie = str:match("^%s*([^<]-)%s*<!%[CDATA%[(.-)%]%]>()", i)
 		if content then
 			-- Found CDATA section

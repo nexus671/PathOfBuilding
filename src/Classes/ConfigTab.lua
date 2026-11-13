@@ -278,6 +278,7 @@ function ConfigTabClass:ConfigTab(build)
 
 	local lastSection
 	for _, varData in ipairs(varList) do
+		if self.build.planningCheckpoint then self.build.planningCheckpoint() end
 		if varData.section then
 			lastSection = new("SectionControl"):SectionControl({"TOPLEFT",self.controls.search,"BOTTOMLEFT"}, {0, 0, 360, 0}, varData.section)
 			lastSection.varControlList = { }

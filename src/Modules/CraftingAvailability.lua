@@ -32,6 +32,11 @@ function M.check(method,state,model)
 	if method=="restore_imprint" and not state.imprint then return false,"No saved imprint exists for this working item." end
 	if method=="beast_imprint" and (state.rarity~="MAGIC" or fractured) then return false,"Imprinting requires a non-fractured magic item." end
 	if method=="remove_crafted" and not crafted then return false,"This item has no bench-crafted modifiers." end
+	if method=="beast_aspect" then
+		if kind=="Jewel" then return false,"Aspect crafts require equipment." end
+		local suffixes=0;for _,entry in ipairs(state.affixes) do if model.byId[entry.id].type=="Suffix" then suffixes=suffixes+1 end end
+		if suffixes>=sim.capacities(model,state).Suffix then return false,"Requires an open suffix." end
+	end
 	if socket[method] then
 		if #(state.sockets or {})==0 then return false,"Add sockets before using this action." end
 		for _,entry in ipairs(state.sockets) do if entry.color=="A" then return false,"Abyssal sockets need a separate socket model." end end
@@ -49,7 +54,14 @@ function M.check(method,state,model)
 	end
 	if method=="vaal" or method=="locus" then if kind=="Jewel" or kind=="Flask" or kind=="Tincture" then return false,"This corruption model currently supports ordinary equipment." end end
 	if method=="blessed" and (#item.implicitModLines==0 or state.implicits) then return false,"This item has no supported base implicit to reroll." end
-	if method=="sacred" and not item.base.armour then return false,"Sacred Orbs require armour with variable base defences." end
+	if method=="sacred" then
+		local variable=false
+		for _,property in ipairs({"Armour","Evasion","EnergyShield","Ward"}) do
+			local armour=item.base.armour;local low=armour and armour[property.."BaseMin"];local high=armour and armour[property.."BaseMax"]
+			if low and high and high>low then variable=true;break end
+		end
+		if not variable then return false,"Sacred Orbs require armour with variable base defences." end
+	end
 	if method=="conflict" and (not state.implicits or #state.implicits~=2) then return false,"Conflict requires both Eldritch implicits." end
 	if method:find("eldritch",1,true) then
 		if kind~="Helmet" and kind~="Body Armour" and kind~="Gloves" and kind~="Boots" then return false,"Eldritch currencies require a helmet, body armour, gloves or boots." end

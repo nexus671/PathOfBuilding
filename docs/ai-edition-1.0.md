@@ -55,10 +55,10 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,120 Lua tests, 42 Node tests,
-the real MCP save/reopen workflow and 666 source-stable UI frames without audit
+The published preview passed exact-commit CI with 1,126 Lua tests, 43 Node tests,
+the real MCP save/reopen workflow and 672 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `24f68d7d851e160942b7ab287d6000124c87b40a`.
+against commit `67a4aaa9e8484c0ff58fd20997e95fe7cfb1b8f8`.
 That preview includes the native colour wheel, brightness/opacity controls,
 exact RGBA input and Ruthless validation. Native input tests also exposed and
 fixed campaign fields rejecting numeric entry. It also includes 14
@@ -77,12 +77,18 @@ and adds consistent ellipses to long build/save-status labels. Native input chec
 confirm Enter cannot select the unavailable action and a valid two-socket craft
 still applies.
 
-The next review adds native weapon/defence minimums to item goals, recipe stop
+That preview also adds native weapon/defence minimums to item goals, recipe stop
 conditions, the target editor and MCP inspection. A real MCP workflow verifies
 changed native Armour values after a Harvest enchantment and preserves that goal
-through save/reopen and bundle import. Local validation passed 1,126 Lua tests, 43 Node tests, the real MCP workflow
-and 672 source-stable UI states without audit failures. Exact-commit CI remains
-required.
+through save/reopen and bundle import.
+
+The next review makes XML parsing and candidate initialization cooperative,
+yields between calculation stages and skills, and checks recovery cancellation
+more frequently. It also explains Aspect crafts without a free suffix and Sacred
+Orbs without variable base defences before execution. Focused parsing, recovery,
+proposal and availability checks pass. Full local validation passed 1,132 Lua
+tests, the real MCP workflow and 672 source-stable UI states without audit
+failures; modifier-cache comparison passed. Exact-commit CI remains required.
 The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.
@@ -97,8 +103,13 @@ outputs identical. An earlier comparison measured 6.7 versus 4.7 seconds. These
 bounded checks do not establish sustained UI performance or mark the release complete.
 The final native benchmark returned identical synchronous/background results:
 3.8 seconds synchronously, 4.6 seconds in the worker, and 236 ms to snapshot.
-Its slowest worker slice was 137 ms, so long initialization slices still need
-attention even though the total calculation now does less work.
+Its slowest worker slice was 137 ms. The next review makes parsing, control
+creation and calculation stages cooperative. The final native benchmark returned
+identical synchronous/background results in 3.9 seconds each, with a 251 ms
+snapshot and an 18 ms worst worker slice. A separate instrumented run measured
+37 ms worst, versus 142-163 ms before the added checkpoints. Snapshot creation
+and occasional initialization pauses remain measurable; this is a bounded saved-build
+check, not sustained interactive gameplay evidence.
 
 Next: close source-verified socket/corruption/league gaps and repeat cross-tool performance,
 recovery and layout checks. The coverage guide continues to identify incomplete
