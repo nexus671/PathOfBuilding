@@ -56,9 +56,9 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The latest verified checkpoint is `feef4a55be0690ed077d2895203d208c4f98d6b7`
-([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43389479413),
-[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43389479411)).
+The latest verified checkpoint is `38c043e8b999435e7405ca8611782a75c2e76ea4`
+([Run Tests](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43391224339),
+[Spell Checker](https://github.com/nexus671/PathOfBuilding-AI-Edition/actions/runs/43391224333)).
 It passed 1,162 Lua tests, 44 Node tests, the real MCP save/reopen workflow and
 732 source-stable UI states without audit failures. All 2,420 updater file hashes
 and every CI artifact source hash were verified against that commit.
@@ -151,7 +151,7 @@ all six influence currencies, overrides, project reuse and empty dictionaries.
 The final local and CI passes covered 732 source-stable UI states without audit
 failures. Exact-commit CI passed, and all artifact source hashes were verified.
 
-The current review checks the recovery worker's time budget before every
+Preview 22 checks the recovery worker's time budget before every
 simulation step. Previously it checked only once per eight steps, allowing a
 batch of expensive events to exceed the frame budget. Five paired native
 build edits preserve all recovery outputs, individual trial data and timeline
@@ -163,6 +163,21 @@ The read-only command `luajit ../tools/benchmark_tree_responsiveness.lua
 path/to/build.xml 5`, run from `src` with the headless Lua environment, reports
 allocation, normal calculation and recovery-worker times. It restores each
 passive edit and checks the original revision without saving the supplied file.
+
+The current review adds source-matched bench ingredients and exposes them in
+native quotes, recipe costs and MCP inspection. Independent and runtime joins
+agree on 3,541 of 3,737 ordinary craft/class cases, plus 368 of 390 Rune Dagger
+and Warstaff cases. Other costs stay unknown. Conflicting quote aliases are
+rejected before a project is admitted, and empty quote books retain the working
+unit. A bounded 100-project validation probe took 17 ms.
+
+Fossil comparison now has artwork, selectable subsets, a chance/interval plot,
+cost and chance sorting, explicit unknown costs, quote provenance and CSV export.
+The mixed priced/unpriced ordering is consistent, and selection does not spend
+currency. Configuration retains existing choices, rejects duplicates and does
+not assume an unrevealed Tangled outcome. Local review passed 1,168 Lua tests,
+44 Node tests and the real MCP workflow; final visual and exact-commit CI gates
+remain required.
 
 Repeat cross-tool performance and recovery checks. Close source-verified socket, corruption and league gaps without
 inventing missing weights. The [coverage guide](crafting-coverage.md) identifies

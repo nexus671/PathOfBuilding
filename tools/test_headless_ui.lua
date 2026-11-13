@@ -292,6 +292,43 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:text("search","Orb of Alchemy");ui:text("price","1.5");frame("crafting-resource-copy-quote");ui:click("keep");ui:click("close")
 	end
 
+	do
+		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86"
+		local benchProject={id="bench-price-ui",title="Bench ingredient budget",slot="Body Armour",startingItem=raw,goals={},steps={},preferredMethod="bench",nativeRecipe={steps={{method="bench",modId="bench:1"}},targets={},requirements={minAffixes=1}}}
+		require("Classes.CraftingSimulatorControl").Open(build,benchProject)
+		ui:click("tab_simulate");ui:click("resourcePrices");ui:text("search","Orb of Alteration")
+		local resources=main.popups[1].controls.resources.list
+		assert(resources[1][1]:find("Orb of Alteration",1,true),"Bench ingredients were not discovered")
+		frame("crafting-bench-ingredients");ui:text("price","1.5");ui:click("keep");ui:text("trials","4");ui:text("budget","1");ui:click("runRecipe")
+		local jobs=require("Modules.CraftingTasks");for i=1,200 do if not jobs.job then break end;jobs.tick(build) end;assert(not jobs.job)
+		local lines={};for _,row in ipairs(main.popups[1].controls.resultSummary.list) do lines[#lines+1]=row[1] end
+		assert(table.concat(lines," "):find("Mean spent: 1.50 chaos",1,true));frame("crafting-bench-cost");ui:click("close")
+		local life,cold="Metadata/Items/Currency/CurrencyDelveCraftingLife","Metadata/Items/Currency/CurrencyDelveCraftingCold"
+		local p={id="fossil-budget-ui",title="Fossil comparison budget",slot="Body Armour",startingItem=raw,goals={},steps={},preferredMethod="fossil",nativeRecipe={steps={{method="fossil",fossils={life,cold}}},targets={},requirements={minAffixes=1}},priceBook={currency="chaos",source="Local fossil quotes",quotedAt=1700000000,values={[life]=1,["Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll1"]=2}}}
+		require("Classes.CraftingSimulatorControl").Open(build,p)
+		ui:click("tab_settings");ui:click("configure");ui:choose("fossil1",life,"id");ui:choose("fossil2",cold,"id")
+		assert(main.popups[1].controls.tangled:GetSelValueByKey("id")==nil,"An unrevealed Tangled outcome was assumed")
+		frame("crafting-fossil-configured");ui:choose("fossil2",life,"id");ui:click("use")
+		assert(main.popups[1].title=="Native crafting");frame("crafting-fossil-duplicate-error");ui:click("close")
+		assert(main.popups[1].controls.fossil1:GetSelValueByKey("id")==life,"Invalid fossil configuration lost the input")
+		ui:choose("fossil2",cold,"id");ui:click("use");ui:click("configure")
+		assert(main.popups[1].controls.fossil1:GetSelValueByKey("id")==life and main.popups[1].controls.fossil2:GetSelValueByKey("id")==cold,"Reopening configuration lost its selection")
+		frame("crafting-fossil-reopened");ui:click("close");ui:click("tab_simulate");ui:text("trials","4");ui:click("optimize")
+		for i=1,400 do if not jobs.job then break end;jobs.tick(build) end;assert(not jobs.job)
+		assert(main.popups[1].title=="Fossil comparison");frame("crafting-fossil-comparison")
+		local list=main.popups[1].controls.results;local x,y=list:GetPos();ui:clickAt(x+180,y+12);ui:key("DOWN")
+		lines={};for _,row in ipairs(main.popups[1].controls.stats.list) do lines[#lines+1]=row[1] end
+		assert(table.concat(lines," "):find("Cost unknown",1,true));frame("crafting-fossil-unknown-cost")
+		ui:choose("sort","successChance","val");frame("crafting-fossil-sorted");ui:click("copy")
+		assert(ui.clipboard:find('"Quote source"',1,true) and ui.clipboard:find('"Local fossil quotes"',1,true))
+		ui:click("choose");assert(main.popups[1].title=="Crafting workbench")
+		frame("crafting-fossil-selected","optimize");ui:click("fossilResults");assert(main.popups[1].title=="Fossil comparison");ui:click("close")
+		ui:click("keepWorking");local saved
+		for _,entry in ipairs(build.savers.CraftingProjects.projects) do if entry.id==p.id then saved=entry end end
+		assert(saved and #saved.run.state.affixes==0 and #saved.run.history==0,"Selecting fossils spent currency or changed the item")
+		ui:click("close")
+	end
+
 	local project={id="headless-ui",title="Headless crafting check",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: R-G-B",
 		goals={"Life and resistances"},steps={{action="Inspect native crafting"}}}
 	build.savers.CraftingProjects:Upsert(project)

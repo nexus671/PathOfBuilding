@@ -126,7 +126,7 @@ function F.extend(M,A,api)
 	end
 	function M.priceKey(craft) return settings(craft) and "allflame:"..priceKey(craft) or priceKey(craft) end
 	function M.components(craft,state,model)
-		local result=components(craft,state)
+		local result=components(craft,state,model)
 		if settings(craft) then
 			-- Preserve the ordinary currency component when its default key is used.
 			local combined=M.priceKey(craft);if result[combined] then result[priceKey(craft)]=result[combined];result[combined]=nil end

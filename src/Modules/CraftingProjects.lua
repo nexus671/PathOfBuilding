@@ -33,7 +33,12 @@ function M.validate(project)
 		assert(type(step) == "table","Invalid crafting step")
 		result.steps[#result.steps+1] = {action=text(step.action,1000,"step action"),stopWhen=text(step.stopWhen,500,"stop condition",true),onFailure=text(step.onFailure,500,"failure route",true),done=step.done == true}
 	end
-	if project.priceBook then result.priceBook=require("Modules.CraftingPrices").validate(project.priceBook) end
+	if project.priceBook then
+		local prices=require("Modules.CraftingPrices")
+		result.priceBook=prices.validate(project.priceBook)
+		-- Reject conflicting aliases before saving, preserving the supplied keys.
+		prices.normalized(result.priceBook,{item=M.item(result.startingItem)})
+	end
 	if project.nativeRecipe then result.nativeRecipe=require("Modules.CraftingSimulator").validateRecipe(project.nativeRecipe) end
 	if project.preferredMethod then
 		local valid=false;for _,method in ipairs(require("Modules.CraftingSimulator").methods) do if project.preferredMethod==method then valid=true end end

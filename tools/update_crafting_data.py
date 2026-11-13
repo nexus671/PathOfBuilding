@@ -33,6 +33,9 @@ result = {
     "patch": PATCH, "source": {"repo": REPOSITORY, "commit": COMMIT},
     "hashes": {name: hashlib.sha256(content).hexdigest() for name, content in raw.items()},
     "mods": compiled, "fossils": fossils, "bench": bench,
+    "benchMods": {identifier: {key: mods[identifier][key] for key in ["text", "required_level", "generation_type"]}
+                  for identifier in sorted({row["actions"]["add_explicit_mod"] for row in bench}
+                                           - {None})},
     "currencies": {key: {"name": value["name"], "description": value.get("properties", {}).get("description"),
                          "release": value["release_state"]} for key, value in bases.items()
                    if value["item_class"] in ["StackableCurrency", "DeepwaterCurrency"] or "/Deepwater/" in key},

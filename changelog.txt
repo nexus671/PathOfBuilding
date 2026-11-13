@@ -1,6 +1,10 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Added verified bench ingredients to native resource quotes, recipe costs and MCP inspection, preserving unknown costs and action overrides.
+* Added a visual fossil comparison with artwork, cost/chance sorting, quote provenance, CSV export and selection without crafting.
+* Retained fossil configuration, rejected duplicate selections and stopped assuming unrevealed Tangled outcomes.
+* Rejected conflicting saved quote aliases before admission and kept empty quote-book units consistent.
 * Checked recovery simulation frame budgets between individual steps to reduce long background slices.
 * Added visual saved resource quotes with currency art, source/date metadata and reuse between gear projects, simulations, recipe comparisons and MCP.
 * Kept action price overrides with their selected action and prevented accidental price-unit relabelling.

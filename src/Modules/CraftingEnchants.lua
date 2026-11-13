@@ -75,12 +75,12 @@ function E.extend(M,A,api)
 		return result
 	end
 	function M.priceKey(craft) if craft.method=="harvest_enchant" then return "harvest_enchant:"..tostring(craft.enchantId) end;return price(craft) end
-	function M.components(craft,state)
+	function M.components(craft,state,model)
 		if craft.method=="harvest_enchant" then
 			local entry=assert(E.data().crafts[craft.enchantId],"Choose a known Harvest enchantment")
 			return {[({"wild_lifeforce","vivid_lifeforce","primal_lifeforce"})[entry.lifeforceType]]=entry.cost}
 		end
-		return components(craft,state)
+		return components(craft,state,model)
 	end
 	M.limits[#M.limits+1]="Harvest quality enchantments are deterministic services from pinned client data. They replace existing enchantments and preserve affixes, sockets and quality. Lifeforce costs use supplied resource prices."
 end

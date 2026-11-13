@@ -79,13 +79,13 @@ function S.extend(M,A,api)
 		local result={};for count=2,math.min(4,#(state.sockets or {})) do result[#result+1]={label="At least "..count.." non-white sockets",action={method=method,count=count}} end;return result
 	end
 	function M.priceKey(action) if action.method == "socket_colour_bench" then return action.method..":"..tostring(action.count) end;return originalPrice(action) end
-	function M.components(action,state)
+	function M.components(action,state,model)
 		if action.method == "omen_connections" then return {["Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks"]=1,["Metadata/Items/Currency/CurrencyRerollSocketLinks"]=1} end
 		if action.method == "socket_colour_bench" then
 			local amount=({[2]=5,[3]=20,[4]=75})[action.count]
 			local result={chromatic=amount};if state and state.corrupted then result["Metadata/Items/Currency/CurrencyCorrupt"]=amount end;return result
 		end
-		return originalComponents(action,state)
+		return originalComponents(action,state,model)
 	end
 	local catalog=M.catalog
 	function M.catalog(raw,query,limit,initialState)

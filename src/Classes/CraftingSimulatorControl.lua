@@ -50,7 +50,7 @@ function Panel.Open(build,project,layout)
 	local controls,history,actions={},{},{}
 	local configured={}
 	local sequence=0
-	local lastSimulation
+	local lastSimulation,lastFossilComparison
 	local changedAffixes={}
 	local favorites=layout and (layout.favorites or layout.workbench and layout.workbench.favorites) or {}
 	if layout then layout.favorites=favorites end
@@ -59,7 +59,7 @@ function Panel.Open(build,project,layout)
 	if layout then layout.workbench=nil end
 	if restored then
 		state=restored.state;initial=restored.initial;targets=restored.targets;requirements=restored.requirements;requiredGroups=restored.requiredGroups
-		history=restored.history;actions=restored.actions;configured=restored.configured;sequence=restored.sequence;lastSimulation=restored.lastSimulation
+		history=restored.history;actions=restored.actions;configured=restored.configured;sequence=restored.sequence;lastSimulation=restored.lastSimulation;lastFossilComparison=restored.lastFossilComparison
 	end
 	local paletteOpen=restored and restored.paletteOpen or false
 	local inspectedId=restored and restored.inspectedId
@@ -250,14 +250,20 @@ function Panel.Open(build,project,layout)
 		local popup={}
 		if method == "fossil" then
 			local choices={{label="None"}}; for _,entry in ipairs(model.fossils) do choices[#choices+1]={label=entry.name,id=entry.id} end
-			for i=1,4 do popup["fossil"..i]=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,26+i*34,608,24},choices) end
+			for i=1,4 do
+				popup["fossil"..i]=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,26+i*34,608,24},choices)
+				local id=configured.fossil and configured.fossil.fossils and configured.fossil.fossils[i];if id then popup["fossil"..i]:SelByValue(id,"id") end
+			end
 			local outcomes={};for id,fossil in pairs(require("Modules.CraftingAdvanced").data().fossils) do if id:find("RandomFossilOutcome",1,true) then
 				local descriptions={};for _,text in pairsSortByKey(fossil.descriptions) do descriptions[#descriptions+1]=text end
 				outcomes[#outcomes+1]={label=table.concat(descriptions," / "),id=id}
-			end end;table.sort(outcomes,function(a,b) return a.label < b.label end)
+			end end;table.sort(outcomes,function(a,b) return a.label < b.label end);table.insert(outcomes,1,{label="No revealed Tangled outcome"})
 			popup.tangled=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,210,608,24},outcomes)
+			if configured.fossil and configured.fossil.tangledOutcome then popup.tangled:SelByValue(configured.fossil.tangledOutcome,"id") end
 			button(popup,"use",16,260,180,"Use combination",function()
-				local ids={};for i=1,4 do local value=popup["fossil"..i]:GetSelValue(); if value.id then ids[#ids+1]=value.id end end
+				local ids,seen={},{};for i=1,4 do local value=popup["fossil"..i]:GetSelValue();if value.id then
+					assert(not seen[value.id],"Choose each fossil only once");seen[value.id]=true;ids[#ids+1]=value.id
+				end end
 				assert(#ids > 0,"Choose at least one fossil"); configured.fossil={method="fossil",fossils=ids,tangledOutcome=popup.tangled:GetSelValueByKey("id")}; main:ClosePopup()
 			end)
 		elseif method == "awakener" or method == "recombine" or method == "recombine_predictable" then
@@ -284,7 +290,7 @@ function Panel.Open(build,project,layout)
 			end)
 		else error("Select a fossil, Awakener's Orb or recombination first") end
 		button(popup,"close",508,260,116,"Cancel",function() main:ClosePopup() end)
-		main:OpenPopup(640,310,"Craft options",popup,nil,nil,"close")
+		main:OpenPopup(640,310,method=="fossil" and "Fossil combination" or "Craft options",popup,nil,nil,"close")
 	end)
 	label(controls,"targetLabel",16,262,"Target modifier (add several for AND conditions)")
 	local mods={ }
@@ -377,17 +383,22 @@ function Panel.Open(build,project,layout)
 	button(controls,"targetGroups",232,226,200,"Edit target groups",function()
 		require("Classes.CraftingTargetGroupsControl").Open(model,state,targets,requirements,requiredGroups,function(groups,properties,count) targets=groups;requirements=properties;requiredGroups=count;refresh() end)
 	end)
-	button(controls,"optimize",16,618,416,"Compare subsets of the configured fossils",function()
+	local function showFossilComparison()
+		assert(lastFossilComparison,"Run a fossil comparison first")
+		require("Classes.CraftingFossilCompareControl").Open(lastFossilComparison,function(ids)
+			configured.fossil={method="fossil",fossils=ids};controls.method:SelByValue("fossil","val");updateOptions()
+			refresh({"Selected fossil combination. No currency was spent; the item is unchanged."})
+		end)
+	end
+	button(controls,"fossilResults",232,310,200,"Fossil results",showFossilComparison)
+	button(controls,"optimize",16,618,200,"Compare fossil subsets",function()
 		local selected=action();assert(selected.method == "fossil" and selected.fossils,"Configure a fossil combination first")
 		local options={priceBook=draft.priceBook and copyTable(draft.priceBook),currency=controls.currency.buf,fossils=copyTable(selected.fossils),initialState=copyTable(state),maxSockets=#selected.fossils,requirements=requirements and copyTable(requirements),requiredGroups=requiredGroups,trials=assert(tonumber(controls.trials.buf)),seed=assert(tonumber(controls.seed.buf))}
 		local captured=copyTable(targets)
 		require("Modules.CraftingTasks").start(build,function(checkpoint) options.checkpoint=checkpoint;return simulator.optimizeFossils(draft.startingItem,captured,options) end,function(result)
-			local lines={draft.priceBook and "Fossil subset comparison using saved resource quotes." or "Fossil subset comparison; no prices supplied to this comparison."}
-			for _,entry in ipairs(result.combinations) do
-				local names={};for _,id in ipairs(entry.fossils) do names[#names+1]=require("Modules.CraftingAdvanced").data().fossils[id].name end
-				lines[#lines+1]=table.concat(names," + ").." | "..(entry.error or string.format("%.2f%% [%.2f-%.2f]",entry.successChance,entry.confidenceLow,entry.confidenceHigh))
-			end
-			refresh(lines)
+			lastFossilComparison=result
+			refresh({"Compared "..#result.combinations.." ordinary fossil subsets. Open Fossil results to review captured chances and costs."})
+			showFossilComparison()
 		end,function(message) refresh({message}) end,function(progress) refresh({"Fossil combination "..progress.combination.." / "..progress.combinations}) end)
 	end)
 	button(controls,"exact",232,574,200,"Calculate action odds",function()
@@ -494,6 +505,7 @@ function Panel.Open(build,project,layout)
 	controls.currency.enabled=function() return not draft.priceBook or not next(draft.priceBook.values) end
 	controls.currency.showDisabledValue=true
 	controls.currency.changeFunc=function()
+		if draft.priceBook and not next(draft.priceBook.values) then draft.priceBook.currency=controls.currency.buf end
 		priceOverrides={};controls.price:SetText("");controls.baseCost:SetText("")
 		if draft.run then
 			draft.run.priceOverrides={};draft.run.settings.price="";draft.run.settings.baseCost="";draft.run.settings.currency=controls.currency.buf
@@ -504,11 +516,18 @@ function Panel.Open(build,project,layout)
 	controls.runRecipe.enabled=function() return draft.nativeRecipe~=nil end
 	controls.keepRecipe.enabled=function() return #actions>0 and not state.destroyed and not state.veil end
 	controls.manual.enabled=function() return not state.destroyed and not state.veil end
-	controls.optimize.enabled=function() local craft=configured.fossil;return controls.method:GetSelValueByKey("val")=="fossil" and craft and craft.fossils~=nil end
+	controls.fossilResults.tooltipText="Reopen the captured comparison. Rerun after changing the item, targets or quotes."
+	controls.fossilResults.enabled=function() return lastFossilComparison~=nil and require("Modules.CraftingTasks").job==nil end
+	controls.optimize.tooltipText="Set targets or item properties, then select Fossil resonator. Settings / Configure chooses multiple candidates. Comparisons use ordinary fossil crafts."
+	controls.optimize.enabled=function()
+		if controls.method:GetSelValueByKey("val")~="fossil" or not controls.simulate:IsEnabled() then return false end
+		local craft=action();return craft.fossils~=nil and #craft.fossils>0
+	end
 	controls.distribution.enabled=function() return lastSimulation~=nil end
 	controls.cancelJob.enabled=function() return require("Modules.CraftingTasks").job~=nil end
 	controls.apply.enabled=function() return not state.destroyed end
 	controls.preview.enabled=function() return not state.destroyed and not state.veil end
+	controls.configure.label=function() return controls.method:GetSelValueByKey("val")=="fossil" and "Configure fossil combination" or "Configure donor item" end
 	controls.configure.enabled=function() local method=controls.method:GetSelValueByKey("val");return method=="fossil" or method=="awakener" or method=="recombine" or method=="recombine_predictable" end
 	controls.page=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,18,416,28},{"Emulate item","Target conditions","Simulate recipe","Craft settings"})
 	controls.page.selFunc=function() refresh() end
@@ -527,7 +546,7 @@ function Panel.Open(build,project,layout)
 		["Craft settings"]={methodLabel=96,method=116,configure=160,keepRecipe=198,reset=198,exact=238,compareItem=238,seedLabel=278,seed=298,inspectItem=338,allflame=378,manual=418},
 		["Emulate item"]={selectedAction=230,actionHint=264,optionLabel=310,option=330,apply=370,undo=370,settings=414,history=414},
 		["Target conditions"]={targetLabel=96,target=116,addTarget=154,alternative=154,clearTargets=154,targetPicker=188,targetConditions=226,targetGroups=226,targetSummary=270},
-		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,resourcePrices=266,optimize=310,distribution=354,compareRecipes=354,resultSummary=398},
+		["Simulate recipe"]={trialsLabel=96,trials=116,budget=116,priceLabel=160,price=180,currency=180,baseCost=180,simulate=224,runRecipe=224,editRecipe=266,resourcePrices=266,optimize=310,fossilResults=310,distribution=354,compareRecipes=354,resultSummary=398},
 	}
 	for page,layout in pairs(pages) do for key,y in pairs(layout) do
 		local control=controls[key];control.y=y;control.shown=page=="Emulate item" and crafting or function() return controls.page:GetSelValue()==page end
@@ -587,7 +606,7 @@ function Panel.Open(build,project,layout)
 	end
 	if layout then
 		layout.snapshot=function() return copyTable({kind="workbench",priceOverrides=priceOverrides,project=draft,state=state,initial=initial,targets=targets,requirements=requirements,requiredGroups=requiredGroups,craftWidth=leftWidth,favorites=favorites,paletteOpen=paletteOpen,palette=paletteView and paletteView.snapshot(),inspectedId=inspectedId,
-			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
+			history=history,actions=actions,configured=configured,sequence=sequence,lastSimulation=lastSimulation,lastFossilComparison=lastFossilComparison,page=controls.page:GetSelValue(),method=controls.method:GetSelValueByKey("val"),seed=controls.seed.buf,resultRows=controls.resultSummary.list,settings={trials=controls.trials.buf,budget=controls.budget.buf,price=controls.price.buf,currency=controls.currency.buf,baseCost=controls.baseCost.buf}}) end
 	end
 	button(controls,"keepWorking",232,height-48,200,"Keep working craft",function()
 		if overrideKey then priceOverrides[overrideKey]=controls.price.buf end

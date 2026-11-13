@@ -37,6 +37,18 @@ action. Zero is free and missing is unknown. Bench services and other actions
 without verified ingredient quantities remain whole-action quotes. Quote dates
 are preserved when editing or copying unless explicitly changed.
 
+Bench ingredient quantities come from the pinned export. Native effects match
+by complete displayed ranges, tier, affix type and item class, including Rune
+Daggers and Warstaves. Conflicting costs and unmatched effects remain unknown;
+row numbers alone never identify a service. An explicit whole-action override
+still takes precedence. MCP inspection includes ingredients, source modifier
+IDs and whether a verified ingredient cost is available.
+
+Fossil comparison shows captured quotes, chance intervals and costs with real
+currency artwork. Fully priced subsets with observed successes rank first by
+cost per success; remaining subsets rank by sampled chance. Other sort modes
+and CSV export are available. Selecting a subset only configures the workbench.
+
 ## Assumptions
 
 - Rare affix counts use 4/5/6 with weights 8/3/1; magic counts use one/two equally. Eldritch Chaos uses two/three on the affected side equally.

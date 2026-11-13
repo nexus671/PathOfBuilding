@@ -683,6 +683,7 @@ function A.extend(M,api)
 			result.potentialInfluenced[#result.potentialInfluenced+1]={id=entry.id,text=table.concat(entry.mod," / "),influence=influenced(model,entry.id),level=entry.mod.level}
 		end end
 		result.dataPatch=A.data().patch
+		result.benchCostSource=copyTable(A.data().source)
 		result.initialState=copyTable(state)
 		result.nativeStats=require("Modules.CraftingItemStats").values(M,model,state)
 		local available=require("Modules.CraftingAvailability").check
@@ -694,6 +695,10 @@ function A.extend(M,api)
 					if catalog.method=="bench" then why=M.benchReason(model,state,entry.id) else why=M.essenceReason(model,state,entry.id) end
 				end
 				entry.available=not why;entry.unavailableReason=why or nil
+				if catalog.method=="bench" then
+					local cost,sources=require("Modules.CraftingBenchCosts").cost(M.context(model,state),entry.id)
+					entry.components=cost or {[entry.id]=1};entry.ingredientCostsKnown=cost~=nil;entry.costSources=sources
+				end
 			end
 		end
 		result.harvestOptions={}
@@ -734,7 +739,11 @@ function A.extend(M,api)
 		if action.method == "socket_bench" then return action.method..":"..tostring(action.count)..":"..tostring(action.linked or false) end
 		return action.method
 	end
-	function M.components(action,state)
+	function M.components(action,state,model)
+		if action.method=="bench" and model then
+			local cost=require("Modules.CraftingBenchCosts").cost(state and M.context(model,state) or model,action.modId)
+			if cost then return cost end
+		end
 		if action.method == "unveil" or action.method == "restore_imprint" then return {} end
 		if action.method == "fossil" then
 			local result={["resonator:"..#action.fossils]=1};for _,id in ipairs(action.fossils) do result[id]=(result[id] or 0)+1 end;return result
@@ -768,18 +777,15 @@ function A.extend(M,api)
 		end
 		visit(1,{})
 		assert(#combinations*trials <= 20000,"Use at most 20000 total optimizer trials")
-		local result={combinations={},trialsPerCombination=trials,limitations={"Exhaustive over the supplied fossil subset only.","Ranking uses sampled success or aggregate supplied cost per observed success; zero observations are not impossibility.","Nearby estimates with overlapping sampling intervals do not establish a reliable ordering."}}
+		local result={combinations={},trialsPerCombination=trials,limitations={"Exhaustive over the supplied fossil subset only.","Subsets with complete prices and observed successes rank first by cost per observed success. Remaining subsets rank by sampled success chance; zero observations are not impossibility.","Nearby estimates with overlapping sampling intervals do not establish a reliable ordering."}}
 		for index,ids in ipairs(combinations) do
 			local action={method="fossil",fossils=ids}
 			local ok,simulation=pcall(M.simulate,raw,{steps={action},targets=targets,initialState=options.initialState,requirements=options.requirements,requiredGroups=options.requiredGroups},{trials=trials,maxActions=1,forceFirstAction=true,seed=((options.seed or 104729)+index-2)%2147483646+1,prices=options.prices,priceBook=options.priceBook,currency=options.currency,
 				checkpoint=options.checkpoint and function(progress) progress.combination=index;progress.combinations=#combinations;options.checkpoint(progress) end})
-			result.combinations[#result.combinations+1]=ok and {fossils=ids,successChance=simulation.successChance,successes=simulation.successes,confidenceLow=simulation.confidenceLow,confidenceHigh=simulation.confidenceHigh,meanCost=simulation.meanCost,costPerSuccess=simulation.costPerSuccess} or {fossils=ids,error=tostring(simulation):match("^[^\n]+")}
+			if ok then result.costCurrency=simulation.costCurrency;result.priceSource=simulation.priceSource;result.priceQuotedAt=simulation.priceQuotedAt end
+			result.combinations[#result.combinations+1]=ok and {fossils=ids,successChance=simulation.successChance,successes=simulation.successes,confidenceLow=simulation.confidenceLow,confidenceHigh=simulation.confidenceHigh,meanCost=simulation.meanCost,costPerSuccess=simulation.costPerSuccess,costCurrency=simulation.costCurrency,unpriced=simulation.unpriced} or {fossils=ids,error=tostring(simulation):match("^[^\n]+")}
 		end
-		table.sort(result.combinations,function(a,b)
-			if a.error or b.error then return not a.error and b.error ~= nil end
-			if a.costPerSuccess and b.costPerSuccess then return a.costPerSuccess < b.costPerSuccess end
-			return a.successChance > b.successChance
-		end)
+		result.combinations=require("Modules.CraftingFossilResults").sort(result.combinations)
 		return result
 	end
 	function M.calculate(raw,action,targets,initialState)

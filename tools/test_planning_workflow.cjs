@@ -70,10 +70,15 @@ async function main(){
   const bodySimulation=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:bodyRecipe,options:{trials:4,maxActions:2,priceBook:bodyPriceBook}},'crafted');
   assert.equal(bodySimulation.nativeCrafting.successes,4);assert.equal(bodySimulation.nativeCrafting.meanCost,327.25);assert.equal(bodySimulation.nativeCrafting.priceSource,bodyPriceBook.source);
 
+  const benchInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'maximum Life',limit:100},'inspected');
+  const benchService=benchInspection.crafting.nativeEngine.bench.find(entry=>entry.id==='bench:1');
+  assert.equal(benchService.ingredientCostsKnown,true);assert.deepEqual(benchService.components,{'Metadata/Items/Currency/CurrencyRerollMagic':1});
+  const benchBudget=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[{method:'bench',modId:'bench:1'}],targets:[],requirements:{minAffixes:1}},options:{trials:2,maxActions:1,priceBook:{currency:'chaos',source:'Workflow bench quotes',quotedAt:1700000000,values:{'Metadata/Items/Currency/CurrencyRerollMagic':0.5}}}},'crafted');
+  assert.equal(benchBudget.nativeCrafting.meanCost,0.5);assert.equal(benchBudget.nativeCrafting.currencySpent['Metadata/Items/Currency/CurrencyRerollMagic'],2);
   const fossilId='Metadata/Items/Currency/CurrencyDelveCraftingLife';
   const fossilQuotes={currency:'chaos',source:'Workflow fossil quotes',quotedAt:1700000000,values:{[fossilId]:1,'Metadata/Items/Delve/DelveStackableSocketableCurrencyReroll1':2}};
   const fossilComparison=await queued('optimize_crafting_fossils',{baseRevision:context.revision,itemText:bodyRaw,targets:[],options:{fossils:[fossilId],maxSockets:1,trials:2,requirements:{minAffixes:1},priceBook:fossilQuotes}},'crafted');
-  assert.equal(fossilComparison.nativeCrafting.combinations[0].meanCost,3);
+  assert.equal(fossilComparison.nativeCrafting.combinations[0].meanCost,3);assert.equal(fossilComparison.nativeCrafting.costCurrency,'chaos');assert.equal(fossilComparison.nativeCrafting.priceSource,fossilQuotes.source);
   const exactLinks=await queued('calculate_crafting',{baseRevision:context.revision,itemText:bodyRaw,action:linkAction,targets:[],options:{requirements:{links:6}}},'crafted');
   assert.equal(exactLinks.nativeCrafting.successChance,100);assert.equal(exactLinks.nativeCrafting.sampled,false);assert.equal(exactLinks.nativeCrafting.outcomes.length,1);
   const steelRaw='Rarity: NORMAL\nSteel Ring\nItem Level: 86';
@@ -93,6 +98,10 @@ async function main(){
   assert.equal(reforgeChoice.available,true);assert.ok(reforgeChoice.options.some(entry=>entry.action.tag==='life'));
   const project={priceBook:{currency:'chaos',source:'Unquoted',quotedAt:1700000000,values:{}},id:'helmet',title:'Life helmet',slot:'Helmet',startingItem:raw,targetItem:item(200),goals:['More maximum Life'],steps:[{action:'Apply an Orb of Alchemy',stopWhen:'Target modifiers match',onFailure:'Stop at the recorded budget and reconsider'}],nativeRecipe:recipe};
   project.inventory=[{id:'blank-base',title:'Reusable helmet base',slot:'Helmet',baseItem:raw,at:1700000000,state:inspected.crafting.nativeEngine.initialState}];
+  const conflicting={...project,id:'conflicting-quotes',priceBook:{currency:'chaos',source:'Conflicting quotes',quotedAt:1700000000,values:{exalt:1,'Metadata/Items/Currency/CurrencyAddModToRare':2}}};
+  const rejected=await queued('propose_crafting_plan',{baseRevision:context.revision,project:conflicting},'failed');assert.match(rejected.error,/Conflicting quotes/);
+  assert.equal((await call('get_build_context')).context.revision,context.revision);
+
   await queued('propose_crafting_plan',{baseRevision:context.revision,project},'review');await host('apply');context=(await call('get_build_context')).context;
   const bodyProject={priceBook:bodyPriceBook,id:'body-enchant',title:'Body armour quality guide',slot:'Body Armour',startingItem:bodyRaw,targetItem:bodySimulation.nativeCrafting.sampleItem,preferredMethod:'harvest_enchant',nativeRecipe:bodyRecipe,goals:['Quality grants maximum Life','Six linked sockets'],steps:[{action:'Apply the Harvest Life quality enchantment',stopWhen:'Life quality enchantment is present'},{action:'Use an Orb of Fusing with Omen of Connections',stopWhen:'All six sockets are linked'}],inventory:[{id:'enchanted-body',title:'Enchanted body armour',slot:'Body Armour',baseItem:bodyRaw,at:1700000000,state:enchanted.nativeCrafting.state}]};
   await queued('propose_crafting_plan',{baseRevision:context.revision,project:bodyProject},'review');await host('apply');context=(await call('get_build_context')).context;

@@ -1,7 +1,7 @@
 <!-- cspell:ignore RRBG -->
 # Native crafting
 
-Open **AI builds → Crafting**, or choose **Items -> Crafting plan**. Create a project with a starting item and explicit item level, then choose **Open workbench**.
+Open **AI builds → Crafting**, or choose **Items → Crafting plan**. Create a project with a starting item and explicit item level, then choose **Open workbench**.
 
 The workbench tabs separate **Craft**, **Targets**, **Simulate**, and **Settings**. Crafting runs locally. AI builds, Atlas and crafting projects share a persistent planning workspace; switching pages preserves an Atlas draft. Equipped gear changes only through the desktop preview and review flow.
 
@@ -71,11 +71,19 @@ Set trials and the action budget. **Simulate action** repeats the action until i
 
 Jobs run in the background. **Cancel crafting job** stops them. Results include success frequency, a 95% Wilson sampling interval, currency uses, failed transitions and missing prices. **Results / distribution** shows action counts, spending percentiles, route visits and final modifier frequencies. Up to ten successful items are retained for a separate build preview. Successful-trial percentiles exclude failures; all-trial spending includes them. Trials stopped by the budget are reported separately.
 
-The price field applies to the selected action. The starting-item cost field adds the base cost to every trial in the same currency. MCP can supply prices for each action or fossil/resonator component in one currency. Spending divided by observed successes is not a guaranteed in-game cost. Zero successes does not establish impossibility.
+**Simulate → Resource prices** lists the currencies needed by the selected action and saved recipe. Enter prices per unit, add a source and quote date, or copy quotes from another project. Saved quotes also work through MCP. Zero means free; blank means unknown. Changing the common unit clears action overrides and the starting-item cost rather than converting them.
+
+Verified bench recipes use their actual ingredients. Unmatched services keep a whole-action price. **Action override** replaces the price of the selected action; **Base cost** adds the starting-item cost to every trial. Spending divided by observed successes is a model estimate, not a guaranteed game cost. Zero observed successes does not establish impossibility.
 
 **Explore charts** shows cumulative success by actions or supplied spending, and distributions of completed-trial actions/spending. Hover to inspect, click to pin, or copy the data as CSV. **Compare recipes → Compare charts** overlays captured routes. Failed and capped trials stay in the denominator; unpriced routes are omitted from spending charts.
 
-**Calculate action odds** enumerates supported finite outcomes, including next-affix draws, Talisman fractures and Allflame selection. Item properties, partial group counts, other supported actions and roll thresholds use bounded sampling with a confidence interval. Results state which method was used. **Compare subsets of the configured fossils** samples all combinations from the configured candidates and current state; it is not a global optimizer.
+**Calculate action odds** enumerates supported finite outcomes, including next-affix draws, Talisman fractures and Allflame selection. Item properties, partial group counts, other supported actions and roll thresholds use bounded sampling with a confidence interval. Results state which method was used.
+
+## Compare fossil subsets
+
+To compare fossils, select **Fossil resonator**, open **Settings → Configure fossil combination**, and choose up to four different fossils. Reopening the form retains your selection; a Tangled outcome must be supplied explicitly after it is revealed.
+
+Then open **Simulate → Compare fossil subsets**. The comparison shows fossil artwork, success intervals, cost per trial and cost per observed success. Sort by cost or chance, select a row to inspect it, or copy the comparison as CSV. **Use selected fossils** configures the workbench without crafting the item or spending currency. **Fossil results** reopens the captured comparison; rerun it after changing inputs. This compares the supplied candidates, not every possible crafting method.
 
 ## Keep a project
 
@@ -89,7 +97,7 @@ Keeping a recipe marks the build unsaved. Use normal build **Save** to persist i
 
 ## Compare recipes
 
-The desktop **Simulate → Compare recipes** view compares up to three supported routes with the same captured item, final targets, seed, trial count and action budget. Optional unit prices apply to single-action routes. A saved recipe without every executed action priced reports an unknown cost. Results include success intervals, mean actions, spending when known, and failed transitions. **Cancel comparison** stops the job. These are bounded model experiments, not guaranteed game costs.
+The desktop **Simulate → Compare recipes** view compares up to three supported routes with the same captured item, final targets, seed, trial count and action budget. Saved resource quotes apply to every route. Action overrides apply to single-action routes; a saved recipe needs prices for every executed ingredient to report a cost. Results include success intervals, mean actions, spending when known, and failed transitions. **Cancel comparison** stops the job. These are bounded model experiments, not guaranteed game costs.
 
 **Rules** opens a browser searchable by mechanic, with assumptions alongside implemented actions. Advanced actions still validate item-specific prerequisites when applied.
 
