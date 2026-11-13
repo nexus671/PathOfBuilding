@@ -25,6 +25,7 @@ The installed application and personal builds are outside this release workspace
 - [x] Inspect recipe branches visually and edit routes without numeric guesswork.
 - [x] Keep experimental items in a named local inventory.
 - [x] Show native weapon DPS, attack rate, critical chance and Ward in item comparisons.
+- [x] Use native weapon and defence minimums as saved crafting goals and recipe stop conditions.
 - [x] Compare methods and explore success/budget and spending distributions.
 - [x] Apply quality enchantments with native item state, recipe goals and resource costs.
 - [ ] Review incomplete socket, corruption and league mechanics against sources.
@@ -54,11 +55,10 @@ placeholder that pretends to provide those results offline.
 
 ## Remaining release work
 
-The published preview passed exact-commit CI with 1,119 Lua tests, 42 Node tests,
-the real MCP save/reopen workflow and 660 source-stable UI frames without audit
+The published preview passed exact-commit CI with 1,120 Lua tests, 42 Node tests,
+the real MCP save/reopen workflow and 666 source-stable UI frames without audit
 failures. The updater manifest and every CI artifact source hash were verified
-against commit `c02a2d5610998de9519b7d69e40fc18536ac9b21`.
-
+against commit `24f68d7d851e160942b7ab287d6000124c87b40a`.
 That preview includes the native colour wheel, brightness/opacity controls,
 exact RGBA input and Ruthless validation. Native input tests also exposed and
 fixed campaign fields rejecting numeric entry. It also includes 14
@@ -72,11 +72,17 @@ preserves them through save/reopen and portable bundle import.
 
 That preview also shows native weapon properties and Ward in item comparisons,
 keeps invalid forms editable and explains input errors without Lua source paths.
-The next review disables the non-white socket bench when no count option exists
+It also disables the non-white socket bench when no count option exists
 and adds consistent ellipses to long build/save-status labels. Native input checks
 confirm Enter cannot select the unavailable action and a valid two-socket craft
-still applies. Local validation passed 1,120 Lua tests and 666 source-stable UI
-states. Exact-commit CI remains required.
+still applies.
+
+The next review adds native weapon/defence minimums to item goals, recipe stop
+conditions, the target editor and MCP inspection. A real MCP workflow verifies
+changed native Armour values after a Harvest enchantment and preserves that goal
+through save/reopen and bundle import. Local validation passed 1,126 Lua tests, 43 Node tests, the real MCP workflow
+and 672 source-stable UI states without audit failures. Exact-commit CI remains
+required.
 The comparison engine passed 2,000
 deterministic reconstruction cases. Caching bundled migrations preserved all
 seven exported filters and their reports while reducing repeated work.

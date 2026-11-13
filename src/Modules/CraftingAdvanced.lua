@@ -576,6 +576,7 @@ function A.extend(M,api)
 		end end
 		result.dataPatch=A.data().patch
 		result.initialState=copyTable(state)
+		result.nativeStats=require("Modules.CraftingItemStats").values(M,model,state)
 		if model.unresolvedEldritch then result.importWarning="At least one imported Eldritch implicit has an ambiguous tier; supply a structured implicit state before changing Eldritch implicits or using dominance." end
 		return result
 	end

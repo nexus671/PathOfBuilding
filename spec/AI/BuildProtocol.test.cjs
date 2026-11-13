@@ -402,3 +402,14 @@ test('queues offline appearance, colour goals and optimized Atlas routing', t =>
   assert.throws(()=>f.call('export_loot_filter',{...base,profile:{...profile,appearance:{alertVolume:301}}}),/arguments/);
   assert.throws(()=>f.call('simulate_crafting',{...base,itemText:craftingProject().startingItem,recipe:{...recipe,requirements:{socketColours:'RGX'}}}),/arguments/);
 });
+
+test('queues native item stat goals with decimal thresholds and rejects unknown stats', t => {
+  const f=fixture(t);const base={baseRevision:f.state.revision,itemText:craftingProject().startingItem};
+  const recipe={steps:[{method:'quality',maxAttempts:20,untilRequirements:{nativeStats:{PhysicalDPS:12.4}}}],targets:[],requirements:{nativeStats:{PhysicalDPS:12.4,AttackRate:1.55}}};
+  f.call('simulate_crafting',{...base,recipe,options:{trials:3,maxActions:20}});
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(f.dir,'AI-build-request.json'))).recipe,recipe);
+  fs.unlinkSync(path.join(f.dir,'AI-build-request.json'));
+  for (const nativeStats of [{Life:1},{AttackRate:-1},{PhysicalDPS:1e8},{CritChance:'5'}]) {
+    assert.throws(()=>f.call('simulate_crafting',{...base,recipe:{...recipe,requirements:{nativeStats}}}),/arguments/);
+  }
+});

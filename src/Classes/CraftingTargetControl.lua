@@ -47,7 +47,7 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep,groupIndex)
 			group.negate=controls.mode:GetSelValue() == "Exclude group";group.scope=controls.scope:GetSelValue() == "Implicit modifiers" and "implicit" or "explicit"
 			for _,key in ipairs({"fractured","crafted"}) do local value=controls[key]:GetSelValue();group[key]=nil;if not value:match("^Any ") then group[key]=not value:match("^Not ") end end
 		end
-		local result={};for _,entry in ipairs(properties) do local value=controls[entry[1]].buf;if value ~= "" then result[entry[1]]=assert(tonumber(value),"Enter a number for "..entry[2]:lower()) end end
+		local result={nativeStats=conditions.nativeStats and copyTable(conditions.nativeStats)};for _,entry in ipairs(properties) do local value=controls[entry[1]].buf;if value ~= "" then result[entry[1]]=assert(tonumber(value),"Enter a number for "..entry[2]:lower()) end end
 		local corruption=controls.corrupted:GetSelValue();if corruption ~= "Any corruption state" then result.corrupted=corruption == "Must be corrupted" end
 		result.harvestEnchant=controls.harvestEnchant:GetSelValueByKey("val") or nil
 		if controls.socketColours.buf~="" then result.socketColours=controls.socketColours.buf:upper();result.linkedColours=controls.linkedColours:GetSelValue()=="In one linked group" end
@@ -57,6 +57,9 @@ function Panel.Open(targets,requirements,requiredGroups,onKeep,groupIndex)
 		onKeep(groups,result,required);main:ClosePopup()
 	end)
 	button("close",492,552,116,"Close",function() main:ClosePopup() end)
+	button("itemStats",250,552,224,"Weapon and defence goals",function()
+		require("Classes.CraftingItemStatsControl").Open(conditions.nativeStats,function(value) conditions.nativeStats=value end)
+	end)
 	if not group then for _,key in ipairs({"count","roll","mode","scope","fractured","crafted"}) do controls[key].enabled=false end end
 	require("Modules.PlanningUI").style(controls,{keep=true})
 	main:OpenPopup(624,600,"Crafting target conditions",controls,nil,nil,"close")

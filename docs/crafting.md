@@ -57,6 +57,8 @@ Add a modifier on **Targets**. **Edit target groups** manages required groups (A
 - Explicit or implicit modifiers, and how many groups must match.
 - Specific fractured or crafted modifiers, open affix slots, affix/fracture counts, quality, sockets, links, corruption, memory strands and Intangibility.
 
+**Weapon and defence goals**, inside **Item properties**, sets minimum physical/elemental/chaos/total weapon DPS, attack rate, critical chance, Armour, Evasion, Energy Shield and Ward. These use PoB's native local item calculations before character bonuses. Blank fields impose no condition; every supplied minimum must pass, and a stat from an incompatible item type cannot match. Decimal thresholds are supported. Recipes stop when the calculated stats meet the goal, which can happen before maximum quality because native damage values round. MCP inspection returns `nativeStats`; supply minimums as `requirements.nativeStats`, for example `{"PhysicalDPS":300,"AttackRate":1.5}`. They persist with recipes, inventory workflows and portable guides.
+
 **Socket colours** accepts one to six exact colours, such as `RRBG`. Order does not matter; repeated letters require that many sockets. Choose **In one linked group** when all requested colours must be linked together. White sockets count as white, rather than substitutes for other colours. These conditions work in action odds, fossil comparisons, saved recipes, repeated-action stop conditions and MCP requests (`socketColours`, `linkedColours`).
 
 Roll percentage means the position within a modifier's native range. For several sampled values, every value must meet the threshold. An unfinished unveil never counts as a completed target.

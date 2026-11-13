@@ -84,7 +84,11 @@ function Panel.Open(build,project,layout)
 			if group.crafted ~= nil then lines[#lines+1]=group.crafted and "Crafted only" or "Not crafted" end
 			if group.minRoll then lines[#lines+1]="Minimum roll: "..(group.minRoll*100).."%" end
 		end
-		for key,value in pairsSortByKey(requirements or {}) do lines[#lines+1]=key:gsub("(%l)(%u)","%1 %2")..": "..tostring(value) end
+		for key,value in pairsSortByKey(requirements or {}) do
+			if key=="nativeStats" then
+				for _,field in ipairs(require("Modules.CraftingItemStats").fields) do if value[field[1]] then lines[#lines+1]="Minimum "..field[2]..": "..value[field[1]] end end
+			else lines[#lines+1]=key:gsub("(%l)(%u)","%1 %2")..": "..tostring(value) end
+		end
 		controls.targetSummary.list=rows(lines)
 		if extra and controls.resultSummary then controls.resultSummary.list=rows(extra) end
 		local craftingPage=not controls.page or controls.page:GetSelValue()=="Emulate item"

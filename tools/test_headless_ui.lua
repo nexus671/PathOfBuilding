@@ -229,7 +229,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:text("socketColours","RGB");ui:choose("linkedColours","In one linked group");ui:text("minQuality","many");ui:click("keep")
 	assert(main.popups[1].title=="Crafting targets" and main.popups[1].controls[1].label=="Enter a number for minimum quality","Invalid crafting property was not explained")
 	frame("crafting-target-invalid-quality");ui:click("close");assert(main.popups[1].controls.minQuality.buf=="many","Invalid crafting input was lost")
-	ui:text("minQuality","");frame("targets");ui:choose("fractured","Fractured only");ui:click("keep")
+	ui:text("minQuality","");ui:click("itemStats");ui:text("Armour","5");frame("crafting-native-stat-goals");ui:text("Armour","many");ui:click("keep");frame("crafting-native-stat-error");ui:click("close");ui:text("Armour","5");ui:click("keep");frame("targets");ui:choose("fractured","Fractured only");ui:click("keep")
 	ui:choose("page","Simulate recipe")
 	ui:choose("page","Craft settings");frame("settings");ui:click("inspectItem");frame("crafting-affix-inspector");ui:click("close")
 	ui:click("compareItem");frame("crafting-item-diff");ui:click("close");ui:click("coverage");frame("crafting-coverage");ui:click("close");ui:choose("page","Simulate recipe")

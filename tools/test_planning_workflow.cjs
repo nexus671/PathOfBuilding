@@ -51,12 +51,15 @@ async function main(){
   const bodyRaw='Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20';
   const bodyInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'life',limit:20},'inspected');
   const enchantService=bodyInspection.crafting.nativeEngine.harvestEnchants.find(entry=>entry.id==='LifeBodyEnchant');
+  assert.ok(bodyInspection.crafting.nativeEngine.nativeStats.Armour>0);
   assert.ok(enchantService);assert.deepEqual(enchantService.components,{wild_lifeforce:3250});
   const enchanted=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:enchantService.action,seed:104729},'crafted');
   assert.equal(enchanted.nativeCrafting.state.harvestEnchant,'LifeBodyEnchant');assert.equal(enchanted.nativeCrafting.state.quality,20);
   assert.match(enchanted.nativeCrafting.itemText,/\{enchant\}Grants \+1 to Maximum Life per 2% Quality/);
   assert.equal((await call('get_build_context')).context.revision,context.revision,'Emulating an enchantment changed the character');
-  const bodyRecipe={steps:[enchantService.action],targets:[],requirements:{harvestEnchant:'LifeBodyEnchant'}};
+  const enchantInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,initialState:enchanted.nativeCrafting.state,limit:1},'inspected');
+  assert.ok(enchantInspection.crafting.nativeEngine.nativeStats.Armour<bodyInspection.crafting.nativeEngine.nativeStats.Armour);
+  const bodyRecipe={steps:[enchantService.action],targets:[],requirements:{harvestEnchant:'LifeBodyEnchant',nativeStats:{Armour:enchantInspection.crafting.nativeEngine.nativeStats.Armour}}};
   const bodySimulation=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:bodyRecipe,options:{trials:4,maxActions:1,prices:{wild_lifeforce:0.1},currency:'chaos'}},'crafted');
   assert.equal(bodySimulation.nativeCrafting.successes,4);assert.equal(bodySimulation.nativeCrafting.meanCost,325);
   const starterAtlas={id:'starter-atlas',title:'Starter Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'starter'}};
