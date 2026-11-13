@@ -43,6 +43,22 @@ describe("Native crafting ingredient costs",function()
 		assert.are.equal("Rune Dagger",bench.class({type="Dagger",base={subType="Rune Dagger"}}))
 		assert.are.equal("One Hand Sword",bench.class({type="One Handed Sword",base={}}))
 	end)
+	it("uses the 3.30 Alteration replacement for Chance Orb bench costs",function()
+		local chance="Metadata/Items/Currency/CurrencyUpgradeRandomly"
+		local model=sim.model(raw);local action,cost,sources
+		for id in pairs(model.byId) do
+			local candidate,origins=bench.cost(model,id)
+			if origins and isValueInTable(origins,"EinharMasterAllAttributes1") then action={method="bench",modId=id};cost=candidate;sources=origins;break end
+		end
+		assert.is_not_nil(action);assert.are.same({[alteration]=3},cost)
+		assert.is_truthy(isValueInTable(sources,"GGG 3.30 patch notes"))
+		assert.are.same(cost,sim.components(action,model.initial,model))
+		local result=sim.simulate(raw,{steps={action},targets={},requirements={minAffixes=1}},{trials=2,maxActions=1,priceBook=book({[alteration]=0.5,[chance]=10})})
+		assert.are.equal(1.5,result.meanCost);assert.are.equal(6,result.currencySpent[alteration]);assert.is_nil(result.currencySpent[chance])
+		local catalog=sim.catalog(raw,"Attributes",100);local found
+		for _,entry in ipairs(catalog.bench) do if entry.id==action.modId then found=entry end end
+		assert.is_not_nil(found);assert.are.same(cost,found.components);assert.is_truthy(isValueInTable(found.costSources,"GGG 3.30 patch notes"))
+	end)
 	it("rejects conflicting quote aliases before admitting a project",function()
 		local id=require("Modules.CraftingPrices").aliases(sim.model(raw)).exalt
 		local p=project({exalt=2,[id]=3});local before=copyTable(p)

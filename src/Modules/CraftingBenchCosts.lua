@@ -21,9 +21,16 @@ end
 function B.index(data)
 	local result={}
 	local function add(key,cost,id)
+		-- GGG 3.30 replaces Chance with the same number of Alterations for
+		-- every bench option. Keep the pinned modifier data unchanged.
+		local chance="Metadata/Items/Currency/CurrencyUpgradeRandomly"
+		local alteration="Metadata/Items/Currency/CurrencyRerollMagic"
+		local updated=cost[chance]~=nil
+		if updated then cost=copyTable(cost);cost[alteration]=(cost[alteration] or 0)+cost[chance];cost[chance]=nil end
 		local entry=result[key]
 		if not entry then result[key]={cost=cost,sources={[id]=true}}
 		else entry.sources[id]=true;if not equalCosts(entry.cost,cost) then entry.ambiguous=true end end
+		if updated then result[key].sources["GGG 3.30 patch notes"]=true end
 	end
 	for _,service in ipairs(data.bench) do
 		local id=service.actions.add_explicit_mod

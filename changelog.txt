@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Update crafting bench costs that changed from Orbs of Chance to Orbs of Alteration in 3.30.
 * Protect saved Atlas progression when deleting a stage or changing its tree version.
 * Correct loot-filter previews for socket rules that mix count and colour alternatives.
 * Record the selected build tree as context for crafting results instead of labelling the newest available tree as the selected one.

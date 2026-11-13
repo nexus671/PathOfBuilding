@@ -59,6 +59,11 @@ async function main(){
   const modifier=inspected.crafting.nativeEngine.modifiers[0].id;
   const bodyRaw='Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20\nSockets: W W W W W W';
   const bodyInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'life',limit:20},'inspected');
+  const attributeInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'Attributes',limit:100},'inspected');
+  const attributeBench=attributeInspection.crafting.nativeEngine.bench.find(entry=>entry.costSources?.includes('EinharMasterAllAttributes1'));
+  assert.ok(attributeBench);assert.deepEqual(attributeBench.components,{'Metadata/Items/Currency/CurrencyRerollMagic':3});assert.ok(attributeBench.costSources.includes('GGG 3.30 patch notes'));
+  const attributePlan=await queued('simulate_crafting',{baseRevision:context.revision,itemText:bodyRaw,recipe:{steps:[{method:'bench',modId:attributeBench.id}],targets:[],requirements:{minAffixes:1}},options:{trials:2,maxActions:1,currency:'chaos',prices:{'Metadata/Items/Currency/CurrencyRerollMagic':0.5}}},'crafted');
+  assert.equal(attributePlan.nativeCrafting.meanCost,1.5);assert.equal(attributePlan.nativeCrafting.currencySpent['Metadata/Items/Currency/CurrencyRerollMagic'],6);
   assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.status,'historical');assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.availableInCore,false);assert.equal(bodyInspection.crafting.nativeEngine.allflameAvailability.asOfPatch,'3.30');
   const enchantService=bodyInspection.crafting.nativeEngine.harvestEnchants.find(entry=>entry.id==='LifeBodyEnchant');
   assert.ok(bodyInspection.crafting.nativeEngine.nativeStats.Armour>0);
