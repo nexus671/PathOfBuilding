@@ -421,6 +421,17 @@ describe("Advanced native crafting", function()
 		assert.is_true(tableDeepEquals(magic.state.affixes,restored.state.affixes))
 		assert.is_nil(restored.state.imprint)
 	end)
+	it("does not restore an imprint after fracturing the item",function()
+		local magic=sim.perform(raw,{method="transmute"},22)
+		local state=sim.perform(raw,{method="beast_imprint"},23,magic.state).state
+		state=sim.perform(raw,{method="regal"},24,state).state
+		while #state.affixes<4 do state=sim.perform(raw,{method="exalt"},25+#state.affixes,state).state end
+		state=sim.perform(raw,{method="fracture"},30,state).state
+		local ok,reason=require("Modules.CraftingAvailability").check("restore_imprint",state,sim.model(raw))
+		assert.is_false(ok);assert.matches("fractured",reason)
+		local success,message=pcall(sim.perform,raw,{method="restore_imprint"},31,state)
+		assert.is_false(success);assert.matches("fractured",message);assert.is_truthy(state.imprint)
+	end)
 	it("applies Eldritch dominance to the correct affix side", function()
 		local model=sim.model(raw)
 		local state=sim.perform(raw,{method="eldritch_implicit",side="Exarch",tier=2},11,rare()).state

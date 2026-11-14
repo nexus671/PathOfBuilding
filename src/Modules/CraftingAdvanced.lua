@@ -611,6 +611,7 @@ function A.extend(M,api)
 			state.imprint=nil; state.imprint=copyTable(state)
 		elseif method == "restore_imprint" then
 			local imprint=assert(state.imprint,"No saved imprint in this state")
+			assert(not fractured(state),"Imprints cannot be applied to fractured items")
 			assert(imprint.origin == model.initial.origin,"Imprint belongs to another starting item")
 			state=copyTable(imprint)
 		elseif method == "bench_reroll" then

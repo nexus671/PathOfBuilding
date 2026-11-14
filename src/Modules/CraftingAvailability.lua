@@ -35,6 +35,7 @@ function M.check(method,state,model)
 	end
 	if method=="influence_exalt" and (influenced or fractured or item.synthesised or item.itemLevel<68 or not item.base.influenceTags) then return false,"Requires an eligible uninfluenced, non-fractured base of item level 68 or higher." end
 	if method=="restore_imprint" and not state.imprint then return false,"No saved imprint exists for this working item." end
+	if method=="restore_imprint" and fractured then return false,"Imprints cannot be applied to fractured items." end
 	if method=="beast_imprint" and (state.rarity~="MAGIC" or fractured) then return false,"Imprinting requires a non-fractured magic item." end
 	if method=="remove_crafted" and not crafted then return false,"This item has no bench-crafted modifiers." end
 	if method=="beast_aspect" then
