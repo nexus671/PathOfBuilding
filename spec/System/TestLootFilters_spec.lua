@@ -86,9 +86,10 @@ describe("Build-owned loot filters",function()
 		assert.equal("invalid",parser.simulate(parser.parse('Hide\n TransfiguredGem >= True'),{TransfiguredGem=true}).status)
 	end)
 	it("expands supplied filter files in order and leaves missing or cyclic imports unresolved",function()
-		local profile=filters.profile("included","Included");profile.template='Import "outer.filter"\nShow'
-		profile.importFiles={{name="outer.filter",text='Import "inner.filter"\nShow\n BaseType "Iron"'},{name="inner.filter",text='Hide\n BaseType "Iron Hat"'}}
+		local bom=string.char(239,187,191);local profile=filters.profile("included","Included");profile.template=bom..'Import "outer.filter"\nShow'
+		profile.importFiles={{name="outer.filter",text=bom..'Import "inner.filter"\nShow\n BaseType "Iron"'},{name="inner.filter",text=bom..'Hide\n BaseType "Iron Hat"'}}
 		local raw,report=filters.compile(profile);assert.equal(0,#report.imports);assert.is_truthy(raw:find("# Included filter: inner.filter",1,true))
+		assert.is_falsy(raw:find(bom,1,true));for _,diagnostic in ipairs(report.diagnostics) do assert.is_nil(diagnostic.error) end
 		assert.equal("Hide",filters.simulate(profile,{BaseType="Iron Hat"}).action)
 		assert.equal("Show",filters.simulate(profile,{BaseType="Iron Ring"}).action)
 		local checked=filters.validate({schemaVersion=1,activeId=profile.id,profiles={profile}});assert.same(profile.importFiles,checked.profiles[1].importFiles)
@@ -97,6 +98,7 @@ describe("Build-owned loot filters",function()
 		profile.importFiles[2].text='Import "outer.filter"';local _,cyclic=filters.compile(profile);assert.equal(1,#cyclic.imports);assert.equal("unknown",filters.simulate(profile,{BaseType="Iron Hat"}).status)
 		profile.importFiles={};local _,missing=filters.compile(profile);assert.equal(1,#missing.imports);assert.equal("unknown",filters.simulate(profile,{BaseType="Iron Hat"}).status)
 		profile.template='Import "outer.filter"';assert.is_truthy(filters.validate({schemaVersion=1,activeId=profile.id,profiles={profile}}))
+		profile.template='Hide\n BaseType "Orb of Binding"\nImport "missing.filter"\nShow';local _,migrated=filters.compile(profile);assert.equal(1,#migrated.imports)
 	end)
 	it("edits and validates included files without touching the original profile",function()
 		local profile=filters.profile("included","Included");local saved

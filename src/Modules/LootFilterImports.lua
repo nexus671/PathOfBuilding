@@ -9,6 +9,9 @@ function M.expand(raw,files,limit)
 	end
 	local function expand(text,depth)
 		assert(depth<=32,"Filter imports exceed nesting limit")
+		-- Each supplied file may have its own UTF-8 byte-order mark. Once
+		-- embedded in the compiled filter it is no longer at the start of a file.
+		text=text:gsub("^\239\187\191","")
 		for line in (text.."\n"):gmatch("([^\n]*)\n") do
 			local ok,tokens=pcall(parser.tokens,line)
 			local name=ok and tokens[1]=="Import" and tokens[2]

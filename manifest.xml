@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview75" />
+	<Version number="2.67.2-ai.preview76" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="b22893535e23062063de09d7762ba42bb4279339" />
+	<File name="changelog.txt" part="default" sha1="c319c7890372437a6d9d25bd19328221d5a2cec8" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1527,7 +1527,7 @@
 	<File name="Modules/LootFilterDiagnostics.lua" part="program" sha1="78899585b42082a38cefd3f281513880bd719a8f" />
 	<File name="Modules/LootFilterDiff.lua" part="program" sha1="6f117c8c4dac0273eec0a5b64ba31140c0bac7e6" />
 	<File name="Modules/LootFilterEditing.lua" part="program" sha1="dc5f40df61ab752c4d27e8069ca22b186c4330a2" />
-	<File name="Modules/LootFilterImports.lua" part="program" sha1="b8b75dc45533c7341e5326c9f3ceef602f78385d" />
+	<File name="Modules/LootFilterImports.lua" part="program" sha1="7746307d410dd4cf79ef58c9b584d173ffc2411a" />
 	<File name="Modules/LootFilterLibrary.lua" part="program" sha1="31bc7cfd67b463211b0365bb480a04376bf271d4" />
 	<File name="Modules/LootFilterParser.lua" part="program" sha1="8a976b94d0a48da2ebef52192ed6adbe9b53ca4f" />
 	<File name="Modules/LootFilterStructure.lua" part="program" sha1="eb0d7ded2b43bdb219da5a22c6a85fc2f2fa73f6" />
