@@ -279,6 +279,12 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	end
 
 	do
+		local socketRaw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: R-G B"
+		require("Classes.CraftingSimulatorControl").Open(build,{id="omen-sockets-ui",title="Maximum sockets",slot="Body Armour",startingItem=socketRaw,goals={},steps={},preferredMethod="omen_jeweller"})
+		ui:click("settings");ui:text("paletteSearch","Omen of the Jeweller");assert(main.popups[1].controls.paletteUse:IsEnabled());frame("crafting-omen-sockets-selection")
+		ui:click("paletteUse");ui:click("item");assert(not main.popups[1].controls.apply:IsEnabled());frame("crafting-omen-sockets-applied");ui:click("close")
+	end
+	do
 		local socketRaw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: R-G B W-W R"
 		require("Classes.CraftingSimulatorControl").Open(build,{id="omen-links-ui",title="Guaranteed socket links",slot="Body Armour",startingItem=socketRaw,goals={},steps={},nativeRecipe={steps={{method="omen_connections"}},targets={},requirements={links=6}}})
 		ui:click("settings");ui:text("paletteSearch","Omen of Connections");assert(main.popups[1].controls.paletteUse:IsEnabled())

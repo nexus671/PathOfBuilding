@@ -187,6 +187,7 @@ function M.icon(method,action,model)
 	end
 	action=action or {};local id=currencyArt.methods[method];local name
 	if method=="socket_white_bench" then name="Orb of Scouring"
+	elseif method=="omen_jeweller" then name="Jeweller's Orb"
 	elseif method=="essence" and action.essenceId then local entry=data.essences[action.essenceId];name=entry and entry.name
 	elseif method=="catalyst" and action.catalyst then local entry=({"Abrasive","Accelerating","Dextral","Fertile","Imbued","Intrinsic","Noxious","Prismatic","Sinistral","Tempering","Turbulent","Unstable"})[action.catalyst];name=entry and entry.." Catalyst"
 	elseif method=="fossil" and action.fossils then local prefix=({"Primitive","Potent","Powerful","Prime"})[#action.fossils];name=prefix and prefix.." Chaotic Resonator"
@@ -208,6 +209,7 @@ function M.hint(method,state,model)
 	if available and method=="binding" then return "No longer generated in 3.30. Existing Orbs of Binding still work." end
 	if available and method=="recombine" then return "3.30 uses the chosen base's item level. Count odds for one-to-three modifiers still use older estimates." end
 	if available and method=="socket_white_bench" then return "3.30 bench: turn sockets white for one Scouring Orb, plus one Vaal Orb on corrupted items." end
+	if available and method=="omen_jeweller" then return "Add white sockets up to the base and item-level limit. Uses one Omen and one Jeweller's Orb." end
 	if available and method=="harvest_enchant" then return "Replace the enchantment with a quality bonus. Options show the Lifeforce cost." end
 	if available and method=="harvest_resistance" then return "Change one elemental resistance to another. Costs 300 Lifeforce for each element." end
 	return available and (descriptions[method] or "Choose the craft options, then apply to the item.") or reason

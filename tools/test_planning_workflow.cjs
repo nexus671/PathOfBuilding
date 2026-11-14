@@ -138,6 +138,14 @@ async function main(){
   const enchantInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,initialState:enchanted.nativeCrafting.state,limit:1},'inspected');
   assert.ok(enchantInspection.crafting.nativeEngine.nativeStats.Armour<bodyInspection.crafting.nativeEngine.nativeStats.Armour);
   const linksInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'connections',limit:5},'inspected');
+  const socketOmenRaw=bodyRaw.replace(/Sockets: [^\n]+/,'Sockets: R-G B');
+  const socketOmenInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:socketOmenRaw,query:'omen of the jeweller',limit:5},'inspected');
+  const socketOmen=socketOmenInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='omen_jeweller');
+  assert.ok(socketOmen.available && socketOmen.deterministic);
+  assert.deepEqual(socketOmen.components,{'Metadata/Items/Currency/AncestralOmenOnJewellersMakeFullSockets':1,'Metadata/Items/Currency/CurrencyRerollSocketNumbers':1});
+  const socketOmenResult=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:socketOmenRaw,action:socketOmen.action},'crafted');
+  assert.equal(socketOmenResult.nativeCrafting.state.sockets.length,6);
+  assert.deepEqual(socketOmenResult.nativeCrafting.state.sockets.map(socket=>socket.color),['R','G','B','W','W','W']);
   const colourInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'socket_colour_bench',limit:5},'inspected');
   const colourService=colourInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.action.count===3);
   assert.ok(colourService.available);assert.equal(colourService.deterministic,false);assert.deepEqual(colourService.components,{chromatic:20});

@@ -54,7 +54,7 @@ end
 function M.category(method)
 	if method:find("harvest",1,true) then return "Harvest" elseif method:find("beast",1,true) or method=="restore_imprint" then return "Bestiary"
 	elseif method:find("eldritch",1,true) then return "Eldritch" elseif method:find("bench",1,true) or method=="remove_crafted" then return "Bench"
-	elseif method:find("socket",1,true) or method=="chromatic" or method=="jeweller" or method=="fusing" or method=="omen_connections" or method=="omen_trichromatism" then return "Sockets"
+	elseif method:find("socket",1,true) or method=="chromatic" or method=="jeweller" or method=="fusing" or method=="omen_jeweller" or method=="omen_connections" or method=="omen_trichromatism" then return "Sockets"
 	elseif method:find("ducat",1,true) or method:find("memory",1,true) or method:find("recombine",1,true) then return "Special mechanics"
 	elseif method=="essence" or method=="fossil" then return "Essences and fossils" else return "Currency" end
 end
