@@ -46,7 +46,7 @@ jobs:
           text = path.read_text()
           marker = '"ignorePaths": ['
           assert marker in text
-          path.write_text(text.replace(marker, marker + '"**/src/Data/LootFilters/**", "**/src/Assets/LootFilters/**",', 1))
+          path.write_text(text.replace(marker, marker + '"**/src/Data/LootFilters/**", "**/src/Assets/LootFilters/**", "**/src/Data/Crafting/3.30-abyss-weights.json",', 1))
           PY
 
       - name: Run cspell
