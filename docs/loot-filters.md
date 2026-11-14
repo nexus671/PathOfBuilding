@@ -21,7 +21,7 @@ The workspace has six pages:
 
 **Category appearance**, on Style or in Profile tools, changes declared colours, fonts, alerts and effects for one item family. Rules stay at their original priority. Whole-filter appearance applies last. The picker shows active block counts; categories follow preset labels and rule conditions, so check Customize when styling an imported rule. Restore original removes the category's settings.
 
-Choose **Pick** beside a colour field to open the colour wheel. Drag the wheel, brightness or opacity bars, choose a quick colour, or enter exact hex/RGBA values. Arrow keys adjust a focused selector. **Keep colour** returns to the editor; **Cancel** leaves it unchanged. Ruthless text colours require alpha 80 or higher.
+Choose **Pick** beside a colour field to open the colour wheel. Drag the wheel, brightness or opacity bars, choose a quick colour, or enter exact hex/RGBA values. Arrow keys adjust a focused selector. **Keep colour** returns to the editor; **Cancel** leaves it unchanged. When an imported background colour omits opacity, the preview and picker use the game's default of 240. Ruthless text colours require alpha 80 or higher.
 
 **Saved palettes**, on Style or in Profile tools, stores the current whole-filter appearance, category styles and generated-target theme. Name a snapshot, then use it on the profile later. Editing the active appearance does not overwrite the saved snapshot. Palette changes preserve pickup conditions. Libraries travel in native builds and planning bundles and have no collection-count cap within the shared metadata size guard.
 

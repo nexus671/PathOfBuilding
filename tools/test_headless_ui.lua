@@ -809,6 +809,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("edit");frame("filter-appearance");ui:click("textHexPick");frame("filter-colour-wheel");frame("filter-colour-preset-hover","preset7")
 	local colourWheel=main.popups[1].controls.wheel;local wx,wy=colourWheel:GetPos();ui:dragAt(wx+192,wy+128,-64,64,"LEFTBUTTON");frame("filter-colour-dragged");ui:text("hex","FFE0A0FF");ui:click("keep");assert(main.popups[1].controls.textHex.buf=="FFE0A0FF","Rule picker did not return the selected colour")
 	ui:text("backgroundHex","101820FF");ui:choose("sound","Alert 6");ui:choose("icon","Diamond");ui:click("effects");ui:choose("iconShape","Moon");ui:choose("iconColor","Purple");ui:choose("iconSize","Large","label");ui:choose("beam","Purple");ui:choose("beamDuration","Temporary");frame("filter-sound-and-effects");ui:click("keep");ui:click("keepRule");frame("filter-base-override")
+	do
+		local saved;local rule={id="implicit-alpha",title="Imported background",text='Show\n BaseType == "Chaos Orb"\n SetBackgroundColor 10 20 30'}
+		require("Classes.LootFilterAppearance").Open(rule,function(value) saved=value end,function() end)
+		assert(main.popups[1].controls.backgroundHex.buf=="0A141EF0");frame("filter-background-default-alpha")
+		ui:click("backgroundHexPick");assert(main.popups[1].controls.hex.buf=="0A141EF0");frame("filter-background-default-picker");ui:click("keep");ui:click("keepRule")
+		assert(saved and saved.text:find("SetBackgroundColor 10 20 30 240",1,true))
+	end
 	ui:click("add");ui:text("title","Keep crafting helmets");ui:click("textHexColor1");ui:click("borderHexColor2");ui:click("conditions");frame("filter-rule-editor")
 	ui:click("addCondition");ui:choose("c2key","ItemLevel");ui:choose("c2op",">=");ui:text("c2values","83");ui:click("addCondition");ui:choose("c3key","SocketGroup");ui:choose("c3op",">=");ui:text("c3values","5GGG");ui:click("keepRule");frame("filter-custom-rule")
 	ui:click("toggle");frame("filter-disabled-rule");ui:click("toggle")

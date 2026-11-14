@@ -1,4 +1,7 @@
 local M={colors={"Blue","Brown","Cyan","Green","Grey","Orange","Pink","Purple","Red","White","Yellow"},shapes={"Circle","Diamond","Hexagon","Square","Star","Triangle","Cross","Moon","Raindrop","Kite","Pentagon","UpsideDownHouse"}}
+-- GGG's filter syntax gives an omitted background alpha a different default.
+function M.alpha(key,value) return tonumber(value[4]) or (key=="SetBackgroundColor" and 240 or 255) end
+function M.rgba(key,value) return {tonumber(value[1]) or 255,tonumber(value[2]) or 255,tonumber(value[3]) or 255,M.alpha(key,value)} end
 function M.validate(settings)
 	assert(type(settings)=="table" and settings~=require("dkjson").null,"Invalid global appearance")
 	local result={}

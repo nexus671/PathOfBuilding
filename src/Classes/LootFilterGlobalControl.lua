@@ -33,7 +33,7 @@ function M.Open(profile,onKeep,options)
 		c[key]=new("EditControl"):EditControl(ui.anchor,{268,y-4,252,28},appearance.hex(settings[key]),nil,nil,9,function(value) if value=="" then settings[key]=nil else local color=appearance.fromHex(value);if color then settings[key]=color end end end);c[key].placeholder="Keep original / hex RGBA"
 		c[key.."Pick"]=new("ButtonControl"):ButtonControl(ui.anchor,{528,y-4,76,28},"Pick",function()
 			local initial=appearance.fromHex(c[key].buf) or settings[key]
-			if not initial then local styles=parser.parse(filters.rule("example","Example",{},nil,profile.theme).text).rules[1].styles;local values=styles[({textColor="SetTextColor",borderColor="SetBorderColor",backgroundColor="SetBackgroundColor"})[key]];initial={tonumber(values[1]),tonumber(values[2]),tonumber(values[3]),tonumber(values[4]) or 255} end
+			if not initial then local styles=parser.parse(filters.rule("example","Example",{},nil,profile.theme).text).rules[1].styles;local style=({textColor="SetTextColor",borderColor="SetBorderColor",backgroundColor="SetBackgroundColor"})[key];initial=appearance.rgba(style,styles[style]) end
 			require("Classes.ColourPickerControl").Open(initial,function(colour) c[key]:SetText(appearance.hex(colour),true) end,{title=({textColor="Text colour",borderColor="Border colour",backgroundColor="Background colour"})[key],minimumAlpha=key=="textColor" and profile.mode=="Ruthless" and 80 or 0})
 		end)
 	end

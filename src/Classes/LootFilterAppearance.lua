@@ -3,6 +3,7 @@ local ui=require("Modules.PlanningUI")
 local library=require("Modules.LootFilterLibrary")
 local parser=require("Modules.LootFilterParser")
 local visual=require("Modules.LootFilterVisuals")
+local appearance=require("Modules.LootFilterAppearanceSettings")
 local M={}
 local function button(c,key,x,y,w,label,run) c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,w,28},label,run) end
 function M.Open(rule,save,conditions,options)
@@ -25,10 +26,10 @@ function M.Open(rule,save,conditions,options)
 	end
 	for index,entry in ipairs(columns) do local key,label,style,fallback=unpack(entry);local x=16+(index-1)*(column+16)
 		ui.label(c,key.."Label",x,232,label,16)
-		local value=original.styles[style] or fallback;local hex="";for i=1,4 do hex=hex..string.format("%02X",tonumber(value[i]) or 255) end
+		local value=appearance.rgba(style,original.styles[style] or fallback);local hex="";for i=1,4 do hex=hex..string.format("%02X",value[i]) end
 		c[key]=new("EditControl"):EditControl(ui.anchor,{x,350,column-76,28},hex,nil,nil,9,function(value) local rgba=decode(value);if rgba then changes[style]=rgba end end)
 		button(c,key.."Pick",x+column-68,350,68,"Pick",function()
-			local values=decode(c[key].buf) or original.styles[style] or fallback;local rgba={};for i=1,4 do rgba[i]=tonumber(values[i]) or 255 end
+			local values=decode(c[key].buf) or original.styles[style] or fallback;local rgba=appearance.rgba(style,values)
 			require("Classes.ColourPickerControl").Open(rgba,function(colour) c[key]:SetText(require("Modules.LootFilterAppearanceSettings").hex(colour),true) end,{title=label,minimumAlpha=style=="SetTextColor" and options.mode=="Ruthless" and 80 or 0})
 		end)
 		for i,color in ipairs(palette) do local name=key.."Color"..i;local control=new("ButtonControl"):ButtonControl(ui.anchor,{x+((i-1)%4)*44,262+math.floor((i-1)/4)*40,34,32},"",function() c[key]:SetText(color.."FF");changes[style]=decode(color.."FF") end)
