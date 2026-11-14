@@ -596,6 +596,12 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		assert(sim.perform(raw,saved.steps[5],1).state.rarity=="MAGIC","Direct bench step did not execute")
 		assert(sim.perform(raw,saved.steps[6],1,essence.state).state.rarity=="RARE","Direct Harvest step did not execute")
 		assert(sim.perform(raw,saved.steps[7],1).state.rarity=="RARE","Direct fossil step did not execute")
+		local socketRaw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: R-G B W-W R"
+		local socketRecipe;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy"}},targets={},requirements={links=6}},{method="alchemy"},function(value) socketRecipe=value end,sim.model(socketRaw))
+		ui:click("addCurrency");ui:text("search","Bestiary: maximum links");frame("crafting-recipe-beast-picker");ui:click("choose");ui:click("keep")
+		assert(socketRecipe.steps[2].method=="beast_max_links","Bestiary recipe step was not retained")
+		local socketRun=sim.simulate(socketRaw,socketRecipe,{trials=1,maxActions=2,forceFirstAction=true})
+		assert(socketRun.successes==1 and not next(socketRun.transitionErrors),"The saved Bestiary recipe did not link the item")
 		local replaced;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy",maxAttempts=2,onSuccess=1,onFailure=2,onFailureAction="stop",recoveryNotes="Keep this note",untilRequirements={minAffixes=5}}},targets={},requirements={minAffixes=6}},{method="chaos"},function(value) replaced=value end,routeModel)
 		ui:click("replace");ui:click("keep");local step=replaced.steps[1]
 		assert(step.method=="chaos" and step.maxAttempts==2 and step.onSuccess==1 and step.onFailure==2 and step.onFailureAction=="stop" and step.recoveryNotes=="Keep this note" and step.untilRequirements.minAffixes==5,"Replacing action lost routes or conditions")
