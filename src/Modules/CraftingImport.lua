@@ -50,6 +50,7 @@ function I.resolve(M,model,state)
 	end
 	for _,entry in ipairs(model.mods) do consider(entry.id,false) end
 	for id in pairs(model.legacyAbyss or {}) do consider(id,false) end
+	for id in pairs(model.unveiledJewels or {}) do consider(id,false) end
 	for _,entry in ipairs(model.mods) do if model.legacyLightRadius[entry.id] then consider(entry.id,false,true) end end
 	for _,entry in ipairs(model.essences) do consider(entry.modId,false) end
 	for _,entry in ipairs(model.bench) do consider(entry.id,true) end

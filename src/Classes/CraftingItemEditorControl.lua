@@ -16,14 +16,23 @@ function Panel.Open(model,input,onKeep)
 	controls.info=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,28,0,14},"Manual edits establish a new recipe start. Cancel discards all edits.")
 	controls.current=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,62,744,24},{})
 	local candidates={};local seen={}
+	local function source(id)
+		if model.legacyAbyss and model.legacyAbyss[id] then return "Legacy | " end
+		if model.unveiledJewels and model.unveiledJewels[id] then
+			local eye=id:match("^JunMasterVeiledAbyss(Murderous)ImpaleEffect$") or id:match("^JunMasterVeiledAbyss(Searching)ImpaleEffect$")
+			return eye and "Unveiled ("..eye..") | " or "Unveiled | "
+		end
+		return ""
+	end
 	local function add(id)
 		if not seen[id] then
-			local mod=assert(model.byId[id]);candidates[#candidates+1]={label=mod.type.." | "..table.concat(mod," / "),val=id};seen[id]=true
+			local mod=assert(model.byId[id]);candidates[#candidates+1]={label=mod.type.." | "..source(id)..table.concat(mod," / "),val=id};seen[id]=true
 		end
 	end
 	for _,entry in ipairs(model.mods) do add(entry.id) end
 	for _,entry in ipairs(model.bench) do add(entry.id) end
 	for _,entry in ipairs(model.essences) do add(entry.modId) end
+	for id in pairs(model.unveiledJewels or {}) do add(id) end
 	for _,entry in ipairs(state.affixes) do add(entry.id) end
 	table.sort(candidates,function(a,b) return a.label < b.label end)
 	controls.modifier=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,108,744,24},candidates)
@@ -31,7 +40,7 @@ function Panel.Open(model,input,onKeep)
 	controls.fractured=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{212,154,220,24},{"Not fractured","Fractured"})
 	local function refresh()
 		local list={}
-		for i,entry in ipairs(state.affixes) do list[#list+1]={label=i.." | "..(entry.fractured and "Fractured | " or "")..table.concat(sim.entryMod(model,entry)," / "),val=i} end
+		for i,entry in ipairs(state.affixes) do list[#list+1]={label=i.." | "..(entry.fractured and "Fractured | " or "")..source(entry.id)..table.concat(sim.entryMod(model,entry)," / "),val=i} end
 		if #list == 0 then list={{label="No explicit modifiers",val=0}} end
 		controls.current:SetList(list)
 	end

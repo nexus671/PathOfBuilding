@@ -302,9 +302,17 @@ async function main(){
   assert.ok(assembledMod);assert.equal(assembledMod.weight,750);
   const assembledCraft=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:assembled,action:{method:'transmute'},seed:42},'crafted');
   assert.ok(assembledCraft.nativeCrafting.state.affixes.length>0);
-  const oldAbyss='Rarity: MAGIC\nSearching Eye Jewel\nItem Level: 86\n15% chance to Avoid Elemental Ailments while you have Elusive';
+  const oldAbyss='Rarity: MAGIC\nSearching Eye Jewel of Escape\nCrafted: true\nPrefix: None\nSuffix: {range:0.5}AbyssAvoidElementalAilmentsWhileElusiveJewel1\nItem Level: 86\nImplicits: 0\n{suffix}15% chance to Avoid Elemental Ailments while you have Elusive';
   const oldAbyssResult=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:oldAbyss,action:{method:'divine'},seed:1},'crafted');
   assert.equal(oldAbyssResult.nativeCrafting.state.affixes[0].id,'AbyssAvoidElementalAilmentsWhileElusiveJewel1');
+  const unveiledJewel='Rarity: MAGIC\nCobalt Jewel\nItem Level: 86\n4% increased Elusive Effect';
+  const unveiledInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:unveiledJewel,query:'JunMasterVeiledJewelElusiveEffect',limit:10},'inspected');
+  const unveiledRow=unveiledInspection.crafting.nativeEngine.modifierTable.rows.find(row=>row.id==='JunMasterVeiledJewelElusiveEffect');
+  assert.ok(unveiledRow);assert.equal(unveiledRow.source,'Special');
+  const unveiledDivine=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:unveiledJewel,action:{method:'divine'},seed:7},'crafted');
+  assert.equal(unveiledDivine.nativeCrafting.state.affixes[0].id,'JunMasterVeiledJewelElusiveEffect');
+  const reopenedUnveiled=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:unveiledDivine.nativeCrafting.itemText,limit:5},'inspected');
+  assert.equal(reopenedUnveiled.crafting.nativeEngine.initialState.affixes[0].id,'JunMasterVeiledJewelElusiveEffect');
   const starterAtlas={id:'starter-atlas',title:'Starter Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'starter'}};
   const atlasSearch=await queued('search_atlas_nodes',{baseRevision:context.revision,version:'3.29.1',query:'Essence',limit:10},'atlas');
   const atlasTargets=atlasSearch.atlas.matches.slice(0,3).map(node=>node.id);assert.equal(atlasTargets.length,3);

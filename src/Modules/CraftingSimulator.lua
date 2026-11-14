@@ -171,6 +171,8 @@ function M.model(raw)
 	local extraTags={}
 	if item.clusterJewel and item.clusterJewel.skills[item.clusterJewelSkill] then extraTags[item.clusterJewel.skills[item.clusterJewelSkill].tag]=true end
 	for id,mod in pairs(item.affixes or { }) do model.byId[id]=mod end
+	require("Modules.CraftingUnveiledJewel330").prepare(model)
+	require("Modules.CraftingUnveiledJewel330").restoreIdentities(model,raw)
 	for id,mod in pairs((item.type == "Jewel" or item.type == "Flask" or item.type == "Tincture") and item.affixes or data.itemMods.Explicit) do
 		if (mod.type == "Prefix" or mod.type == "Suffix") and mod.level <= item.itemLevel and not mod.affix:find("Elevated",1,true) then
 			local weight=item:GetModSpawnWeight(mod,extraTags)

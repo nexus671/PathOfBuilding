@@ -15,6 +15,7 @@ function M.modDetails(model,id,entry)
 	for _,line in ipairs(mod) do lines[#lines+1]="Range: "..line end
 	if lightRadius330[id] then lines[#lines+1]="3.30 Light Radius range: "..lightRadius330[id].."%."..(entry and entry.legacyLightRadius and " Existing legacy value is retained until rerolled." or "") end
 	if model.legacyAbyss and model.legacyAbyss[id] then lines[#lines+1]="3.30: this older Abyss modifier no longer rolls naturally. Existing copies are retained." end
+	if model.unveiledJewels and model.unveiledJewels[id] then lines[#lines+1]="3.30 unveiled jewel modifier. Unveil offers and acquisition are not yet simulated." end
 	if sim.isClusterSpeedMod(model,id) then lines[#lines+1]="3.30: small-passive attack and cast speed modifiers share a family." end
 	if mod.tags and #mod.tags>0 then lines[#lines+1]="Tags: "..table.concat(mod.tags,", ") end
 	if entry then

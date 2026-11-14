@@ -32,7 +32,7 @@ describe("3.30 Abyss jewel modifier weights",function()
 		local text=sim.toItem(model,{rarity="MAGIC",affixes={{id=id,range=0.5}}}).raw
 		local imported=sim.model(text);assert.equal(id,imported.initial.affixes[1].id);assert.matches("15%% chance to Avoid Elemental Ailments while you have Elusive",sim.toItem(imported,imported.initial).raw)
 		local plain="Rarity: MAGIC\nSearching Eye Jewel\nItem Level: 86\n15% chance to Avoid Elemental Ailments while you have Elusive"
-		local resolved=sim.model(plain);assert.equal(id,resolved.initial.affixes[1].id);assert.matches("15%% chance to Avoid Elemental Ailments",sim.toItem(resolved,resolved.initial).raw)
+		local ok,why=pcall(sim.model,plain);assert.is_false(ok);assert.matches("several modifier identities",tostring(why))
 		local forged=copyTable(model.initial);forged.rarity="MAGIC";forged.affixes={{id=id,range=0.5}}
 		assert.has_error(function() sim.validateState(model,forged) end)
 		local divined=sim.perform(text,{method="divine"},3);assert.equal(id,divined.state.affixes[1].id)

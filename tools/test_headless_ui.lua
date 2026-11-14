@@ -191,9 +191,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(main.popups[1].controls.intro.label:find("Applied",1,true),"Assembled Eye craft did not apply")
 	assert(not main.popups[1].controls.itemMods.list[1][1]:find("No explicit modifiers",1,true),"Assembled Eye craft has no modifiers")
 	frame("crafting-assembled-eye-crafted");ui:click("close")
-	local oldAbyss="Rarity: MAGIC\nSearching Eye Jewel\nItem Level: 86\n15% chance to Avoid Elemental Ailments while you have Elusive"
+	local oldAbyss="Rarity: MAGIC\nSearching Eye Jewel of Escape\nCrafted: true\nPrefix: None\nSuffix: {range:0.5}AbyssAvoidElementalAilmentsWhileElusiveJewel1\nItem Level: 86\nImplicits: 0\n{suffix}15% chance to Avoid Elemental Ailments while you have Elusive"
 	require("Classes.CraftingSimulatorControl").Open(build,{id="abyss-legacy-ui",title="Legacy Abyss jewel",slot="Jewel",startingItem=oldAbyss,goals={},steps={}})
 	frame("crafting-abyss-legacy");ui:click("close")
+	local jewel="Rarity: NORMAL\nCobalt Jewel\nItem Level: 86"
+	require("Classes.CraftingSimulatorControl").Open(build,{id="unveiled-jewel-ui",title="Unveiled jewel",slot="Jewel",startingItem=jewel,goals={},steps={}})
+	ui:click("tab_settings");ui:click("manual");ui:choose("modifier","JunMasterVeiledJewelElusiveEffect","val");ui:text("roll","50");ui:choose("rarity","MAGIC");ui:click("properties");frame("crafting-unveiled-jewel-editor")
+	ui:click("add");frame("crafting-unveiled-jewel-selected");ui:click("keep");ui:click("tab_craft");frame("crafting-unveiled-jewel-item");ui:click("close")
 	local enchantedProject={id="harvest-ui",title="Body armour quality enchant",slot="Body Armour",startingItem="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20",goals={},steps={}}
 	require("Classes.CraftingSimulatorControl").Open(build,enchantedProject)
 	ui:click("settings");ui:text("paletteSearch","replace quality");frame("crafting-harvest-service");ui:click("paletteUse")
