@@ -215,6 +215,12 @@ describe("Build-owned loot filters",function()
 		assert.is_nil(migrated:find("Orb of Binding",1,true));assert.is_truthy(migrated:find("Maven's Chisel of Threads",1,true))
 		assert.equal(2,#parser.parse(migrated).rules);assert.equal("removed",changes["Orb of Binding"])
 		assert.equal("Show",parser.simulate(parser.parse(migrated),{BaseType="Iron Hat"}).action)
+		local mixed='Hide\n BaseType "Orb of Binding" Chaos # "Orb of Binding" is a comment\nShow'
+		local result=filters.migrate(mixed)
+		assert.is_truthy(result:find('Chaos # "Orb of Binding" is a comment',1,true))
+		assert.equal("Hide",parser.simulate(parser.parse(result),{BaseType="Chaos Orb"}).action)
+		local commentOnly='Show\n BaseType Chaos # "Orb of Binding"\nHide'
+		local preserved,notes=filters.migrate(commentOnly);assert.equal(commentOnly,preserved);assert.is_nil(next(notes))
 	end)
 	it("compiles all seven pinned bases with 3.30 item protection and provenance",function()
 		for strictness=0,6 do

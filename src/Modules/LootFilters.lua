@@ -136,12 +136,15 @@ function M.migrate(raw)
 	for line in (raw.."\n"):gmatch("([^\n]*)\n") do
 		if line:match("^%s*Show%s*") or line:match("^%s*Hide%s*") or line:match("^%s*Minimal%s*") or line:match("^%s*Import%s") then flush() end
 		if line:match("^%s*BaseType%s") then
-			local values={};local changed=false
-			line=line:gsub('"([^"\r\n]+)"',function(name)
+			local changed=false;local quoted=false;local commentAt
+			for i=1,#line do local char=line:sub(i,i);if char=='"' then quoted=not quoted elseif char=="#" and not quoted then commentAt=i;break end end
+			local body=commentAt and line:sub(1,commentAt-1) or line;local comment=commentAt and line:sub(commentAt) or ""
+			body=body:gsub('"([^"\r\n]+)"',function(name)
 				if removed[name] then changed=true;changes[name]="removed";return "" end
-				local nextName=patch.renamed[name] or name;if nextName~=name then changed=true;changes[name]=nextName end;values[#values+1]=nextName;return quote(nextName)
+				local nextName=patch.renamed[name] or name;if nextName~=name then changed=true;changes[name]=nextName end;return quote(nextName)
 			end)
-			if changed and #values==0 then skip=true end
+			line=body..comment
+			if changed then local parsed=parser.parse("Show\n"..body);local condition=parsed.rules[1].conditions[1];if condition and #condition.values==0 then skip=true end end
 		end
 		block[#block+1]=line
 	end
