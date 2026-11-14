@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Show base and item-level changes in crafting history after recombination.
 * Include possible costs when crafting recipes loop back after corruption.
 * Include saved-recipe starting states when listing crafting resources.
 * Include corrupted socket-bench costs in the recipe resource price editor.

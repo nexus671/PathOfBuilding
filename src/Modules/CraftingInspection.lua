@@ -20,11 +20,13 @@ function M.modDetails(model,id,entry)
 	return lines
 end
 function M.slots(model,state)
+	model=sim.context(model,state)
 	local caps=sim.capacities(model,state);local prefixes,suffixes=0,0
 	for _,entry in ipairs(state.affixes) do local mod=model.byId[entry.id];if mod.type=="Prefix" then prefixes=prefixes+1 elseif mod.type=="Suffix" then suffixes=suffixes+1 end end
 	return string.format("Prefixes %d/%d | Suffixes %d/%d",prefixes,caps.Prefix,suffixes,caps.Suffix)
 end
 local function values(model,state)
+	model=sim.context(model,state)
 	local result={}
 	for _,entry in ipairs(state.affixes) do
 		local texts=sim.rolledLines(model.byId[entry.id],entry.range)
@@ -34,6 +36,9 @@ local function values(model,state)
 end
 function M.diff(model,before,after)
 	local old,new=values(model,before),values(model,after);local result={}
+	local oldItem,newItem=sim.context(model,before).item,sim.context(model,after).item
+	if oldItem.baseName~=newItem.baseName then result[#result+1]="Base: "..oldItem.baseName.." -> "..newItem.baseName end
+	if oldItem.itemLevel~=newItem.itemLevel then result[#result+1]="Item level: "..oldItem.itemLevel.." -> "..newItem.itemLevel end
 	for id,text in pairs(old) do if not new[id] then result[#result+1]="- "..text elseif new[id]~=text then result[#result+1]="Changed: "..text.." -> "..new[id] end end
 	for id,text in pairs(new) do if not old[id] then result[#result+1]="+ "..text end end
 	for _,key in ipairs({"rarity","quality","corrupted","destroyed","intangibility","memoryStrands","baseName"}) do if before[key]~=after[key] then result[#result+1]=key..": "..tostring(before[key] or "none").." -> "..tostring(after[key] or "none") end end

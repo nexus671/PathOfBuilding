@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview111" />
+	<Version number="2.67.2-ai.preview112" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="2b665c9cb3d2ee500bb5ee1cee019a82a3e07c3b" />
+	<File name="changelog.txt" part="default" sha1="7a90b34bb28300ddbc75b2e43e269e25b5f5d071" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1488,7 +1488,7 @@
 	<File name="Modules/CraftingEnchants.lua" part="program" sha1="530d69607de5818c37823762938dba0e39158a49" />
 	<File name="Modules/CraftingFossilResults.lua" part="program" sha1="484afaf696ec7915f1dc175badfa7fa60d718b83" />
 	<File name="Modules/CraftingImport.lua" part="program" sha1="832fbad9e3f5b50dbbb5acc78d1a15b8b032f62f" />
-	<File name="Modules/CraftingInspection.lua" part="program" sha1="e4dda6101ea3b139e77bb12ee6df79172ea1d8eb" />
+	<File name="Modules/CraftingInspection.lua" part="program" sha1="01d2a74ad38357ca396acc1ffde6102b0aa15981" />
 	<File name="Modules/CraftingInventory.lua" part="program" sha1="d273ecaae81f4d7a81d65a91ad8e6619a13c0795" />
 	<File name="Modules/CraftingItemStats.lua" part="program" sha1="9311b1009123eed0600491248a5bccd0bff34343" />
 	<File name="Modules/CraftingLeague.lua" part="program" sha1="947365404de9f6008b564714a88967a3a2f3de5d" />
