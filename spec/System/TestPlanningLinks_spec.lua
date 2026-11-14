@@ -44,6 +44,18 @@ describe("Linked planning tools",function()
 		end)
 		filters.generate=original;assert.is_true(ok,err)
 	end)
+	it("detects skill and active weapon changes before recalculation",function()
+		local original=build.skillsTab.socketGroupList
+		build.skillsTab.socketGroupList={{enabled=true,slot="Weapon 1",gemList={{enabled=true,nameSpec="Fireball"}}},{enabled=true,slot="Weapon 1 Swap",gemList={{enabled=true,nameSpec="Arc"}}}}
+		local profile=filters.profile("skills","Skills");profile.rules=filters.generate(build,profile)
+		local revision=build.outputRevision;assert.is_false(dependencies.report(build,profile).stale)
+		build.itemsTab.activeItemSet.useSecondWeaponSet=true
+		assert.equal(revision,build.outputRevision);assert.is_true(dependencies.report(build,profile).stale)
+		profile.rules=filters.generate(build,profile);assert.is_false(dependencies.report(build,profile).stale)
+		build.skillsTab.socketGroupList[2].enabled=false
+		assert.equal(revision,build.outputRevision);assert.is_true(dependencies.report(build,profile).stale)
+		build.itemsTab.activeItemSet.useSecondWeaponSet=false;build.skillsTab.socketGroupList=original
+	end)
 	it("keeps the source filter draft and previous working craft when following a link",function()
 		local project=craft();build.savers.CraftingProjects:Upsert(project);local workspace=require("Modules.PlanningWorkspace").new(build)
 		local profile=filters.profile("filter","Unsaved filter name");workspace:Show("filters",{data={schemaVersion=1,activeId=profile.id,profiles={profile}},dirty=true})

@@ -4,6 +4,18 @@ local parser=require("Modules.LootFilterParser")
 local stable=require("Modules.PlanningData")
 local M={}
 local generated=setmetatable({},{__mode="k"})
+local function skillInputs(build)
+	local result={weaponSet=build.itemsTab.activeItemSet.useSecondWeaponSet and 2 or 1,groups={}}
+	for _,group in ipairs(build.skillsTab.socketGroupList) do
+		local entry={enabled=group.enabled~=false,slot=group.slot or "",gems={}};result.groups[#result.groups+1]=entry
+		for _,gem in ipairs(group.gemList) do
+			local effect=gem.grantedEffect or gem.gemData and gem.gemData.grantedEffect
+			local color=effect and effect.color; if type(color)~="number" and type(color)~="string" then color="" end
+			entry.gems[#entry.gems+1]={enabled=gem.enabled~=false,name=gem.nameSpec or "",color=color}
+		end
+	end
+	return stable.encode(result)
+end
 function M.report(build,profile)
 	local function collect(rules)
 		local groups={};for _,rule in ipairs(rules) do if rule.origin then
@@ -18,8 +30,8 @@ function M.report(build,profile)
 		for _,group in pairs(groups) do table.sort(group.conditions,function(a,b) return stable.encode(a)<stable.encode(b) end) end
 		return groups
 	end
-	local revision=require("Modules.PlanningRevision");local stamp=revision.stamp(build);local cached=generated[build]
-	if not cached or not revision.same(cached.stamp,stamp) then cached={stamp=stamp,profiles={}};generated[build]=cached end
+	local revision=require("Modules.PlanningRevision");local stamp=revision.stamp(build);local skills=skillInputs(build);local cached=generated[build]
+	if not cached or not revision.same(cached.stamp,stamp) or cached.skills~=skills then cached={stamp=stamp,skills=skills,profiles={}};generated[build]=cached end
 	local key=profile.preset..":"..profile.theme;local new=cached.profiles[key]
 	if not new then
 		local start=os.clock();new=collect(filters.generate(build,profile));cached.profiles[key]=new;require("Modules.PlanningPerformance").record(build,"Filter target refresh",os.clock()-start)
