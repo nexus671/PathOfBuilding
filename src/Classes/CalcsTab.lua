@@ -787,6 +787,7 @@ end
 function CalcsTabClass:CalculatePowerStat(selection, original, modified)
 	local originalValue = data.powerStatList.GetFromOutput(original, selection)
 	local modifiedValue = data.powerStatList.GetFromOutput(modified, selection)
+	if originalValue == modifiedValue then return 0 end
 	return originalValue - modifiedValue
 end
 

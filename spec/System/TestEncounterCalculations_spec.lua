@@ -15,6 +15,33 @@ describe("Encounter reporting and comparisons",function()
 			assert.are.equal(value,data.powerStatList.GetFromOutput(output,{stat=key}))
 		end
 	end)
+	it("keeps node power and heatmap colours defined for zero and infinite values",function()
+		local power=common.classes.CalcsTab.CalculatePowerStat;local stat={stat="SecondMinimalMaximumHitTaken"}
+		assert.equal(0,power(nil,stat,{SecondMinimalMaximumHitTaken=math.huge},{SecondMinimalMaximumHitTaken=math.huge}))
+		assert.equal(math.huge,power(nil,stat,{SecondMinimalMaximumHitTaken=math.huge},{SecondMinimalMaximumHitTaken=100}))
+		local color=data.powerStatList.HeatmapIntensity
+		assert.equal(0,color(0,0));assert.equal(0,color(1,math.huge));assert.equal(0,color(0/0,10))
+		assert.near(math.sqrt(1.5),color(math.huge,math.huge),1e-9);assert.near(math.sqrt(0.75),color(5,10),1e-9)
+	end)
+	it("draws zero and infinite power heatmaps without invalid colours",function()
+		local ui=require("Modules.HeadlessUI").install({width=1024,height=768});local viewer=build.treeTab.viewer;local oldTheme=main.nodePowerTheme
+		local ok,message=pcall(function()
+			viewer.showHeatMap=true;build.calcsTab.BuildPower=function() end;main.nodePowerTheme="RED/BLUE"
+			for _,node in pairs(build.spec.nodes) do node.power=node.power or {} end
+			for _,case in ipairs({{single=true,value=0},{single=false,value=0},{single=true,value=math.huge},{single=false,value=math.huge}}) do
+				build.calcsTab.powerStat=case.single and {stat="SecondMinimalMaximumHitTaken"} or nil
+				build.calcsTab.powerMax={singleStat=case.value,offence=case.value,defence=case.value}
+				for _,node in pairs(build.spec.nodes) do node.power.singleStat=case.value;node.power.offence=case.value;node.power.defence=case.value end
+				ui:frame(function(viewport) viewer:Draw(build,viewport,{}) end)
+				local count,highlight=0,false
+				for _,command in ipairs(ui.commands) do for _,value in ipairs(command.color or {}) do
+					assert.is_true(type(value)=="number" and value==value and math.abs(value)<math.huge);count=count+1;if value>1.2 then highlight=true end
+				end end
+				assert.is_true(count>0);if case.value==math.huge then assert.is_true(highlight) end
+			end
+		end)
+		ui:restore();main.nodePowerTheme=oldTheme;assert.is_true(ok,message)
+	end)
 
 	it("calculates distinct node identities with identical modifiers independently",function()
 		local nodes={}

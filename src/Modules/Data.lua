@@ -180,6 +180,14 @@ data.powerStatList = {
 	{ stat="SpellSuppressionChance", label="Spell Suppression Chance" },
 }
 
+function data.powerStatList.HeatmapIntensity(value, maximum)
+	if type(value) ~= "number" or value ~= value or type(maximum) ~= "number" or maximum ~= maximum or maximum <= 0 then return 0 end
+	value = math.max(value, 0)
+	if maximum == math.huge then return value == math.huge and 1.5 ^ 0.5 or 0 end
+	if value == math.huge then return 1.5 ^ 0.5 end
+	return (value / maximum * 1.5) ^ 0.5
+end
+
 ---@param output any Calc output
 ---@param statTable PowerStat Table with stats as in data.powerStatList
 ---@param skipTransform? boolean Whether the stat transform should be skipped. This is useful if you want to e.g. divide two less is better stats

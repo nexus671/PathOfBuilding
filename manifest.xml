@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview102" />
+	<Version number="2.67.2-ai.preview103" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="d069eedf2dcc3647fc1a89c808f6f1e9656e1ae8" />
+	<File name="changelog.txt" part="default" sha1="b220fd52ab988d4cb8aadb53333bf3be181a3fb3" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1128,7 +1128,7 @@
 	<File name="Classes/ButtonControl.lua" part="program" sha1="dd46384fc87d495e7ef5a11803cfc70360ac8bf1" />
 	<File name="Classes/CalcBreakdownControl.lua" part="program" sha1="a21556a505153a81023f0d04ace948d606e2914e" />
 	<File name="Classes/CalcSectionControl.lua" part="program" sha1="ace88981a36381c6ccecbdb76ee1b9b04d1afeaf" />
-	<File name="Classes/CalcsTab.lua" part="program" sha1="b572194703b7db74244032d9d3018bf78967aca0" />
+	<File name="Classes/CalcsTab.lua" part="program" sha1="5a66915be7fbf8b76974b7bc24e20979a8baac12" />
 	<File name="Classes/CheckBoxControl.lua" part="program" sha1="021e4ea29d62a600ab14e69e6ed0ad33832d78ab" />
 	<File name="Classes/ColourPickerControl.lua" part="program" sha1="c635b032cb53d0770a68b2f2e64f0fcd19f6a256" />
 	<File name="Classes/CompareBuySimilar.lua" part="program" sha1="0efebcea57d90cc9169819cd0e344899f369b618" />
@@ -1206,7 +1206,7 @@
 	<File name="Classes/PassiveSpec.lua" part="program" sha1="2186af4673814e9f9e56a8b5f6235e293454a8ee" />
 	<File name="Classes/PassiveSpecListControl.lua" part="program" sha1="24bedd3c52a837bfd19143a6428fe3f88a4211a8" />
 	<File name="Classes/PassiveTree.lua" part="program" sha1="8404aecfad5bd10625f2438d12fc0f9f56726993" />
-	<File name="Classes/PassiveTreeView.lua" part="program" sha1="b2526722216d42c8ca38d57154af22b13fde9b63" />
+	<File name="Classes/PassiveTreeView.lua" part="program" sha1="680a082b54962b4023ebda39a4bcc6520c946fd7" />
 	<File name="Classes/PathControl.lua" part="program" sha1="868c38fd9095317b6721f6932cf06590bd616f13" />
 	<File name="Classes/PlanningBrowserControl.lua" part="program" sha1="1dba27d781935550bffb7a826c91c5b8e563e562" />
 	<File name="Classes/PlanningToolsControl.lua" part="program" sha1="b9e051fd9af5b48ae82e894cfe15546b2e4a9a81" />
@@ -1505,7 +1505,7 @@
 	<File name="Modules/CraftingSockets.lua" part="program" sha1="d90d7bb79eae9234dc23940143519580e238bb5e" />
 	<File name="Modules/CraftingTasks.lua" part="program" sha1="4cf20e586cf547c310d4bb5c715a817d13099fa3" />
 	<File name="Modules/CraftingWorkbench.lua" part="program" sha1="915a9fe8d6d8a1def2792a9ffa4a60f2a5660df3" />
-	<File name="Modules/Data.lua" part="program" sha1="d8bd104ed0cb90c311238b2c2f4bc62dfaa7d69e" />
+	<File name="Modules/Data.lua" part="program" sha1="5b6a767bc7d7cca868c3bc4da80bb4b74505a7a2" />
 	<File name="Modules/DataAbyssJewelLookUpTableHelper.lua" part="program" sha1="c95c4e8af0e9ab9c2abec801e5a279952754cf05" />
 	<File name="Modules/DataJewelFileLoader.lua" part="program" sha1="7f437192153f03eb1fecb4ea00283ead108fbde8" />
 	<File name="Modules/DataLegionLookUpTableHelper.lua" part="program" sha1="ece92c4b6062f627f98ba2454531366b4628abfc" />
