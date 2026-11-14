@@ -146,6 +146,15 @@ local examples={
 }
 function M.scene(profile,build,kind,seed,area,itemLevel,targetRules)
 	local list={}
+	if kind=="Tiered gear" then
+		-- Identical base and rarity make the explicit tier the useful difference.
+		-- These are comparison samples, not a model of drop probabilities.
+		for _,tier in ipairs({0,2,3,4,5}) do
+			local item=M.sample();item.BaseType="Iron Hat";item.Class="Helmets";item.Rarity="Rare";item.Identified=false;item.UnidentifiedItemTier=tier
+			item.AreaLevel=area or 83;item.ItemLevel=itemLevel or 86;list[#list+1]=item
+		end
+		return list
+	end
 	if kind=="Build targets" then for _,rule in ipairs(targetRules or filters.generate(build,profile)) do list[#list+1]=M.sample(rule) end end
 	for i=1,#examples do local example=examples[(i+(seed or 0)-1)%#examples+1];local item=M.sample();item.BaseType=example[1];item.Class=example[2];item.Rarity=example[3] or "Normal";item.AreaLevel=area or 83
 		if kind~="Currency" or item.Class=="Stackable Currency" then list[#list+1]=item end

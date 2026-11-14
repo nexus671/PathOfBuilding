@@ -30,7 +30,7 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Click a simulated item | Explains results and opens matched blocks for editing | More unknown-property guidance |
 | Item configuration | Editable properties and native game-clipboard import | Hidden identities are never inferred |
 | Item history | Session history plus persistent named sets of exact sample properties | More encounter sample presets |
-| Generator level settings | Shared area/item-level controls | Encounter-specific samples |
+| Generator level settings | Shared area/item-level controls and a tiered-gear comparison scene | More encounter-specific samples |
 | Expensive-drop generation | Currency scene and exact custom samples | A separate expensive-item mode based on verified tiers |
 | Preview background | Stone, dark and light scenes | Additional environments |
 | Individual colours | Swatches, RGBA input and live preview | Full colour wheel and saved palettes |

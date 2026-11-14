@@ -28,6 +28,7 @@ function M.Open(build,source,layout,controller)
 	local function sampleDetails(sample,evaluated)
 		local deciding=evaluated and (evaluated.ruleTitle or (evaluated.line and "Filter line "..evaluated.line or evaluated.status=="matched" and "No matching block: default Show" or "Resolve missing properties or filter errors.")) or "Select a drop to inspect the rule."
 		local lines={sample.BaseType or "Unknown base","iLvl "..tostring(sample.ItemLevel or "?").." / area "..tostring(sample.AreaLevel or "?"),evaluated and evaluated.action or "Choose a drop",deciding}
+		if sample.Identified==false and sample.UnidentifiedItemTier~=nil then lines[#lines+1]="Unidentified item tier: "..sample.UnidentifiedItemTier end
 		for _,reason in ipairs(evaluated and evaluated.reasons or {}) do lines[#lines+1]=reason end;return lines
 	end
 	local history=require("Modules.PlanningHistory").new(data,state.history);local tierView;local tierState=state.tierState
@@ -165,7 +166,10 @@ function M.Open(build,source,layout,controller)
 			ui.label(c,"scenePage",x+196,y+height-66,"Page "..scenePage.." / "..pages,13)
 		end
 		function canvas:Draw() local px,py=self:GetPos();visual.floor(px,py,width,height,settings.background)
-			local selectedKey=encode(item);for _,cell in ipairs(cells) do visual.chip(px+cell.x-x,py+cell.y-y,cell.w,cell.h,cell.item,cell.result,selectedKey==cell.key) end
+			local selectedKey=encode(item);for _,cell in ipairs(cells) do
+				local cx,cy=px+cell.x-x,py+cell.y-y;visual.chip(cx,cy,cell.w,cell.h,cell.item,cell.result,selectedKey==cell.key)
+				if sceneKind=="Tiered gear" and cell.item.Identified==false and cell.item.UnidentifiedItemTier~=nil then visual.text(cx+5,cy+2,12,cell.item.UnidentifiedItemTier==0 and "Untiered" or "Tier "..cell.item.UnidentifiedItemTier,"^xEED49C",cell.w-10) end
+			end
 			if #cells==0 then visual.text(px+14,py+height/2,14,"No visible examples. Show hidden drops or choose another scene.","^xAABBBE",width-28) end
 			visual.text(px+14,py+height-26,12,(caption or "EXAMPLE DROPS").."  /  "..visible.." displayed  /  click an item to inspect","^xAABBBE",page=="Simulate" and width-224 or width-28)
 		end
@@ -308,12 +312,12 @@ function M.Open(build,source,layout,controller)
 	elseif page=="Simulate" then
 		local left=208;local groundX=240;local groundW=w-256
 		ui.label(c,"sceneTitle",16,124,"Loot simulator",20)
-		local kinds={"Mixed drops","Build targets","Currency"};local savedSets=profile.sampleSets or {};if #savedSets>0 then kinds[#kinds+1]="Saved examples" elseif sceneKind=="Saved examples" then sceneKind="Mixed drops" end
+		local kinds={"Mixed drops","Build targets","Currency","Tiered gear"};local savedSets=profile.sampleSets or {};if #savedSets>0 then kinds[#kinds+1]="Saved examples" elseif sceneKind=="Saved examples" then sceneKind="Mixed drops" end
 		c.sceneKind=new("DropDownControl"):DropDownControl(ui.anchor,{16,162,left,26},kinds,function(_,value)
-			sceneKind=value;scenePage=1;if value=="Saved examples" then local chosen=savedSets[1];for _,entry in ipairs(savedSets) do if entry.id==sampleSetId then chosen=entry end end;item=copyTable(chosen.samples[1]) end;reopen()
+			sceneKind=value;scenePage=1;if value=="Saved examples" then local chosen=savedSets[1];for _,entry in ipairs(savedSets) do if entry.id==sampleSetId then chosen=entry end end;item=copyTable(chosen.samples[1]) elseif value=="Tiered gear" then item=library.scene(profile,build,value,seed,settings.areaLevel,settings.itemLevel)[1] end;reopen()
 		end);c.sceneKind:SelByValue(sceneKind)
 		button(c,"regenerate",16,202,100,"Regenerate",function() seed=seed+1;scenePage=1;if sceneKind=="Build targets" then transient.filterSceneTargets=nil end;reopen() end)
-		c.regenerate.enabled=sceneKind~="Saved examples";c.regenerate.tooltipText="Regenerate generated scenes. Saved examples keep their exact properties; edit them through Saved sets."
+		c.regenerate.enabled=sceneKind~="Saved examples" and sceneKind~="Tiered gear";c.regenerate.tooltipText="Regenerate mixed, currency or build-target examples. Saved and tier-comparison examples keep their exact properties."
 		button(c,"savedSamples",124,202,100,"Saved sets",function() collection("sampleSets") end)
 		local savedSet
 		if sceneKind=="Saved examples" then
@@ -335,7 +339,8 @@ function M.Open(build,source,layout,controller)
 				local evaluated=parsed and parser.simulate(parsed,drop) or {action="Unknown",status="unknown",styles={},reasons={"Filter is unavailable."}}
 				local action=M.dropOutcome(evaluated)
 				counts[action]=counts[action]+1
-				entries[#entries+1]={id=index,label=(drop.BaseType or "Unknown item").." - "..action,category=action,details=sampleDetails(drop,evaluated),sample=drop}
+				local tier=drop.Identified==false and drop.UnidentifiedItemTier~=nil and (drop.UnidentifiedItemTier==0 and " (untiered)" or " (tier "..drop.UnidentifiedItemTier..")") or ""
+				entries[#entries+1]={id=index,label=(drop.BaseType or "Unknown item")..tier.." - "..action,category=action,details=sampleDetails(drop,evaluated),sample=drop}
 			end
 			local title=string.format("Examples: %d shown, %d minimal, %d hidden, %d unknown",counts.Show,counts.Minimal,counts.Hide,counts.Unknown)
 			require("Classes.PlanningBrowserControl").Open(title,entries,{action="Inspect item",choose=function(entry) rememberSample(entry.sample);scenePage=1;compile();reopen() end})
@@ -347,9 +352,9 @@ function M.Open(build,source,layout,controller)
 			scene=copyTable(savedSet.samples);local encode=require("Modules.PlanningData").encode;local present=false;local current=encode(item);for _,sample in ipairs(scene) do if encode(sample)==current then present=true;break end end
 			if not present then table.insert(scene,1,item);extraTest=true end
 		else local targets=sceneKind=="Build targets" and targetPreview() or nil
-			scene=library.scene(profile,build,sceneKind,seed,settings.areaLevel,settings.itemLevel,targets and (targets.rules or {}));table.insert(scene,1,item) end
+			scene=library.scene(profile,build,sceneKind,seed,settings.areaLevel,settings.itemLevel,targets and (targets.rules or {}));if sceneKind~="Tiered gear" then table.insert(scene,1,item) end end
 		local targets=sceneKind=="Build targets" and transient.filterSceneTargets or nil
-		local caption=savedSet and (extraTest and "SAVED SET + CURRENT TEST" or "SAVED EXAMPLES") or targets and (targets.error and "TARGETS UNAVAILABLE" or not targets.rules and "CHECKING BUILD TARGETS..." or #targets.warnings>0 and "SOME TARGETS NEED REVIEW" or "BUILD TARGETS")
+		local caption=sceneKind=="Tiered gear" and "TIER COMPARISON" or savedSet and (extraTest and "SAVED SET + CURRENT TEST" or "SAVED EXAMPLES") or targets and (targets.error and "TARGETS UNAVAILABLE" or not targets.rules and "CHECKING BUILD TARGETS..." or #targets.warnings>0 and "SOME TARGETS NEED REVIEW" or "BUILD TARGETS")
 		sceneControl("preview",groundX,savedSet and 168 or 120,groundW,h-(savedSet and 230 or 182),scene,true,caption)
 		if targets then c.preview.tooltipText=targets.error or (#(targets.warnings or {})>0 and "Some crafting guides need review. Open linked build targets for details." or "Build target examples update as the build changes.") end
 		button(c,"inspectMatch",w-216,h-96,184,"Inspect matched rules",inspectMatches);c.inspectMatch.enabled=function() return parsed~=nil end

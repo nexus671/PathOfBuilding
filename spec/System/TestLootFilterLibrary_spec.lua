@@ -39,6 +39,16 @@ describe("Visual filter catalogue",function()
 		local unresolved=copyTable(first[1]);unresolved.BaseType="Iron Hat";unresolved.Class="Helmets"
 		assert.equal("unknown",filters.simulate(profile,unresolved).status)
 	end)
+	it("compares explicitly tiered unidentified gear without modeling drop rates",function()
+		local scene=library.scene(filters.profile("test","Test"),build,"Tiered gear",4,72,75)
+		assert.equal(5,#scene)
+		for index,tier in ipairs({0,2,3,4,5}) do
+			local item=scene[index];assert.equal(tier,item.UnidentifiedItemTier);assert.is_false(item.Identified)
+			assert.equal("Iron Hat",item.BaseType);assert.equal(72,item.AreaLevel);assert.equal(75,item.ItemLevel)
+			local result=parser.simulate(parser.parse("Show\n UnidentifiedItemTier >= 4\nHide"),item)
+			assert.equal(tier>=4 and "Show" or "Hide",result.action)
+		end
+	end)
 	it("builds example properties only when requested and reuses the parsed block",function()
 		local p=filters.profile("test","Test");p.template='Show\n BaseType == "Iron Hat"\n ItemLevel >= 83'
 		local entry=library.catalog(p)[1];assert.is_nil(rawget(entry,"sample"));local sample=entry.sample;assert.equal("Iron Hat",sample.BaseType);assert.equal(83,sample.ItemLevel)
