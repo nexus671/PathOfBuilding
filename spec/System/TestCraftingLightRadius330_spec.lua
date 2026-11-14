@@ -58,6 +58,34 @@ describe("3.30 Light Radius modifier ranges",function()
 		assert.is_nil(upgraded.affixes[1].legacyLightRadius)
 		assert.has_no.errors(function() sim.toItem(old,upgraded) end)
 	end)
+	it("retains a legacy roll from either recombination donor and updates it with a Divine Orb",function()
+		local model=sim.model(raw)
+		local oldText=sim.toItem(model,{rarity="MAGIC",affixes={{id=id,range=0.5,legacyLightRadius=true}}}).raw
+		for _,case in ipairs({{raw,oldText,0.1},{raw,oldText,0.9},{oldText,raw,0.1},{oldText,raw,0.9}}) do
+			local source=sim.model(case[1]);local draws=0
+			local result=sim.action(source,source.initial,{method="recombine",donorItem=case[2]},function() draws=draws+1;return draws==1 and case[3] or 0.9 end)
+			assert.equal(1,#result.affixes);assert.is_true(result.affixes[1].legacyLightRadius)
+			assert.matches("15%% increased Light Radius",sim.toItem(source,result).raw)
+			local validated=sim.validateState(source,result)
+			local updated=sim.perform(case[1],{method="divine"},1,validated)
+			assert.is_nil(updated.state.affixes[1].legacyLightRadius)
+			assert.matches("2%d%% increased Light Radius",updated.itemText)
+		end
+	end)
+	it("retains a selected legacy modifier in predictable recombination",function()
+		local model=sim.model(raw)
+		local oldText=sim.toItem(model,{rarity="MAGIC",affixes={{id=id,range=0.5,legacyLightRadius=true}}}).raw
+		local lifeText=sim.toItem(model,{rarity="MAGIC",affixes={{id="IncreasedLife0",range=0.5}}}).raw
+		for _,host in ipairs({0.1,0.9}) do
+			local source=sim.model(oldText)
+			local action={method="recombine_predictable",donorItem=lifeText,selectedMods={left={id},right={"IncreasedLife0"}},reportedSuccessChance=100}
+			local result=sim.action(source,source.initial,action,function() return host end)
+			assert.is_false(result.destroyed or false);local found
+			for _,entry in ipairs(result.affixes) do if entry.id==id then found=entry end end
+			assert.is_true(found.legacyLightRadius);assert.matches("15%% increased Light Radius",sim.toItem(source,result).raw)
+			assert.has_no.errors(function() sim.validateState(source,result) end)
+		end
+	end)
 	it("imports plain copied old and current rolls without changing their values",function()
 		for _,value in ipairs({15,25}) do
 			local text="Rarity: MAGIC\nIron Hat\nItem Level: 86\n18% increased Global Accuracy Rating\n"..value.."% increased Light Radius"
