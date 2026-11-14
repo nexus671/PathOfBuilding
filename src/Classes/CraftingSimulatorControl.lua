@@ -77,6 +77,7 @@ function Panel.Open(build,project,layout)
 	local inspectedId=restored and restored.inspectedId
 	local paletteView
 	local populateAffix
+	local refreshTargetOptions
 	local action,overrideKey,updateCurrency
 	local function actionName()
 		local selected=action()
@@ -93,6 +94,7 @@ function Panel.Open(build,project,layout)
 	controls.targetSummary=new("TextListControl"):TextListControl({"TOPLEFT",nil,"TOPLEFT"},{16,244,416,height-312},nil,{})
 	local targetReason,savedResultRows,warningActive
 	local function refresh(extra)
+		if refreshTargetOptions then refreshTargetOptions() end
 		if action and controls.price then
 			local key=simulator.priceKey(action())
 			if overrideKey and overrideKey~=key then priceOverrides[overrideKey]=controls.price.buf;controls.price:SetText(priceOverrides[key] or "") end
@@ -103,7 +105,7 @@ function Panel.Open(build,project,layout)
 		local lines={inspect.slots(model,state),"Target groups: "..#targets.." ("..(requiredGroups or "all").." required)"}
 		for index,group in ipairs(targets) do
 			local names={}
-			for _,id in ipairs(group.anyOf) do names[#names+1]=model.byId[id] and table.concat(model.byId[id]," / ") or "Unknown modifier" end
+			for _,id in ipairs(group.anyOf) do local mod=simulator.context(model,state).byId[id] or model.byId[id];names[#names+1]=mod and table.concat(mod," / ") or "Unknown modifier" end
 			lines[#lines+1]=index..". "..(group.negate and "Exclude " or "Require ")..(group.atLeast or 1)..": "..table.concat(names," OR ")
 			if group.fractured ~= nil then lines[#lines+1]=group.fractured and "Fractured only" or "Not fractured" end
 			if group.crafted ~= nil then lines[#lines+1]=group.crafted and "Crafted only" or "Not crafted" end
@@ -201,7 +203,7 @@ function Panel.Open(build,project,layout)
 	populateAffix=function(id)
 		local found;for _,entry in ipairs(state.affixes) do if entry.id==id then found=entry end end
 		if not found then return end
-		controls.affixFacts.list=ui.rows(inspect.modDetails(model,id,found),leftWidth-30)
+		controls.affixFacts.list=ui.rows(inspect.modDetails(simulator.context(model,state),id,found),leftWidth-30)
 		controls.affixFacts.controls.scrollBar.offset=0
 		local entries={}
 		for _,method in ipairs(found.crafted and {"remove_crafted","divine"} or found.fractured and {"divine","bench"} or {"divine","annul","bench"}) do
@@ -250,7 +252,8 @@ function Panel.Open(build,project,layout)
 		browser.Open("Starting item versus working item",entries)
 	end)
 	button(controls,"inspectItem",16,338,416,"Inspect affixes and slots",function()
-		local entries={};for _,entry in ipairs(state.affixes) do local id=entry.id;entries[#entries+1]={id=id,label=table.concat(model.byId[id]," / "),category=model.byId[id].type,details=function() return inspect.modDetails(model,id,entry) end} end
+		local current=simulator.context(model,state)
+		local entries={};for _,entry in ipairs(state.affixes) do local id=entry.id;entries[#entries+1]={id=id,label=table.concat(current.byId[id]," / "),category=current.byId[id].type,details=function() return inspect.modDetails(current,id,entry) end} end
 		browser.Open(inspect.slots(model,state),entries,{action="Use as target",choose=function(entry) pickTarget(entry.id);controls.page:SelByValue("Target conditions") end})
 	end)
 	button(controls,"allflame",16,410,416,"Allflame settings (3.29)",function()
@@ -324,11 +327,18 @@ function Panel.Open(build,project,layout)
 		main:OpenPopup(640,310,method=="fossil" and "Fossil combination" or "Craft options",popup,nil,nil,"close")
 	end)
 	label(controls,"targetLabel",16,262,"Target modifier (add several for AND conditions)")
-	local mods={ }
-	for _,entry in ipairs(model.mods) do mods[#mods+1]={label=entry.mod.type.." | "..table.concat(entry.mod," / ").." | iLvl "..entry.mod.level,val=entry.id} end
-	for _,entry in ipairs(model.essences) do mods[#mods+1]={label=entry.name.." guaranteed mod",val=entry.modId} end
-	for id in pairs(model.special) do local mod=model.byId[id]; if mod.type == "Prefix" or mod.type == "Suffix" or mod.type == "Corrupted" or mod.type == "Exarch" or mod.type == "Eater" then mods[#mods+1]={label=mod.type.." | "..table.concat(mod," / "),val=id} end end
-	controls.target=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,282,416,24},mods)
+	controls.target=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{16,282,416,24},{})
+	local targetModel
+	refreshTargetOptions=function()
+		local current=simulator.context(model,state);if current==targetModel then return end;targetModel=current
+		local selected=controls.target:GetSelValue();selected=selected and selected.val
+		local mods={}
+		for _,entry in ipairs(current.mods) do mods[#mods+1]={label=entry.mod.type.." | "..table.concat(entry.mod," / ").." | iLvl "..entry.mod.level,val=entry.id} end
+		for _,entry in ipairs(current.essences) do mods[#mods+1]={label=entry.name.." guaranteed mod",val=entry.modId} end
+		for id in pairs(current.special) do local mod=current.byId[id];if mod.type=="Prefix" or mod.type=="Suffix" or mod.type=="Corrupted" or mod.type=="Exarch" or mod.type=="Eater" then mods[#mods+1]={label=mod.type.." | "..table.concat(mod," / "),val=id} end end
+		controls.target:SetList(mods);controls.target.selIndex=1;if selected then controls.target:SelByValue(selected,"val") end
+	end
+	refreshTargetOptions()
 	button(controls,"targetPicker",16,188,416,"Find target modifiers",function()
 		require("Classes.CraftingModifierControl").Open(model,copyTable(state),{choose=pickTarget,canAlternative=function() return #targets>0 end,alternative=function(id)
 			local group=assert(targets[#targets],"Add a target group first");assert(require("Modules.CraftingModifiers").scope(simulator.context(model,state).byId[id])==(group.scope or "explicit"),"Choose the same explicit/implicit scope, or create a separate group");for _,value in ipairs(group.anyOf) do if value==id then return end end;assert(#group.anyOf<30,"Use up to thirty alternatives per group");group.anyOf[#group.anyOf+1]=id;changed();refresh()
@@ -340,7 +350,7 @@ function Panel.Open(build,project,layout)
 	end)
 	button(controls,"addTarget",16,310,132,"Add target",function()
 		assert(#targets < 6,"Use up to six target groups")
-		local id=controls.target:GetSelValueByKey("val");local kind=model.byId[id].type
+		local id=controls.target:GetSelValueByKey("val");local kind=simulator.context(model,state).byId[id].type
 		targets[#targets+1]={anyOf={id},scope=(kind == "Exarch" or kind == "Eater" or kind == "Corrupted") and "implicit" or "explicit"};changed();refresh()
 	end)
 	button(controls,"alternative",160,310,132,"Add alternative",function()

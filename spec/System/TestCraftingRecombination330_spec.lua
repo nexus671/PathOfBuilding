@@ -45,4 +45,20 @@ describe("3.30 recombination base rules",function()
 		local result=sim.action(evasion,state,action,function() return 0.9 end)
 		assert.is_true(result.destroyed)
 	end)
+	it("uses the recombined base for native target and affix views",function()
+		newBuild()
+		local evasion,armour=sim.model(evasionRaw),sim.model(armourRaw)
+		local state=input(evasion,"IncreasedLife0");local donor=input(armour,"LocalIncreasedPhysicalDamageReductionRating1")
+		local result=sim.action(evasion,state,{method="recombine",donorItem=sim.toItem(armour,donor).raw},function() return 0.9 end)
+		local project={id="recombine-view",title="Recombined armour",slot="Body Armour",startingItem=evasionRaw,goals={},steps={},nativeRecipe={steps={{method="alchemy"}},targets={},requirements={minAffixes=1},initialState=result}}
+		local controls=require("Classes.CraftingSimulatorControl").Open(build,project)
+		local found=false;for _,entry in ipairs(controls.target.list) do if entry.val=="LocalIncreasedPhysicalDamageReductionRating1" then found=true end end
+		assert.is_true(found)
+		controls.itemMods.onClick({line={affixId="LocalIncreasedPhysicalDamageReductionRating1"}})
+		local affix;for _,entry in ipairs(result.affixes) do if entry.id=="LocalIncreasedPhysicalDamageReductionRating1" then affix=entry end end
+		local expected=require("Modules.PlanningUI").rows(require("Modules.CraftingInspection").modDetails(sim.context(evasion,result),"LocalIncreasedPhysicalDamageReductionRating1",affix),386)
+		assert.same(expected,controls.affixFacts.list)
+		controls.inspectItem:Click();assert.is_truthy(main.popups[1]);main:ClosePopup()
+		controls.close:Click();main.popups={}
+	end)
 end)
