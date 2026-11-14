@@ -67,14 +67,14 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		selected=math.min(selected,math.max(1,#draft.steps));refresh()
 	end)
 	button(controls,"update",16,558,256,"Update selected routes",function()
-		local step=assert(draft.steps[selected],"Select a step")
+		local candidate=copyTable(draft);local step=assert(candidate.steps[selected],"Select a step")
 		step.maxAttempts=assert(tonumber(controls.attempts.buf),"Enter an attempt count")
 		local condition=controls.condition:GetSelValue()
 		if condition == "Until final targets and properties match" then assert(#draft.targets > 0 or draft.requirements,"Choose targets or properties in the emulator first");step.untilTargets=#draft.targets > 0 and copyTable(draft.targets) or nil;step.untilRequirements=draft.requirements and copyTable(draft.requirements) or nil
 		elseif condition == "After a successful action" then step.untilTargets=nil;step.untilRequirements=nil end
 		local success,failure=controls.success:GetSelValueByKey("val"),controls.failure:GetSelValueByKey("val")
 		step.onSuccess=success ~= 0 and success or nil;step.onFailure=failure ~= 0 and failure or nil
-		sim.validateRecipe(draft);refresh()
+		sim.validateRecipe(candidate);draft=candidate;refresh()
 	end)
 	controls.note=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,604,0,14},"Loops stop at the simulation action budget. Keeping a recipe does not craft or equip an item.")
 	button(controls,"recovery",288,558,272,"Failure recovery",function()
