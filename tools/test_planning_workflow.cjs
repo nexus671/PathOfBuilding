@@ -120,6 +120,17 @@ async function main(){
   const enchantInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,initialState:enchanted.nativeCrafting.state,limit:1},'inspected');
   assert.ok(enchantInspection.crafting.nativeEngine.nativeStats.Armour<bodyInspection.crafting.nativeEngine.nativeStats.Armour);
   const linksInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'connections',limit:5},'inspected');
+  const colourInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'socket_colour_bench',limit:5},'inspected');
+  const colourService=colourInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.action.count===3);
+  assert.ok(colourService.available);assert.equal(colourService.deterministic,false);assert.deepEqual(colourService.components,{chromatic:20});
+  const coloured=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:colourService.action,seed:104729},'crafted');
+  assert.ok(coloured.nativeCrafting.state.sockets.filter(socket=>socket.color!=='W').length>=3);
+  const taintedInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'tainted_fusing',limit:5},'inspected');
+  const taintedService=taintedInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='tainted_fusing');
+  assert.equal(taintedService.available,false);assert.match(taintedService.unavailableReason,/corrupted/);
+  const corruptedLinked={...coloured.nativeCrafting.state,corrupted:true,sockets:coloured.nativeCrafting.state.sockets.map(socket=>({...socket,group:0}))};
+  const linkedTaintedInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'tainted_fusing',limit:5,initialState:corruptedLinked},'inspected');
+  assert.match(linkedTaintedInspection.crafting.nativeEngine.socketCrafts[0].unavailableReason,/already fully linked/);
   const linksService=linksInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='omen_connections');
   const beastLinksInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'maximum links',limit:5},'inspected');
   const beastLinks=beastLinksInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='beast_max_links');
