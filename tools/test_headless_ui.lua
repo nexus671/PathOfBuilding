@@ -761,6 +761,18 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		saved=nil;control.EditRule(original,function(rule) saved=rule end);ui:click("effects");ui:choose("soundKind","Silent");ui:click("keep");ui:click("keepRule");check(saved)
 		saved=nil;control.Conditions(original,function(rule) saved=rule end);ui:choose("sound","Silent");ui:click("keepRule");check(saved)
 	end
+	do
+		local effects=require("Classes.LootFilterEffectsControl")
+		local sample={BaseType="Iron Hat"}
+		for _,case in ipairs({{styles={PlayAlertSound={"4"}},volume=50},{styles={CustomAlertSound={"test.wav"}},volume=100},{styles={PlayAlertSoundPositional={"5","80"}},volume=80}}) do
+			local saved;local controls=effects.Open(case.styles,sample,function(value) saved=value end)
+			assert(controls.volumeLabel.label()=="^7Alert volume: "..case.volume,"Sound editor displayed an incorrect default volume")
+			ui:click("keep");local key,original=next(case.styles);assert(saved[key] and #saved[key]==#original and saved[key][1]==original[1] and saved[key][2]==original[2],"Opening sound effects changed an untouched alert")
+		end
+		local saved;local controls=effects.Open({PlayAlertSound={"None"},CustomAlertSound={"None"}},sample,function(value) saved=value end)
+		controls.volume:SetVal(0);ui:click("keep")
+		assert(#saved.PlayAlertSound==1 and #saved.CustomAlertSound==1,"Changing volume modified disabled alerts")
+	end
 	ui:click("manage");ui:text("search","Included filter files");ui:click("choose")
 	ui:text("name","rules.filter");ui:text("text",'Hide\n BaseType "Iron Hat"');frame("filter-included-files");ui:click("keep")
 	assert(build.planningWorkspace.cache.filters.layout.snapshot().data.profiles[1].importFiles[1].name=="rules.filter","Included filter file was not kept in the draft")

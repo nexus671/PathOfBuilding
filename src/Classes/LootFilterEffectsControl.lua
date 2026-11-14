@@ -5,7 +5,8 @@ local M={}
 function M.Open(original,sample,onKeep)
 	local c={};local w,h=760,548;local sounds={"Keep current","Silent","Numbered alert","Positional alert","Custom sound","Optional custom sound"};local volumeChanged=false
 	local current=original.PlayAlertSound or original.PlayAlertSoundPositional or original.CustomAlertSound or original.CustomAlertSoundOptional
-	local volume=tonumber(current and current[2]) or 300
+	local isCustom=current and (current==original.CustomAlertSound or current==original.CustomAlertSoundOptional)
+	local volume=tonumber(current and current[2]) or (isCustom and 100 or 50)
 	local function label(key,x,y,title) ui.label(c,key,x,y,title,14) end
 	local function drop(key,x,y,entries) c[key]=new("DropDownControl"):DropDownControl(ui.anchor,{x,y,352,28},entries);return c[key] end
 	label("soundLabel",16,140,"Alert type");drop("soundKind",16,164,sounds)
@@ -35,7 +36,7 @@ function M.Open(original,sample,onKeep)
 		elseif mode>=5 then
 			local path=c.customPath.buf;local valid=path:match("%S") and not path:find('["\r\n]');if strict then assert(valid,"Enter a sound path without quotes or newlines") end
 			if valid then next[mode==5 and "CustomAlertSound" or "CustomAlertSoundOptional"]={path,tostring(volume)} end
-		elseif mode==1 and volumeChanged then for _,key in ipairs({"PlayAlertSound","PlayAlertSoundPositional","CustomAlertSound","CustomAlertSoundOptional"}) do if next[key] then next[key][2]=tostring(volume) end end end
+		elseif mode==1 and volumeChanged then for _,key in ipairs({"PlayAlertSound","PlayAlertSoundPositional","CustomAlertSound","CustomAlertSoundOptional"}) do if next[key] and next[key][1]~="None" then next[key][2]=tostring(volume) end end end
 		if c.iconShape.selIndex==2 then next.MinimapIcon={"-1"} elseif c.iconShape.selIndex>2 then next.MinimapIcon={tostring(c.iconSize:GetSelValueByKey("val")),c.iconColor:GetSelValue(),c.iconShape:GetSelValue()} end
 		if c.beam.selIndex==2 then next.PlayEffect={"None"} elseif c.beam.selIndex>2 then next.PlayEffect={c.beam:GetSelValue()};if c.beamDuration.selIndex==2 then next.PlayEffect[2]="Temp" end end
 		return next

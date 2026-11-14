@@ -13,8 +13,13 @@ function M.apply(raw,settings)
 			-- Do not inject a size into blocks that inherit styling through Continue.
 			line="    SetFontSize "..math.max(tonumber(tokens[2]),settings.minimumFontSize)
 		elseif block and (settings.alertVolume~=nil or settings.alertId) and (key=="PlayAlertSound" or key=="PlayAlertSoundPositional" or key=="CustomAlertSound" or key=="CustomAlertSoundOptional") and tokens[2] then
-			local sound=key:find("Custom",1,true) and '"'..tokens[2]..'"' or tokens[2]
-			line="    "..(settings.alertId and (key=="PlayAlertSoundPositional" and key or "PlayAlertSound") or key).." "..(settings.alertId or sound).." "..(settings.alertVolume or tokens[3] or "300")
+			if tokens[2]~="None" then
+				local custom=key:find("Custom",1,true);local sound=custom and '"'..tokens[2]..'"' or tokens[2]
+				local target=settings.alertId and (key=="PlayAlertSoundPositional" and key or "PlayAlertSound") or key
+				local volume=settings.alertVolume~=nil and settings.alertVolume or tokens[3]
+				if volume==nil and custom and target~=key then volume=100 end
+				line="    "..target.." "..(settings.alertId or sound)..(volume~=nil and " "..volume or "")
+			end
 		elseif block and key=="PlayEffect" then
 			if settings.disableEffects then line="    PlayEffect None" elseif settings.effectColor and tokens[2] and tokens[2]~="None" then line="    PlayEffect "..settings.effectColor..(tokens[3]=="Temp" and " Temp" or "") end
 		elseif block and key=="MinimapIcon" and settings.disableIcons then line="    MinimapIcon -1"

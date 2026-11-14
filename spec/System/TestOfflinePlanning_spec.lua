@@ -32,6 +32,17 @@ describe("Offline planning refinements",function()
 		assert.is_not.equal(variants[1].text,variants[7].text)
 		p.template='Show';assert.is_false(pcall(filters.variants,p))
 	end)
+	it("preserves disabled alerts and effective default volumes during global restyling",function()
+		local decorate=require("Modules.LootFilterDecorators").apply
+		local raw='Show\n PlayAlertSound None\n CustomAlertSound "None"\n Continue\nShow\n PlayAlertSound 4\n Continue\nShow\n CustomAlertSound "test.wav"\n Continue\nShow\n PlayAlertSoundPositional 5 80'
+		local styled=parser.parse(decorate(raw,{alertId=6})).rules
+		assert.same({"None"},styled[1].styles.PlayAlertSound);assert.same({"None"},styled[1].styles.CustomAlertSound)
+		assert.same({"6"},styled[2].styles.PlayAlertSound);assert.same({"6","100"},styled[3].styles.PlayAlertSound)
+		assert.same({"6","80"},styled[4].styles.PlayAlertSoundPositional)
+		local muted=parser.parse(decorate(raw,{alertVolume=0})).rules
+		assert.same({"None"},muted[1].styles.PlayAlertSound);assert.same({"None"},muted[1].styles.CustomAlertSound)
+		assert.same({"4","0"},muted[2].styles.PlayAlertSound);assert.same({"test.wav","0"},muted[3].styles.CustomAlertSound)
+	end)
 	it("keeps imports separate and rejects malformed global settings",function()
 		local decorate=require("Modules.LootFilterDecorators").apply
 		local parsed=parser.parse(decorate('Show\n BaseType == "Iron Hat"\nImport "shared.filter" Optional\nHide\n BaseType == "Iron Ring"',{minimumFontSize=40}))
