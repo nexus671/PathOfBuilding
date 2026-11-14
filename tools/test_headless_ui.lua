@@ -275,6 +275,14 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		assert(main.popups[1].controls.intro.label:find("Applied Vaal",1,true),"A multi-range corruption did not apply")
 		frame("crafting-corruption-independent-ranges");ui:click("close")
 	end
+	do
+		local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W W W\nCorrupted"
+		require("Classes.CraftingSimulatorControl").Open(build,{id="locus-second-ui",title="Second corruption",slot="Helmet",startingItem=raw,goals={},steps={},preferredMethod="locus"})
+		assert(main.popups[1].controls.apply:IsEnabled(),"A once-corrupted item cannot use the altar")
+		frame("crafting-locus-second-ready");ui:click("apply")
+		assert(main.popups[1].controls.intro.label:find("Applied Locus",1,true),"Second corruption did not apply")
+		frame("crafting-locus-second-applied");ui:click("close")
+	end
 
 	do
 		local rgbRaw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: W-W-W"

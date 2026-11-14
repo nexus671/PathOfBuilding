@@ -13,8 +13,11 @@ function M.check(method,state,model)
 	if method=="unveil" then return state.veil~=nil,state.veil and "Choose one of the offered modifiers." or "This item has no pending unveil." end
 	local tainted=method:find("tainted_",1,true)~=nil
 	if tainted and not state.corrupted then return false,"Requires a corrupted item." end
-	if state.corrupted and not tainted and method~="socket_bench" and method~="socket_colour_bench" and method~="socket_white_bench" and method~="beast_talisman_fracture" and method~="ducat_tzamoto" then return false,"Requires an uncorrupted item." end
+	if state.corrupted and not tainted and method~="locus" and method~="socket_bench" and method~="socket_colour_bench" and method~="socket_white_bench" and method~="beast_talisman_fracture" and method~="ducat_tzamoto" then return false,"Requires an uncorrupted item." end
+	if method=="locus" and (not state.corrupted or state.twiceCorrupted) then return false,"Requires a Corrupted item that is not Twice Corrupted." end
 	model=sim.context(model,state);local item=model.item;local kind=item.type
+	if method=="locus" and (state.implicits or model.unresolvedEldritch) then return false,"Second corruption of Eldritch implicits is not modeled." end
+	if method=="locus" and model.unresolvedCorruption and not state.corruptedImplicits then return false,"Identify the existing corruption implicits first." end
 	if (kind=="Flask" or kind=="Tincture") and not flask[method] and method~="ducat_tzamoto" and method~="ducat_kishara" then return false,"This method is unavailable for flasks and tinctures." end
 	local reason=sim.methodReason(model,state,method);if reason then return false,reason end
 	if normal[method] and state.rarity~="NORMAL" then return false,"Requires a normal item." end

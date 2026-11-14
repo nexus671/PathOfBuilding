@@ -41,8 +41,9 @@ function C.extend(M,A,api)
 		model.initial.corruptedImplicits=imported;model.unresolvedCorruption=reason
 		return model
 	end
-	function M.rollCorrupted(model,state,random,count)
-		local chosen,groups={},{}
+	function M.rollCorrupted(model,state,random,count,retained)
+		local chosen,groups=copyTable(retained or {}),{}
+		for _,entry in ipairs(chosen) do for _,group in ipairs(A.data().mods[entry.id].groups) do groups[group]=true end end
 		for _=1,(count or 1) do
 			local eligible,total={},0
 			for _,entry in ipairs(model.corruptions) do
@@ -100,7 +101,12 @@ function C.extend(M,A,api)
 		assert(not input.destroyed and not input.mirrored and not input.veil,"Cannot craft a destroyed or mirrored item or an unfinished unveil")
 		local state=copyTable(input)
 		if method == "vaal" or method == "locus" then
-			assert(not input.corrupted,"The item is already corrupted")
+			if method == "vaal" then assert(not input.corrupted,"The item is already corrupted")
+			else
+				assert(input.corrupted and not input.twiceCorrupted,"The 3.30 altar model requires a Corrupted item that is not Twice Corrupted")
+				assert(not model.unresolvedCorruption or input.corruptedImplicits,"The existing corruption implicits must be identified first")
+				assert(not input.implicits and not model.unresolvedEldritch,"Second corruption of Eldritch implicits is not modeled")
+			end
 			assert(model.item.type ~= "Jewel" and model.item.type ~= "Flask" and model.item.type ~= "Tincture","This Vaal model currently supports ordinary equipment")
 			if method == "locus" then
 				local flags=api.flags(model,state);assert(not (flags.prefixes or flags.suffixes or flags.attack or flags.caster),"Locus meta-modifier interactions need additional validation")
@@ -108,21 +114,20 @@ function C.extend(M,A,api)
 				assert(not model.item.synthesised and model.item.baseName ~= "Sacrificial Garb","This special Locus transformation is not modeled")
 			end
 			local outcome=math.floor(random()*4)
-			if outcome == 0 then M.rollCorrupted(model,state,random,method == "locus" and 2 or 1)
+			if outcome == 0 then
+				local retained=method=="locus" and copyTable(state.corruptedImplicits or {}) or {}
+				if #retained==2 then table.remove(retained,math.floor(random()*2)+1) end
+				M.rollCorrupted(model,state,random,1,retained)
 			elseif outcome == 1 then
 				local white={};for i,socket in ipairs(state.sockets or {}) do if socket.color == "W" then white[#white+1]=i end end
 				if #white > 0 then
 					local forced=white[math.floor(random()*#white)+1]
 					for _,i in ipairs(white) do if method == "locus" or i == forced or random() < 0.1 then state.sockets[i].color=({"R","G","B"})[math.floor(random()*3)+1] end end
 				end
-			elseif outcome == 2 then
+			elseif outcome == 2 and method ~= "locus" then
 				-- Keep fractures and metamod-protected affixes on the rare reroll.
 				state.corrupted=false;local flags=api.flags(model,state);api.clear(model,state);state.rollBlock={attack=flags.attack,caster=flags.caster}
 				state.rarity="RARE"
-				if method == "locus" then
-					local choices={};for _,key in ipairs({"shaper","elder","adjudicator","basilisk","crusader","eyrie"}) do if model.item.base.influenceTags and model.item.base.influenceTags[key] then choices[#choices+1]=key end end
-					if #choices > 0 then state.influences={choices[math.floor(random()*#choices)+1]} end
-				end
 				while #state.affixes < M.capacities(model,state).total do
 					local ok=pcall(api.add,model,state,random);if not ok then break end
 				end
@@ -130,6 +135,7 @@ function C.extend(M,A,api)
 			elseif method == "locus" then state.destroyed=true;state.affixes={};state.implicits=nil;state.corruptedImplicits=nil
 			end
 			state.corrupted=true;state.imprint=nil
+			if method=="locus" and not state.destroyed then state.twiceCorrupted=true end
 		else
 			assert(input.corrupted and state.rarity == "RARE","Tainted affix currency requires a corrupted rare item")
 			state.corrupted=false
@@ -141,7 +147,6 @@ function C.extend(M,A,api)
 		return state
 	end
 	M.limits[#M.limits+1]="The equipment Vaal model includes the four outcome branches and current non-white socket conversion. Rare-brick socket/link rerolls are not modeled; tainted affix outcomes use a 50/50 assumption."
-	M.limits[#M.limits+1]="Locus models destruction and paired implicits for ordinary equipment. Its rare outcome assumes equal influence selection. Fractured, synthesised, meta-modified and special transformation bases are excluded."
-	M.limits[#M.limits+1]="The 3.30 Twice Corrupted marker is recognised and preserved. This does not add 3.30 second-corruption outcomes to the 3.29 crafting rules."
+	M.limits[#M.limits+1]="The 3.30 Locus model requires a Corrupted item and adds a second corruption. Outcome chances, socket conversion and selection of a replaced implicit are assumptions; uncorrupted altar use is not modeled. Fractured, synthesised, meta-modified and special transformation bases are excluded."
 end
 return C

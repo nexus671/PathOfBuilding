@@ -197,7 +197,8 @@ describe("State-aware crafting choices",function()
 		end
 		local m=model("Rusted Sword")
 		for _,method in ipairs({"vaal","locus"}) do for seed=1,10 do
-			local result=sim.perform(m.raw,{method=method},seed)
+			local initial=copyTable(m.initial);if method=="locus" then initial.corrupted=true end
+			local result=sim.perform(m.raw,{method=method},seed,initial)
 			if result.state.corruptedImplicits then
 				local before=copyTable(result.state);local expected={}
 				for _,entry in ipairs(result.state.corruptedImplicits) do for _,line in ipairs(sim.rolledLines(m.byId[entry.id],entry.range)) do expected[#expected+1]=line end end

@@ -313,6 +313,11 @@ async function main(){
   assert.equal(unveiledDivine.nativeCrafting.state.affixes[0].id,'JunMasterVeiledJewelElusiveEffect');
   const reopenedUnveiled=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:unveiledDivine.nativeCrafting.itemText,limit:5},'inspected');
   assert.equal(reopenedUnveiled.crafting.nativeEngine.initialState.affixes[0].id,'JunMasterVeiledJewelElusiveEffect');
+  const altarItem='Rarity: NORMAL\nIron Hat\nItem Level: 86\nSockets: W W W\nCorrupted';
+  const secondCorruption=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:altarItem,action:{method:'locus'},seed:1},'crafted');
+  assert.equal(secondCorruption.nativeCrafting.warnings[0].code,'locus_assumptions');
+  assert.ok(secondCorruption.nativeCrafting.state.destroyed || secondCorruption.nativeCrafting.state.twiceCorrupted);
+  if(!secondCorruption.nativeCrafting.state.destroyed) assert.match(secondCorruption.nativeCrafting.itemText,/Twice Corrupted/);
   const starterAtlas={id:'starter-atlas',title:'Starter Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'starter'}};
   const atlasSearch=await queued('search_atlas_nodes',{baseRevision:context.revision,version:'3.29.1',query:'Essence',limit:10},'atlas');
   const atlasTargets=atlasSearch.atlas.matches.slice(0,3).map(node=>node.id);assert.equal(atlasTargets.length,3);
