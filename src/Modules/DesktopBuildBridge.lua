@@ -541,7 +541,7 @@ function M.poll(build, force)
 			assert(profile,"Choose a loot-filter profile")
 			profile=filters.validate({schemaVersion=1,activeId=profile.id,profiles={profile}}).profiles[1]
 			if request.kind=="generate_loot_filter" then
-				profile.rules=filters.generate(build,profile);M.status={id=request.id,status="generated",profile=profile}
+				local rules,warnings=filters.generate(build,profile);profile.rules=rules;M.status={id=request.id,status="generated",profile=profile,warnings=warnings}
 			elseif request.kind=="test_loot_filter" then
 				assert(type(request.sample)=="table","Supply drop properties");M.status={id=request.id,status="tested",result=filters.simulate(profile,request.sample)}
 			else local raw,report=filters.compile(profile);M.status={id=request.id,status="exported",filter=raw,report=report} end

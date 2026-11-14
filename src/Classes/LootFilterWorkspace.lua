@@ -34,6 +34,13 @@ function M.Open(build,source,layout,controller)
 	local function draft(field) dirty=true;history:record(data,field);ui.draft(build,"filters") end
 	local function snapshot() return {data=data,selected=profile and profile.id,page=page,category=category,scope=scope,query=query,rule=selected,sample=item,dirty=dirty,seed=seed,sceneKind=sceneKind,showHidden=showHidden,history=history:snapshot(),tierState=tierView and tierView.snapshot() or tierState,sceneSettings=settings,sampleHistory=samples,sampleSetId=sampleSetId,scenePage=scenePage} end
 	local function reopen() layout.navigate("filters",snapshot()) end
+	local function generatePickups()
+		local rules,warnings=filters.generate(build,profile);profile.rules=rules;draft();reopen()
+		if #warnings>0 then
+			local entries={};for _,warning in ipairs(warnings) do entries[#entries+1]={id=warning.origin,label=warning.title,details={warning.message}} end
+			require("Classes.PlanningBrowserControl").Open("Review build pickups",entries)
+		end
+	end
 	local function replaceProfile(next)
 		for i,value in ipairs(data.profiles) do if value.id==next.id then data.profiles[i]=next end end;profile=next;draft();reopen()
 	end
@@ -149,7 +156,7 @@ function M.Open(build,source,layout,controller)
 			elseif entry.id=="changes" then require("Classes.PlanningBrowserControl").Open("Filter changes",require("Modules.LootFilterEditing").review(saver.data,data))
 			elseif entry.id=="links" and profile then
 				refreshDependencies();require("Classes.PlanningBrowserControl").Open("Linked filter targets",dependencies.entries,{action="Open source",choose=function(entry) main:ClosePopup();require("Modules.LootFilterDependencies").open(build,layout,entry.origin) end,closeOnChoose=false,
-					secondary={label="Refresh build pickups",run=function() main:ClosePopup();profile.rules=filters.generate(build,profile);draft();reopen() end}})
+					secondary={label="Refresh build pickups",run=function() main:ClosePopup();generatePickups() end}})
 			elseif entry.id=="campaign" and profile then require("Classes.LootFilterCampaignControl").Open(build,profile.campaign,function(value) profile.campaign=value;draft();reopen() end)
 			elseif entry.id=="structure" and profile then require("Classes.LootFilterStructureControl").Open(profile,function(rule) editRule(rule,keepRule) end)
 			elseif (entry.id=="sampleSets" or entry.id=="palettes") and profile then collection(entry.id)
@@ -177,7 +184,7 @@ function M.Open(build,source,layout,controller)
 		c.preset=new("DropDownControl"):DropDownControl(ui.anchor,{16,306,left/2-6,26},{{label="Campaign",val="campaign"},{label="Early maps",val="early_maps"},{label="Endgame",val="endgame"}},function(_,value) profile.preset=value.val;draft() end);c.preset:SelByValue(profile.preset,"val")
 		c.mode=new("DropDownControl"):DropDownControl(ui.anchor,{28+left/2-6,306,left/2-6,26},{"Normal","Ruthless"},function(_,value) profile.mode=value;draft();reopen() end);c.mode:SelByValue(profile.mode)
 		ui.label(c,"strictLabel",16,346,"Strictness",12);c.strictness=new("DropDownControl"):DropDownControl(ui.anchor,{16,364,left,26},filters.strictness,function(index) profile.strictness=index-1;draft();reopen() end);c.strictness.selIndex=profile.strictness+1
-		button(c,"generate",16,406,left,"Auto-adjust for this build",function() profile.rules=filters.generate(build,profile);draft();reopen() end)
+		button(c,"generate",16,406,left,"Auto-adjust for this build",generatePickups)
 		c.generate.label=function() return dependencies and dependencies.stale and "Refresh build pickups *" or "Auto-adjust for this build" end
 		c.generate.tooltipText="* means linked targets changed. Profile tools > Linked build targets shows the sources. Refreshing preserves personal overrides."
 		button(c,"customize",16,448,left,"Customize pickups  >",function() page="Customize";reopen() end)

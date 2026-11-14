@@ -78,7 +78,7 @@ function M.rule(id,title,conditions,origin,theme)
 	return {id=id,title=title,text=table.concat(lines,"\n"),enabled=true,origin=origin}
 end
 function M.generate(build,profile)
-	local result={};local used={};local ids={}
+	local result={};local used={};local ids={};local warnings={}
 	for _,rule in ipairs(profile.rules) do if not rule.origin then ids[rule.id]=true end end
 	local function add(id,title,conditions,origin)
 		local signature=table.concat(conditions,"\n");if used[signature] then return end;used[signature]=true
@@ -131,6 +131,10 @@ function M.generate(build,profile)
 		if ok then for _,entry in ipairs(entries) do if not removed[entry.name] then
 			add("craft-resource-"..project.id.."-"..require("sha1")(entry.key):sub(1,12),entry.name,{"BaseType == "..quote(entry.name)},"craft:"..project.id)
 		end end end
+		if not ok then
+			warnings[#warnings+1]={origin="craft:"..project.id,title=project.title,message="Could not inspect this recipe's resources. Previous recipe pickups were kept; review the crafting guide."}
+			for _,rule in ipairs(profile.rules) do if rule.origin=="craft:"..project.id and rule.id:match("^craft%-resource%-") and not ids[rule.id] then result[#result+1]=copyTable(rule);ids[rule.id]=true end end
+		end
 	end end
 	local aliases={chaos="Chaos Orb",divine="Divine Orb",divines="Divine Orb",alchemy="Orb of Alchemy",alteration="Orb of Alteration",exalt="Exalted Orb",annul="Orb of Annulment",fusing="Orb of Fusing",chromatic="Chromatic Orb",jeweller="Jeweller's Orb"}
 	for name in pairs(names) do aliases[name:lower()]=name;aliases[name:lower().."s"]=name end
@@ -146,7 +150,7 @@ function M.generate(build,profile)
 	end
 	local rules={};for _,rule in ipairs(profile.rules) do if not rule.origin then rules[#rules+1]=copyTable(rule) end end
 	for _,rule in ipairs(result) do rules[#rules+1]=rule end
-	return rules
+	return rules,warnings
 end
 -- Only rewrite BaseType token lists. Removing every value removes the whole rule,
 -- rather than broadening a Hide block. Original imports remain saved verbatim.

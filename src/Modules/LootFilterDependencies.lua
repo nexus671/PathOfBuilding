@@ -34,16 +34,20 @@ function M.report(build,profile)
 	if not cached or not revision.same(cached.stamp,stamp) or cached.skills~=skills then cached={stamp=stamp,skills=skills,profiles={}};generated[build]=cached end
 	local key=profile.preset..":"..profile.theme;local new=cached.profiles[key]
 	if not new then
-		local start=os.clock();new=collect(filters.generate(build,profile));cached.profiles[key]=new;require("Modules.PlanningPerformance").record(build,"Filter target refresh",os.clock()-start)
+		local start=os.clock();local rules,warnings=filters.generate(build,profile);new={groups=collect(rules),warnings=warnings or {}}
+		if #new.warnings==0 then cached.profiles[key]=new end
+		require("Modules.PlanningPerformance").record(build,"Filter target refresh",os.clock()-start)
 	end
 	local old=collect(profile.rules);local result={stale=false,linked=0,entries={}}
-	local origins={};for key in pairs(old) do origins[key]=true end;for key in pairs(new) do origins[key]=true end
+	local origins,warningByOrigin={},{};for key in pairs(old) do origins[key]=true end;for key in pairs(new.groups) do origins[key]=true end
+	for _,warning in ipairs(new.warnings) do origins[warning.origin]=true;warningByOrigin[warning.origin]=warning end
 	for origin in pairsSortByKey(origins) do
-		local before,after=old[origin],new[origin];local status=not before and "New target" or not after and "Source removed / no longer needed" or stable.encode(before.conditions)~=stable.encode(after.conditions) and "Changed" or "Current"
+		local before,after=old[origin],new.groups[origin];local warning=warningByOrigin[origin];local status=warning and "Needs review" or not before and "New target" or not after and "Source removed / no longer needed" or stable.encode(before.conditions)~=stable.encode(after.conditions) and "Changed" or "Current"
 		if before then result.linked=result.linked+#before.rules end
 		if status~="Current" then result.stale=true end
 		local lines={status,"Source: "..origin,"Refreshing replaces generated pickups and preserves personal overrides.","Existing pickups: "..table.concat(before and before.rules or {},", "),"Current targets: "..table.concat(after and after.rules or {},", ")}
-		result.entries[#result.entries+1]={id=origin,label=(after and after.rules[1] or before.rules[1]).." | "..status,category=status,details=lines,origin=origin,status=status}
+		if warning then lines[#lines+1]=warning.message end
+		result.entries[#result.entries+1]={id=origin,label=(after and after.rules[1] or before and before.rules[1] or warning.title).." | "..status,category=status,details=lines,origin=origin,status=status}
 	end
 	-- An entirely manual filter has no previous generation to become out of date.
 	result.stale=result.linked>0 and result.stale;return result

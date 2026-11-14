@@ -42,6 +42,27 @@ describe("Linked planning tools",function()
 		profile.rules=filters.generate(build,profile);names={};for _,rule in ipairs(profile.rules) do names[rule.title]=true end
 		assert.is_nil(names["Omen of Connections"]);assert.is_true(names["Orb of Scouring"])
 	end)
+	it("preserves recipe pickups and reports inspection failures",function()
+		local project=craft();project.nativeRecipe={steps={{method="omen_connections"}},targets={},requirements={links=4}}
+		build.savers.CraftingProjects:Upsert(project);local profile=filters.profile("review-craft","Review craft");profile.rules=filters.generate(build,profile)
+		project.nativeRecipe.steps={{method="omen_connections"},{method="scour"}};build.savers.CraftingProjects:Upsert(project)
+		local sim=require("Modules.CraftingSimulator");local original=sim.model;sim.model=function() error("fixture failure") end
+		local ok,rules,warnings=pcall(filters.generate,build,profile)
+		local reportOk,report=pcall(dependencies.report,build,profile);sim.model=original
+		assert.is_true(ok);assert.equal(1,#warnings);assert.equal("craft:helmet",warnings[1].origin)
+		assert.is_true(reportOk,report);assert.is_true(report.stale);assert.equal("Needs review",report.entries[1].status)
+		local found=false;for _,rule in ipairs(rules) do if rule.title=="Omen of Connections" then found=true end end;assert.is_true(found)
+		report=dependencies.report(build,profile);assert.equal("Changed",report.entries[1].status)
+	end)
+	it("shows recipe inspection warnings when refreshing pickups in the workspace",function()
+		local project=craft();project.nativeRecipe={steps={{method="omen_connections"}},targets={},requirements={links=4}}
+		build.savers.CraftingProjects:Upsert(project);local profile=filters.profile("review-ui","Review UI");profile.rules=filters.generate(build,profile)
+		local workspace=require("Modules.PlanningWorkspace").new(build);workspace:Show("filters",{data={schemaVersion=1,activeId=profile.id,profiles={profile}}})
+		project.nativeRecipe.steps={{method="omen_connections"},{method="chaos"}};build.savers.CraftingProjects:Upsert(project)
+		local sim=require("Modules.CraftingSimulator");local original=sim.model;sim.model=function() error("fixture failure") end
+		local ok,err=pcall(function() workspace.controls.generate:Click();assert.is_truthy(main.popups[1].controls.results) end)
+		sim.model=original;assert.is_true(ok,err)
+	end)
 	it("leaves entirely manual filters untracked and preserves personal overrides on refresh",function()
 		build.savers.CraftingProjects:Upsert(craft());local profile=filters.profile("filter","Filter");profile.rules={filters.rule("mine","Personal",{'BaseType == "Chaos Orb"'})}
 		assert.is_false(dependencies.report(build,profile).stale);local original=copyTable(profile.rules[1]);profile.rules=filters.generate(build,profile);assert.same(original,profile.rules[1])
