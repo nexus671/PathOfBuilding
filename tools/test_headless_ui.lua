@@ -89,7 +89,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(next(workspace.controls.canvas.matches),"Mechanic selection did not highlight nodes")
 	local map=workspace.controls.canvas;local mx,my=map:GetPos();local oldY=map.centerY
 	ui:clickAt(mx+map.width-70,my+map.height-60);assert(map.centerY~=oldY,"Minimap did not navigate");frame("atlas-minimap")
-	ui:click("routes");frame("atlas-route-options");ui:click("close")
+	ui:click("routes");local routeText="";for _,line in ipairs(main.popups[1].controls.details.list) do routeText=routeText..tostring(line[1] or "") end;assert(routeText:find("New allocations:",1,true) and routeText:find("[",1,true),"Route comparison omitted allocated nodes");frame("atlas-route-options");ui:click("close")
 	ui:click("tools");ui:text("search","Strategy");ui:click("choose");frame("atlas-presets");ui:click("close")
 	local divider=workspace.controls.splitter;local dx,dy=divider:GetPos();local priorWidth=workspace.controls.canvas.width
 	ui.cursorX,ui.cursorY=dx+5,dy+50;ui:dispatch(build,{{type="KeyDown",key="LEFTBUTTON"}});ui.cursorX=ui.cursorX-24;ui:dispatch(build,{{type="KeyUp",key="LEFTBUTTON"}})

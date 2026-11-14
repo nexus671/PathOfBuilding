@@ -332,8 +332,12 @@ function Panel.Open(build,source,layout)
 	controls.routes=button(338,height-86,86,"Routes",function()
 		local target=assert(controls.canvas.focus,"Select a node first");local entries={}
 		for i,route in ipairs(strategy.routes(current(),target,avoided,preferred)) do
-			local details={route.label,route.cost.." new points","Uses the current point budget and avoided nodes."}
-			for _,id in ipairs(route.added) do local node=controls.canvas.tree.nodes[id];if node.kind~="small" then details[#details+1]=node.name end end
+			local details={route.label,route.cost.." new points","Uses the current point budget and avoided nodes.","New allocations:"}
+			for _,id in ipairs(route.added) do
+				local node=controls.canvas.tree.nodes[id];details[#details+1]=node.name.." ["..id.."]"
+				for _,stat in ipairs(node.stats) do details[#details+1]="  "..stat end
+			end
+			if #route.added==0 then details[#details+1]="Target is already allocated." end
 			entries[#entries+1]={id=i,label=route.label.." | +"..route.cost,details=details,plan=route.plan}
 		end
 		browser.Open("Compare Atlas routes",entries,{action="Use route",choose=function(entry) change(entry.plan) end})
