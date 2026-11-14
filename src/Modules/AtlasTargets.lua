@@ -3,10 +3,7 @@ local atlas=require("Modules.AtlasPlanner")
 local strategy=require("Modules.AtlasStrategy")
 local identity=require("Modules.PlanningData")
 local M={jobs=setmetatable({},{__mode="k"})}
-function M.blocking(node)
-	local lines={};for _,stat in ipairs(node.stats or {}) do local text=stat:lower();if text:find("no chance to contain",1,true) or text:find("cannot contain",1,true) then lines[#lines+1]=stat end end
-	return lines
-end
+M.blocking=strategy.blocking
 function M.toggle(plan,id,kind)
 	assert(kind=="desired" or kind=="avoided","Choose desired or avoided")
 	local next=atlas.validate(plan);next.desired=next.desired or {};next.avoided=next.avoided or {}

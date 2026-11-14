@@ -18,6 +18,10 @@ function M.hasMechanic(node,name)
 	if name=="Maps" then return M.mechanic(node)=="Maps" end
 	return matches((node.name.." "..table.concat(node.stats," ")):lower(),name)
 end
+function M.blocking(node)
+	local lines={};for _,stat in ipairs(node.stats or {}) do local text=stat:lower();if text:find("no chance to contain",1,true) or text:find("cannot contain",1,true) then lines[#lines+1]=stat end end
+	return lines
+end
 function M.costs(plan,avoid)
 	local tree=atlas.tree(plan.version);local blocked={};for _,id in ipairs(atlas.exclusions(plan,avoid)) do blocked[id]=true end
 	local costs={[tree.start]=0};local queue={tree.start}
@@ -74,7 +78,7 @@ function M.presets(plan)
 	local result={}
 	for _,mechanic in ipairs(M.mechanics) do
 		local targets={};local matches=M.results(plan,"",mechanic)
-		for _,entry in ipairs(matches) do if entry.node.kind=="notable" then targets[#targets+1]=entry.id;if #targets==3 then break end end end
+		for _,entry in ipairs(matches) do if entry.node.kind=="notable" and #M.blocking(entry.node)==0 then targets[#targets+1]=entry.id;if #targets==3 then break end end end
 		if #targets>0 then
 			local nextPlan=copyTable(plan);local kept={}
 			for _,target in ipairs(targets) do local ok,value=pcall(atlas.connect,nextPlan,{target});if ok then nextPlan=value;kept[#kept+1]=target end end

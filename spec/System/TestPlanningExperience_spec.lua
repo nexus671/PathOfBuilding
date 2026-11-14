@@ -6,6 +6,15 @@ describe("Planning experience queries",function()
 	local function empty(version) return {id="test",title="Strategy",version=version or "3.29.1",budget=138,nodes={},notes=""} end
 	before_each(function() newBuild() end)
 	after_each(function() main.popups={} end)
+	it("does not recommend mechanic-blocking notables as starting targets",function()
+		local targets=require("Modules.AtlasTargets")
+		local routes=strategy.presets(empty("3.29.3"));assert.is_true(#routes>0)
+		for _,route in ipairs(routes) do
+			for _,id in ipairs(route.targets) do
+				assert.equal(0,#targets.blocking(atlas.tree(route.plan.version).nodes[id]),route.label..": "..id)
+			end
+		end
+	end)
 	it("finds an alternative when a target is two allocations away",function()
 		local plan=atlas.connect(empty(),{42692});local target=52858
 		local shortest,added=atlas.connect(plan,{target});assert.equal(2,#added)
