@@ -727,7 +727,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	do
 		local rule={id="rare-example",title="Rare modifiers",text='Show\n Rarity Rare\n HasExplicitMod >=2 "Haast" "Ephij"'}
 		local example=require("Modules.LootFilterLibrary").sample(rule);assert(example.BaseType=="Iron Hat" and example.Identified and #example.HasExplicitMod==2,"Generic rare example did not use equipment and matching modifiers")
-		require("Classes.LootFilterControl").EditRule(rule,function() end);frame("filter-rare-example");ui:click("cancel")
+		require("Classes.LootFilterControl").EditRule(rule,function() end);assert(main.popups[1].controls.textHex.buf=="FFFF77FF","Rare example did not show its default text colour");frame("filter-rare-example");ui:click("cancel")
 	end
 	do
 		local saved;require("Classes.LootFilterControl").Conditions({id="count",title="Modifier count",text='Hide\n HasExplicitMod >=2 "Haast" "Ephij"'},function(rule) saved=rule end)

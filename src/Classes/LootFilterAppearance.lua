@@ -16,7 +16,8 @@ function M.Open(rule,save,conditions,options)
 	c.preview=new("Control"):Control(ui.anchor,{16,100,w-32,112})
 	function c.preview:Draw() local x,y=self:GetPos();local width,height=self:GetSize();visual.floor(x,y,width,height);visual.chip(x+width*0.2,y+8,width*0.6,height-8,sample,{action=c.action:GetSelValue(),styles=parser.parse(nextRule().text).rules[1].styles}) end
 	local palette={"FFFFFF","F2D59A","EF6A62","FFAE57","61D8ED","7BD89B","7C9FF2","BE8CE8"}
-	local columns={{"textHex","Text colour","SetTextColor",{255,255,255,255}},{"borderHex","Border colour","SetBorderColor",{120,140,150,255}},{"backgroundHex","Background","SetBackgroundColor",{8,12,14,255}}}
+	local defaultText=copyTable(visual.defaultTextColor(sample));defaultText[4]=255
+	local columns={{"textHex","Text colour","SetTextColor",defaultText},{"borderHex","Border colour","SetBorderColor",{120,140,150,255}},{"backgroundHex","Background","SetBackgroundColor",{8,12,14,255}}}
 	local column=math.floor((w-64)/3);local custom={}
 	local function decode(value)
 		value=value:gsub("^#","");if not value:match("^%x+$") or #value~=6 and #value~=8 then return nil end

@@ -3,6 +3,13 @@ local ui=require("Modules.PlanningUI")
 local M={}
 M.colors={Cyan={0.2,0.8,0.95},Red={0.95,0.25,0.2},Green={0.35,0.9,0.4},Blue={0.3,0.5,1},White={1,1,1},Yellow={1,0.9,0.2},Orange={1,0.55,0.2},Pink={1,0.4,0.75},Purple={0.7,0.4,1},Brown={0.6,0.4,0.2},Grey={0.6,0.6,0.6}}
 local images={}
+-- Rarity and item-class colours match PoB's native colourCodes defaults.
+local rarityColors={Normal={200,200,200},Magic={136,136,255},Rare={255,255,119},Unique={175,96,37}}
+local classColors={["Stackable Currency"]={170,158,130},Currency={170,158,130},["Skill Gems"]={26,162,155},["Support Gems"]={26,162,155}}
+function M.defaultTextColor(item)
+	if item.Rarity=="Normal" and classColors[item.Class] then return classColors[item.Class] end
+	return rarityColors[item.Rarity] or {220,225,215}
+end
 function M.image(path) if not images[path] then local image=NewImageHandle();image:Load(path);images[path]=image end;return images[path] end
 function M.box(x,y,w,h,color) SetDrawColor(color);DrawImage(nil,x,y,w,h) end
 function M.text(x,y,size,value,color,width)
@@ -54,7 +61,7 @@ function M.chip(x,y,w,h,item,result,selected)
 	if selected then M.box(left-3,top-3,width+6,38,"^xEAD29D") end
 	color("SetBorderColor",{100,110,115});DrawImage(nil,left-1,top-1,width+2,34)
 	color("SetBackgroundColor",{8,12,14});DrawImage(nil,left,top,width,32)
-	color("SetTextColor",{220,225,215});DrawString(x+w/2,top+(32-size)/2,"CENTER_X",size,"VAR",name)
+	color("SetTextColor",M.defaultTextColor(item));DrawString(x+w/2,top+(32-size)/2,"CENTER_X",size,"VAR",name)
 	if unknown then M.text(x+w-20,y+2,14,"?","^xE5B66A") end
 	local icon=styles.MinimapIcon;if icon and tonumber(icon[1]) and tonumber(icon[1])>=0 and not hidden then
 		local color=M.colors[icon[2]] or M.colors.White;SetDrawColor(unpack(color));local cx,cy=left+width-3,top-10
