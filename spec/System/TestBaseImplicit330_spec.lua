@@ -59,6 +59,24 @@ describe("3.30 base implicits",function()
 		local restored=require("Modules.CraftingInventory").validate(decoded)[1]
 		assert.equal(result.itemText,sim.toItem(sim.model(raw),restored.state).raw)
 	end)
+	it("applies catalyst quality to generated and Blessed-updated base implicits",function()
+		local raw="Rarity: NORMAL\nAmethyst Ring\nItem Level: 1";local model=sim.model(raw)
+		local quality=sim.perform(raw,{method="catalyst",catalyst=8},1).state;local generated=sim.toItem(model,quality)
+		local line=generated.implicitModLines[1];assert.equal(1.2,generated:GetModLineValueScalar(line,"IMPLICIT"))
+		assert.equal("+19% to Chaos Resistance",StripEscapes(itemLib.formatModLine(line,false)))
+		local old="Rarity: NORMAL\nAmethyst Ring\nItem Level: 86\nCatalyst: Prismatic\nCatalystQuality: 20\nImplicits: 1\n+23% to Chaos Resistance"
+		model=sim.model(old);local updated=sim.action(model,model.initial,{method="blessed"},function() return 0 end)
+		local item=sim.toItem(model,updated);line=item.implicitModLines[1]
+		assert.equal("+15% to Chaos Resistance",StripEscapes(itemLib.formatModLine(line,false)))
+		local restored=require("Modules.CraftingInventory").capture({id="ring",title="Ring",slot="Ring 1",startingItem=old,goals={},steps={}},updated)
+		local reloaded=sim.toItem(sim.model(old),restored.state)
+		assert.equal("+15% to Chaos Resistance",StripEscapes(itemLib.formatModLine(reloaded.implicitModLines[1],false)))
+	end)
+	it("preserves the tags on an unrelated imported implicit",function()
+		local raw="Rarity: NORMAL\nAmethyst Ring\nItem Level: 1\nImplicits: 1\n{tags:attribute}+10 to Strength"
+		local model=sim.model(raw);local state=sim.perform(raw,{method="catalyst",catalyst=8},1).state
+		local item=sim.toItem(model,state);assert.same({"attribute"},item.implicitModLines[1].modTags)
+	end)
 	it("keeps an updated implicit valid through recombination and later crafting",function()
 		local raw="Rarity: NORMAL\nFingerless Silk Gloves\nItem Level: 86\nImplicits: 1\n12% increased Spell Damage"
 		local model=sim.model(raw);local random=function() return 0.1 end

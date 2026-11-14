@@ -240,6 +240,12 @@ async function main(){
   assert.equal(updatedGloves.nativeCrafting.state.baseImplicit330,true);
   const continuedGloves=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:legacyGloves,action:{method:'quality'},initialState:updatedGloves.nativeCrafting.state,seed:1},'crafted');
   assert.match(continuedGloves.nativeCrafting.itemText,/(?:2[0-6])% increased Spell Damage/);
+  const legacyRing='Rarity: NORMAL\nAmethyst Ring\nItem Level: 86\nCatalyst: Prismatic\nCatalystQuality: 20\nImplicits: 1\n+23% to Chaos Resistance';
+  const blessedLegacyRing=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:legacyRing,action:{method:'blessed'},seed:1},'crafted');
+  assert.match(blessedLegacyRing.nativeCrafting.itemText,/\{tags:chaos,resistance\}\+\d+% to Chaos Resistance/);
+  assert.equal(blessedLegacyRing.nativeCrafting.state.catalystQuality,20);
+  const continuedRing=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:legacyRing,action:{method:'blessed'},initialState:blessedLegacyRing.nativeCrafting.state,seed:2},'crafted');
+  assert.match(continuedRing.nativeCrafting.itemText,/\{tags:chaos,resistance\}\+\d+% to Chaos Resistance/);
   const legacyCluster='Rarity: RARE\nSimulated craft\nLarge Cluster Jewel\nCrafted: true\nPrefix: None\nPrefix: None\nSuffix: {range:0.5}AfflictionJewelSmallPassivesGrantAttackSpeed\nSuffix: {range:0.5}AfflictionJewelSmallPassivesGrantCastSpeed\nCluster Jewel Skill: affliction_axe_and_sword_damage\nCluster Jewel Node Count: 8\nItem Level: 86\nImplicits: 3\n{crafted}Adds 8 Passive Skills\n{crafted}2 Added Passive Skills are Jewel Sockets\n{crafted}Added Small Passive Skills grant: 12% increased Axe and Sword Damage\n{tags:attack,speed}{suffix}Added Small Passive Skills also grant: 1% increased Attack Speed\n{tags:caster,speed}{suffix}Added Small Passive Skills also grant: 1% increased Cast Speed';
   const castOnly={rarity:'RARE',affixes:[{id:'AfflictionJewelSmallPassivesGrantCastSpeed',range:0.5}]};
   const clusterInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:legacyCluster,initialState:castOnly,query:'AfflictionJewelSmallPassivesGrantAttackSpeed',limit:20},'inspected');

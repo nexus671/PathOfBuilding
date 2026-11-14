@@ -290,6 +290,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	end
 
 	do
+		local raw="Rarity: NORMAL\nAmethyst Ring\nItem Level: 1"
+		require("Classes.CraftingSimulatorControl").Open(build,{id="catalyst-base-ui",title="Catalyst ring",slot="Ring 1",startingItem=raw,goals={},steps={}})
+		ui:click("settings");ui:text("paletteSearch","Catalyst");ui:click("paletteUse");ui:choose("option","Prismatic Catalyst","label");ui:click("item")
+		assert(main.popups[1].controls.intro.label:find("Applied Catalyst",1,true),"Catalyst could not be applied to the ring");ui:click("close")
+	end
+
+	do
 		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nSockets: R-G B W-W R"
 		require("Classes.CraftingSimulatorControl").Open(build,{id="beast-links-ui",title="Bestiary links",slot="Body Armour",startingItem=raw,goals={},steps={},nativeRecipe={steps={{method="beast_max_links"}},targets={},requirements={links=6}}})
 		ui:click("settings");ui:text("paletteSearch","Bestiary: maximum links");assert(main.popups[1].controls.paletteUse:IsEnabled());frame("crafting-beast-link-selection")

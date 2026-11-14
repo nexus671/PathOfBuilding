@@ -131,7 +131,7 @@ function A.extend(M,api)
 		M.dataPatch=A.data().patch
 		local model=originalModel(raw)
 		if not model.item.corrupted and not model.item.synthesised and #model.item.implicitModLines == 0 and type(model.item.base.implicit) == "string" then
-			for line in model.item.base.implicit:gmatch("[^\n]+") do model.item.implicitModLines[#model.item.implicitModLines+1]={line=line,range=0.5} end
+			for line in model.item.base.implicit:gmatch("[^\n]+") do local i=#model.item.implicitModLines+1;model.item.implicitModLines[i]={line=line,range=0.5,modTags=copyTable(model.item.base.implicitModTypes and model.item.base.implicitModTypes[i] or {})} end
 		end
 		local changed=model.item.base.blessed330
 		if changed and not model.item.synthesised and #model.item.implicitModLines==1 and not model.item.implicitModLines[1].exarch and not model.item.implicitModLines[1].eater and not model.item.implicitModLines[1].corrupted then
@@ -461,7 +461,7 @@ function A.extend(M,api)
 	end
 	function M.decorateItem(model,state,item)
 		if #item.implicitModLines == 0 and not item.corrupted and not item.synthesised and type(item.base.implicit) == "string" then
-			for line in item.base.implicit:gmatch("[^\n]+") do item.implicitModLines[#item.implicitModLines+1]={line=line,range=0.5} end
+			for line in item.base.implicit:gmatch("[^\n]+") do local i=#item.implicitModLines+1;item.implicitModLines[i]={line=line,range=0.5,modTags=copyTable(item.base.implicitModTypes and item.base.implicitModTypes[i] or {})} end
 		end
 		if state.influences then
 			for key in pairs(influences) do item[key]=false end
@@ -472,7 +472,10 @@ function A.extend(M,api)
 		if state.quality then item.quality=state.quality end
 		if state.sockets then item.sockets=copyTable(state.sockets) end
 		for kind,value in pairs(state.percentiles or {}) do item.armourData[kind.."BasePercentile"]=value end
-		if state.baseImplicit330 then assert(model.blessed330 and item.implicitModLines[1],"Invalid updated base implicit");item.implicitModLines[1].line=model.blessed330 end
+		if state.baseImplicit330 then
+			assert(model.blessed330 and item.implicitModLines[1],"Invalid updated base implicit")
+			item.implicitModLines[1].line=model.blessed330;item.implicitModLines[1].modTags=copyTable(item.base.implicitModTypes and item.base.implicitModTypes[1] or {})
+		end
 		if state.baseImplicitRanges then for i,range in ipairs(state.baseImplicitRanges) do if item.implicitModLines[i] then item.implicitModLines[i].line=itemLib.applyRange(item.implicitModLines[i].line,range);item.implicitModLines[i].range=nil end end end
 		if state.vendorImplicit then
 			for _,line in ipairs(assert(model.byId[state.vendorImplicit],"Unknown vendor implicit")) do item.implicitModLines[#item.implicitModLines+1]={line=line} end
