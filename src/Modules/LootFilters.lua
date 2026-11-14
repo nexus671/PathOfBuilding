@@ -4,6 +4,7 @@ local json=require("dkjson")
 local parser=require("Modules.LootFilterParser")
 local M={limit=2*1024*1024,strictness={"Soft","Regular","Semi-strict","Strict","Very strict","Uber strict","Uber plus strict"}}
 local cache={}
+local recipeResourceCache,recipeResourceOrder={},{}
 local function read(name)
 	if not cache[name] then local f=assert(io.open("Data/LootFilters/"..name,"rb"));cache[name]=f:read("*a");f:close() end
 	return cache[name]
@@ -111,6 +112,26 @@ function M.generate(build,profile)
 	local patch=M.patch();local names={};for class,items in pairs(patch.added) do for _,name in ipairs(items) do names[name]=class end end
 	local removed={};for _,name in ipairs(patch.removed) do removed[name]=true end
 	for _,name in ipairs({"Orb of Alchemy","Chaos Orb","Divine Orb","Orb of Alteration","Orb of Augmentation","Regal Orb","Exalted Orb","Orb of Annulment","Chromatic Orb","Jeweller's Orb","Orb of Fusing","Vaal Orb"}) do names[name]="Stackable Currency" end
+	-- Only concrete currency items from modeled recipe components become drops.
+	-- Unknown prices, beasts and whole-service prices are not item identities.
+	local recipeModels={}
+	for _,project in ipairs(build.savers.CraftingProjects.projects) do if project.nativeRecipe then
+		local key=require("sha1")(project.startingItem.."\0"..require("Modules.PlanningData").encode(project.nativeRecipe))
+		local entries=recipeResourceCache[key];local ok=true
+		if not entries then ok,entries=pcall(function()
+			local sim=require("Modules.CraftingSimulator");local model=recipeModels[project.startingItem]
+			if not model then model=sim.model(project.startingItem);recipeModels[project.startingItem]=model end
+			local state=project.nativeRecipe.initialState and sim.validateState(model,project.nativeRecipe.initialState) or model.initial
+			local result={};for _,entry in ipairs(require("Modules.CraftingPrices").entries(model,state,project.nativeRecipe.steps,nil,state)) do
+				if entry.required and entry.kind=="Currency" then result[#result+1]={key=entry.key,name=entry.name} end
+			end;return result
+		end)
+			if ok then recipeResourceCache[key]=entries;recipeResourceOrder[#recipeResourceOrder+1]=key;if #recipeResourceOrder>128 then recipeResourceCache[table.remove(recipeResourceOrder,1)]=nil end end
+		end
+		if ok then for _,entry in ipairs(entries) do if not removed[entry.name] then
+			add("craft-resource-"..project.id.."-"..require("sha1")(entry.key):sub(1,12),entry.name,{"BaseType == "..quote(entry.name)},"craft:"..project.id)
+		end end end
+	end end
 	local aliases={chaos="Chaos Orb",divine="Divine Orb",divines="Divine Orb",alchemy="Orb of Alchemy",alteration="Orb of Alteration",exalt="Exalted Orb",annul="Orb of Annulment",fusing="Orb of Fusing",chromatic="Chromatic Orb",jeweller="Jeweller's Orb"}
 	for name in pairs(names) do aliases[name:lower()]=name;aliases[name:lower().."s"]=name end
 	for _,resource in ipairs(build.savers.BuildJourney.data.resources) do

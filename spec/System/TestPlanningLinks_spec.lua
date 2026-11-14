@@ -29,6 +29,19 @@ describe("Linked planning tools",function()
 		profile.rules=filters.generate(build,profile);assert.is_false(dependencies.report(build,profile).stale)
 		build.savers.CraftingProjects.projects={};assert.is_true(dependencies.report(build,profile).stale)
 	end)
+	it("links modeled recipe currencies to the filter and marks changed recipes stale",function()
+		local project=craft();project.nativeRecipe={steps={{method="omen_connections"},{method="beast_max_links"}},targets={},requirements={links=4}}
+		build.savers.CraftingProjects:Upsert(project)
+		local profile=filters.profile("craft-resources","Craft resources");profile.rules=filters.generate(build,profile)
+		local names={};for _,rule in ipairs(profile.rules) do names[rule.title]=true end
+		assert.is_true(names["Omen of Connections"]);assert.is_true(names["Orb of Fusing"]);assert.is_nil(names["The Black Morrigan"])
+		assert.equal("Show",filters.simulate(profile,{BaseType="Omen of Connections"}).action)
+		assert.is_false(dependencies.report(build,profile).stale)
+		project.nativeRecipe.steps={{method="socket_white_bench"}};build.savers.CraftingProjects:Upsert(project)
+		assert.is_true(dependencies.report(build,profile).stale)
+		profile.rules=filters.generate(build,profile);names={};for _,rule in ipairs(profile.rules) do names[rule.title]=true end
+		assert.is_nil(names["Omen of Connections"]);assert.is_true(names["Orb of Scouring"])
+	end)
 	it("leaves entirely manual filters untracked and preserves personal overrides on refresh",function()
 		build.savers.CraftingProjects:Upsert(craft());local profile=filters.profile("filter","Filter");profile.rules={filters.rule("mine","Personal",{'BaseType == "Chaos Orb"'})}
 		assert.is_false(dependencies.report(build,profile).stale);local original=copyTable(profile.rules[1]);profile.rules=filters.generate(build,profile);assert.same(original,profile.rules[1])
