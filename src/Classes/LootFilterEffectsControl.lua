@@ -30,7 +30,8 @@ function M.Open(original,sample,onKeep)
 	local function styles(strict)
 		local next=copyTable(original);local mode=c.soundKind.selIndex
 		if mode>1 then for _,key in ipairs({"PlayAlertSound","PlayAlertSoundPositional","CustomAlertSound","CustomAlertSoundOptional"}) do next[key]=nil end end
-		if mode==3 or mode==4 then next[mode==3 and "PlayAlertSound" or "PlayAlertSoundPositional"]={tostring(c.alertId:GetSelValueByKey("val")),tostring(volume)}
+		if mode==2 then next.PlayAlertSound={"None"};next.CustomAlertSound={"None"}
+		elseif mode==3 or mode==4 then next[mode==3 and "PlayAlertSound" or "PlayAlertSoundPositional"]={tostring(c.alertId:GetSelValueByKey("val")),tostring(volume)}
 		elseif mode>=5 then
 			local path=c.customPath.buf;local valid=path:match("%S") and not path:find('["\r\n]');if strict then assert(valid,"Enter a sound path without quotes or newlines") end
 			if valid then next[mode==5 and "CustomAlertSound" or "CustomAlertSoundOptional"]={path,tostring(volume)} end

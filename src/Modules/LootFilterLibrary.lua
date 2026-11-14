@@ -88,8 +88,9 @@ end
 function M.appearance(rule,changes)
 	local block=assert(parser.parse(rule.text).rules[1]);local lines={block.action}
 	for _,condition in ipairs(block.conditions) do
-		local values={};for _,value in ipairs(condition.values) do values[#values+1]=(parser.strings[condition.keyword] and not tonumber(value) or value:find("%s")) and filters.quote(value) or value end
-		lines[#lines+1]="    "..condition.keyword.." "..condition.operator.." "..table.concat(values," ")
+		local values={};for i,value in ipairs(condition.values) do values[#values+1]=((condition.quoted and condition.quoted[i]) or (parser.strings[condition.keyword] and not tonumber(value)) or value:find("%s")) and filters.quote(value) or value end
+		local count=(condition.keyword=="HasExplicitMod" or condition.keyword=="HasEnchantment") and not (condition.quoted and condition.quoted[1]) and tonumber(condition.values[1])
+		lines[#lines+1]="    "..condition.keyword.." "..condition.operator..(count and "" or " ")..table.concat(values," ")
 	end
 	local styles=copyTable(block.styles);for key,value in pairs(changes) do styles[key]=value~=false and value or nil end
 	local keys={};for key in pairs(styles) do keys[#keys+1]=key end;table.sort(keys)

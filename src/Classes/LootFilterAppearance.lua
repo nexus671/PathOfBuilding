@@ -43,7 +43,7 @@ function M.Open(rule,save,conditions,options)
 	local sounds={"Keep sound","Silent"};for i=1,16 do sounds[#sounds+1]="Alert "..i end
 	c.sound=new("DropDownControl"):DropDownControl(ui.anchor,{32+column,440,column,26},sounds,function(index)
 		if index==1 then changes.PlayAlertSound=nil;changes.CustomAlertSound=nil;changes.CustomAlertSoundOptional=nil;changes.PlayAlertSoundPositional=nil
-		else if index==2 then changes.PlayAlertSound=false else changes.PlayAlertSound={tostring(index-2),"200"} end;changes.CustomAlertSound=false;changes.CustomAlertSoundOptional=false;changes.PlayAlertSoundPositional=false end
+		else if index==2 then changes.PlayAlertSound={"None"};changes.CustomAlertSound={"None"} else changes.PlayAlertSound={tostring(index-2),"200"};changes.CustomAlertSound=false end;changes.CustomAlertSoundOptional=false;changes.PlayAlertSoundPositional=false end
 	end)
 	ui.label(c,"iconLabel",48+column*2,414,"Map icon",14)
 	local shapes={"Keep icon","None"};for _,shape in ipairs(require("Modules.LootFilterAppearanceSettings").shapes) do shapes[#shapes+1]=shape end

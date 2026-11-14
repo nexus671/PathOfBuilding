@@ -4,6 +4,16 @@ describe("Build-owned loot filters",function()
 	local parser=require("Modules.LootFilterParser")
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() main.popups={} end)
+	it("preserves quoted conditions and modifier counts when restyling",function()
+		local library=require("Modules.LootFilterLibrary")
+		for _,condition in ipairs({'HasExplicitMod >=2 "Haast" "Ephij"','HasExplicitMod "1"','BaseType "123"'}) do
+			local rule={id="quoted",title="Quoted",text="Show\n "..condition}
+			local edited=library.appearance(rule,{SetFontSize={"42"}});local parsed=parser.parse(edited.text)
+			assert.equal(0,#parsed.diagnostics)
+			local before=parser.parse(rule.text).rules[1].conditions[1];local after=parsed.rules[1].conditions[1]
+			assert.equal(before.operator,after.operator);assert.same(before.values,after.values);assert.same(before.quoted,after.quoted)
+		end
+	end)
 	it("distinguishes known zero sockets from an unknown socket group",function()
 		local function test(condition,item) return parser.simulate(parser.parse("Show\n "..condition.."\nHide"),item) end
 		for _,item in ipairs({{Sockets=0},{SocketGroup="0"},{SocketGroup=""}}) do
