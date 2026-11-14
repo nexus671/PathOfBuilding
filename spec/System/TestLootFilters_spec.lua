@@ -99,6 +99,15 @@ describe("Build-owned loot filters",function()
 		assert.equal("Hide",result.action);assert.equal(2,#result.matches);assert.same({"255","0","0"},result.styles.SetTextColor)
 		assert.equal("Show",parser.simulate(parser.parse(raw),{BaseType="Iron Ring"}).action)
 	end)
+	it("validates documented alert sound IDs and volumes",function()
+		for _,line in ipairs({"PlayAlertSound 0","PlayAlertSound 17","PlayAlertSound 1 301","PlayAlertSoundPositional 2 -1",'CustomAlertSound "file.wav" 301',"CustomAlertSoundOptional",'CustomAlertSound ""'}) do
+			local result=parser.simulate(parser.parse("Show\n "..line.."\nHide"),{})
+			assert.equal("invalid",result.status,line)
+		end
+		for _,line in ipairs({"PlayAlertSound None","PlayAlertSound 1 0","PlayAlertSoundPositional 16 300",'CustomAlertSound "file one.wav;file two.wav" 100',"DisableDropSound True"}) do
+			assert.equal("matched",parser.simulate(parser.parse("Show\n "..line),{}).status,line)
+		end
+	end)
 	it("treats numeric text as a name outside modifier-count conditions",function()
 		local function action(condition,item) return parser.simulate(parser.parse("Hide\n "..condition.."\nShow"),item).action end
 		assert.equal("Hide",action('BaseType "1"',{BaseType="Level 1 Relic"}))

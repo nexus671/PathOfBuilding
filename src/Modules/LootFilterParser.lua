@@ -52,6 +52,11 @@ function M.parse(raw)
 					if key=="SetTextColor" or key=="SetBorderColor" or key=="SetBackgroundColor" then
 						invalid=#t<3 or #t>4;for _,v in ipairs(t) do local n=tonumber(v);if not n or n<0 or n>255 or n~=math.floor(n) then invalid=true end end
 					elseif key=="SetFontSize" then local n=tonumber(t[1]);invalid=#t~=1 or not n or n<1 or n>45 or n~=math.floor(n)
+					elseif key=="PlayAlertSound" or key=="PlayAlertSoundPositional" or key=="CustomAlertSound" or key=="CustomAlertSoundOptional" then
+						local custom=key=="CustomAlertSound" or key=="CustomAlertSoundOptional";local id=tonumber(t[1]);local volume=tonumber(t[2])
+						invalid=#t<1 or #t>2 or not t[1] or not t[1]:match("%S")
+						if not custom and t[1]~="None" and (not id or id~=math.floor(id) or id<1 or id>16) then invalid=true end
+						if t[2] and (not volume or volume~=math.floor(volume) or volume<0 or volume>300) then invalid=true end
 					elseif key=="MinimapIcon" then local size=tonumber(t[1]);invalid=not (#t==1 and size==-1) and (#t~=3 or not size or size<0 or size>2 or size~=math.floor(size) or not colors[t[2]] or not shapes[t[3]])
 					elseif key=="PlayEffect" then invalid=not (#t==1 and t[1]=="None") and (not colors[t[1]] or #t>2 or #t==2 and t[2]~="Temp") end
 					if invalid then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid "..key} end
