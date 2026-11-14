@@ -553,16 +553,23 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:click("addCurrency");ui:text("search","Fossil combination");ui:click("choose")
 		local life,cold="Metadata/Items/Currency/CurrencyDelveCraftingLife","Metadata/Items/Currency/CurrencyDelveCraftingCold"
 		ui:choose("fossil1",life,"id");ui:choose("fossil2",cold,"id");frame("crafting-recipe-fossil-configuration");ui:click("use")
-		assert(main.popups[1].controls.graph.list[7][1]:find("Fossils:",1,true),"Recipe fossil combination was not labeled");frame("crafting-recipe-fossil-added");ui:click("keep")
+		assert(main.popups[1].controls.graph.list[7][1]:find("Fossils:",1,true),"Recipe fossil combination was not labeled");frame("crafting-recipe-fossil-added")
+		ui:text("attempts","2");ui:choose("condition","Until final targets and properties match");ui:choose("success","Step 2","label");ui:choose("failure","End recipe","label");ui:click("update")
+		ui:click("editFossils");assert(main.popups[1].controls.fossil1:GetSelValueByKey("id")==life and main.popups[1].controls.fossil2:GetSelValueByKey("id")==cold,"Fossil edit lost existing choices")
+		local metallic="Metadata/Items/Currency/CurrencyDelveCraftingLightning";ui:choose("fossil2",metallic,"id");frame("crafting-recipe-fossil-edit");ui:click("use");frame("crafting-recipe-fossil-edited");ui:click("keep")
 		assert(saved.steps[2].method=="chaos" and saved.steps[3].method=="bench_reroll" and saved.steps[3].count==3,"Direct recipe actions were not retained")
 		assert(saved.steps[4].method=="essence" and saved.steps[5].modId==benchId and saved.steps[6].tag=="life","Configured recipe actions were not retained")
-		assert(saved.steps[7].method=="fossil" and saved.steps[7].fossils[1]==life and saved.steps[7].fossils[2]==cold,"Recipe fossil combination was not retained")
+		assert(saved.steps[7].method=="fossil" and saved.steps[7].fossils[1]==life and saved.steps[7].fossils[2]==metallic,"Edited fossil combination was not retained")
+		assert(saved.steps[7].maxAttempts==2 and saved.steps[7].onSuccess==2 and saved.steps[7].onFailure==8 and saved.steps[7].untilRequirements.maxAffixes==0,"Editing fossils lost routes or conditions")
 		local result=sim.simulate(raw,saved,{trials=1,maxActions=3,forceFirstAction=true})
 		assert(not next(result.transitionErrors) and result.meanActions==3,"The directly assembled recipe did not run all three actions")
 		local essence=sim.perform(raw,saved.steps[4],1);assert(essence.state.rarity=="RARE","Direct Essence step did not execute")
 		assert(sim.perform(raw,saved.steps[5],1).state.rarity=="MAGIC","Direct bench step did not execute")
 		assert(sim.perform(raw,saved.steps[6],1,essence.state).state.rarity=="RARE","Direct Harvest step did not execute")
 		assert(sim.perform(raw,saved.steps[7],1).state.rarity=="RARE","Direct fossil step did not execute")
+		local replaced;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy",maxAttempts=2,onSuccess=1,onFailure=2,onFailureAction="stop",recoveryNotes="Keep this note",untilRequirements={minAffixes=5}}},targets={},requirements={minAffixes=6}},{method="chaos"},function(value) replaced=value end,routeModel)
+		ui:click("replace");ui:click("keep");local step=replaced.steps[1]
+		assert(step.method=="chaos" and step.maxAttempts==2 and step.onSuccess==1 and step.onFailure==2 and step.onFailureAction=="stop" and step.recoveryNotes=="Keep this note" and step.untilRequirements.minAffixes==5,"Replacing action lost routes or conditions")
 	end
 	ui:click("distribution");frame("simulation-distribution");assert(main.popups[1].controls.successCard and main.popups[1].controls.medianSpend and main.popups[1].controls.veryUnluckySpend and main.popups[1].controls.moreTrials,"Simulation result cards are missing");ui:click("charts");frame("crafting-success-chart");ui:choose("mode","Spending per trial");frame("crafting-spending-chart");ui:click("copy");assert(ui.clipboard:find("route,value,percent,count,trials",1,true));ui:click("close");ui:click("sample");frame("crafting-sampled-outcome");ui:click("close");ui:click("moreTrials")
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end

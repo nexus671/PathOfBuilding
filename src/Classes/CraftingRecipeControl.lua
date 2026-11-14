@@ -54,7 +54,13 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		assert(#draft.steps < 20,"Use up to twenty steps")
 		draft.steps[#draft.steps+1]=copyTable(currentAction);selected=#draft.steps;refresh()
 	end)
-	button(controls,"replace",288,514,272,"Replace selected with emulator action",function() assert(draft.steps[selected],"Select a step");draft.steps[selected]=copyTable(currentAction);refresh() end)
+	button(controls,"replace",288,514,272,"Replace selected with emulator action",function()
+		local old=assert(draft.steps[selected],"Select a step");local next=copyTable(currentAction)
+		for _,key in ipairs({"maxAttempts","onSuccess","onFailure","onFailureAction","recoveryNotes","untilTargets","untilRequirements"}) do
+			local value=old[key];if value~=nil then next[key]=type(value)=="table" and copyTable(value) or value end
+		end
+		draft.steps[selected]=next;refresh()
+	end)
 	button(controls,"delete",576,514,268,"Delete selected step",function()
 		assert(draft.steps[selected],"Select a step");table.remove(draft.steps,selected)
 		for _,step in ipairs(draft.steps) do for _,key in ipairs({"onSuccess","onFailure"}) do if step[key] and step[key] > selected then step[key]=step[key]-1 end end end
@@ -109,6 +115,15 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 			if entry.configure=="fossil" then require("Classes.CraftingFossilControl").Open(model,nil,append) else append(entry.action) end
 		end})
 	end)
+	button(controls,"editFossils",576,642,136,"Edit fossils",function()
+		local index=selected;local step=assert(draft.steps[index],"Select a fossil step")
+		assert(model and step.method=="fossil","Select a fossil step")
+		require("Classes.CraftingFossilControl").Open(model,step,function(action)
+			local next=copyTable(step);next.fossils=copyTable(action.fossils);next.tangledOutcome=action.tangledOutcome
+			draft.steps[index]=next;refresh()
+		end)
+	end)
+	controls.editFossils.enabled=function() return model~=nil and draft.steps[selected]~=nil and draft.steps[selected].method=="fossil" end
 	button(controls,"close",728,642,116,"Close",function() main:ClosePopup() end)
 	local height=math.max(520,math.min(690,main.screenH-60));local offset=690-height
 	controls.graph.height=264-offset
