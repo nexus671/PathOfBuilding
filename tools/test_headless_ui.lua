@@ -767,8 +767,11 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		for _,case in ipairs({{styles={PlayAlertSound={"4"}},volume=50},{styles={CustomAlertSound={"test.wav"}},volume=100},{styles={PlayAlertSoundPositional={"5","80"}},volume=80},{styles={PlayAlertSound={"4","30"},CustomAlertSoundOptional={"test.wav","120"}},volume=120}}) do
 			local saved;local controls=effects.Open(case.styles,sample,function(value) saved=value end)
 			assert(controls.volumeLabel.label()=="^7Alert volume: "..case.volume,"Sound editor displayed an incorrect default volume")
+			if case.styles.PlayAlertSound and case.styles.CustomAlertSoundOptional then assert(controls.alertId:GetSelValueByKey("val")==4,"Sound editor lost the numbered fallback identity") end
 			ui:click("keep");for key,original in pairs(case.styles) do assert(saved[key] and #saved[key]==#original and saved[key][1]==original[1] and saved[key][2]==original[2],"Opening sound effects changed an untouched alert") end
 		end
+		local selected;effects.Open({PlayAlertSound={"4","30"},CustomAlertSoundOptional={"test.wav","120"}},sample,function(value) selected=value end)
+		ui:choose("soundKind","Numbered alert");ui:click("keep");assert(selected.PlayAlertSound[1]=="4","Switching to a numbered alert changed the fallback identity")
 		local saved;local controls=effects.Open({PlayAlertSound={"None"},CustomAlertSound={"None"}},sample,function(value) saved=value end)
 		controls.volume:SetVal(0);ui:click("keep")
 		assert(#saved.PlayAlertSound==1 and #saved.CustomAlertSound==1,"Changing volume modified disabled alerts")

@@ -4,7 +4,8 @@ local options=require("Modules.LootFilterAppearanceSettings")
 local M={}
 function M.Open(original,sample,onKeep)
 	local c={};local w,h=760,548;local sounds={"Keep current","Silent","Numbered alert","Positional alert","Custom sound","Optional custom sound"};local volumeChanged=false
-	local current=original.CustomAlertSound or original.CustomAlertSoundOptional or original.PlayAlertSound or original.PlayAlertSoundPositional
+	local numbered=original.PlayAlertSound or original.PlayAlertSoundPositional
+	local current=original.CustomAlertSound or original.CustomAlertSoundOptional or numbered
 	local isCustom=current and (current==original.CustomAlertSound or current==original.CustomAlertSoundOptional)
 	local volume=tonumber(current and current[2]) or (isCustom and 100 or 50)
 	local function label(key,x,y,title) ui.label(c,key,x,y,title,14) end
@@ -13,7 +14,7 @@ function M.Open(original,sample,onKeep)
 	label("iconLabel",392,140,"Minimap shape");local shapes={"Keep current","None"};for _,shape in ipairs(options.shapes) do shapes[#shapes+1]=shape end
 	drop("iconShape",392,164,shapes);if original.MinimapIcon then c.iconShape:SelByValue(tonumber(original.MinimapIcon[1])==-1 and "None" or original.MinimapIcon[3] or "Keep current") end
 	label("alertLabel",16,208,"Numbered alert identity");local ids={};for i=1,16 do ids[#ids+1]={label="Alert "..i,val=i} end
-	drop("alertId",16,232,ids);c.alertId:SelByValue(tonumber(current and current[1]) or 1,"val")
+	drop("alertId",16,232,ids);c.alertId:SelByValue(tonumber(numbered and numbered[1]) or 1,"val")
 	c.alertId.enabled=function() return c.soundKind.selIndex==3 or c.soundKind.selIndex==4 end
 	label("iconColorLabel",392,208,"Minimap colour");drop("iconColor",392,232,options.colors);c.iconColor:SelByValue(original.MinimapIcon and original.MinimapIcon[2] or "Cyan")
 	label("volumeLabel",16,276,"",14);c.volumeLabel.label=function() return "^7Alert volume: "..volume end
