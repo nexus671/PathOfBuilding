@@ -28,7 +28,8 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		scroll:SetContentDimension(#draft.steps*92,height-4);scroll:ScrollIntoView((selected-1)*92,92)
 		controls.attempts:SetText(tostring(step.maxAttempts or 1))
 		controls.condition:SelByValue((step.untilTargets or step.untilRequirements) and "Keep custom conditions" or "After a successful action")
-		controls.success:SelByValue(step.onSuccess or 0,"val");controls.failure:SelByValue(step.onFailure or 0,"val")
+		controls.success:SelByValue(step.onSuccess or 0,"val")
+		controls.failure:SelByValue(step.onFailureAction and step.onFailureAction~="route" and step.onFailureAction or step.onFailure or 0,"val")
 	end
 	local function refresh()
 		local list,routes,lines={ },{{label="Next step",val=0}},{}
@@ -43,7 +44,10 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		end
 		routes[#routes+1]={label="End recipe",val=#draft.steps+1}
 		controls.graph.list=lines;controls.step:SetList(list);controls.step:SelByValue(selected,"val")
-		controls.success:SetList(routes);controls.failure:SetList(copyTable(routes));loadStep()
+		controls.success:SetList(routes)
+		local failureRoutes=copyTable(routes);local recovery=require("Classes.CraftingRecoveryControl")
+		for _,policy in ipairs({"stop","restart","salvage"}) do failureRoutes[#failureRoutes+1]={label=recovery.labels[policy],val=policy} end
+		controls.failure:SetList(failureRoutes);loadStep()
 	end
 	controls.step.selFunc=function(_,entry) selected=entry.val;loadStep() end
 	button(controls,"flowGraph",664,24,180,"Flow graph",function()
@@ -73,7 +77,9 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		if condition == "Until final targets and properties match" then assert(#draft.targets > 0 or draft.requirements,"Choose targets or properties in the emulator first");step.untilTargets=#draft.targets > 0 and copyTable(draft.targets) or nil;step.untilRequirements=draft.requirements and copyTable(draft.requirements) or nil
 		elseif condition == "After a successful action" then step.untilTargets=nil;step.untilRequirements=nil end
 		local success,failure=controls.success:GetSelValueByKey("val"),controls.failure:GetSelValueByKey("val")
-		step.onSuccess=success ~= 0 and success or nil;step.onFailure=failure ~= 0 and failure or nil
+		step.onSuccess=success ~= 0 and success or nil
+		if type(failure)=="string" then step.onFailureAction=failure
+		else step.onFailureAction="route";step.onFailure=failure ~= 0 and failure or nil end
 		sim.validateRecipe(candidate);draft=candidate;refresh()
 	end)
 	controls.note=new("LabelControl"):LabelControl({"TOPLEFT",nil,"TOPLEFT"},{16,604,0,14},"Loops stop at the simulation action budget. Keeping a recipe does not craft or equip an item.")

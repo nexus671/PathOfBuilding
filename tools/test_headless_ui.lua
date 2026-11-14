@@ -536,7 +536,12 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 	assert(not jobs.job,"Crafting simulation did not finish")
 	frame("simulation-result");assert(#main.popups[1].controls.resultSummary.list>=4,"Detailed simulation results are missing")
-	ui:click("editRecipe");frame("crafting-recipe-cards");ui:click("flowGraph");frame("crafting-route-graph");ui:click("graphAll");frame("crafting-route-graph-all");ui:click("close");ui:click("recovery");ui:choose("action","stop","val");ui:text("notes","Inspect unwanted rolls before spending more");frame("crafting-failure-recovery");ui:click("keep");frame("crafting-recovery-route");ui:click("keep")
+	ui:click("editRecipe");frame("crafting-recipe-cards");ui:click("flowGraph");frame("crafting-route-graph");ui:click("graphAll");frame("crafting-route-graph-all");ui:click("close");ui:click("recovery");ui:choose("action","stop","val");ui:text("notes","Inspect unwanted rolls before spending more");frame("crafting-failure-recovery");ui:click("keep")
+	assert(main.popups[1].controls.failure:GetSelValueByKey("val")=="stop","Recovery policy was not shown as the failure behavior")
+	ui:click("update");assert(main.popups[1].controls.failure:GetSelValueByKey("val")=="stop","Updating a step lost its recovery policy")
+	ui:choose("failure","Step 1","label");ui:click("update");assert(main.popups[1].controls.graph.list[1].subtitle:find("Failure -> Step 1",1,true),"Choosing a failure route did not replace recovery")
+	ui:choose("failure","restart","val");ui:click("update");assert(main.popups[1].controls.graph.list[1].subtitle:find("Restart",1,true),"Choosing restart did not update the recipe")
+	ui:choose("failure","stop","val");ui:click("update");frame("crafting-recovery-route");ui:click("keep")
 	do
 		local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86";local routeModel=sim.model(raw);local benchId=routeModel.bench[1].id
 		local saved;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy"}},targets={},requirements={maxAffixes=0}},{method="alchemy"},function(value) saved=value end,routeModel)
