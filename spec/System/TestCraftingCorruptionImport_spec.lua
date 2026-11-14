@@ -11,6 +11,24 @@ describe("Imported corruption identities",function()
 	end
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() main.popups={} end)
+	it("uses 3.30 maximum-charge weights on rings without changing other bases",function()
+		local ids={"V2MaxPowerChargesCorrupted","V2MaxFrenzyChargesCorrupted","V2MaximumEnduranceChargesCorruption"}
+		local function weight(base,id)
+			local model=sim.model("Rarity: NORMAL\n"..base.."\nItem Level: 86")
+			for _,entry in ipairs(model.corruptions) do if entry.id==id then return entry.weight end end
+		end
+		for _,id in ipairs(ids) do assert.equal(50,weight("Iron Ring",id)) end
+		assert.equal(1000,weight("Iron Hat",ids[1]))
+		assert.equal(1000,weight("Iron Gauntlets",ids[2]))
+		assert.equal(1000,weight("Iron Greaves",ids[3]))
+		local model=sim.model("Rarity: NORMAL\nIron Ring\nItem Level: 86")
+		local total,before=0,0;for _,entry in ipairs(model.corruptions) do
+			if entry.id==ids[1] then before=total end;total=total+entry.weight
+		end
+		local first=true;local function random() if first then first=false;return (before+25)/total end;return 0 end
+		local state=copyTable(model.initial);sim.rollCorrupted(model,state,random,2)
+		assert.equal(ids[1],state.corruptedImplicits[1].id);assert.equal(2,#state.corruptedImplicits)
+	end)
 	it("recovers one and two native implicits and preserves them through tainted crafting",function()
 		local model=sim.model(raw)
 		for count=1,2 do

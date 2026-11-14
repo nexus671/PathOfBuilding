@@ -1,4 +1,7 @@
 local C={}
+-- Client 3.30.0.1.4 lowers these three ring weights; other bases retain
+-- their original weights. The remaining corruption data is pinned to 3.29.
+local ringChargeWeights330={V2MaxPowerChargesCorrupted=50,V2MaxFrenzyChargesCorrupted=50,V2MaximumEnduranceChargesCorruption=50}
 function C.extend(M,A,api)
 	local labels={vaal="Vaal Orb",locus="Locus of Corruption",tainted_exalt="Tainted Exalted Orb",tainted_chaos="Tainted Chaos Orb"}
 	for method,label in pairs(labels) do M.methods[#M.methods+1]=method;M.labels[method]=label end;table.sort(M.methods)
@@ -19,7 +22,11 @@ function C.extend(M,A,api)
 	local function weight(model,id)
 		local metadata=A.data().mods[id]
 		if not metadata then return 0 end
-		for _,entry in ipairs(metadata.spawn_weights) do if entry.tag == "default" or model.item.base.tags[entry.tag] then return entry.weight end end
+		for _,entry in ipairs(metadata.spawn_weights) do
+			if entry.tag == "default" or model.item.base.tags[entry.tag] then
+				return entry.tag == "ring" and ringChargeWeights330[id] or entry.weight
+			end
+		end
 		return 0
 	end
 	function M.model(raw)
