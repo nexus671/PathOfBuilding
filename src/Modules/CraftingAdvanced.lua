@@ -413,7 +413,7 @@ function A.extend(M,api)
 		if api.flags(model,state).suffixes then return "Suffixes are locked" end
 		local matches={};local element=from:gsub("^%l",string.upper)
 		for i,entry in ipairs(state.affixes) do
-			local jewel=model.item.type=="Jewel" and (entry.id==element.."ResistanceJewel" or entry.id=="Maximum"..element.."ResistanceJewel")
+			local jewel=model.item.type=="Jewel" and (entry.id==element.."ResistanceJewel" or entry.id=="Maximum"..element.."ResistanceJewel" or entry.id=="Abyss"..element.."ResistanceJewel1")
 			local shield=shieldResistanceTarget(model,entry.id,from,to)
 			if not entry.fractured and (model.byId[entry.id].group==element.."Resistance" or jewel or shield) then matches[#matches+1]=i end
 		end
