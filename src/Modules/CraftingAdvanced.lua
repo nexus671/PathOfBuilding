@@ -707,7 +707,7 @@ function A.extend(M,api)
 			local reason,matches=M.resistanceReason(model,state,action.from,action.to);assert(not reason,reason)
 			local index=matches[math.floor(random()*#matches)+1]; local old=state.affixes[index]
 			local id=old.id:gsub(action.from:gsub("^%l",string.upper),action.to:gsub("^%l",string.upper))
-			old.id=id
+			old.id=id;old.range=M.rollRange(model.byId[id],random)
 		elseif method == "blessed" then
 			assert(#model.item.implicitModLines > 0 and not state.implicits,"No base implicit to reroll")
 			state.baseImplicitRanges={}

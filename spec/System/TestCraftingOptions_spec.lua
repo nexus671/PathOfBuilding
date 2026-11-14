@@ -42,7 +42,7 @@ describe("State-aware crafting choices",function()
 		for _,choice in ipairs(sim.actionOptions(m,fractured,"essence")) do assert.are_not.equal(greed.id,choice.action.essenceId) end
 		assert.is_false(pcall(sim.perform,m.raw,{method="essence",essenceId=greed.id},1,fractured))
 	end)
-	it("offers only possible resistance swaps and retains their rolled value",function()
+	it("offers only possible resistance swaps and rerolls within the replacement tier",function()
 		local m=model();local fire=natural(m,"FireResistance")
 		local input=state(m,"MAGIC",{{id=fire,range=0.73}});local before=copyTable(input)
 		local choices=sim.actionOptions(m,input,"harvest_resistance");assert.are.equal(2,#choices)
@@ -50,7 +50,9 @@ describe("State-aware crafting choices",function()
 			assert.are.equal("fire",choice.action.from)
 			local changed=sim.perform(m.raw,choice.action,1,input).state
 			assert.are.equal(choice.action.to:gsub("^%l",string.upper).."Resistance",m.byId[changed.affixes[1].id].group)
-			assert.are.equal(0.73,changed.affixes[1].range)
+			local low=sim.action(m,input,choice.action,function() return 0 end)
+			local high=sim.action(m,input,choice.action,function() return 0.999999 end)
+			assert.are.equal(0,low.affixes[1].range);assert.are.equal(1,high.affixes[1].range)
 		end
 		input.affixes[1].fractured=true
 		assert.is_false(check("harvest_resistance",input,m));assert.are.equal(0,#sim.actionOptions(m,input,"harvest_resistance"))

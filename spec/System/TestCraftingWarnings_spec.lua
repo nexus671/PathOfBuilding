@@ -2,6 +2,14 @@ describe("Crafting result model notes",function()
 	local sim=require("Modules.CraftingSimulator")
 	local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86"
 	local donor="Rarity: NORMAL\nCone Helmet\nItem Level: 70"
+	it("reports the known Harvest swap cost without inventing ingredient types",function()
+		local action={method="harvest_resistance",from="fire",to="cold"}
+		local warning=sim.actionWarnings(action)[1]
+		assert.equal("harvest_resistance_cost",warning.code);assert.is_truthy(warning.message:find("300 Lifeforce",1,true))
+		assert.equal("harvest_resistance_cost",sim.catalog(raw,"",10).methodWarnings.harvest_resistance[1].code)
+		assert.equal("harvest_resistance_cost",sim.recipeWarnings({steps={action,action}})[1].code)
+		assert.same({harvest_resistance=1},sim.components(action))
+	end)
 	it("deduplicates contextual notes and leaves ordinary actions clear",function()
 		assert.are.equal(0,#sim.actionWarnings({method="alchemy"}))
 		local notes=sim.recipeWarnings({steps={{method="recombine",donorItem=donor},{method="recombine",donorItem=donor},{method="alchemy",allflame={auto=true}}}})

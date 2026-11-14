@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Reroll modifier values during Harvest resistance swaps.
+* Explain 3.30 Harvest resistance-swap costs and unverified ingredient pairs.
 * Distinguish 3.30 Harvest nodes from Viridian Wildwood encounter nodes.
 * Find 3.30 Atlas mechanics and shared mechanic nodes in planning filters.
 * Compare tiered unidentified gear in the loot-filter simulator.

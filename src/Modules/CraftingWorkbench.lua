@@ -209,6 +209,7 @@ function M.hint(method,state,model)
 	if available and method=="recombine" then return "3.30 uses the chosen base's item level. Count odds for one-to-three modifiers still use older estimates." end
 	if available and method=="socket_white_bench" then return "3.30 bench: turn sockets white for one Scouring Orb, plus one Vaal Orb on corrupted items." end
 	if available and method=="harvest_enchant" then return "Replace the enchantment with a quality bonus. Options show the Lifeforce cost." end
+	if available and method=="harvest_resistance" then return "3.30: costs 300 Lifeforce of each of two types. Check the station; the exact pair is not modeled. Use a whole-service price." end
 	return available and (descriptions[method] or "Choose the craft options, then apply to the item.") or reason
 end
 function M.currencies(controls,selectMethod,currentMethod,isShown,usage,getState,model,leftWidth)
