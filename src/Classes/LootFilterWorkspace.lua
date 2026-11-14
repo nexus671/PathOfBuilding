@@ -28,6 +28,7 @@ function M.Open(build,source,layout,controller)
 	end
 	local history=require("Modules.PlanningHistory").new(data,state.history);local tierView;local tierState=state.tierState
 	local transient=layout.transient or {};local dependencies;local dependencyTime;local dependencyJob;local dependencyError;local generationJob=transient.filterGeneration
+	if not profile then transient.filterSceneTargets=nil end
 	local function advanceDependencies()
 		if not dependencyJob then return end
 		local done,result,err=require("Modules.LootFilterDependencies").poll(dependencyJob)
@@ -40,11 +41,28 @@ function M.Open(build,source,layout,controller)
 	end
 	local function refreshDependencies()
 		if dependencyJob or generationJob then return end
+		local targets=transient.filterSceneTargets
+		if page=="Simulate" and sceneKind=="Build targets" and targets and not targets.rules and not targets.error then return end
 		if profile then dependencyJob=require("Modules.LootFilterDependencies").begin(build,profile);advanceDependencies() else dependencies=nil;dependencyTime=GetTime() end
 	end
 	local function draft(field) dirty=true;history:record(data,field);ui.draft(build,"filters") end
 	local function snapshot() return {data=data,selected=profile and profile.id,page=page,category=category,scope=scope,query=query,rule=selected,sample=item,dirty=dirty,seed=seed,sceneKind=sceneKind,showHidden=showHidden,history=history:snapshot(),tierState=tierView and tierView.snapshot() or tierState,sceneSettings=settings,sampleHistory=samples,sampleSetId=sampleSetId,scenePage=scenePage} end
 	local function reopen() layout.navigate("filters",snapshot()) end
+	local function targetPreview()
+		local state=transient.filterSceneTargets;local dependency=require("Modules.LootFilterDependencies")
+		if state and (state.job.profile~=profile or not dependency.current(state.job)) then state=nil;transient.filterSceneTargets=nil end
+		if not state then state={job=dependency.beginGenerate(build,profile)};transient.filterSceneTargets=state end
+		return state
+	end
+	local function advanceTargetPreview()
+		local state=targetPreview();if state.rules or state.error then return end
+		local done,result,err=require("Modules.LootFilterDependencies").poll(state.job)
+		if not done then return end
+		if err=="changed" then transient.filterSceneTargets=nil
+		elseif err then state.error=ui.errorText(err)
+		else state.rules=result.rules;state.warnings=result.warnings end
+		reopen()
+	end
 	local function advanceGeneration()
 		if not generationJob then return end
 		local done,result,err
@@ -79,9 +97,13 @@ function M.Open(build,source,layout,controller)
 	local function compile()
 		parsed=nil
 		if not profile then return end
-		local ok,value,details=pcall(filters.compile,profile)
-		if not ok then raw=nil;report={error=value};result={action="Unknown",status="invalid",styles={},reasons={value}};return end
-		raw,report=value,details;parsed=parser.parse(raw);result=parser.simulate(parsed,item)
+		local key=require("Modules.PlanningData").encode(profile);local cached=transient.filterCompiled
+		if not cached or cached.key~=key then
+			local ok,value,details=pcall(filters.compile,profile)
+			if not ok then raw=nil;report={error=value};result={action="Unknown",status="invalid",styles={},reasons={value}};return end
+			cached={key=key,raw=value,report=details,parsed=parser.parse(value)};transient.filterCompiled=cached
+		end
+		raw,report,parsed=cached.raw,cached.report,cached.parsed;result=parser.simulate(parsed,item)
 		for _,d in ipairs(report.diagnostics) do if d.error then raw=nil;result={action="Unknown",status="invalid",styles={},reasons={d.error}} end end
 	end
 	local function selectedRule() return selectedEntry and selectedEntry.rule end
@@ -286,7 +308,7 @@ function M.Open(build,source,layout,controller)
 		c.sceneKind=new("DropDownControl"):DropDownControl(ui.anchor,{16,162,left,26},kinds,function(_,value)
 			sceneKind=value;scenePage=1;if value=="Saved examples" then local chosen=savedSets[1];for _,entry in ipairs(savedSets) do if entry.id==sampleSetId then chosen=entry end end;item=copyTable(chosen.samples[1]) end;reopen()
 		end);c.sceneKind:SelByValue(sceneKind)
-		button(c,"regenerate",16,202,100,"Regenerate",function() seed=seed+1;scenePage=1;reopen() end)
+		button(c,"regenerate",16,202,100,"Regenerate",function() seed=seed+1;scenePage=1;if sceneKind=="Build targets" then transient.filterSceneTargets=nil end;reopen() end)
 		c.regenerate.enabled=sceneKind~="Saved examples";c.regenerate.tooltipText="Regenerate generated scenes. Saved examples keep their exact properties; edit them through Saved sets."
 		button(c,"savedSamples",124,202,100,"Saved sets",function() collection("sampleSets") end)
 		local savedSet
@@ -308,8 +330,12 @@ function M.Open(build,source,layout,controller)
 		if savedSet then
 			scene=copyTable(savedSet.samples);local encode=require("Modules.PlanningData").encode;local present=false;local current=encode(item);for _,sample in ipairs(scene) do if encode(sample)==current then present=true;break end end
 			if not present then table.insert(scene,1,item);extraTest=true end
-		else scene=library.scene(profile,build,sceneKind,seed,settings.areaLevel,settings.itemLevel);table.insert(scene,1,item) end
-		sceneControl("preview",groundX,savedSet and 168 or 120,groundW,h-(savedSet and 230 or 182),scene,true,savedSet and (extraTest and "SAVED SET + CURRENT TEST" or "SAVED EXAMPLES"))
+		else local targets=sceneKind=="Build targets" and targetPreview() or nil
+			scene=library.scene(profile,build,sceneKind,seed,settings.areaLevel,settings.itemLevel,targets and (targets.rules or {}));table.insert(scene,1,item) end
+		local targets=sceneKind=="Build targets" and transient.filterSceneTargets or nil
+		local caption=savedSet and (extraTest and "SAVED SET + CURRENT TEST" or "SAVED EXAMPLES") or targets and (targets.error and "TARGETS UNAVAILABLE" or not targets.rules and "CHECKING BUILD TARGETS..." or #targets.warnings>0 and "SOME TARGETS NEED REVIEW" or "BUILD TARGETS")
+		sceneControl("preview",groundX,savedSet and 168 or 120,groundW,h-(savedSet and 230 or 182),scene,true,caption)
+		if targets then c.preview.tooltipText=targets.error or (#(targets.warnings or {})>0 and "Some crafting guides need review. Open linked build targets for details." or "Build target examples update as the build changes.") end
 		button(c,"inspectMatch",w-216,h-96,184,"Inspect matched rules",inspectMatches);c.inspectMatch.enabled=function() return parsed~=nil end
 	else
 		ui.label(c,"styleHeading",16,128,"A palette for your pickups",22)
@@ -332,7 +358,16 @@ function M.Open(build,source,layout,controller)
 		c.saveHint.label=function() return "^7"..(dirty and "Working draft / Keep in build, then Save" or "Kept profiles travel with your build") end
 	end
 	layout.snapshot=snapshot
-	layout.onShow=function() if not generationJob then refreshDependencies() end end;layout.tick=function() if generationJob then advanceGeneration() elseif dependencyJob then advanceDependencies() elseif not dependencyTime or GetTime()-dependencyTime>2000 then refreshDependencies() end end
+	layout.onShow=function() if not generationJob then refreshDependencies() end end
+	layout.tick=function()
+		if generationJob then advanceGeneration()
+		elseif page=="Simulate" and sceneKind=="Build targets" and transient.filterSceneTargets and not transient.filterSceneTargets.rules and not transient.filterSceneTargets.error then advanceTargetPreview()
+		elseif dependencyJob then advanceDependencies()
+		elseif not dependencyTime or GetTime()-dependencyTime>2000 then
+			if page=="Simulate" and sceneKind=="Build targets" and transient.filterSceneTargets and (transient.filterSceneTargets.job.profile~=profile or not require("Modules.LootFilterDependencies").current(transient.filterSceneTargets.job)) then transient.filterSceneTargets=nil;reopen();return end
+			refreshDependencies()
+		end
+	end
 	refreshDependencies()
 	for _,control in pairs(c) do control.layoutAudit="loot-filter-workspace" end
 	ui.style(c,{keep=true,export=true},custom);visual.layers(c,backgrounds);layout.mount(w,h,"Loot filter",c)

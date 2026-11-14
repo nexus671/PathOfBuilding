@@ -72,17 +72,17 @@ local function begin(build,profile,generate)
 end
 function M.begin(build,profile) return begin(build,profile,false) end
 function M.beginGenerate(build,profile) return begin(build,profile,true) end
-function M.poll(job)
+function M.current(job)
 	local revision=require("Modules.PlanningRevision")
-	local function unchanged()
-		return revision.same(job.stamp,revision.stamp(job.build)) and job.skills==skillInputs(job.build)
-			and job.profileKey==stable.encode({preset=job.profile.preset,theme=job.profile.theme,rules=job.profile.rules})
-	end
-	if not unchanged() then return true,nil,"changed" end
+	return revision.same(job.stamp,revision.stamp(job.build)) and job.skills==skillInputs(job.build)
+		and job.profileKey==stable.encode({preset=job.profile.preset,theme=job.profile.theme,rules=job.profile.rules})
+end
+function M.poll(job)
+	if not M.current(job) then return true,nil,"changed" end
 	local start=os.clock();local ok,result=coroutine.resume(job.thread)
 	require("Modules.PlanningPerformance").record(job.build,job.generate and "Filter pickup generation slice" or "Filter target refresh slice",os.clock()-start)
 	if not ok then return true,nil,result end
-	if coroutine.status(job.thread)=="dead" then if not unchanged() then return true,nil,"changed" end;return true,result end
+	if coroutine.status(job.thread)=="dead" then if not M.current(job) then return true,nil,"changed" end;return true,result end
 	return false
 end
 function M.open(build,layout,origin)
