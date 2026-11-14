@@ -162,8 +162,8 @@ function M.connect(plan,targets,avoid,checkpoint)
 	local result=M.validate(plan);local reachable,why=budgetReachabilityChecked(result);assert(reachable~=false,why)
 	return result,additions
 end
--- Bounded order search, retaining every existing allocation. This is a heuristic,
--- not a Steiner-tree solver. An invalid baseline must not prevent a valid reorder.
+-- Retain existing allocations. Compare bounded orders, then solve up to four
+-- targets exactly. An invalid baseline must not prevent a valid reorder.
 function M.connectOptimized(plan,targets,avoid,options)
 	options=options or {};plan=M.validate(plan);array(targets,300,"Atlas targets")
 	local tree=M.tree(plan.version);local blocked=nodeSet(tree,M.exclusions(plan,avoid))
@@ -205,8 +205,27 @@ function M.connectOptimized(plan,targets,avoid,options)
 		if options.checkpoint then options.checkpoint({order=attempts+1,orders=math.min(#targets+2,33),target=#nearest,targets=#targets}) end
 	end
 	if not next(remaining) then try(nearest) end
+	-- A small target set can be solved exactly, including shared paths between
+	-- targets. Larger requests retain the bounded order search above.
+	local exact=false
+	if options.exact~=false and #targets<=4 then
+		local found=require("Modules.AtlasExactRoute").find(tree,allocated,blocked,targets,options.checkpoint)
+		if found then
+			local candidate=copyTable(plan);local set=copyTable(allocated)
+			for id in pairs(found) do set[id]=true end;set[tree.start]=nil;candidate.nodes=sorted(set)
+			local exclusions=M.exclusions(plan,avoid);if candidate.avoided~=nil or #exclusions>0 then candidate.avoided=exclusions end
+			local ok,value=pcall(M.validate,candidate)
+			if ok then
+				local reachable=budgetReachabilityChecked(value)
+				if reachable~=false then
+					local added=sorted(found)
+					if not best or #added<=#additions then best,additions=value,added;exact=true end
+				end
+			end
+		end
+	end
 	assert(best,"Atlas targets cannot be connected within this budget and exclusions")
-	return best,additions,{attempts=attempts,originalCost=baseline,cost=#additions,saved=baseline and baseline-#additions or nil,heuristic=true}
+	return best,additions,{attempts=attempts,originalCost=baseline,cost=#additions,saved=baseline and baseline-#additions or nil,heuristic=not exact}
 end
 function M.remove(plan,id)
 	plan=M.validate(plan); local tree=M.tree(plan.version)
@@ -231,7 +250,7 @@ function M.report(plan)
 	table.sort(lines,function(a,b) return a.text < b.text end); table.sort(notables); table.sort(keystones)
 	return {version=plan.version,mode="Standard",preview=tree.preview,compatibleModes=tree.compatibleModes,used=#plan.nodes,budget=plan.budget,bonus=bonus,remaining=plan.budget+bonus-#plan.nodes,budgetReachable=reachable,budgetWarning=budgetWarning,pointsBeforeGrant=pointsBeforeGrant,
 		counts=counts,notables=notables,keystones=keystones,stats=lines,source=tree.source,sourceCommit=tree.commit,
-		limitations={"Atlas plans do not modify character DPS or EHP.","Stat lines are grouped verbatim, not combined into effective map odds. Keystone interactions are not simulated.","Budget is supplied progression, not imported account completion. Routing is greedy shortest connection, not a global optimum."}}
+		limitations={"Atlas plans do not modify character DPS or EHP.","Stat lines are grouped verbatim, not combined into effective map odds. Keystone interactions are not simulated.","Budget is supplied progression, not imported account completion. Small optimized routes can be exact; larger routes use a heuristic."}}
 end
 function M.export(plan)
 	return json.encode({schemaVersion=1,atlasPlan=M.validate(plan)})

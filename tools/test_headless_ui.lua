@@ -890,7 +890,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(build.savers.LootFilters.data.profiles[1].palettes[1].categoryStyles[1].category=="Currency","Palette omitted category settings")
 	ui:click("viewSimulate");ui:choose("sceneKind","Mixed drops")
 	filterTool("Linked build targets");frame("filter-linked-targets");ui:click("choose");assert(build.planningWorkspace.page~="filters","Linked filter target did not open its source plan");frame("filter-linked-plan");ui:click("nav_filters");frame("filter-returned-draft");assert(build.planningWorkspace.cache.filters.layout.snapshot().page=="Simulate","Following a linked plan lost the filter draft")
-	ui:click("nav_atlas");ui:text("search","");ui:choose("mechanic","Mirage");frame("atlas-mirage-filter");ui:choose("mechanic","Essence");ui:click("targets");ui:click("targetAdd");ui:choose("targetMechanic","Harvest");ui:click("targetMechanicAdd");frame("atlas-desired-targets")
+	ui:click("nav_atlas");ui:text("search","");ui:choose("mechanic","Mirage");frame("atlas-mirage-filter");ui:choose("mechanic","Essence");ui:click("targets");ui:click("targetAdd")
+	ui:click("targetCalculate");for i=1,500 do ui:frame();if not require("Modules.AtlasTargets").jobs[build].thread then break end end
+	local exactRoute=require("Modules.AtlasTargets").jobs[build].result;assert(exactRoute and not exactRoute.routing.heuristic,"Exact Atlas route did not complete");ui:frame();frame("atlas-exact-target-preview")
+	ui:choose("targetMechanic","Harvest");ui:click("targetMechanicAdd");frame("atlas-desired-targets")
 	ui:click("targetCalculate");for i=1,500 do ui:frame();if not require("Modules.AtlasTargets").jobs[build].thread then break end end
 	assert(require("Modules.AtlasTargets").jobs[build].result,require("Modules.AtlasTargets").jobs[build].error)
 	frame("atlas-desired-preview");ui:click("targetApply");ui:click("keep");frame("atlas-desired-kept")

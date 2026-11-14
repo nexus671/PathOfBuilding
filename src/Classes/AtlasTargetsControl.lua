@@ -12,6 +12,7 @@ function M.Open(build,options)
 	local function showDetails(plan,preview)
 		local summary=targets.summary(plan);local lines={#(plan.desired or {}).." desired | "..#(plan.avoided or {}).." avoided",preview and "Preview investment" or "Current allocated investment"}
 		if preview then local diff=require("Modules.AtlasStrategy").compare(options.current(),plan);lines[#lines+1]=#diff.added.." points added | "..#diff.removed.." points refunded"
+			local job=targets.jobs[build];if job and job.result and job.result.routing and not job.result.routing.heuristic then lines[#lines+1]="Fewest added points for these targets and exclusions; existing allocations are retained." end
 			for _,node in ipairs(diff.added) do if node.kind=="notable" or node.kind=="keystone" then lines[#lines+1]="+ "..node.name end end
 		end
 		for _,row in ipairs(summary.mechanics) do lines[#lines+1]=row.name..": "..row.total.." points | "..row.notable.." notables | "..row.small.." small | "..row.gateway.." gateways" end
@@ -49,7 +50,7 @@ function M.Open(build,options)
 		if state.result then previewCurrent=require("Modules.PlanningData").hash(options.current())==state.baseHash
 			if previewCurrent and lastPreview~=state.result then lastPreview=state.result;showDetails(state.result.plan,true) end
 		end
-		local text=state.error or state.status;if state.paused then text="Paused" elseif state.thread then text=text.." | order "..(state.progress.order or 1).." / "..(state.progress.orders or "?") elseif state.result then text=text.." | "..#state.result.plan.nodes.." allocated points" end
+		local text=state.error or state.status;if state.paused then text="Paused" elseif state.thread then if state.progress.phase=="exact" then text=text.." | checking shared paths" else text=text.." | order "..(state.progress.order or 1).." / "..(state.progress.orders or "?") end elseif state.result then text=text.." | "..#state.result.plan.nodes.." allocated points" end
 		if state.result and not previewCurrent then text="Plan changed. Recalculate before using the preview." end
 		return "^7"..ui.fit(text,w-36,14)
 	end

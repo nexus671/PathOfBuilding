@@ -76,7 +76,7 @@ def main():
             assert all(b"Covens pickup plan" in z.read(name) for name in z.namelist()), "ZIP lost the personal filter"
         archive.unlink()
     paths = sorted(frames.glob("*.json"))
-    assert len(paths) == 1080, f"Expected 1080 UI frames, found {len(paths)}"
+    assert len(paths) == 1083, f"Expected 1083 UI frames, found {len(paths)}"
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         failures = [failure for failure in pool.map(render_frame, paths) if failure]
     tooltip = json.loads((directory / "expected-audit-tooltip.json").read_text())

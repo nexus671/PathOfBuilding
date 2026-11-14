@@ -300,7 +300,7 @@ async function main(){
   const atlasSearch=await queued('search_atlas_nodes',{baseRevision:context.revision,version:'3.29.1',query:'Essence',limit:10},'atlas');
   const atlasTargets=atlasSearch.atlas.matches.slice(0,3).map(node=>node.id);assert.equal(atlasTargets.length,3);
   const atlasRoute=await queued('plan_atlas_tree',{baseRevision:context.revision,plan:starterAtlas,targets:atlasTargets,optimize:true},'atlas');
-  assert.ok(atlasRoute.atlas.routing.heuristic);assert.ok(atlasRoute.atlas.routing.attempts>=1);
+  assert.equal(atlasRoute.atlas.routing.heuristic,false);assert.ok(atlasRoute.atlas.routing.attempts>=1);
   assert.ok(atlasTargets.every(id=>atlasRoute.atlas.plan.nodes.includes(id)));assert.equal((await call('get_build_context')).context.revision,context.revision);
   const unfundedAtlas=await queued('plan_atlas_tree',{baseRevision:context.revision,plan:{...starterAtlas,budget:0},targets:[65225]},'failed');assert.match(JSON.stringify(unfundedAtlas),/earned points.*Unwavering Vision/);
   await queued('propose_atlas_plan',{baseRevision:context.revision,plan:starterAtlas},'review');await host('apply');context=(await call('get_build_context')).context;
