@@ -41,7 +41,8 @@ function M.families()
 end
 function M.equipped(build)
 	local result=M.defaults();local weapons,defences={},{}
-	for name,slot in pairs(build.itemsTab.slots) do if not name:find("Swap",1,true) then local item=build.itemsTab.items[slot.selItemId]
+	local activeSet=build.itemsTab.activeItemSet.useSecondWeaponSet and 2 or 1
+	for _,slot in pairs(build.itemsTab.slots) do if not slot.inactive and (not slot.weaponSet or slot.weaponSet==activeSet) and (not slot.shown or slot.shown()) then local item=build.itemsTab.items[slot.selItemId]
 		if item and item.base then local a,b=M.weapon(item.base),M.defence(item.base);if a then weapons[a]=true end;if b then defences[b]=true end end
 	end end
 	for _,name in ipairs(M.weapons) do if weapons[name] then result.weapons[#result.weapons+1]=name end end

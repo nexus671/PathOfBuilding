@@ -24,6 +24,25 @@ describe("Offline campaign pickup policies",function()
 		assert.has_error(function() campaign.validate({weapons={"Imaginary"}}) end);assert.has_error(function() campaign.validate({minAreaLevel=70,maxAreaLevel=1}) end)
 		assert.has_error(function() campaign.validate({weapons={"Bow","Bow"}}) end)
 	end)
+	it("uses the active weapon set and skips inactive equipment",function()
+		local fake={itemsTab={activeItemSet={useSecondWeaponSet=true},items={
+			[1]={base={type="Bow",weapon={}}},[2]={base={type="Wand",weapon={}}},
+			[3]={base={type="Shield",armour={ArmourBaseMin=1}}},[4]={base={type="Helmet",armour={EvasionBaseMin=1}}},
+		},slots={
+			first={selItemId=1,weaponSet=1},second={selItemId=2,weaponSet=2},
+			shield={selItemId=3,weaponSet=2},inactive={selItemId=4,inactive=true},
+		}}}
+		local equipped=campaign.equipped(fake)
+		assert.same({"Wand","Shield"},equipped.weapons);assert.same({"Armour"},equipped.defences)
+		fake.itemsTab.activeItemSet.useSecondWeaponSet=false
+		equipped=campaign.equipped(fake);assert.same({"Bow"},equipped.weapons);assert.same({},equipped.defences)
+	end)
+	it("keeps recipe selections when choosing equipped families",function()
+		local policy=campaign.defaults();policy.recipes={"Quality gems"};local kept
+		local controls=require("Classes.LootFilterCampaignControl").Open(build,policy,function(value) kept=value end)
+		controls.equipped:Click();controls.keep:Click()
+		assert.same({"Quality gems"},kept.recipes)
+	end)
 	it("keeps every selectable family within the export budget and round-trips policy metadata",function()
 		local p=profile();p.campaign.weapons=copyTable(campaign.weapons);p.campaign.defences=copyTable(campaign.defences);p.campaign.recipes=copyTable(campaign.recipes)
 		local raw,report=filters.compile(p);assert.is_true(#raw<filters.limit);for _,d in ipairs(report.diagnostics) do assert.is_nil(d.error,d.error) end

@@ -19,7 +19,10 @@ function M.Open(build,value,onKeep)
 	for i,field in ipairs(fields) do local key,title=field[1],field[2];local x=16+(i-1)*(fieldWidth+4);ui.label(c,key.."Label",x,96,title,12)
 		c[key]=new("EditControl"):EditControl(ui.anchor,{x,120,fieldWidth-4,28},tostring(current[key]),nil,"%D",3)
 	end
-	button("equipped",16+5*(fieldWidth+4),120,w-32-5*(fieldWidth+4),"Use equipped",function() selections(policy.equipped(build)) end)
+	button("equipped",16+5*(fieldWidth+4),120,w-32-5*(fieldWidth+4),"Use equipped",function()
+		local equipped=policy.equipped(build)
+		for _,key in ipairs({"weapons","defences"}) do selected[key]={};for _,name in ipairs(equipped[key]) do selected[key][name]=true end end
+	end)
 	c.upgradeWindow.tooltipText="0 keeps every selected base. Otherwise, five-area bands raise the required base DropLevel as you progress. A band starts at area level minus this window."
 	c.minDropLevel.tooltipText="The game's base DropLevel, rather than the item's character requirements. Applies to base families, not recipe pickups."
 	ui.label(c,"weaponsLabel",16,162,"Weapons, shields and quivers",16);ui.label(c,"defencesLabel",right,162,"Armour families",16)
