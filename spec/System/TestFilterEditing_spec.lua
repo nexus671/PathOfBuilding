@@ -56,6 +56,30 @@ describe("Local filter editing",function()
 		for _,text in ipairs({'Show\n MinimapIcon 3 Cyan Diamond','Show\n MinimapIcon 0 Cyan Unknown','Show\n PlayEffect Cyan Forever'}) do assert.is_truthy(parser.parse(text).diagnostics[1].error) end
 		assert.equal(0,#parser.parse('Show\n MinimapIcon -1\n PlayEffect Purple Temp').diagnostics)
 	end)
+	it("preserves conflict diagnostics for all bundled strictness levels",function()
+		local stable=require("Modules.PlanningData");local diagnostic=require("Modules.LootFilterDiagnostics")
+		local function reference(parsed)
+			local seen,result={},{};local terminal
+			for _,rule in ipairs(parsed.rules) do
+				local conditions={}
+				for _,condition in ipairs(rule.conditions) do
+					local count=(condition.keyword=="HasExplicitMod" or condition.keyword=="HasEnchantment") and not (condition.quoted and condition.quoted[1]) and tonumber(condition.values[1])
+					local values={};for i=count and 2 or 1,#condition.values do values[#values+1]=stable.encode({value=condition.values[i],quoted=condition.quoted and condition.quoted[i] or false}) end
+					table.sort(values);conditions[#conditions+1]=stable.encode({keyword=condition.keyword,operator=condition.operator,count=count,values=values})
+				end
+				table.sort(conditions);local key=table.concat(conditions,"\n");local prior=terminal or seen[key]
+				if prior then result[#result+1]={line=rule.line,shadowedBy=prior.line,warning="This block cannot be reached: a preceding terminating block at line "..prior.line.." matches the same conditions"..(terminal and " or every item." or ".")}
+				elseif not rule.continue then seen[key]=rule;if #conditions==0 then terminal=rule end end
+			end
+			return result
+		end
+		for strictness=0,6 do
+			local p=filters.profile("comparison","Comparison");p.strictness=strictness
+			local parsed=parser.parse(filters.migratedBase(p));assert.same(reference(parsed),diagnostic.shadowing(parsed))
+		end
+		local parsed=parser.parse('Show\n BaseType == "a:1" "b"\nHide\n BaseType == "b" "a:1"\nShow\n BaseType == "a" "1:b"\nShow\nHide\n BaseType == "x"')
+		assert.same(reference(parsed),diagnostic.shadowing(parsed))
+	end)
 	it("shares frozen modules between profiles and updates snapshots explicitly",function()
 		local source=profile();source.rules={filters.rule("hat","Crafting base",{'BaseType == "Iron Hat"'},"craft:test")}
 		local module=editing.module(source,"bases","Bases");assert.is_nil(module.rules[1].origin)

@@ -99,9 +99,9 @@ function M.Open(build,source,layout,controller)
 		if not profile then return end
 		local key=require("Modules.PlanningData").encode(profile);local cached=transient.filterCompiled
 		if not cached or cached.key~=key then
-			local ok,value,details=pcall(filters.compile,profile)
+			local ok,value,details,compiled=pcall(filters.compile,profile,true)
 			if not ok then raw=nil;report={error=value};result={action="Unknown",status="invalid",styles={},reasons={value}};return end
-			cached={key=key,raw=value,report=details,parsed=parser.parse(value)};transient.filterCompiled=cached
+			cached={key=key,raw=value,report=details,parsed=compiled};transient.filterCompiled=cached
 		end
 		raw,report,parsed=cached.raw,cached.report,cached.parsed;result=parser.simulate(parsed,item)
 		for _,d in ipairs(report.diagnostics) do if d.error then raw=nil;result={action="Unknown",status="invalid",styles={},reasons={d.error}} end end

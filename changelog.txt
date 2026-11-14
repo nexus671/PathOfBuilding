@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Open filter previews faster while retaining priority-conflict checks.
 * Prepare simulator build-target examples across frames and reuse unchanged filter previews.
 * Keep pending filter updates running when changing filter screens or resizing the workspace.
 * Generate build-adjusted filter pickups in stages and discard outdated results.

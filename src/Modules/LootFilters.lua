@@ -196,7 +196,7 @@ function M.migratedBase(profile)
 	if not cache[key] then cache[key]={M.migrate(raw)} end
 	return cache[key][1],copyTable(cache[key][2])
 end
-function M.compile(profile)
+function M.compile(profile,includeParsed)
 	local checked=M.validate({schemaVersion=1,activeId=profile.id,profiles={profile}}).profiles[1]
 	local function styled(text,category) return require("Modules.LootFilterCategoryStyles").apply(text,checked.categoryStyles,category) end
 	local output={"# Path of Building AI Edition | "..checked.title,"# PoE 3.30 | NeverSink base "..checked.baseCommit,"# NeverSink templates: MIT. Personal rules precede the base filter."}
@@ -218,7 +218,9 @@ function M.compile(profile)
 	for _,diagnostic in ipairs(require("Modules.LootFilterDiagnostics").shadowing(parsed)) do parsed.diagnostics[#parsed.diagnostics+1]=diagnostic end
 	if checked.mode=="Normal" then for _,rule in ipairs(parsed.rules) do if rule.action=="Minimal" then parsed.diagnostics[#parsed.diagnostics+1]={line=rule.line,error="Minimal blocks require Ruthless mode"} end end end
 	if checked.mode=="Ruthless" then for _,rule in ipairs(parsed.rules) do local text=rule.styles.SetTextColor;if text and tonumber(text[4]) and tonumber(text[4])<80 then parsed.diagnostics[#parsed.diagnostics+1]={line=rule.line,error="Ruthless text opacity must be at least 80"} end end end
-	return raw,{changes=changes,diagnostics=parsed.diagnostics,imports=parsed.imports,rules=#parsed.rules,baseCommit=checked.baseCommit,currentCommit=M.source().commit,imported=checked.template~=nil}
+	local report={changes=changes,diagnostics=parsed.diagnostics,imports=parsed.imports,rules=#parsed.rules,baseCommit=checked.baseCommit,currentCommit=M.source().commit,imported=checked.template~=nil}
+	if includeParsed then return raw,report,parsed end
+	return raw,report
 end
 function M.variants(profile)
 	assert(not profile.template,"An imported filter has no bundled strictness variants")
@@ -232,9 +234,9 @@ function M.variants(profile)
 	return variants
 end
 function M.simulate(profile,item)
-	local raw,report=M.compile(profile)
+	local raw,report,parsed=M.compile(profile,true)
 	for _,d in ipairs(report.diagnostics) do if d.error then return {status="invalid",action="Unknown",styles={},matches={},reasons={d.error}} end end
-	return parser.simulate(parser.parse(raw),item)
+	return parser.simulate(parsed,item)
 end
 function M.update(profile)
 	local nextProfile=copyTable(profile);nextProfile.baseCommit=M.source().commit
