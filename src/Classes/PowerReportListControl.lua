@@ -28,13 +28,15 @@ function PowerReportListClass:PowerReportListControl(anchor, rect, nodeSelectCal
 	self.showClusters = false
 	self.showMasteries = true
 	self.allocated = false
+	self.includeLosses = false
 	self.label = "Building Tree..."
 	
 	self.controls.filterSelect = new("DropDownControl"):DropDownControl({"BOTTOMRIGHT", self, "TOPRIGHT"}, {0, -2, 200, 20},
-		{ "Show Unallocated", "Show Unallocated & Clusters", "Show Allocated" },
+		{ "Show Unallocated", "Show Unallocated & Clusters", "Show Allocated", "Unallocated: gains & losses" },
 		function(index, value)
 			self.showClusters = index == 2
 			self.allocated = index == 3
+			self.includeLosses = index == 4
 			self:ReList()
 			self:ReSort(3) -- Sort by power
 		end)
@@ -49,6 +51,7 @@ end
 function PowerReportListClass:SetReport(stat, report)
 	self.powerColumn.label = stat and stat.label or ""
 	self.originalList = report or {}
+	self.reportReady = stat and stat.stat and report ~= nil
 
 	if stat and stat.stat then
 		self.label = report and "Click to focus node on tree" or "Building Tree..."
@@ -106,7 +109,7 @@ function PowerReportListClass:ReList()
 	end
 
 	for _, item in ipairs(self.originalList) do
-		local insert = item.power > 0
+		local insert = item.power > 0 or self.includeLosses and item.power < 0
 		if not self.showClusters and item.pathDist == "Cluster" then
 			insert = false
 		end
@@ -122,6 +125,11 @@ function PowerReportListClass:ReList()
 		if insert then
 			t_insert(self.list, item)
 		end
+	end
+	if self.reportReady then
+		self.defaultText = self.allocated and "No allocated nodes shown." or self.includeLosses and "No non-zero changes shown." or "No gains. Try gains & losses."
+	else
+		self.defaultText = nil
 	end
 end
 
