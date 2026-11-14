@@ -98,6 +98,31 @@ describe("Linked planning tools",function()
 		assert.equal(revision,build.outputRevision);assert.is_true(dependencies.report(build,profile).stale)
 		build.itemsTab.activeItemSet.useSecondWeaponSet=false;build.skillsTab.socketGroupList=original
 	end)
+	it("checks recipe dependencies in bounded steps and discards changed sources",function()
+		for i=1,3 do
+			local project=craft();project.id="step"..i;project.startingItem=project.startingItem:gsub("86",tostring(70+i))
+			project.nativeRecipe={steps={{method="omen_connections"}},targets={},requirements={links=4}};build.savers.CraftingProjects:Upsert(project)
+		end
+		local profile=filters.profile("async-check","Async check");local job=dependencies.begin(build,profile)
+		local done,result,err=dependencies.poll(job);assert.is_false(done)
+		local changed=copyTable(build.savers.CraftingProjects.projects[1]);changed.title="Changed during check";build.savers.CraftingProjects:Upsert(changed)
+		done,result,err=dependencies.poll(job);assert.is_true(done);assert.is_nil(result);assert.equal("changed",err)
+		job=dependencies.begin(build,profile);local slices=0
+		repeat slices=slices+1;done,result,err=dependencies.poll(job);assert.is_nil(err) until done or slices>10
+		assert.is_true(done);assert.is_true(slices>1);assert.same(dependencies.report(build,profile),result)
+	end)
+	it("keeps the filter workspace usable while linked recipes are checked",function()
+		for i=1,3 do
+			local project=craft();project.id="ui-step"..i;project.startingItem=project.startingItem:gsub("86",tostring(60+i))
+			project.nativeRecipe={steps={{method="socket_white_bench"}},targets={},requirements={sockets=1}};build.savers.CraftingProjects:Upsert(project)
+		end
+		local profile=filters.profile("async-ui","Async UI");local workspace=require("Modules.PlanningWorkspace").new(build)
+		workspace:Show("filters",{data={schemaVersion=1,activeId=profile.id,profiles={profile}}})
+		assert.is_false(workspace.controls.generate:IsEnabled())
+		assert.equal("Checking build pickups...",workspace.controls.generate.label())
+		for _=1,10 do if workspace.controls.generate:IsEnabled() then break end;workspace.cache.filters.layout.tick() end
+		assert.is_true(workspace.controls.generate:IsEnabled())
+	end)
 	it("keeps the source filter draft and previous working craft when following a link",function()
 		local project=craft();build.savers.CraftingProjects:Upsert(project);local workspace=require("Modules.PlanningWorkspace").new(build)
 		local profile=filters.profile("filter","Unsaved filter name");workspace:Show("filters",{data={schemaVersion=1,activeId=profile.id,profiles={profile}},dirty=true})

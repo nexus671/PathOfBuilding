@@ -27,9 +27,20 @@ function M.Open(build,source,layout,controller)
 		for _,reason in ipairs(evaluated and evaluated.reasons or {}) do lines[#lines+1]=reason end;return lines
 	end
 	local history=require("Modules.PlanningHistory").new(data,state.history);local tierView;local tierState=state.tierState
-	local dependencies;local dependencyTime
+	local dependencies;local dependencyTime;local dependencyJob;local dependencyError
+	local function advanceDependencies()
+		if not dependencyJob then return end
+		local done,result,err=require("Modules.LootFilterDependencies").poll(dependencyJob)
+		if done then
+			dependencyJob=nil
+			if err=="changed" then dependencies=nil;dependencyTime=nil
+			elseif err then dependencies=nil;dependencyError=ui.errorText(err);dependencyTime=GetTime()
+			else dependencies=result;dependencyError=nil;dependencyTime=GetTime() end
+		end
+	end
 	local function refreshDependencies()
-		if profile then dependencies=require("Modules.LootFilterDependencies").report(build,profile) end;dependencyTime=GetTime()
+		if dependencyJob then return end
+		if profile then dependencyJob=require("Modules.LootFilterDependencies").begin(build,profile);advanceDependencies() else dependencies=nil;dependencyTime=GetTime() end
 	end
 	local function draft(field) dirty=true;history:record(data,field);ui.draft(build,"filters") end
 	local function snapshot() return {data=data,selected=profile and profile.id,page=page,category=category,scope=scope,query=query,rule=selected,sample=item,dirty=dirty,seed=seed,sceneKind=sceneKind,showHidden=showHidden,history=history:snapshot(),tierState=tierView and tierView.snapshot() or tierState,sceneSettings=settings,sampleHistory=samples,sampleSetId=sampleSetId,scenePage=scenePage} end
@@ -155,7 +166,8 @@ function M.Open(build,source,layout,controller)
 			elseif entry.id=="audit" and profile then controller.Audit(profile,report,function(next) for i,p in ipairs(data.profiles) do if p.id==next.id then data.profiles[i]=next end end;profile=next;draft();reopen() end)
 			elseif entry.id=="changes" then require("Classes.PlanningBrowserControl").Open("Filter changes",require("Modules.LootFilterEditing").review(saver.data,data))
 			elseif entry.id=="links" and profile then
-				refreshDependencies();require("Classes.PlanningBrowserControl").Open("Linked filter targets",dependencies.entries,{action="Open source",choose=function(entry) main:ClosePopup();require("Modules.LootFilterDependencies").open(build,layout,entry.origin) end,closeOnChoose=false,
+				refreshDependencies();if not dependencies or dependencyJob then main:OpenMessagePopup("Linked filter targets",dependencyError or "Checking build pickups. Please try again shortly.");return end
+				require("Classes.PlanningBrowserControl").Open("Linked filter targets",dependencies.entries,{action="Open source",choose=function(entry) main:ClosePopup();require("Modules.LootFilterDependencies").open(build,layout,entry.origin) end,closeOnChoose=false,
 					secondary={label="Refresh build pickups",run=function() main:ClosePopup();generatePickups() end}})
 			elseif entry.id=="campaign" and profile then require("Classes.LootFilterCampaignControl").Open(build,profile.campaign,function(value) profile.campaign=value;draft();reopen() end)
 			elseif entry.id=="structure" and profile then require("Classes.LootFilterStructureControl").Open(profile,function(rule) editRule(rule,keepRule) end)
@@ -185,7 +197,8 @@ function M.Open(build,source,layout,controller)
 		c.mode=new("DropDownControl"):DropDownControl(ui.anchor,{28+left/2-6,306,left/2-6,26},{"Normal","Ruthless"},function(_,value) profile.mode=value;draft();reopen() end);c.mode:SelByValue(profile.mode)
 		ui.label(c,"strictLabel",16,346,"Strictness",12);c.strictness=new("DropDownControl"):DropDownControl(ui.anchor,{16,364,left,26},filters.strictness,function(index) profile.strictness=index-1;draft();reopen() end);c.strictness.selIndex=profile.strictness+1
 		button(c,"generate",16,406,left,"Auto-adjust for this build",generatePickups)
-		c.generate.label=function() return dependencies and dependencies.stale and "Refresh build pickups *" or "Auto-adjust for this build" end
+		c.generate.label=function() return dependencyJob and "Checking build pickups..." or dependencies and dependencies.stale and "Refresh build pickups *" or "Auto-adjust for this build" end
+		c.generate.enabled=function() return not dependencyJob end
 		c.generate.tooltipText="* means linked targets changed. Profile tools > Linked build targets shows the sources. Refreshing preserves personal overrides."
 		button(c,"customize",16,448,left,"Customize pickups  >",function() page="Customize";reopen() end)
 		sceneControl("preview",left+32,214,right,h-288,library.scene(profile,build,"Mixed drops",0,83),true)
@@ -304,7 +317,7 @@ function M.Open(build,source,layout,controller)
 		c.saveHint.label=function() return "^7"..(dirty and "Working draft / Keep in build, then Save" or "Kept profiles travel with your build") end
 	end
 	layout.snapshot=snapshot
-	layout.onShow=refreshDependencies;layout.tick=function() if not dependencyTime or GetTime()-dependencyTime>2000 then refreshDependencies() end end
+	layout.onShow=refreshDependencies;layout.tick=function() if dependencyJob then advanceDependencies() elseif not dependencyTime or GetTime()-dependencyTime>2000 then refreshDependencies() end end
 	refreshDependencies()
 	for _,control in pairs(c) do control.layoutAudit="loot-filter-workspace" end
 	ui.style(c,{keep=true,export=true},custom);visual.layers(c,backgrounds);layout.mount(w,h,"Loot filter",c)

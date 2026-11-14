@@ -16,7 +16,7 @@ local function skillInputs(build)
 	end
 	return stable.encode(result)
 end
-function M.report(build,profile)
+function M.report(build,profile,checkpoint)
 	local function collect(rules)
 		local groups={};for _,rule in ipairs(rules) do if rule.origin then
 			local group=groups[rule.origin] or {origin=rule.origin,rules={},conditions={}};groups[rule.origin]=group
@@ -34,9 +34,9 @@ function M.report(build,profile)
 	if not cached or not revision.same(cached.stamp,stamp) or cached.skills~=skills then cached={stamp=stamp,skills=skills,profiles={}};generated[build]=cached end
 	local key=profile.preset..":"..profile.theme;local new=cached.profiles[key]
 	if not new then
-		local start=os.clock();local rules,warnings=filters.generate(build,profile);new={groups=collect(rules),warnings=warnings or {}}
+		local start=os.clock();local rules,warnings=filters.generate(build,profile,checkpoint);new={groups=collect(rules),warnings=warnings or {}}
 		if #new.warnings==0 then cached.profiles[key]=new end
-		require("Modules.PlanningPerformance").record(build,"Filter target refresh",os.clock()-start)
+		if not checkpoint then require("Modules.PlanningPerformance").record(build,"Filter target refresh",os.clock()-start) end
 	end
 	local old=collect(profile.rules);local result={stale=false,linked=0,entries={}}
 	local origins,warningByOrigin={},{};for key in pairs(old) do origins[key]=true end;for key in pairs(new.groups) do origins[key]=true end
@@ -51,6 +51,26 @@ function M.report(build,profile)
 	end
 	-- An entirely manual filter has no previous generation to become out of date.
 	result.stale=result.linked>0 and result.stale;return result
+end
+function M.begin(build,profile)
+	local revision=require("Modules.PlanningRevision")
+	local job={build=build,profile=profile,stamp=revision.stamp(build),skills=skillInputs(build),profileKey=stable.encode({preset=profile.preset,theme=profile.theme,rules=profile.rules})}
+	local captured=copyTable(profile)
+	job.thread=coroutine.create(function() return M.report(build,captured,function() coroutine.yield() end) end)
+	return job
+end
+function M.poll(job)
+	local revision=require("Modules.PlanningRevision")
+	local function unchanged()
+		return revision.same(job.stamp,revision.stamp(job.build)) and job.skills==skillInputs(job.build)
+			and job.profileKey==stable.encode({preset=job.profile.preset,theme=job.profile.theme,rules=job.profile.rules})
+	end
+	if not unchanged() then return true,nil,"changed" end
+	local start=os.clock();local ok,result=coroutine.resume(job.thread)
+	require("Modules.PlanningPerformance").record(job.build,"Filter target refresh slice",os.clock()-start)
+	if not ok then return true,nil,result end
+	if coroutine.status(job.thread)=="dead" then if not unchanged() then return true,nil,"changed" end;return true,result end
+	return false
 end
 function M.open(build,layout,origin)
 	local kind,id=origin:match("^([^:]+):(.+)$")

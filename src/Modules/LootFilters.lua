@@ -77,7 +77,7 @@ function M.rule(id,title,conditions,origin,theme)
 	for _,pair in ipairs({{"SetTextColor",style.text},{"SetBorderColor",style.border},{"SetBackgroundColor",style.background},{"SetFontSize","42"},{"PlayAlertSound",style.sound.." 200"},{"MinimapIcon","1 Cyan Diamond"},{"PlayEffect","Cyan"}}) do lines[#lines+1]="    "..pair[1].." "..pair[2] end
 	return {id=id,title=title,text=table.concat(lines,"\n"),enabled=true,origin=origin}
 end
-function M.generate(build,profile)
+function M.generate(build,profile,checkpoint)
 	local result={};local used={};local ids={};local warnings={}
 	for _,rule in ipairs(profile.rules) do if not rule.origin then ids[rule.id]=true end end
 	local function add(id,title,conditions,origin)
@@ -117,7 +117,7 @@ function M.generate(build,profile)
 	local recipeModels={}
 	for _,project in ipairs(build.savers.CraftingProjects.projects) do if project.nativeRecipe then
 		local key=require("sha1")(project.startingItem.."\0"..require("Modules.PlanningData").encode(project.nativeRecipe))
-		local coverage=recipeResourceCache[key];local ok=true
+		local coverage=recipeResourceCache[key];local needsInspection=not coverage;local ok=true
 		if not coverage then ok,coverage=pcall(function()
 			local sim=require("Modules.CraftingSimulator");local model=recipeModels[project.startingItem]
 			if not model then model=sim.model(project.startingItem);recipeModels[project.startingItem]=model end
@@ -137,6 +137,7 @@ function M.generate(build,profile)
 			warnings[#warnings+1]={origin="craft:"..project.id,title=project.title,message=message.." Previous recipe pickups were kept; review the crafting guide."}
 			for _,rule in ipairs(profile.rules) do if rule.origin=="craft:"..project.id and rule.id:match("^craft%-resource%-") and not ids[rule.id] then result[#result+1]=copyTable(rule);ids[rule.id]=true end end
 		end
+		if checkpoint and needsInspection then checkpoint() end
 	end end
 	local aliases={chaos="Chaos Orb",divine="Divine Orb",divines="Divine Orb",alchemy="Orb of Alchemy",alteration="Orb of Alteration",exalt="Exalted Orb",annul="Orb of Annulment",fusing="Orb of Fusing",chromatic="Chromatic Orb",jeweller="Jeweller's Orb"}
 	for name in pairs(names) do aliases[name:lower()]=name;aliases[name:lower().."s"]=name end
