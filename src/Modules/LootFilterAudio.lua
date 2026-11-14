@@ -2,9 +2,17 @@
 -- Original reference tones; game-native alert IDs play the game's sounds on export.
 local M={}
 function M.alert(styles)
+	local custom=styles.CustomAlertSound or styles.CustomAlertSoundOptional
+	if custom then
+		if custom[1]=="None" then return nil,"The custom alert is disabled; no custom audio is previewed." end
+		if tonumber(custom[2])==0 then return nil,"The custom alert volume is zero." end
+		if styles.CustomAlertSoundOptional and not styles.CustomAlertSound then return nil,"Optional custom audio may fall back to a numbered alert if its file is missing. Custom files are not previewed." end
+		return nil,"Custom audio overrides numbered alerts. Custom files are not previewed."
+	end
 	local values=styles.PlayAlertSound or styles.PlayAlertSoundPositional
 	if not values then return nil,"No numbered alert is configured. Custom sound files are preserved on export." end
 	local id=tonumber(values[1]);if not id or id<1 or id>16 or id~=math.floor(id) then return nil,"No reference tone for this alert." end
+	if tonumber(values[2])==0 then return nil,"The numbered alert volume is zero." end
 	return id
 end
 function M.play(styles)

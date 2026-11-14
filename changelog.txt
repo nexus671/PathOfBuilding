@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Explain custom and muted alerts instead of playing misleading preview tones.
 * Flag invalid loot-filter alert sound IDs and volumes.
 * Preserve unquoted filter values and comments when migrating removed bases.
 * Exclude disabled and inactive weapon-set skills from generated filter rules.
