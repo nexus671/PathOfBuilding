@@ -4,6 +4,18 @@ describe("Visual filter catalogue",function()
 	local library=require("Modules.LootFilterLibrary")
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() main.popups={} end)
+	it("builds a reproducible 3.30 league-item example scene from published item classes",function()
+		local profile=filters.profile("test","Test");local scene=library.scene(profile,build,"Covens & Threads",0,76,81)
+		local file=assert(io.open("Data/LootFilters/patch-3.30.json","rb"));local patch=assert(require("dkjson").decode(file:read("*a")));file:close()
+		assert.equal(16,#scene);local seen={}
+		for _,item in ipairs(scene) do
+			assert.is_truthy(isValueInTable(patch.added[item.Class],item.BaseType),item.BaseType)
+			assert.equal(76,item.AreaLevel);assert.equal(81,item.ItemLevel);seen[item.BaseType]=true
+		end
+		assert.is_true(seen["Frayed Thread"]);assert.is_true(seen["Breach Thread"]);assert.is_true(seen["Enshrouded Quiver"]);assert.is_true(seen["Scorched Arm"])
+		local rotated=library.scene(profile,build,"Covens & Threads",1,76,81)
+		assert.equal(scene[2].BaseType,rotated[1].BaseType);assert.same(rotated,library.scene(profile,build,"Covens & Threads",1,76,81))
+	end)
 	it("browses real base blocks without mutating the profile or their conditions",function()
 		local profile=filters.profile("test","Test");local before=copyTable(profile)
 		local entries=library.catalog(profile);assert.is_true(#entries>500)

@@ -1,5 +1,7 @@
 # Loot filters
 
+The simulator's **Covens & Threads** scene provides varied 3.30 league-item examples, including Threads, Enshrouded items and Viscera. The examples test filter behavior; they are not a prediction of encounter drops.
+
 Open **AI builds**, **Atlas**, or **Crafting**, then choose **Loot filter**. **Alt+5** opens it from any planning page.
 
 The workspace has six pages:

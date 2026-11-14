@@ -312,12 +312,12 @@ function M.Open(build,source,layout,controller)
 	elseif page=="Simulate" then
 		local left=208;local groundX=240;local groundW=w-256
 		ui.label(c,"sceneTitle",16,124,"Loot simulator",20)
-		local kinds={"Mixed drops","Build targets","Currency","Tiered gear"};local savedSets=profile.sampleSets or {};if #savedSets>0 then kinds[#kinds+1]="Saved examples" elseif sceneKind=="Saved examples" then sceneKind="Mixed drops" end
+		local kinds={"Mixed drops","Build targets","Currency","Tiered gear","Covens & Threads"};local savedSets=profile.sampleSets or {};if #savedSets>0 then kinds[#kinds+1]="Saved examples" elseif sceneKind=="Saved examples" then sceneKind="Mixed drops" end
 		c.sceneKind=new("DropDownControl"):DropDownControl(ui.anchor,{16,162,left,26},kinds,function(_,value)
 			sceneKind=value;scenePage=1;if value=="Saved examples" then local chosen=savedSets[1];for _,entry in ipairs(savedSets) do if entry.id==sampleSetId then chosen=entry end end;item=copyTable(chosen.samples[1]) elseif value=="Tiered gear" then item=library.scene(profile,build,value,seed,settings.areaLevel,settings.itemLevel)[1] end;reopen()
 		end);c.sceneKind:SelByValue(sceneKind)
 		button(c,"regenerate",16,202,100,"Regenerate",function() seed=seed+1;scenePage=1;if sceneKind=="Build targets" then transient.filterSceneTargets=nil end;reopen() end)
-		c.regenerate.enabled=sceneKind~="Saved examples" and sceneKind~="Tiered gear";c.regenerate.tooltipText="Regenerate mixed, currency or build-target examples. Saved and tier-comparison examples keep their exact properties."
+		c.regenerate.enabled=sceneKind~="Saved examples" and sceneKind~="Tiered gear";c.regenerate.tooltipText="Reorder generated examples. Saved and tier-comparison examples keep their exact properties; examples are not drop-rate estimates."
 		button(c,"savedSamples",124,202,100,"Saved sets",function() collection("sampleSets") end)
 		local savedSet
 		if sceneKind=="Saved examples" then

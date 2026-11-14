@@ -144,6 +144,16 @@ local examples={
 	{"Iron Hat","Helmets","Rare"},{"Vaal Regalia","Body Armours","Rare"},{"Leather Belt","Belts","Unique"},{"Iron Ring","Rings","Magic"},
 	{"Arcane Link","Skill Gems"},{"Orb of Fusing","Stackable Currency"},{"Scroll of Wisdom","Stackable Currency"},{"Chromatic Orb","Stackable Currency"},
 }
+-- Exact examples from GGG's published 3.30 item-filter changes. These are
+-- deliberately varied test items, not an estimate of encounter drops.
+local covensExamples={
+	{"Frayed Thread","Stackable Currency"},{"Breach Thread","Map Fragments"},{"Expedition Thread","Map Fragments"},
+	{"Abyss Thread","Map Fragments"},{"Ritual Thread","Map Fragments"},{"Ultimatum Thread","Map Fragments"},
+	{"Legion Thread","Map Fragments"},{"Blight Thread","Map Fragments"},{"Bestiary Thread","Map Fragments"},
+	{"Betrayal Thread","Map Fragments"},{"Incursion Thread","Map Fragments"},{"Cursed Poppet","Map Fragments"},
+	{"Enshrouded Quiver","Enshrouded Items"},{"Scorched Arm","Viscera"},{"Severed Rhoa Head","Viscera"},
+	{"Afarud Enshrouding Crystal","Stackable Currency"},
+}
 function M.scene(profile,build,kind,seed,area,itemLevel,targetRules)
 	local list={}
 	if kind=="Tiered gear" then
@@ -156,7 +166,8 @@ function M.scene(profile,build,kind,seed,area,itemLevel,targetRules)
 		return list
 	end
 	if kind=="Build targets" then for _,rule in ipairs(targetRules or filters.generate(build,profile)) do list[#list+1]=M.sample(rule) end end
-	for i=1,#examples do local example=examples[(i+(seed or 0)-1)%#examples+1];local item=M.sample();item.BaseType=example[1];item.Class=example[2];item.Rarity=example[3] or "Normal";item.AreaLevel=area or 83
+	local source=kind=="Covens & Threads" and covensExamples or examples
+	for i=1,#source do local example=source[(i+(seed or 0)-1)%#source+1];local item=M.sample();item.BaseType=example[1];item.Class=example[2];item.Rarity=example[3] or "Normal";item.AreaLevel=area or 83
 		if kind~="Currency" or item.Class=="Stackable Currency" then list[#list+1]=item end
 	end
 	for _,item in ipairs(list) do item.AreaLevel=area or 83;item.ItemLevel=itemLevel or 86 end
