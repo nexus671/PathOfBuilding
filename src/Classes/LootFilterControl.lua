@@ -134,6 +134,7 @@ function M.EditSample(item,save)
 			c[key]:SelByValue(value==nil and "Unknown" or value and "Yes" or "No")
 		else c[key]=new("EditControl"):EditControl(ui.anchor,{x,y+18,w/3-32,24},tostring(value==nil and "" or value),nil,nil,240) end
 		if key=="HasExplicitMod" then c[key].tooltipText='Enter quoted modifier names. Leave blank if unknown; enter [] for a known empty list.' end
+		if key=="SocketGroup" then c[key].tooltipText='Enter linked groups, 0 for no sockets, or leave blank if unknown.' end
 	end
 	button(c,"useSample",16,h-48,140,"Test drop",function() attempt(function()
 		local nextItem=copyTable(item);for _,key in ipairs(fields) do local v=parser.booleans[key] and c[key]:GetSelValue() or c[key].buf

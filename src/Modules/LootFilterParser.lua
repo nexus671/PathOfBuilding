@@ -91,10 +91,12 @@ function M.condition(c,item)
 	if c.keyword=="HasExplicitMod" and item.Identified~=true then
 		return nil,item.Identified==false and "Explicit modifiers are hidden on unidentified items" or "Supply identification state for explicit modifiers"
 	end
-	local value=item[c.keyword];if value==nil then return nil,"Missing "..c.keyword end
+	local value=item[c.keyword]
+	if c.keyword=="SocketGroup" and value==nil and tonumber(item.Sockets)==0 then value="0" end
+	if value==nil then return nil,"Missing "..c.keyword end
 	local op=c.operator;local values=c.values
 	if c.keyword=="Sockets" then
-		local count=tonumber(value);local colours=item.SocketColours or (not count and type(value)=="string" and value or nil);local unknown
+		local count=tonumber(value);local colours=item.SocketColours or (count==0 and "") or (not count and type(value)=="string" and value or nil);local unknown
 		local negative=op=="!" or op=="!="
 		for _,pattern in ipairs(values) do
 			local number=tonumber(pattern);local pass
@@ -110,6 +112,10 @@ function M.condition(c,item)
 	end
 	if c.keyword=="SocketGroup" then
 		if type(value)~="string" then return nil,"Supply socket colours for "..c.keyword end
+		if value=="0" or value=="" then
+			for _,pattern in ipairs(values) do if socketMatch("",pattern,op) then return true end end
+			return false
+		end
 		if value:find("[^RGBWAD%s%-]") then return nil,"Invalid socket colours for "..c.keyword end
 		for _,pattern in ipairs(values) do
 			-- Abyss and Delve sockets cannot link to other sockets, even when

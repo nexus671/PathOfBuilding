@@ -285,6 +285,9 @@ async function main(){
   const importsProfile={...socketProfile,rules:[],template:'\ufeffImport "rules.filter"\nShow',importFiles:[{name:'rules.filter',text:'\ufeffHide\n BaseType "Iron Hat"'}]};
   const importedMatch=await queued('test_loot_filter',{baseRevision:context.revision,profile:importsProfile,sample:{BaseType:'Iron Hat'}},'tested');assert.equal(importedMatch.result.action,'Hide');
   const socketTest=await queued('test_loot_filter',{baseRevision:context.revision,profile:socketProfile,sample:{BaseType:'Plate Vest',Rarity:'Normal',SocketGroup:'GGGRRW'}},'tested');assert.equal(socketTest.result.action,'Hide');assert.equal(socketTest.result.ruleTitle,'Socket rule');
+  const zeroSocketProfile={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n SocketGroup 0'}]};
+  const zeroSocketTest=await queued('test_loot_filter',{baseRevision:context.revision,profile:zeroSocketProfile,sample:{BaseType:'Iron Ring',Sockets:0}},'tested');assert.equal(zeroSocketTest.result.action,'Hide');
+  const unknownSockets=await queued('test_loot_filter',{baseRevision:context.revision,profile:zeroSocketProfile,sample:{BaseType:'Iron Ring'}},'tested');assert.equal(unknownSockets.result.status,'unknown');
   const invalidSocketSample=await queued('test_loot_filter',{baseRevision:context.revision,profile:socketProfile,sample:{BaseType:'Plate Vest',Rarity:'Normal',SocketGroup:'GGGRRW?'}},'tested');assert.equal(invalidSocketSample.result.status,'unknown');assert.match(invalidSocketSample.result.reasons[0],/Invalid socket colours/);
   const mixedSocketProfile={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n Sockets 6 RGB'}]};
   const mixedSocketTest=await queued('test_loot_filter',{baseRevision:context.revision,profile:mixedSocketProfile,sample:{BaseType:'Plate Vest',Rarity:'Normal',Sockets:3,SocketColours:'RGB'}},'tested');assert.equal(mixedSocketTest.result.action,'Hide');

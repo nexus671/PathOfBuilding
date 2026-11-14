@@ -4,6 +4,17 @@ describe("Build-owned loot filters",function()
 	local parser=require("Modules.LootFilterParser")
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() main.popups={} end)
+	it("distinguishes known zero sockets from an unknown socket group",function()
+		local function test(condition,item) return parser.simulate(parser.parse("Show\n "..condition.."\nHide"),item) end
+		for _,item in ipairs({{Sockets=0},{SocketGroup="0"},{SocketGroup=""}}) do
+			assert.equal("Show",test("SocketGroup 0",item).action)
+			assert.equal("Show",test("SocketGroup < 1",item).action)
+			assert.equal("Hide",test("SocketGroup >= 1",item).action)
+		end
+		assert.equal("Hide",test("SocketGroup 0",{SocketGroup="W"}).action)
+		assert.equal("unknown",test("SocketGroup 0",{}).status)
+		assert.equal("Hide",test("Sockets R",{Sockets=0}).action)
+	end)
 	it("never treats Abyss or Delve sockets as links in simulated drops",function()
 		local function action(condition,item)
 			return parser.simulate(parser.parse("Show\n "..condition.."\nHide"),item).action

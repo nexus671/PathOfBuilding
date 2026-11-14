@@ -752,6 +752,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(build.planningWorkspace.cache.filters.layout.snapshot().sample.HasExplicitMod==nil,"Unknown modifier names were not cleared")
 	ui:click("sampleEdit");ui:text("HasExplicitMod","[]");ui:click("useSample")
 	local emptyMods=build.planningWorkspace.cache.filters.layout.snapshot().sample.HasExplicitMod;assert(type(emptyMods)=="table" and #emptyMods==0,"Known empty modifier list was not retained")
+	ui:click("sampleEdit");ui:text("SocketGroup","0");ui:text("Sockets","0");ui:click("useSample")
+	local noSockets=build.planningWorkspace.cache.filters.layout.snapshot().sample
+	assert(noSockets.SocketGroup=="0" and noSockets.Sockets==0,"Zero sockets were not retained in the sample")
+	assert(require("Modules.LootFilterParser").simulate(require("Modules.LootFilterParser").parse("Show\n SocketGroup 0\nHide"),noSockets).action=="Show","Zero-socket sample did not match")
 	detail={};for _,row in ipairs(build.planningWorkspace.controls.detail.list) do detail[#detail+1]=row[1] or "" end;assert(not table.concat(detail," "):find("Invalid socket colours",1,true),"Corrected sample left a stale explanation")
 	ui:click("viewSimulate");frame("filter-loot-pile");ui:click("drop2");frame("filter-selected-drop");ui:click("regenerate");ui:click("hidden");frame("filter-hidden-drops")
 	ui:click("viewStyle");ui:click("style2");ui:click("applyStyle");frame("filter-themes");ui:click("globalStyle");ui:choose("minimumFontSize","Minimum size 40","label");ui:choose("alertVolume","Mute filter alerts","label");ui:choose("disableEffects","Disable beams","label");ui:choose("alertId","Use alert 6","label");ui:text("textColor","FFE0A0FF");ui:text("borderColor","C0A060FF");ui:text("backgroundColor","101820FF");ui:click("borderColorPick");frame("filter-global-colour-wheel");ui:text("hex","C0A060FF");ui:click("keep");assert(main.popups[1].controls.borderColor.buf=="C0A060FF","Global picker did not return the selected colour");frame("filter-global-style");ui:click("keep")
