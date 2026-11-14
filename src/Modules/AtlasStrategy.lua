@@ -53,7 +53,10 @@ function M.routes(plan,target,avoid,preferred)
 	if preferred and preferred~=target then add("Via preferred node",{preferred,target},avoid) end
 	if routes[1] then
 		local first=routes[1].added
-		for i=2,math.min(#first-1,8) do local blocked=copyTable(avoid or {});blocked[#blocked+1]=first[i];add("Alternative connection",{target},blocked);if #routes>=4 then break end end
+		-- Additions are returned from target back towards the existing tree.
+		-- The last addition is a valid intermediate node too, including for a
+		-- two-node route; only the target itself must remain unblocked.
+		for i=2,math.min(#first,9) do local blocked=copyTable(avoid or {});blocked[#blocked+1]=first[i];add("Alternative connection",{target},blocked);if #routes>=4 then break end end
 	end
 	table.sort(routes,function(a,b) if a.cost~=b.cost then return a.cost<b.cost else return a.label<b.label end end)
 	return routes

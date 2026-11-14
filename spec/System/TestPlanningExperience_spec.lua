@@ -6,6 +6,14 @@ describe("Planning experience queries",function()
 	local function empty(version) return {id="test",title="Strategy",version=version or "3.29.1",budget=138,nodes={},notes=""} end
 	before_each(function() newBuild() end)
 	after_each(function() main.popups={} end)
+	it("finds an alternative when a target is two allocations away",function()
+		local plan=atlas.connect(empty(),{42692});local target=52858
+		local shortest,added=atlas.connect(plan,{target});assert.equal(2,#added)
+		local routes=strategy.routes(plan,target);assert.is_true(#routes>=2)
+		assert.is_not.same(routes[1].plan.nodes,routes[2].plan.nodes);local found=false
+		for _,route in ipairs(routes) do assert.same(route.plan.nodes,atlas.validate(route.plan).nodes);assert.equal(target,route.added[1]);if route.label=="Shortest connection" then assert.same(shortest.nodes,route.plan.nodes);found=true end end
+		assert.is_true(found)
+	end)
 	it("edits shared item properties without changing or exposing a modifier group",function()
 		local groups={{anyOf={"example-a"},minRoll=0.75,fractured=true},{anyOf={"example-b"},atLeast=2}}
 		local before=copyTable(groups);local kept,properties,required
