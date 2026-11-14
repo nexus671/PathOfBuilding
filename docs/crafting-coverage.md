@@ -11,6 +11,7 @@ The independent engine uses PoB modifiers and an immutable [RePoE export](https:
 | Cluster jewels | The [3.30 shared family](https://www.pathofexile.com/forum/view-thread/4013680) prevents new combinations of small-passive Attack Speed and Cast Speed modifiers. | All 36 members match the `AfflictionJewelAttackOrCastSpeed` group in a local export of client 3.30.0.1.4, including conditional and minion variants. Known legacy combinations can be retained when imported with recognized modifier identities. Existing values are not silently removed. |
 | Fossils | Combinations, tag weights, special added/forced mods, lucky rolls, fractures, corrupted implicits | Tangled needs a revealed outcome; Sanctified uses empirical level bias. |
 | Harvest | Tagged reforge, augment/remove, ordinary equipment, shield maximum, Abyss jewel and regular/maximum jewel resistance swaps, 14 quality enchantments with client-derived eligibility and costs | Reforges include minion, elemental, attribute, mana and drop tags with their Crystallised Rancour costs; those tags do not have augment recipes. Arbitrary legacy crafts and hybrid resistance swaps are excluded. Resistance swaps reroll values within the replacement tier using the model's roll distribution. Each 3.30 swap consumes 300 Lifeforce for each element: Wild for fire, Primal for cold and Vivid for lightning. |
+
 | Influence | Six slams, Awakener, Dominance | Known native higher tiers and compatible bases. |
 | Veiled | Remove/add veil, offered choices, preferred choices in recipes | Pending choices are unfinished items. |
 | Bestiary | Level 20/30 Aspects, affix conversion, magic and rare Talisman imprints, restore, random metamod, influenced augmentation, one/two-mod Talisman fractures | Imprints cannot be restored onto fractured items. Talisman fractures sample distinct modifiers uniformly. Rare Talisman imprint uses a user-supplied whole-action price. Unique services remain unsupported. |
@@ -25,6 +26,8 @@ The independent engine uses PoB modifiers and an immutable [RePoE export](https:
 | Planning | Rich targets including native weapon/defence minimums, linked socket-colour counts and specific fractures/crafted flags, manual starting-item edits, bounded routes/loops, background jobs, cancellation, starting-item costs, percentiles, final-affix/property distributions, retained successes, finite-outcome enumeration with cancellable sampled fallback, fossil comparison | No globally cheapest policy guarantee. |
 
 Socket craft inspection includes the modelled colour bench, Chromatic and tainted currency actions alongside the deterministic socket and link services. Random outcomes remain labelled as such, and unavailable choices explain their current restrictions.
+
+Resistance conversion is refused when an eligible, unprotected hybrid or cluster family is not yet modeled, even if another modifier on the item could be converted. This avoids presenting a definite outcome when the game could choose the unsupported modifier.
 
 ## Saved resource prices
 

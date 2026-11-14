@@ -68,6 +68,13 @@ describe("State-aware crafting choices",function()
 		for _,entry in ipairs(catalogue.harvestOptions) do if entry.method=="harvest_resistance" then swap=entry end end
 		assert.is_true(swap.available);assert.equal(2,#swap.options)
 		for _,option in ipairs(swap.options) do assert.same(sim.components(option.action),option.components) end
+		-- The game may select a hybrid family as well as the plain suffix.
+		-- Refuse a deterministic result until both conversions are modeled.
+		local mixed=copyTable(input);assert.is_not_nil(m.byId.DelveArmourFireResistance1)
+		mixed.affixes[#mixed.affixes+1]={id="DelveArmourFireResistance1",range=0.5}
+		assert.matches("unsupported conversion family",sim.resistanceReason(m,mixed,"fire","cold"))
+		local blocked,reason=sim.resistanceOptions(m,mixed);assert.equal(0,#blocked);assert.matches("unsupported conversion family",reason)
+		mixed.affixes[2].fractured=true;assert.is_nil(sim.resistanceReason(m,mixed,"fire","cold"))
 		local priced=sim.simulate(m.raw,{initialState=input,steps={{method="harvest_resistance",from="fire",to="cold"}},targets={},requirements={minAffixes=2}},
 			{trials=2,maxActions=1,currency="chaos",prices={wild_lifeforce=0.01,primal_lifeforce=0.02}})
 		assert.equal(9,priced.meanCost);assert.equal(0,priced.successes)

@@ -417,12 +417,22 @@ function A.extend(M,api)
 	end
 	function M.resistanceReason(model,state,from,to)
 		if from==to or not contains({"fire","cold","lightning"},from) or not contains({"fire","cold","lightning"},to) then return "Choose different elemental resistance types" end
-		if api.flags(model,state).suffixes then return "Suffixes are locked" end
+		local f=api.flags(model,state);if f.suffixes then return "Suffixes are locked" end
 		local matches={};local element=from:gsub("^%l",string.upper)
+		-- HarvestCraftOptions lists these families as eligible, including
+		-- hybrids we cannot convert yet. Never ignore an eligible modifier:
+		-- the game could select it instead of the one we know how to model.
+		local sourceGroups={element.."Resistance",element.."ResistanceAilments",element.."ResistanceForJewel",element.."ResistanceLeech",
+			"Maximum"..element..(from=="lightning" and "Resistance" or "Resist"),element.."ResistancePhysTakenAs"..element,
+			element.."ResistancePrefix","AfflictionJewelSmallPassivesGrant"..element.."Res","Maximum"..element.."ResistanceForJewel"}
 		for i,entry in ipairs(state.affixes) do
 			local jewel=model.item.type=="Jewel" and (entry.id==element.."ResistanceJewel" or entry.id=="Maximum"..element.."ResistanceJewel" or entry.id=="Abyss"..element.."ResistanceJewel1")
 			local shield=shieldResistanceTarget(model,entry.id,from,to)
-			if not entry.fractured and (model.byId[entry.id].group==element.."Resistance" or jewel or shield) then matches[#matches+1]=i end
+			local eligible=false;for _,group in ipairs(groups(model,entry.id)) do if contains(sourceGroups,group) then eligible=true;break end end
+			if not api.protected(entry,model.byId[entry.id],f) and eligible then
+				if not (model.byId[entry.id].group==element.."Resistance" or jewel or shield) then return "An eligible resistance modifier has an unsupported conversion family" end
+				matches[#matches+1]=i
+			end
 		end
 		if #matches==0 then return "No swappable single-element resistance" end
 		for _,index in ipairs(matches) do
@@ -434,11 +444,13 @@ function A.extend(M,api)
 		return nil,matches
 	end
 	function M.resistanceOptions(model,state)
-		local result={}
+		local result={};local unsupported
 		for _,from in ipairs({"fire","cold","lightning"}) do for _,to in ipairs({"fire","cold","lightning"}) do
-			if not M.resistanceReason(model,state,from,to) then result[#result+1]={label=from.." to "..to,action={method="harvest_resistance",from=from,to=to}} end
+			local reason=M.resistanceReason(model,state,from,to)
+			if not reason then result[#result+1]={label=from.." to "..to,action={method="harvest_resistance",from=from,to=to}}
+			elseif reason=="An eligible resistance modifier has an unsupported conversion family" then unsupported=reason end
 		end end
-		return result,#result==0 and (api.flags(model,state).suffixes and "Suffixes are locked." or "No swappable single-element resistance is available.") or nil
+		return result,#result==0 and (unsupported or (api.flags(model,state).suffixes and "Suffixes are locked." or "No swappable single-element resistance is available.")) or nil
 	end
 	function M.harvestChoices(model,state,method)
 		if state.rarity~="RARE" then return {},"Requires a rare item." end
