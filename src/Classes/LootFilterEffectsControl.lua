@@ -4,7 +4,7 @@ local options=require("Modules.LootFilterAppearanceSettings")
 local M={}
 function M.Open(original,sample,onKeep)
 	local c={};local w,h=760,548;local sounds={"Keep current","Silent","Numbered alert","Positional alert","Custom sound","Optional custom sound"};local volumeChanged=false
-	local current=original.PlayAlertSound or original.PlayAlertSoundPositional or original.CustomAlertSound or original.CustomAlertSoundOptional
+	local current=original.CustomAlertSound or original.CustomAlertSoundOptional or original.PlayAlertSound or original.PlayAlertSoundPositional
 	local isCustom=current and (current==original.CustomAlertSound or current==original.CustomAlertSoundOptional)
 	local volume=tonumber(current and current[2]) or (isCustom and 100 or 50)
 	local function label(key,x,y,title) ui.label(c,key,x,y,title,14) end
@@ -27,7 +27,7 @@ function M.Open(original,sample,onKeep)
 	local beams={"Keep current","None"};for _,color in ipairs(options.colors) do beams[#beams+1]=color end
 	drop("beam",392,372,beams);c.beam:SelByValue(original.PlayEffect and original.PlayEffect[1] or "Keep current")
 	label("beamDurationLabel",392,420,"Beam duration");drop("beamDuration",392,444,{"Permanent","Temporary"});c.beamDuration:SelByValue(original.PlayEffect and original.PlayEffect[2]=="Temp" and "Temporary" or "Permanent");c.beamDuration.enabled=function() return c.beam.selIndex>2 end
-	ui.description(c,"help",16,420,352,58,{"Custom audio files must accompany the exported filter. Built-in previews use reference tones; the game plays the chosen alert."},13)
+	ui.description(c,"help",16,420,352,58,{"Custom audio overrides built-in alerts; optional files fall back if missing. Previews use reference tones."},13)
 	local function styles(strict)
 		local next=copyTable(original);local mode=c.soundKind.selIndex
 		if mode>1 then for _,key in ipairs({"PlayAlertSound","PlayAlertSoundPositional","CustomAlertSound","CustomAlertSoundOptional"}) do next[key]=nil end end

@@ -764,10 +764,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	do
 		local effects=require("Classes.LootFilterEffectsControl")
 		local sample={BaseType="Iron Hat"}
-		for _,case in ipairs({{styles={PlayAlertSound={"4"}},volume=50},{styles={CustomAlertSound={"test.wav"}},volume=100},{styles={PlayAlertSoundPositional={"5","80"}},volume=80}}) do
+		for _,case in ipairs({{styles={PlayAlertSound={"4"}},volume=50},{styles={CustomAlertSound={"test.wav"}},volume=100},{styles={PlayAlertSoundPositional={"5","80"}},volume=80},{styles={PlayAlertSound={"4","30"},CustomAlertSoundOptional={"test.wav","120"}},volume=120}}) do
 			local saved;local controls=effects.Open(case.styles,sample,function(value) saved=value end)
 			assert(controls.volumeLabel.label()=="^7Alert volume: "..case.volume,"Sound editor displayed an incorrect default volume")
-			ui:click("keep");local key,original=next(case.styles);assert(saved[key] and #saved[key]==#original and saved[key][1]==original[1] and saved[key][2]==original[2],"Opening sound effects changed an untouched alert")
+			ui:click("keep");for key,original in pairs(case.styles) do assert(saved[key] and #saved[key]==#original and saved[key][1]==original[1] and saved[key][2]==original[2],"Opening sound effects changed an untouched alert") end
 		end
 		local saved;local controls=effects.Open({PlayAlertSound={"None"},CustomAlertSound={"None"}},sample,function(value) saved=value end)
 		controls.volume:SetVal(0);ui:click("keep")

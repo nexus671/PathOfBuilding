@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Show the custom alert volume when a filter rule also has a built-in fallback.
 * Preserve disabled alerts and default volumes when restyling loot filters.
 * Flag legacy-only Orbs of Binding in crafting plans and correct the full-lock cost guide.
 * Find and show temporary Atlas grant paths when planning stage transitions.
