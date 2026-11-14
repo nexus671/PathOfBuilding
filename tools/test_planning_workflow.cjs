@@ -101,6 +101,11 @@ async function main(){
   const harvestHatLock=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:harvestHat,action:{method:'bench',modId:'bench:partial-prefix-1'},initialState:harvestHatStart},'crafted');
   const harvestHatInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:harvestHat,initialState:harvestHatLock.nativeCrafting.state,limit:100},'inspected');
   const harvestHatReforge=harvestHatInspection.crafting.nativeEngine.harvestOptions.find(entry=>entry.method==='harvest_reforge');
+  const resistState={rarity:'MAGIC',affixes:[{id:'FireResist1',range:0.5}]};
+  const resistInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,initialState:resistState,limit:20},'inspected');
+  const resistOptions=resistInspection.crafting.nativeEngine.harvestOptions.find(entry=>entry.method==='harvest_resistance');
+  const fireToCold=resistOptions.options.find(entry=>entry.action.from==='fire' && entry.action.to==='cold');
+  assert.deepEqual(fireToCold.components,{wild_lifeforce:300,primal_lifeforce:300});
   assert.match(harvestHatReforge.selectionNote,/Other selections or later rolls can fail/);const harvestHatOptions=harvestHatReforge.options;
   assert.ok(harvestHatOptions.some(entry=>entry.label==='life'));assert.ok(!harvestHatOptions.some(entry=>entry.label==='physical'));
   const multiInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:harvestHat,query:'Can have up to 3 Crafted Modifiers',limit:100},'inspected');

@@ -867,7 +867,10 @@ function A.extend(M,api)
 		result.harvestOptions={}
 		for _,method in ipairs({"harvest_reforge","harvest_augment","harvest_resistance"}) do
 			local allowed,reason=available(method,state,model);local choices=allowed and M.actionOptions(model,state,method) or {};local selected={}
-			for i=1,math.max(0,math.min(limit or 50,#choices)) do selected[i]=copyTable(choices[i]);selected[i].priceKey=M.priceKey(selected[i].action) end
+			for i=1,math.max(0,math.min(limit or 50,#choices)) do
+				selected[i]=copyTable(choices[i]);selected[i].priceKey=M.priceKey(selected[i].action)
+				if method=="harvest_resistance" then selected[i].components=M.components(selected[i].action,state,model) end
+			end
 			local conditional=allowed and (method=="harvest_reforge" or method=="harvest_augment") and M.hasPartialLock(M.context(model,state),state)
 			result.harvestOptions[#result.harvestOptions+1]={method=method,available=allowed,unavailableReason=not allowed and reason or nil,options=selected,total=#choices,
 				selectionNote=conditional and "A tag is offered if a modeled protection selection leaves a legal tagged modifier and removable original when required. Other selections or later rolls can fail." or nil}
@@ -905,6 +908,14 @@ function A.extend(M,api)
 		return action.method
 	end
 	function M.components(action,state,model)
+		if action.method == "harvest_resistance" then
+			-- HarvestCraftOptions, client 3.30.0.1.4: the two resource types
+			-- follow the source and destination elements, each at 300.
+			local lifeforce={fire="wild_lifeforce",cold="primal_lifeforce",lightning="vivid_lifeforce"}
+			local from,to=lifeforce[action.from],lifeforce[action.to]
+			assert(from and to and from~=to,"Choose two different elemental resistances")
+			return {[from]=300,[to]=300}
+		end
 		if model and (action.method=="bench" or action.method=="remove_crafted" or action.method=="bench_reroll") then
 			local context=state and M.context(model,state) or model;local bench=require("Modules.CraftingBenchCosts")
 			local cost=action.method=="bench" and bench.cost(context,action.modId) or bench.service(context,action)

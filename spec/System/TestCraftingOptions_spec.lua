@@ -46,6 +46,13 @@ describe("State-aware crafting choices",function()
 		local m=model();local fire=natural(m,"FireResistance")
 		local input=state(m,"MAGIC",{{id=fire,range=0.73}});local before=copyTable(input)
 		local choices=sim.actionOptions(m,input,"harvest_resistance");assert.are.equal(2,#choices)
+		local catalogue=sim.catalog(m.raw,"",50,input);local swap
+		for _,entry in ipairs(catalogue.harvestOptions) do if entry.method=="harvest_resistance" then swap=entry end end
+		assert.is_true(swap.available);assert.equal(2,#swap.options)
+		for _,option in ipairs(swap.options) do assert.same(sim.components(option.action),option.components) end
+		local priced=sim.simulate(m.raw,{initialState=input,steps={{method="harvest_resistance",from="fire",to="cold"}},targets={},requirements={minAffixes=2}},
+			{trials=2,maxActions=1,currency="chaos",prices={wild_lifeforce=0.01,primal_lifeforce=0.02}})
+		assert.equal(9,priced.meanCost);assert.equal(0,priced.successes)
 		for _,choice in ipairs(choices) do
 			assert.are.equal("fire",choice.action.from)
 			local changed=sim.perform(m.raw,choice.action,1,input).state

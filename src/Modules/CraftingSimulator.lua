@@ -30,7 +30,6 @@ function M.actionWarnings(action)
 	if action.method=="bench" and type(action.modId)=="string" and action.modId:match("^bench:partial%-") then result[#result+1]={code="partial_lock_model",message=partialWarningMessage} end
 	if action.method=="recombine" then result[#result+1]={code="recombination_count_odds",message="Recombination uses older count odds; 3.30 odds are not verified."} end
 	if action.method=="binding" then result[#result+1]={code="binding_legacy",message="Orbs of Binding are no longer generated in 3.30; existing orbs still work.",source="https://www.pathofexile.com/forum/view-thread/4013680",asOfPatch="3.30"} end
-	if action.method=="harvest_resistance" then result[#result+1]={code="harvest_resistance_cost",message="3.30 resistance swaps cost 300 Lifeforce of each of two types. The exact pair is not modeled; check the station and enter a whole-service price.",source="https://www.pathofexile.com/forum/view-thread/4013680",asOfPatch="3.30"} end
 	if action.allflame or action.method=="ducat_kishara" then result[#result+1]={code="allflame_historical",message="Allflame is historical and did not return to core in 3.30."} end
 	return result
 end

@@ -2,13 +2,15 @@ describe("Crafting result model notes",function()
 	local sim=require("Modules.CraftingSimulator")
 	local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86"
 	local donor="Rarity: NORMAL\nCone Helmet\nItem Level: 70"
-	it("reports the known Harvest swap cost without inventing ingredient types",function()
-		local action={method="harvest_resistance",from="fire",to="cold"}
-		local warning=sim.actionWarnings(action)[1]
-		assert.equal("harvest_resistance_cost",warning.code);assert.is_truthy(warning.message:find("300 Lifeforce",1,true))
-		assert.equal("harvest_resistance_cost",sim.catalog(raw,"",10).methodWarnings.harvest_resistance[1].code)
-		assert.equal("harvest_resistance_cost",sim.recipeWarnings({steps={action,action}})[1].code)
-		assert.same({harvest_resistance=1},sim.components(action))
+	it("uses the 3.30 client ingredients for every resistance conversion",function()
+		local cases={fire={cold={wild_lifeforce=300,primal_lifeforce=300},lightning={wild_lifeforce=300,vivid_lifeforce=300}},
+			cold={fire={primal_lifeforce=300,wild_lifeforce=300},lightning={primal_lifeforce=300,vivid_lifeforce=300}},
+			lightning={fire={vivid_lifeforce=300,wild_lifeforce=300},cold={vivid_lifeforce=300,primal_lifeforce=300}}}
+		for from,choices in pairs(cases) do for to,cost in pairs(choices) do
+			local action={method="harvest_resistance",from=from,to=to}
+			assert.same(cost,sim.components(action));assert.equal(0,#sim.actionWarnings(action))
+		end end
+		assert.has_error(function() sim.components({method="harvest_resistance",from="fire",to="fire"}) end)
 	end)
 	it("deduplicates contextual notes and leaves ordinary actions clear",function()
 		assert.are.equal(0,#sim.actionWarnings({method="alchemy"}))
