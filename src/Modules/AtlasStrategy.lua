@@ -75,19 +75,30 @@ function M.routes(plan,target,avoid,preferred)
 	return routes
 end
 function M.presets(plan)
+	plan=atlas.validate(plan)
+	local tree=atlas.tree(plan.version);local allocated={[tree.start]=true};for _,id in ipairs(plan.nodes) do allocated[id]=true end
+	local blocked={};for id,node in pairs(tree.nodes) do if not allocated[id] and #M.blocking(node)>0 then blocked[#blocked+1]=id end end;table.sort(blocked)
+	-- These exclusions apply only while calculating the suggestion. Preserve
+	-- the user's desired and avoided preferences in the resulting plan.
+	local working=copyTable(plan);working.desired=nil
+	local function restore(candidate)
+		candidate.desired=plan.desired and copyTable(plan.desired) or nil
+		candidate.avoided=plan.avoided and copyTable(plan.avoided) or nil
+		return atlas.validate(candidate)
+	end
 	local result={}
 	for _,mechanic in ipairs(M.mechanics) do
 		local targets={};local matches=M.results(plan,"",mechanic)
 		for _,entry in ipairs(matches) do if entry.node.kind=="notable" and #M.blocking(entry.node)==0 then targets[#targets+1]=entry.id;if #targets==3 then break end end end
 		if #targets>0 then
-			local nextPlan=copyTable(plan);local kept={}
-			for _,target in ipairs(targets) do local ok,value=pcall(atlas.connect,nextPlan,{target});if ok then nextPlan=value;kept[#kept+1]=target end end
+			local nextPlan=copyTable(working);local kept={}
+			for _,target in ipairs(targets) do local ok,value=pcall(atlas.connect,nextPlan,{target},blocked);if ok then nextPlan=value;kept[#kept+1]=target end end
 			-- Try the whole target set before dropping a notable for the budget.
-			local ok,optimized,_,routing=pcall(atlas.connectOptimized,plan,targets)
+			local ok,optimized,_,routing=pcall(atlas.connectOptimized,working,targets,blocked)
 			if ok then nextPlan=optimized;kept=targets else
-				ok,optimized,_,routing=pcall(atlas.connectOptimized,plan,kept);if ok then nextPlan=optimized end
+				ok,optimized,_,routing=pcall(atlas.connectOptimized,working,kept,blocked);if ok then nextPlan=optimized end
 			end
-			if #kept>0 then result[#result+1]={label=mechanic.." starting route",plan=nextPlan,targets=kept,mechanic=mechanic,routing=ok and routing or nil} end
+			if #kept>0 then result[#result+1]={label=mechanic.." starting route",plan=restore(nextPlan),targets=kept,mechanic=mechanic,routing=ok and routing or nil} end
 		end
 	end
 	return result

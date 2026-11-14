@@ -13,6 +13,21 @@ describe("Planning experience queries",function()
 			for _,id in ipairs(route.targets) do
 				assert.equal(0,#targets.blocking(atlas.tree(route.plan.version).nodes[id]),route.label..": "..id)
 			end
+			for _,id in ipairs(route.plan.nodes) do
+				assert.equal(0,#targets.blocking(atlas.tree(route.plan.version).nodes[id]),route.label.." path: "..id)
+			end
+		end
+	end)
+	it("preserves allocated blockers and saved preferences when suggesting routes",function()
+		local original=atlas.connect(empty("3.29.3"),{24930})
+		original.desired={24930};original.avoided={39896};original=atlas.validate(original)
+		local routes=strategy.presets(original);assert.is_true(#routes>0)
+		for _,route in ipairs(routes) do
+			assert.is_truthy(isValueInTable(route.plan.nodes,24930))
+			assert.same(original.desired,route.plan.desired);assert.same(original.avoided,route.plan.avoided)
+			for _,id in ipairs(route.plan.nodes) do
+				if not isValueInTable(original.nodes,id) then assert.equal(0,#strategy.blocking(atlas.tree(original.version).nodes[id])) end
+			end
 		end
 	end)
 	it("finds an alternative when a target is two allocations away",function()
