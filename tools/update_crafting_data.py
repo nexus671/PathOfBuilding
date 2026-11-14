@@ -1,20 +1,33 @@
 """Rebuild supplemental crafting data from immutable RePoE game exports."""
 # cspell:ignore repoe
 import hashlib
+import argparse
 import json
 import re
 from pathlib import Path
 from urllib.request import urlopen
+from crafting_data_status import require_changed_export, require_exported, version
 
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY = "repoe-fork/repoe-fork.github.io"
 COMMIT = "ae6d85a5c36857e08819852ab8732239294aba59"
 PATCH = "3.29.3.6"
 FILES = ["mods.json", "fossils.json", "base_items.json", "crafting_bench_options.json"]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--allow-identical-export", action="store_true", help="Allow a reviewed new patch whose crafting source files are unchanged")
+args = parser.parse_args()
+with urlopen(f"https://raw.githubusercontent.com/{REPOSITORY}/{COMMIT}/exported-version.txt", timeout=60) as response:
+    require_exported(PATCH, version(response.read()))
 raw = {}
 for name in FILES:
     with urlopen(f"https://raw.githubusercontent.com/{REPOSITORY}/{COMMIT}/data/{name}", timeout=60) as response:
         raw[name] = response.read()
+destination = ROOT / "src" / "Data" / "Crafting" / "3.29.json"
+if destination.exists():
+    previous = json.loads(destination.read_text(encoding="utf-8"))
+    require_changed_export(PATCH, previous["patch"], previous["hashes"],
+                           {name: hashlib.sha256(content).hexdigest() for name, content in raw.items()},
+                           args.allow_identical_export)
 mods, fossils, bases, bench = (json.loads(raw[name]) for name in FILES)
 identifiers = set()
 for source in (ROOT / "src" / "Data").glob("*.lua"):
@@ -42,7 +55,6 @@ result = {
 }
 encoded = '{"_comment":"Generated GGG data from RePoE. cspell:disable",\n' + json.dumps(
     result, ensure_ascii=False, separators=(",", ":"))[1:]
-destination = ROOT / "src" / "Data" / "Crafting" / "3.29.json"
 destination.parent.mkdir(parents=True, exist_ok=True)
 destination.write_text(encoded, encoding="utf-8")
 def lua_string(value):

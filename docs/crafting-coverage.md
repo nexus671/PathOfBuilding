@@ -79,7 +79,7 @@ and CSV export are available. Selecting a subset only configures the workbench.
 
 ## Patch maintenance
 
-`python tools/update_allflame_data.py` rebuilds the pinned client-derived Allflame catalog in memory and records source hashes. `python tools/update_crafting_data.py` rebuilds supplemental data from the pinned commit and records source hashes. Updating the patch requires checking modifier identities, mechanics and regression fixtures together.
+`python tools/crafting_data_status.py` checks the latest detected and exported RePoE versions at one immutable revision. A new client version can appear before its data export is ready; changed source files signal a review, not automatic compatibility. `python tools/update_allflame_data.py` rebuilds the pinned client-derived Allflame catalog in memory and records source hashes. `python tools/update_crafting_data.py` verifies the exported version before rebuilding supplemental data from the pinned commit. If all source hashes match a previous patch, it requires `--allow-identical-export` after review. Updating the patch requires checking modifier identities, mechanics and regression fixtures together.
 
 `python tools/update_harvest_enchants.py` joins the pinned client Harvest service table to RePoE modifier text and base classes. It records every source hash and includes deterministic quality-enchantment services, rather than assuming random enchantment weights. Imported matching enchantments are recognised; replacement, recipe goals, inventory state and selected recombination hosts retain their identities. For supplied resource prices, use `wild_lifeforce`, `vivid_lifeforce` and `primal_lifeforce`.
 

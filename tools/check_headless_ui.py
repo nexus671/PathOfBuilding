@@ -23,7 +23,7 @@ def source_hashes():
     sources += list((ROOT / "src/Assets/Atlas").rglob("*"))
     sources += list((ROOT / "src/Data/Atlas").glob("*.json"))
     sources += list((ROOT / "src/Data/Crafting").glob("*.json"))
-    sources += [ROOT / "tools/update_harvest_enchants.py", ROOT / "tools/update_crafting_data.py", ROOT / "tools/update_allflame_data.py"]
+    sources += [ROOT / "tools/update_harvest_enchants.py", ROOT / "tools/update_crafting_data.py", ROOT / "tools/crafting_data_status.py", ROOT / "tools/test_crafting_data_status.py", ROOT / "tools/update_allflame_data.py"]
     sources += list((ROOT / "src/Data/LootFilters").glob("*"))
     sources += list((ROOT / "src/Assets/LootFilters").glob("*"))
     sources += list((ROOT / "src/TreeData/3_30").glob("*"))
