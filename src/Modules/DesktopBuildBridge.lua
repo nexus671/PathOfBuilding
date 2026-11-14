@@ -501,6 +501,7 @@ function M.poll(build, force)
 		end
 	end
 	M.lastPoll = os.time()
+	local requestId
 	local ok,err = pcall(function()
 		if build.buildFlag then return end
 		local revisions=require("Modules.PlanningRevision")
@@ -513,6 +514,7 @@ function M.poll(build, force)
 		local request = assert(json.decode(requestText),"Invalid proposal JSON")
 		assert(request.session == M.session,"Proposal belongs to another desktop session")
 		assert(type(request.id) == "string" and request.id:match("^[%w%-]+$") and #request.id <= 80,"Invalid proposal ID")
+		requestId=request.id
 		if M.prepared then return end
 		M.lastRequest,M.lastError = os.time(),nil
 		if request.kind == "craftCancel" then
@@ -626,7 +628,7 @@ function M.poll(build, force)
 	end)
 	if not ok then
 		M.lastError = tostring(err):match("^[^\n]+")
-		M.status = {id=M.status and M.status.id,status="failed",error=M.lastError}
+		M.status = {id=requestId,status="failed",error=M.lastError}
 		pcall(M.publishState)
 	end
 end

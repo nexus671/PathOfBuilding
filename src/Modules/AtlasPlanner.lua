@@ -90,6 +90,31 @@ function M.validate(plan)
 	table.sort(result.nodes)
 	return result
 end
+-- A grant cannot pay for the path that must be allocated before receiving it.
+-- Keep legacy plans readable; callers can report or reject unattainable budgets.
+local function budgetReachabilityChecked(plan)
+	local tree=M.tree(plan.version)
+	local available=plan.budget+(tree.nodes[tree.start].grantedPoints or 0)
+	if #plan.nodes<=available then return true end
+	local set=nodeSet(tree,plan.nodes);set[tree.start]=true
+	local grants={};for _,id in ipairs(plan.nodes) do if (tree.nodes[id].grantedPoints or 0)>0 then grants[#grants+1]=id end end
+	if #grants~=1 then return nil,"Cannot verify the allocation order for multiple point grants." end
+	local function distance(allowed)
+		local distances,queue={[tree.start]=0},{tree.start};local index=1
+		while index<=#queue do
+			local id=queue[index];index=index+1;if id==grants[1] then return distances[id] end
+			for _,other in ipairs(tree.nodes[id].links) do
+				if (not allowed or allowed[other]) and distances[other]==nil then distances[other]=distances[id]+1;queue[#queue+1]=other end
+			end
+		end
+	end
+	local direct=assert(distance(set),"Disconnected grant node")
+	if direct<=available then return true,nil,direct end
+	local shortest=assert(distance(),"Unreachable grant node")
+	if shortest>available then return false,"Need "..shortest.." earned points to reach "..tree.nodes[grants[1]].name.." before its grant.",shortest end
+	return nil,"Reaching "..tree.nodes[grants[1]].name.." may require a temporary path and refunds; review the transition.",direct
+end
+function M.budgetReachability(plan) return budgetReachabilityChecked(M.validate(plan)) end
 function M.search(version,query,limit)
 	local tree=M.tree(version)
 	query=text(query or "",160,"Atlas search"):lower(); limit=integer(limit or 30,1,100,"search limit")
@@ -134,7 +159,8 @@ function M.connect(plan,targets,avoid,checkpoint)
 	end
 	set[tree.start]=nil; plan.nodes=sorted(set)
 	if plan.avoided~=nil or #exclusions>0 then plan.avoided=exclusions end
-	return M.validate(plan),additions
+	local result=M.validate(plan);local reachable,why=budgetReachabilityChecked(result);assert(reachable~=false,why)
+	return result,additions
 end
 -- Bounded order search, retaining every existing allocation. This is a heuristic,
 -- not a Steiner-tree solver. An invalid baseline must not prevent a valid reorder.
@@ -191,6 +217,7 @@ function M.remove(plan,id)
 end
 function M.report(plan)
 	plan=M.validate(plan); local tree=M.tree(plan.version)
+	local reachable,budgetWarning,pointsBeforeGrant=budgetReachabilityChecked(plan)
 	local counts,notables,keystones,stats,bonus={small=0,notable=0,keystone=0,gateway=0},{},{},{},0
 	for _,id in ipairs(plan.nodes) do
 		local node=tree.nodes[id]; counts[node.kind]=counts[node.kind]+1
@@ -202,7 +229,7 @@ function M.report(plan)
 	local lines={}
 	for stat,count in pairs(stats) do lines[#lines+1]={text=stat,count=count} end
 	table.sort(lines,function(a,b) return a.text < b.text end); table.sort(notables); table.sort(keystones)
-	return {version=plan.version,mode="Standard",preview=tree.preview,compatibleModes=tree.compatibleModes,used=#plan.nodes,budget=plan.budget,bonus=bonus,remaining=plan.budget+bonus-#plan.nodes,
+	return {version=plan.version,mode="Standard",preview=tree.preview,compatibleModes=tree.compatibleModes,used=#plan.nodes,budget=plan.budget,bonus=bonus,remaining=plan.budget+bonus-#plan.nodes,budgetReachable=reachable,budgetWarning=budgetWarning,pointsBeforeGrant=pointsBeforeGrant,
 		counts=counts,notables=notables,keystones=keystones,stats=lines,source=tree.source,sourceCommit=tree.commit,
 		limitations={"Atlas plans do not modify character DPS or EHP.","Stat lines are grouped verbatim, not combined into effective map odds. Keystone interactions are not simulated.","Budget is supplied progression, not imported account completion. Routing is greedy shortest connection, not a global optimum."}}
 end
@@ -262,6 +289,13 @@ function M.new(build)
 	function self:Upsert(plan)
 		assert(not self.unreadable,self.warning)
 		local entry=M.validate(plan); local replacement=copyTable(self.plans); local found
+		local reachable,why=budgetReachabilityChecked(entry)
+		if reachable==false then
+			local old;for _,saved in ipairs(self.plans) do if saved.id==entry.id then old=saved;break end end
+			local unchanged=old and old.version==entry.version and old.budget==entry.budget and #old.nodes==#entry.nodes
+			if unchanged then for i,id in ipairs(entry.nodes) do if old.nodes[i]~=id then unchanged=false;break end end end
+			assert(unchanged,why)
+		end
 		for i,old in ipairs(replacement) do if old.id == entry.id then replacement[i]=entry; found=true; break end end
 		if not found then replacement[#replacement+1]=entry end
 		for _,other in ipairs(replacement) do

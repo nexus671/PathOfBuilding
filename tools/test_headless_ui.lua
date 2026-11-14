@@ -76,6 +76,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	do
 		local atlas=require("Modules.AtlasPlanner");local tree=atlas.tree("3.29.3")
 		local route=atlas.connect({id="test",title="Test",version="3.29.3",budget=138,nodes={}},{65225});local set={};for _,id in ipairs(route.nodes) do set[id]=true end
+		ui:text("budget",tostring(#route.nodes-1));assert(workspace.controls.status.label:find("points before grant",1,true),"Atlas budget did not explain that the grant is unreachable");frame("atlas-unreachable-grant");ui:text("budget","138")
 		for _,id in ipairs(tree.nodes[tree.start].links) do if set[id] then canvas.focus=id;break end end
 		ui:click("remove");assert(main.popups[1].controls.confirm,"Branch removal did not ask for review");frame("atlas-remove-branch-confirm")
 		main:ClosePopup();assert(workspace.controls.status.label:find("20 granted",1,true),"Cancelling branch removal changed the plan");canvas.focus=65225

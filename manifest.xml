@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview87" />
+	<Version number="2.67.2-ai.preview88" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="6b32e74a27d4596726f41ed8e26a4d63395b0344" />
+	<File name="changelog.txt" part="default" sha1="f729f272bb754f40414f1cf4ca8969ec36fc517d" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1119,7 +1119,7 @@
 	<File name="Assets/veiledicon.png" part="program" sha1="035479a7ee7847969ef50ff428e3bee897fba671" />
 	<File name="Assets/vestigialicon.png" part="program" sha1="ecb5dd4b9aed1cac0c1a677b18838ae9c62744d7" />
 	<File name="Assets/warlordicon.png" part="program" sha1="cca050c84884f5c0bb1380ece51d3c4b32be4900" />
-	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="ceb49eaacbd832cea55a9dca614b683756f40e67" />
+	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="f325fe08c4629407b641cb71acddf25f0b52c537" />
 	<File name="Classes/AtlasPlanningControl.lua" part="program" sha1="18fba4bf0422846dfaf51f75bcf426b7c9d15aa1" />
 	<File name="Classes/AtlasTargetsControl.lua" part="program" sha1="e925a2ea5e9069b388163afe363c9e07c76a64d1" />
 	<File name="Classes/BuildJourneyControl.lua" part="program" sha1="3429fb9b3ce4463a96838e127e3863814d47f976" />
@@ -1445,7 +1445,7 @@
 	<File name="LaunchServer.lua" part="program" sha1="f15bdfbedaf887e19556490dce49b720f8365379" />
 	<File name="Modules/AddImplicitPopup.lua" part="program" sha1="f68d391d10b95c0feef70b7e8e82326a745dcb3b" />
 	<File name="Modules/AtlasArt.lua" part="program" sha1="1d3d01aa76eb489f2f5fa6f6852d0860b5429c84" />
-	<File name="Modules/AtlasPlanner.lua" part="program" sha1="28a3be6a4ce721c2f0f698a18f357643fa8c3990" />
+	<File name="Modules/AtlasPlanner.lua" part="program" sha1="f40e0833ca3e7cc7147d1616bbf631683d73e9ff" />
 	<File name="Modules/AtlasStrategy.lua" part="program" sha1="f671d6c64944239684a2d175ec187f927d4880fd" />
 	<File name="Modules/AtlasTargets.lua" part="program" sha1="0847c6e61d2308fd37c7890648ee1163e0e22751" />
 	<File name="Modules/Build.lua" part="program" sha1="972e8291b2ac3360e6914e39ab7db209e78e97d8" />
@@ -1509,7 +1509,7 @@
 	<File name="Modules/DataAbyssJewelLookUpTableHelper.lua" part="program" sha1="c95c4e8af0e9ab9c2abec801e5a279952754cf05" />
 	<File name="Modules/DataJewelFileLoader.lua" part="program" sha1="7f437192153f03eb1fecb4ea00283ead108fbde8" />
 	<File name="Modules/DataLegionLookUpTableHelper.lua" part="program" sha1="ece92c4b6062f627f98ba2454531366b4628abfc" />
-	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="98af8544bf4bfd89b40b309181ea4367daf6b5d7" />
+	<File name="Modules/DesktopBuildBridge.lua" part="program" sha1="59c461c843808f106f3e0a8489a920f4978ba338" />
 	<File name="Modules/EncounterReport.lua" part="program" sha1="710dc78939bfbc8282f295cf626bcde9c9b7d8e5" />
 	<File name="Modules/HeadlessCompression.lua" part="program" sha1="16a42bf407eb777602f9b03b5c8466188a04ee58" />
 	<File name="Modules/HeadlessUI.lua" part="program" sha1="62a302392792431a8e1ceeb24208272e294b490c" />

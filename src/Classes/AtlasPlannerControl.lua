@@ -190,7 +190,9 @@ function Panel.Open(build,source,layout)
 		local budget=tonumber(controls.budget.buf)
 		if budget and budget==math.floor(budget) and budget>=0 and budget<=controls.canvas.tree.maxPoints then
 			report.budget=budget;report.remaining=budget+report.bonus-report.used;pointUsage=report
-			controls.status.label=string.format("%s%d / %d points%s | %s",report.remaining<0 and "^xE58F8F" or "^7",report.used,report.budget,report.bonus>0 and " + "..report.bonus.." granted" or "",report.remaining<0 and (-report.remaining).." over budget" or report.remaining.." left")
+			local warning;controls.status.tooltipText=nil
+			if report.remaining>=0 then local candidate=copyTable(draft);candidate.budget=budget;local reachable,why,needed=atlas.budgetReachability(candidate);if reachable~=true then warning=reachable==false and ("Need "..needed.." points before grant") or "Grant path needs review";controls.status.tooltipText=why end end
+			controls.status.label=string.format("%s%d / %d points%s | %s",(report.remaining<0 or warning) and "^xE58F8F" or "^7",report.used,report.budget,report.bonus>0 and " + "..report.bonus.." granted" or "",warning or (report.remaining<0 and (-report.remaining).." over budget" or report.remaining.." left"))
 		else pointUsage=nil;controls.status.label="^xE58F8FEnter a budget from 0 to "..controls.canvas.tree.maxPoints end
 		local node=atlas.tree(draft.version).nodes[id or controls.canvas.focus]
 		local lines={node and node.name or "Select a node on the tree or search.",node and node.kind:gsub("^%l",string.upper) or "Search a mechanic, or select a node."}

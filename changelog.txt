@@ -1,6 +1,8 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Check that Atlas point grants can be reached before using their points.
+* Report failed AI planning requests with the correct request ID.
 * Show native rarity colours on loot-filter previews when a rule has no text colour.
 * Build more representative loot-filter examples for rare items and explicit-modifier rules.
 * Label generic loot-filter rules by their conditions instead of unrelated example items.
