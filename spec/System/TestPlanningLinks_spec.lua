@@ -4,6 +4,22 @@ describe("Linked planning tools",function()
 	local function craft() return {id="helmet",title="Helmet",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",goals={},steps={}} end
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() main.popups={} end)
+	it("distinguishes quoted numeric modifier names from counts when checking linked targets",function()
+		build.savers.CraftingProjects:Upsert(craft());local profile=filters.profile("filter","Filter");profile.rules=filters.generate(build,profile)
+		profile.rules[1].text='Show\n HasExplicitMod "1" "foo"'
+		local current=copyTable(profile.rules);current[1].text='Show\n HasExplicitMod 1 "foo"'
+		local generate=filters.generate;filters.generate=function() return current end
+		local ok,report=pcall(dependencies.report,build,profile);filters.generate=generate
+		assert.is_true(ok);assert.is_true(report.stale);assert.equal("Changed",report.entries[1].status)
+	end)
+	it("does not mark linked targets stale for harmless string quoting",function()
+		build.savers.CraftingProjects:Upsert(craft());local profile=filters.profile("filter","Filter");profile.rules=filters.generate(build,profile)
+		profile.rules[1].text='Show\n BaseType "IronHat"'
+		local current=copyTable(profile.rules);current[1].text='Show\n BaseType IronHat'
+		local generate=filters.generate;filters.generate=function() return current end
+		local ok,report=pcall(dependencies.report,build,profile);filters.generate=generate
+		assert.is_true(ok);assert.is_false(report.stale)
+	end)
 	it("detects changed or removed generated targets without treating styles or inventory as dependencies",function()
 		local project=craft();build.savers.CraftingProjects:Upsert(project);local profile=filters.profile("filter","Filter");profile.rules=filters.generate(build,profile)
 		assert.is_false(dependencies.report(build,profile).stale)

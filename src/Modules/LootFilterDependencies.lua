@@ -9,7 +9,10 @@ function M.report(build,profile)
 		local groups={};for _,rule in ipairs(rules) do if rule.origin then
 			local group=groups[rule.origin] or {origin=rule.origin,rules={},conditions={}};groups[rule.origin]=group
 			group.rules[#group.rules+1]=rule.title;local block=parser.parse(rule.text).rules[1];local conditions={}
-			for _,condition in ipairs(block.conditions) do conditions[#conditions+1]={keyword=condition.keyword,operator=condition.operator,values=condition.values} end
+			for _,condition in ipairs(block.conditions) do
+				local numericName=(condition.keyword=="HasExplicitMod" or condition.keyword=="HasEnchantment") and tonumber(condition.values[1]) and condition.quoted and condition.quoted[1] or nil
+				conditions[#conditions+1]={keyword=condition.keyword,operator=condition.operator,values=condition.values,numericName=numericName}
+			end
 			table.sort(conditions,function(a,b) return stable.encode(a)<stable.encode(b) end);group.conditions[#group.conditions+1]={title=rule.title,action=block.action,conditions=conditions}
 		end end
 		for _,group in pairs(groups) do table.sort(group.conditions,function(a,b) return stable.encode(a)<stable.encode(b) end) end

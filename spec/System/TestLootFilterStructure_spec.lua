@@ -9,6 +9,12 @@ describe("Compiled filter structure",function()
 		p.campaign=require("Modules.LootFilterCampaign").defaults();p.campaign.weapons={"Bow"};p.campaign.upgradeWindow=0;return p
 	end
 	before_each(function() newBuild() end)
+	it("does not flag different modifier counts as unreachable in the structure",function()
+		local p=filters.profile("counts","Counts");p.template='Show\n HasExplicitMod >=2 "1"\nHide\n HasExplicitMod >=1 "2"'
+		local view=structure.outline(p);local base=structure.filter(view,"","base")
+		assert.equal(2,#base)
+		for _,entry in ipairs(base) do for _,diagnostic in ipairs(structure.diagnostics(view,entry)) do assert.is_nil(diagnostic.shadowedBy) end end
+	end)
 	it("maps every active block to its real source section and edit behavior",function()
 		local view=structure.outline(profile());assert.equal(view.report.rules,#view.entries);local sections={};for _,group in ipairs(view.sections) do sections[group.id]=true end
 		for _,id in ipairs({"personal","tiers","module-shared","campaign","safety","base"}) do assert.is_true(sections[id],id) end
