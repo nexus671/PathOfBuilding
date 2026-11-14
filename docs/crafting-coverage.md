@@ -30,6 +30,8 @@ and resource values. The native **Resource prices** editor uses bundled currency
 art and can copy quotes from another gear project. It does not fetch live prices
 or convert currencies. Clear quotes before changing their unit. Changing the
 unit also clears action overrides and the starting-item cost.
+If you entered a rare Talisman imprint service quote in preview 100, re-enter
+it as a service price; a Bestiary Orb quote does not price the craft.
 
 Simulations, recipe comparisons and fossil optimization share these quotes,
 including through MCP's `priceBook` option. Explicit `prices` entries override

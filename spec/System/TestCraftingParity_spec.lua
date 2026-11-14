@@ -85,6 +85,12 @@ describe("Current crafting reference workflows",function()
 		assert.same(state.affixes,restored.affixes);assert.is_nil(restored.imprint)
 		assert.same({beast_talisman_imprint=1},sim.components(craft,state,model))
 		local icon=require("Modules.CraftingWorkbench").icon;assert.is_truthy(icon(craft.method));assert.equal(icon("beast_max_links"),icon(craft.method))
+		local pricing=require("Modules.CraftingPrices");assert.equal(craft.method,pricing.key(craft.method,model))
+		local name,art,kind=pricing.describe(craft.method,model);assert.matches("Talisman",name);assert.is_truthy(art);assert.equal("Whole action",kind)
+		local orb="Metadata/Items/Currency/CurrencyItemisedCapturedMonster";local book={currency="chaos",source="Manual",quotedAt=1700000000,values={[orb]=1}}
+		local recipe={steps={craft},targets={},requirements={minAffixes=6},initialState=state}
+		local unpriced=sim.simulate(item,recipe,{trials=1,maxActions=1,forceFirstAction=true,priceBook=book});assert.is_truthy(unpriced.unpriced[craft.method])
+		book.values[craft.method]=7;local priced=sim.simulate(item,recipe,{trials=1,maxActions=1,forceFirstAction=true,priceBook=book});assert.equal(7,priced.meanCost);assert.is_nil(priced.unpriced[craft.method])
 		local other=sim.model(raw);assert.is_false(require("Modules.CraftingAvailability").check(craft.method,sixAffixes(other),other))
 		assert.is_false(pcall(sim.perform,raw,craft,1,sixAffixes(other)))
 		state.affixes[1].fractured=true;assert.is_false(pcall(sim.perform,item,craft,1,state))
