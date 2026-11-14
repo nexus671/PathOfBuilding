@@ -7,6 +7,24 @@ describe("State-aware crafting choices",function()
 		error("Missing fixture modifier group "..group)
 	end
 	local function state(m,rarity,affixes) local s=copyTable(m.initial);s.rarity=rarity;s.affixes=affixes or {};return sim.validateState(m,s) end
+	it("offers the five additional tagged reforges without inventing augments",function()
+		local expected={minion={primal_lifeforce=200,crystallised_rancour=3},elemental={wild_lifeforce=200,crystallised_rancour=1},
+			attribute={vivid_lifeforce=200,crystallised_rancour=2},mana={primal_lifeforce=200,crystallised_rancour=2},drop={vivid_lifeforce=200,crystallised_rancour=1}}
+		local found={}
+		for _,base in ipairs({"Bone Helmet","Opal Wand","Gold Ring","Vaal Regalia"}) do
+			local m=model(base);local input=state(m,"RARE",{{id=assert(m.mods[1]).id,range=0.5}})
+			local choices=sim.actionOptions(m,input,"harvest_reforge")
+			for _,choice in ipairs(choices) do local tag=choice.action.tag;if expected[tag] and not found[tag] then
+				assert.same(expected[tag],sim.components(choice.action))
+				local result=sim.action(m,input,choice.action,function() return 0.31 end)
+				local matched=false;local data=require("Modules.CraftingAdvanced").data().mods
+				for _,entry in ipairs(result.affixes) do if data[entry.id] and isValueInTable(data[entry.id].implicit_tags,tag) then matched=true end end
+				assert.is_true(matched,tag);found[tag]=true
+			end end
+			for _,choice in ipairs(sim.actionOptions(m,input,"harvest_augment")) do assert.is_nil(expected[choice.action.tag]) end
+		end
+		for tag in pairs(expected) do assert.is_true(found[tag] or false,tag) end
+	end)
 	it("offers bench crafts only on open sides and respects the crafted limit",function()
 		local m=model();local input=state(m,"MAGIC",{{id=natural(m,"FireResistance"),range=0.5}})
 		local before=copyTable(input);local choices=sim.actionOptions(m,input,"bench");assert.is_true(#choices>0)

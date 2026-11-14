@@ -36,7 +36,7 @@ function M.aliases(model)
 		result["eldritch_implicit:Exarch:"..i]=names[name.." Eldritch Ember"];result["eldritch_implicit:Eater:"..i]=names[name.." Eldritch Ichor"]
 	end
 	for _,info in ipairs(itemLib.influenceInfo.all) do result["influence_exalt:"..info.key]=names[info.display.."'s Exalted Orb"] end
-	for key,name in pairs({wild_lifeforce="Wild Crystallised Lifeforce",vivid_lifeforce="Vivid Crystallised Lifeforce",primal_lifeforce="Primal Crystallised Lifeforce",sacred_lifeforce="Sacred Crystallised Lifeforce"}) do result[key]=names[name] end
+	for key,name in pairs({wild_lifeforce="Wild Crystallised Lifeforce",vivid_lifeforce="Vivid Crystallised Lifeforce",primal_lifeforce="Primal Crystallised Lifeforce",sacred_lifeforce="Sacred Crystallised Lifeforce",crystallised_rancour="Crystallised Rancour"}) do result[key]=names[name] end
 	if model then
 		local kind=model.item.type;local ordinary=(kind=="Flask" or kind=="Tincture") and "Glassblower's Bauble" or _G.data.weaponTypeInfo[kind] and "Blacksmith's Whetstone" or "Armourer's Scrap"
 		result.quality=names[ordinary]

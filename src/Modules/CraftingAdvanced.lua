@@ -61,12 +61,14 @@ local methods={
 }
 A.methods=methods
 local influences={shaper=true,elder=true,adjudicator=true,basilisk=true,crusader=true,eyrie=true}
-local tags={attack=true,caster=true,physical=true,fire=true,cold=true,lightning=true,chaos=true,life=true,defences=true,speed=true,critical=true,influence=true}
+local tags={attack=true,caster=true,physical=true,fire=true,cold=true,lightning=true,chaos=true,life=true,defences=true,speed=true,critical=true,influence=true,minion=true,elemental=true,attribute=true,mana=true,drop=true}
 -- HarvestCraftOptions, client 3.30.0.1.4: currency, reforge, augment.
 local harvestCosts={fire={"wild_lifeforce",50,15000},cold={"vivid_lifeforce",50,15000},lightning={"primal_lifeforce",50,15000},
 	physical={"vivid_lifeforce",50,15000},life={"wild_lifeforce",75,17500},defences={"primal_lifeforce",75,17500},
 	chaos={"vivid_lifeforce",100,17500},attack={"wild_lifeforce",75,17500},caster={"primal_lifeforce",75,17500},
-	speed={"vivid_lifeforce",150,20000},critical={"primal_lifeforce",150,20000},influence={"primal_lifeforce",5000}}
+	speed={"vivid_lifeforce",150,20000},critical={"primal_lifeforce",150,20000},influence={"primal_lifeforce",5000},
+	minion={"primal_lifeforce",200,nil,3},elemental={"wild_lifeforce",200,nil,1},attribute={"vivid_lifeforce",200,nil,2},
+	mana={"primal_lifeforce",200,nil,2},drop={"vivid_lifeforce",200,nil,1}}
 local function contains(list,wanted) for _,value in ipairs(list or {}) do if value == wanted then return true end end end
 local function influenced(model,id)
 	local mod=model.byId[id]
@@ -454,7 +456,7 @@ function A.extend(M,api)
 		local available={}
 		local function collect(candidate)
 			local entries=pool(model,candidate)
-			for tag in pairs(tags) do if not available[tag] and (not augment or tag~="influence") then
+			for tag in pairs(tags) do if not available[tag] and (not augment or harvestCosts[tag][3]) then
 				local found=false
 				if candidate.memoryActive or candidate.memoryFoulborn then found=#pool(model,candidate,{tag=tag})>0
 				else for _,entry in ipairs(entries) do if hasTag(model,entry.id,tag) then found=true;break end end end
@@ -551,7 +553,7 @@ function A.extend(M,api)
 			api.clear(model,state); state.rollBlock={attack=f.attack,caster=f.caster}
 			append(model,state,random,{tag=action.tag}); state.rollBlock=nil; fill(model,state,random)
 		elseif method == "harvest_augment" then
-			assert(state.rarity == "RARE" and tags[action.tag] and action.tag ~= "influence","Select a supported Harvest augment tag on a rare item")
+			assert(state.rarity == "RARE" and tags[action.tag] and harvestCosts[action.tag][3],"Select a supported Harvest augment tag on a rare item")
 			assert(not baseInfluences(state),"Harvest augment requires a non-influenced item")
 			if M.hasPartialLock(model,state) then api.selectPartialLocks(model,state,random) end
 			-- Harvest adds first, then removes one of the original removable affixes.
@@ -920,6 +922,7 @@ function A.extend(M,api)
 			assert(not augment or entry[3],"No Harvest augment for that tag")
 			local result={[entry[1]]=augment and entry[3] or entry[2]}
 			if augment or action.tag=="influence" then result.sacred_lifeforce=1 end
+			if entry[4] then result.crystallised_rancour=entry[4] end
 			return result
 		end
 		if action.method == "harvest_resistance" then

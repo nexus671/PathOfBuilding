@@ -1639,6 +1639,14 @@
       "height": 78,
       "sha256": "58287face31cfd529c10abfee0f1a08a91231541f7876d8da8c1ad06bc489810"
     },
+    "Metadata/Items/Currency/HarvestSeedFaridun": {
+      "name": "Crystallised Rancour",
+      "path": "Assets/Crafting/Currency/de1368a730e92f2eef45.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/Harvest/FaridunLifeforce.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "c9af8e61a0be7da9f774f88c20588cdced6b7e2be043c131701f9fc324d45d34"
+    },
     "Metadata/Items/Currency/HarvestSeedGreen": {
       "name": "Vivid Crystallised Lifeforce",
       "path": "Assets/Crafting/Currency/2c3bd8deb4588cba4d36.png",
