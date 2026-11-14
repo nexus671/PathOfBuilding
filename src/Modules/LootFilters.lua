@@ -94,14 +94,18 @@ function M.generate(build,profile)
 	for _,p in ipairs(build.savers.CraftingProjects.projects) do base(p.startingItem,"craft-"..p.id,p.title.." base","craft:"..p.id) end
 	for _,e in ipairs(build.savers.BuildJourney.data.wishlist) do if e.status=="planned" then base(e.targetItem,"gear-"..e.id,e.title.." base","gear:"..e.id) end end
 	for i,group in ipairs(build.skillsTab.socketGroupList) do
-		local colours={}
-		for j,gem in ipairs(group.gemList) do if gem.enabled~=false and gem.nameSpec and gem.nameSpec~="" then
-			add("gem-"..i.."-"..j,gem.nameSpec,{"Class == \"Skill Gems\" \"Support Gems\"","BaseType == "..quote(gem.nameSpec)},"gems")
-			local data=gem.grantedEffect or gem.gemData and gem.gemData.grantedEffect;local color=data and data.color;if type(color)=="number" then color=({"R","G","B","W"})[color] end
-			if color=="R" or color=="G" or color=="B" or color=="W" then colours[#colours+1]=color end
-		end end
-		if #colours>=2 and #colours<=6 and profile.preset=="campaign" then
-			add("links-"..i,"Links for skill group "..i,{"SocketGroup "..table.concat(colours),"Rarity <= Rare"},"gems")
+		local slot=group.slot and build.itemsTab.slots[group.slot]
+		local activeWeaponSet=build.itemsTab.activeItemSet.useSecondWeaponSet and 2 or 1
+		if group.enabled~=false and (not slot or not slot.weaponSet or slot.weaponSet==activeWeaponSet) then
+			local colours={}
+			for j,gem in ipairs(group.gemList) do if gem.enabled~=false and gem.nameSpec and gem.nameSpec~="" then
+				add("gem-"..i.."-"..j,gem.nameSpec,{"Class == \"Skill Gems\" \"Support Gems\"","BaseType == "..quote(gem.nameSpec)},"gems")
+				local data=gem.grantedEffect or gem.gemData and gem.gemData.grantedEffect;local color=data and data.color;if type(color)=="number" then color=({"R","G","B","W"})[color] end
+				if color=="R" or color=="G" or color=="B" or color=="W" then colours[#colours+1]=color end
+			end end
+			if #colours>=2 and #colours<=6 and profile.preset=="campaign" then
+				add("links-"..i,"Links for skill group "..i,{"SocketGroup "..table.concat(colours),"Rarity <= Rare"},"gems")
+			end
 		end
 	end
 	local patch=M.patch();local names={};for class,items in pairs(patch.added) do for _,name in ipairs(items) do names[name]=class end end

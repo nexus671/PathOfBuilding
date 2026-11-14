@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Exclude disabled and inactive weapon-set skills from generated filter rules.
 * Preserve recipe pickups and use the active weapon set when choosing equipped filter families.
 * Update crafting targets and affix details when recombination changes the base.
 * Show base and item-level changes in crafting history after recombination.

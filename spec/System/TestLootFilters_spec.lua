@@ -252,6 +252,23 @@ describe("Build-owned loot filters",function()
 		assert.equal("Show",filters.simulate(profile,{BaseType="Iron Hat",Rarity="Rare",ItemLevel=86}).action)
 		local count=#profile.rules;profile.rules=filters.generate(build,profile);assert.equal(count,#profile.rules)
 	end)
+	it("generates gem rules only for enabled groups in the active weapon set",function()
+		local original=build.skillsTab.socketGroupList
+		build.skillsTab.socketGroupList={
+			{enabled=true,slot="Weapon 1",gemList={{nameSpec="Fireball",enabled=true,grantedEffect={color="R"}},{nameSpec="Added Fire Damage Support",enabled=true,grantedEffect={color="R"}}}},
+			{enabled=false,gemList={{nameSpec="Ice Nova",enabled=true}}},
+			{enabled=true,slot="Weapon 1 Swap",gemList={{nameSpec="Arc",enabled=true}}},
+			{enabled=true,gemList={{nameSpec="Spark",enabled=false}}},
+		}
+		local profile=filters.profile("active-gems","Active gems","campaign")
+		local rules=filters.generate(build,profile);local titles={};for _,rule in ipairs(rules) do titles[rule.title]=true end
+		assert.is_true(titles.Fireball);assert.is_true(titles["Links for skill group 1"])
+		assert.is_nil(titles["Ice Nova"]);assert.is_nil(titles.Arc);assert.is_nil(titles.Spark)
+		build.itemsTab.activeItemSet.useSecondWeaponSet=true
+		rules=filters.generate(build,profile);titles={};for _,rule in ipairs(rules) do titles[rule.title]=true end
+		assert.is_true(titles.Arc);assert.is_nil(titles.Fireball);assert.is_nil(titles["Links for skill group 1"])
+		build.itemsTab.activeItemSet.useSecondWeaponSet=false;build.skillsTab.socketGroupList=original
+	end)
 	it("rejects malformed metadata, title injection, duplicate IDs and executable imports",function()
 		local p=filters.profile("test","Bad\nHide");assert.has_error(function() filters.validate({schemaVersion=1,profiles={p}}) end)
 		p=filters.profile("test","Test");p.rules={{id="bad",title="Bad",text='Import "evil.filter"'}}
