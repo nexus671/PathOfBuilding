@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview101" />
+	<Version number="2.67.2-ai.preview102" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="155fda4374ede28814efa5ab438a72060eaf83fb" />
+	<File name="changelog.txt" part="default" sha1="d069eedf2dcc3647fc1a89c808f6f1e9656e1ae8" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1496,7 +1496,7 @@
 	<File name="Modules/CraftingModifiers.lua" part="program" sha1="18841af6f16cefde0e61f1186eadf058c0903d80" />
 	<File name="Modules/CraftingPalette.lua" part="program" sha1="edd27dc9231769e2c5035238bc2e6aa1a5df5de6" />
 	<File name="Modules/CraftingPredictable.lua" part="program" sha1="96bf14e9645edc1a52dcb4baec013afc37c91131" />
-	<File name="Modules/CraftingPrices.lua" part="program" sha1="0afba89f73dd584e2092caaabae0ea0f9c719a82" />
+	<File name="Modules/CraftingPrices.lua" part="program" sha1="ab6288c5a8a356f1c942419b0d5d11af93fffdec" />
 	<File name="Modules/CraftingProjects.lua" part="program" sha1="aa99e28e6e49ea33c8094b49942df22167fe2a23" />
 	<File name="Modules/CraftingProperties.lua" part="program" sha1="ae12f7c969947c17178f08a1876b227acfaa5371" />
 	<File name="Modules/CraftingRecombination.lua" part="program" sha1="2af46b10bbb24be61240c19c80255f1c0b344890" />

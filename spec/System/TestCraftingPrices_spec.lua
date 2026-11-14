@@ -1,6 +1,10 @@
 -- cspell:ignore jsontype
 describe("Saved crafting resource prices",function()
 	local sim=require("Modules.CraftingSimulator");local prices=require("Modules.CraftingPrices")
+	it("does not turn new service artwork into a currency quote",function()
+		local aliases=prices.currencyAliases({alchemy="alchemy-id",beast_talisman_imprint="orb-id",future_service="orb-id"})
+		assert.equal("alchemy-id",aliases.alchemy);assert.is_nil(aliases.beast_talisman_imprint);assert.is_nil(aliases.future_service)
+	end)
 	local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20\nSockets: W W W W W W"
 	local omen="Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks";local fusing="Metadata/Items/Currency/CurrencyRerollSocketLinks"
 	local function book(values) return {currency="chaos",source="Test quotes",quotedAt=1700000000,values=values or {[omen]=2,[fusing]=0.25}} end

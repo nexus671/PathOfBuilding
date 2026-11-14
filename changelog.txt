@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Prevent service artwork from silently becoming a currency price.
 * Keep Talisman imprint service prices separate from Bestiary Orb prices.
 * Show Bestiary artwork for the rare Talisman imprint craft.
 * Add the Bestiary rare Talisman imprint to crafting and AI plans.

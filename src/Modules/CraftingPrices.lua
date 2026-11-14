@@ -1,4 +1,4 @@
--- cspell:ignore jsontype
+-- cspell:ignore jsontype katakohi ukatoa
 -- Saved quotes share a common unit; no economy feed or conversion is implied.
 local sim=require("Modules.CraftingSimulator")
 local M={}
@@ -13,12 +13,19 @@ local function catalogue()
 	return art
 end
 local catalysts={"Abrasive","Accelerating","Dextral","Fertile","Imbued","Intrinsic","Noxious","Prismatic","Sinistral","Tempering","Turbulent","Unstable"}
-local complex={fossil=true,essence=true,catalyst=true,quality=true,tainted_quality=true,eldritch_implicit=true,harvest_reforge=true,harvest_augment=true,harvest_resistance=true,beast_max_links=true,beast_talisman_imprint=true,omen_connections=true,omen_trichromatism=true}
+-- Artwork may represent a service or a composite action. Only these actions
+-- have a one-to-one currency price; adding artwork must not add a price alias.
+local simpleCurrency={alchemy=true,alteration=true,annul=true,augmentation=true,awakener=true,binding=true,blessed=true,chaos=true,chromatic=true,conflict=true,divine=true,dominance=true,
+	ducat_brinehook=true,ducat_cyaxan=true,ducat_genteel=true,ducat_katakohi=true,ducat_kishara=true,ducat_merrick=true,ducat_rotmother=true,ducat_tzamoto=true,ducat_ukatoa=true,
+	eldritch_annul=true,eldritch_chaos=true,eldritch_exalt=true,exalt=true,foulborn_augmentation=true,foulborn_exalt=true,foulborn_regal=true,fracture=true,fusing=true,jeweller=true,
+	regal=true,remembrance=true,sacred=true,scour=true,tainted_catalyst=true,tainted_chaos=true,tainted_chromatic=true,tainted_exalt=true,tainted_fusing=true,tainted_jeweller=true,transmute=true,unravelling=true,vaal=true,veiled_chaos=true,veiled_orb=true}
+function M.currencyAliases(methods)
+	local result={};for method in pairs(simpleCurrency) do local id=methods[method];if id then result[method]=id end end;return result
+end
 function M.aliases(model)
 	local kind=model and model.item.type or ""
 	if aliasCache[kind] then return aliasCache[kind] end
-	local data=catalogue();local result={}
-	for method,id in pairs(data.methods) do if not complex[method] then result[method]=id end end
+	local data=catalogue();local result=M.currencyAliases(data.methods)
 	for id,entry in pairs(data.items) do
 		local stackable=id:gsub("/DelveSocketableCurrencyReroll","/DelveStackableSocketableCurrencyReroll")
 		if stackable~=id and data.items[stackable] and data.items[stackable].name==entry.name then result[id]=stackable end
