@@ -24,6 +24,8 @@ The independent engine uses PoB modifiers and an immutable [RePoE export](https:
 | Allflame | Historical 3.29 client-derived profiles, ship upgrades, class/level-scaled Sulphur costs, independent ghost previews, Intangibility collapse, preferred-target selection, conditional finite-outcome calculation | Not core in 3.30. Gain intervals are sampled uniformly; collapse and selection remain model assumptions. An observed override is available. Existing imprints are consumed. |
 | Planning | Rich targets including native weapon/defence minimums, linked socket-colour counts and specific fractures/crafted flags, manual starting-item edits, bounded routes/loops, background jobs, cancellation, starting-item costs, percentiles, final-affix/property distributions, retained successes, finite-outcome enumeration with cancellable sampled fallback, fossil comparison | No globally cheapest policy guarantee. |
 
+Socket craft inspection includes the modelled colour bench, Chromatic and tainted currency actions alongside the deterministic socket and link services. Random outcomes remain labelled as such, and unavailable choices explain their current restrictions.
+
 ## Saved resource prices
 
 Each gear project can store a price book with a common unit, source, quote time

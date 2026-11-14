@@ -5,6 +5,23 @@ describe("Guaranteed socket crafts",function()
 	local raw="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20\nSockets: R-G B W-W R"
 	local omen="Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks"
 	local fusing="Metadata/Items/Currency/CurrencyRerollSocketLinks"
+	it("exposes socket currency and bench choices with honest availability",function()
+		local colour=sim.catalog(raw,"socket_colour_bench",50).socketCrafts
+		assert.are.equal(3,#colour)
+		assert.are.equal(2,colour[1].action.count);assert.are.same({chromatic=5},colour[1].components)
+		assert.is_true(colour[1].available);assert.is_false(colour[1].deterministic)
+		local chromatic=sim.catalog(raw,"chromatic",50).socketCrafts
+		local ordinary,tainted
+		for _,entry in ipairs(chromatic) do if entry.method=="chromatic" then ordinary=entry elseif entry.method=="tainted_chromatic" then tainted=entry end end
+		assert.is_true(ordinary.available);assert.is_false(ordinary.deterministic)
+		assert.is_false(tainted.available);assert.matches("corrupted",tainted.unavailableReason)
+		local state=sim.model(raw).initial;state.corrupted=true
+		local choice=sim.catalog(raw,"tainted_fusing",50,state).socketCrafts[1]
+		assert.is_true(choice.available);assert.is_false(choice.deterministic)
+		for _,socket in ipairs(state.sockets) do socket.group=0 end
+		choice=sim.catalog(raw,"tainted_fusing",50,state).socketCrafts[1]
+		assert.is_false(choice.available);assert.matches("already fully linked",choice.unavailableReason)
+	end)
 	it("links every existing socket while preserving colours and item properties",function()
 		local m=sim.model(raw);local before=copyTable(m.initial)
 		local result=sim.perform(raw,{method="omen_connections"},1)

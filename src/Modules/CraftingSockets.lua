@@ -17,6 +17,13 @@ function S.extend(M,A,api)
 		if linked then return "The item is already fully linked." end
 	end
 	M.methodChecks.beast_max_links=M.methodChecks.omen_connections
+	M.methodChecks.tainted_fusing=function(model,state)
+		local sockets=state.sockets or {}
+		if #sockets<2 then return "Link crafting needs at least two sockets." end
+		local linked=true
+		for _,socket in ipairs(sockets) do linked=linked and socket.group==sockets[1].group end
+		if linked then return "The item is already fully linked." end
+	end
 	M.methodChecks.omen_trichromatism=function(model,state)
 		if #(state.sockets or {})<3 then return "Add at least three sockets for the RGB guarantee." end
 		for _,socket in ipairs(state.sockets) do if socket.color=="A" then return "Abyssal sockets need a separate socket model." end end
@@ -110,13 +117,13 @@ function S.extend(M,A,api)
 		local state=initialState and M.validateState(model,initialState) or model.initial
 		model=M.context(model,state);query=(query or ""):lower();result.socketCrafts={}
 		local available=require("Modules.CraftingAvailability").check
-		for _,method in ipairs({"socket_bench","socket_white_bench","beast_max_links","omen_connections","omen_trichromatism"}) do
-			local choices=method=="socket_bench" and M.actionOptions(model,state,method) or {{label=M.labels[method],action={method=method}}}
+		for _,method in ipairs({"socket_bench","socket_white_bench","socket_colour_bench","chromatic","beast_max_links","omen_connections","omen_trichromatism","tainted_chromatic","tainted_jeweller","tainted_fusing"}) do
+			local choices=(method=="socket_bench" or method=="socket_colour_bench") and M.actionOptions(model,state,method) or {{label=M.labels[method],action={method=method}}}
 			local allowed,reason=available(method,state,model)
 			for _,choice in ipairs(choices) do
 				if #result.socketCrafts<(limit or 50) and (method.." "..choice.label):lower():find(query,1,true) then
 					result.socketCrafts[#result.socketCrafts+1]={method=method,label=choice.label,action=copyTable(choice.action),priceKey=M.priceKey(choice.action),
-						available=allowed,unavailableReason=not allowed and reason or nil,deterministic=method~="omen_trichromatism",guaranteedColours=method=="omen_trichromatism" and "RGB" or nil,components=M.components(choice.action,state)}
+						available=allowed,unavailableReason=not allowed and reason or nil,deterministic=method=="socket_bench" or method=="socket_white_bench" or method=="beast_max_links" or method=="omen_connections",guaranteedColours=method=="omen_trichromatism" and "RGB" or nil,components=M.components(choice.action,state)}
 				end
 			end
 		end
