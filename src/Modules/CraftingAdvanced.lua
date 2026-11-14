@@ -62,6 +62,11 @@ local methods={
 A.methods=methods
 local influences={shaper=true,elder=true,adjudicator=true,basilisk=true,crusader=true,eyrie=true}
 local tags={attack=true,caster=true,physical=true,fire=true,cold=true,lightning=true,chaos=true,life=true,defences=true,speed=true,critical=true,influence=true}
+-- HarvestCraftOptions, client 3.30.0.1.4: currency, reforge, augment.
+local harvestCosts={fire={"wild_lifeforce",50,15000},cold={"vivid_lifeforce",50,15000},lightning={"primal_lifeforce",50,15000},
+	physical={"vivid_lifeforce",50,15000},life={"wild_lifeforce",75,17500},defences={"primal_lifeforce",75,17500},
+	chaos={"vivid_lifeforce",100,17500},attack={"wild_lifeforce",75,17500},caster={"primal_lifeforce",75,17500},
+	speed={"vivid_lifeforce",150,20000},critical={"primal_lifeforce",150,20000},influence={"primal_lifeforce",5000}}
 local function contains(list,wanted) for _,value in ipairs(list or {}) do if value == wanted then return true end end end
 local function influenced(model,id)
 	local mod=model.byId[id]
@@ -869,7 +874,7 @@ function A.extend(M,api)
 			local allowed,reason=available(method,state,model);local choices=allowed and M.actionOptions(model,state,method) or {};local selected={}
 			for i=1,math.max(0,math.min(limit or 50,#choices)) do
 				selected[i]=copyTable(choices[i]);selected[i].priceKey=M.priceKey(selected[i].action)
-				if method=="harvest_resistance" then selected[i].components=M.components(selected[i].action,state,model) end
+				selected[i].components=M.components(selected[i].action,state,model)
 			end
 			local conditional=allowed and (method=="harvest_reforge" or method=="harvest_augment") and M.hasPartialLock(M.context(model,state),state)
 			result.harvestOptions[#result.harvestOptions+1]={method=method,available=allowed,unavailableReason=not allowed and reason or nil,options=selected,total=#choices,
@@ -908,6 +913,15 @@ function A.extend(M,api)
 		return action.method
 	end
 	function M.components(action,state,model)
+		if action.method == "harvest_reforge" or action.method == "harvest_augment" then
+			-- Influence is a separate reforge with no corresponding augment.
+			local entry=assert(harvestCosts[action.tag],"Select a supported Harvest tag")
+			local augment=action.method=="harvest_augment"
+			assert(not augment or entry[3],"No Harvest augment for that tag")
+			local result={[entry[1]]=augment and entry[3] or entry[2]}
+			if augment or action.tag=="influence" then result.sacred_lifeforce=1 end
+			return result
+		end
 		if action.method == "harvest_resistance" then
 			-- HarvestCraftOptions, client 3.30.0.1.4: the two resource types
 			-- follow the source and destination elements, each at 300.

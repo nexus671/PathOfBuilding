@@ -107,6 +107,7 @@ async function main(){
   const fireToCold=resistOptions.options.find(entry=>entry.action.from==='fire' && entry.action.to==='cold');
   assert.deepEqual(fireToCold.components,{wild_lifeforce:300,primal_lifeforce:300});
   assert.match(harvestHatReforge.selectionNote,/Other selections or later rolls can fail/);const harvestHatOptions=harvestHatReforge.options;
+  assert.deepEqual(harvestHatOptions.find(entry=>entry.action.tag==='life').components,{wild_lifeforce:75});
   assert.ok(harvestHatOptions.some(entry=>entry.label==='life'));assert.ok(!harvestHatOptions.some(entry=>entry.label==='physical'));
   const multiInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:harvestHat,query:'Can have up to 3 Crafted Modifiers',limit:100},'inspected');
   const multi=multiInspection.crafting.nativeEngine.bench.find(entry=>entry.text==='Can have up to 3 Crafted Modifiers');assert.ok(multi);

@@ -171,7 +171,7 @@ describe("3.30 partial affix locks",function()
 		assert.is_true(result.successes>0 and result.successes<100);assert.is_truthy(next(result.transitionErrors))
 		local failures=0;for _,count in pairs(result.transitionErrors) do failures=failures+count end
 		assert.are.equal(100-failures,result.successes)
-		assert.are.equal(result.successes,result.currencySpent["harvest_reforge:defences"])
+		assert.are.equal(result.successes*75,result.currencySpent.primal_lifeforce)
 	end)
 	it("enumerates two-lock selections without counting permutations twice",function()
 		local model=sim.model(raw);local ids,groups={},{}

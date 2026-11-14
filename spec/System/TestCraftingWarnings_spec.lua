@@ -12,6 +12,18 @@ describe("Crafting result model notes",function()
 		end end
 		assert.has_error(function() sim.components({method="harvest_resistance",from="fire",to="fire"}) end)
 	end)
+	it("prices all supported tagged Harvest reforges and augments",function()
+		local expected={fire={"wild_lifeforce",50,15000},cold={"vivid_lifeforce",50,15000},lightning={"primal_lifeforce",50,15000},
+			physical={"vivid_lifeforce",50,15000},life={"wild_lifeforce",75,17500},defences={"primal_lifeforce",75,17500},
+			chaos={"vivid_lifeforce",100,17500},attack={"wild_lifeforce",75,17500},caster={"primal_lifeforce",75,17500},
+			speed={"vivid_lifeforce",150,20000},critical={"primal_lifeforce",150,20000}}
+		for tag,cost in pairs(expected) do
+			assert.same({[cost[1]]=cost[2]},sim.components({method="harvest_reforge",tag=tag}))
+			assert.same({[cost[1]]=cost[3],sacred_lifeforce=1},sim.components({method="harvest_augment",tag=tag}))
+		end
+		assert.same({primal_lifeforce=5000,sacred_lifeforce=1},sim.components({method="harvest_reforge",tag="influence"}))
+		assert.has_error(function() sim.components({method="harvest_augment",tag="influence"}) end)
+	end)
 	it("deduplicates contextual notes and leaves ordinary actions clear",function()
 		assert.are.equal(0,#sim.actionWarnings({method="alchemy"}))
 		local notes=sim.recipeWarnings({steps={{method="recombine",donorItem=donor},{method="recombine",donorItem=donor},{method="alchemy",allflame={auto=true}}}})
