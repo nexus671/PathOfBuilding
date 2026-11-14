@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Correct strict socket comparisons in loot-filter previews.
 * Let node-power reports show losses as well as gains, and explain empty results.
 * Keep node-power heatmaps stable when values are zero or infinite.
 * Prevent service artwork from silently becoming a currency price.

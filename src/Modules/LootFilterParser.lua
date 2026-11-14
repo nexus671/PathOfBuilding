@@ -84,6 +84,12 @@ local function socketMatch(value,pattern,op)
 	local required={};local number=tonumber(pattern:match("^%d+"))
 	for color in pattern:gmatch("[RGBWAD]") do required[color]=(required[color] or 0)+1 end
 	local available={};local count=0;for color in value:gmatch("[RGBWAD]") do available[color]=(available[color] or 0)+1;count=count+1 end
+	-- GGG defines strict comparisons as any specified count being greater or less.
+	if op=="<" or op==">" then
+		if number and compare(count,number,op) then return true end
+		for color,n in pairs(required) do if compare(available[color] or 0,n,op) then return true end end
+		return false
+	end
 	if number and not compare(count,number,op) then return false end
 	local colorOp=op=="==" and "==" or (op=="!" or op=="!=") and op or ">="
 	for color,n in pairs(required) do if not compare(available[color] or 0,n,colorOp) then return false end end

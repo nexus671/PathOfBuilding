@@ -33,6 +33,8 @@ The drop preview shows the label, border and beam, and explains the deciding rul
 
 For socket conditions, enter linked groups separately in **SocketGroup** and all socket colours in **SocketColours**. Enter `0` in **SocketGroup** or **Sockets** when the item has no sockets; leave the fields blank when unknown. Use R, G, B, W, A and D for red, green, blue, white, Abyss and Delve sockets; linked colours can be separated by hyphens. A rule such as `SocketGroup >= 5GGG` requires at least five linked sockets and at least three green sockets; `==` requires an exact count of the named colours. Invalid rules and test-drop colours show an explanation instead of a certain result.
 
+For strict `<` and `>` comparisons, a socket pattern matches when **any** specified count satisfies the comparison. For example, `SocketGroup < 4RG` matches a four-link with no red socket. This follows [GGG's explanation of socket matching](https://www.reddit.com/r/pathofexile/comments/f2t4tz/comment/g0xmhhp/?context=10).
+
 For modifier or enchantment counts, the game requires the operator and number together, such as `HasExplicitMod >=2 "of Haast" "of Ephij"`. The rule editor formats this automatically and flags a separated operator in imported rules.
 
 **Import** accepts exported `.filter` text. The original text stays in the build, separate from personal rules. The compiler adapts GGG's announced 3.30 BaseType renames and removals and adds Show rules for new items. If removing old items empties a BaseType list, it discards that entire block instead of broadening it. **Audit / update** lists migrations and parser diagnostics. New items remain visible rather than receiving invented economy tiers.
