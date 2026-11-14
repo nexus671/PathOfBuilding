@@ -1,7 +1,7 @@
 -- Presentation queries over the pinned graph; no character or map-odds simulation.
 local atlas=require("Modules.AtlasPlanner")
 local M={mechanics={"Maps","Essence","Harvest","Expedition","Breach","Legion","Blight","Delirium","Ritual","Beyond","Abyss","Strongboxes","Shrines","Heist","Delve","Bestiary","Incursion","Betrayal","Ultimatum","Bosses","Mirage","Wildwood","Sentinels","Torment","Rogue Exiles","Threads"}}
-local aliases={Maps={"map","kirac"},Bosses={"boss","shaper","elder","maven","eater","exarch"},Strongboxes={"strongbox"},Shrines={"shrine"},Bestiary={"beast","einhar"},Incursion={"incursion","alva"},Betrayal={"syndicate","jun"},Delve={"sulphite","niko"},Wildwood={"wildwood","sacred flora","sacred fauna"},Sentinels={"sentinel"},Torment={"tormented spirit","tormented procurator"},["Rogue Exiles"]={"rogue exile"},Threads={"thread"}}
+local aliases={Maps={"map","kirac"},Bosses={"boss","shaper","elder","maven","eater","exarch"},Strongboxes={"strongbox"},Shrines={"shrine"},Bestiary={"beast","einhar"},Incursion={"incursion","alva"},Betrayal={"syndicate","jun"},Delve={"sulphite","niko"},Harvest={"harvest","sacred flora","sacred fauna","sacred specimen","lifeforce"},Wildwood={"viridian wildwood","wildwood chance"},Sentinels={"sentinel"},Torment={"tormented spirit","tormented procurator"},["Rogue Exiles"]={"rogue exile"},Threads={"thread"}}
 local function matches(text,name)
 	for _,word in ipairs(aliases[name] or {name:lower()}) do if text:find(word,1,true) then return true end end
 	return false

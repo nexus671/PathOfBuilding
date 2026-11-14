@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview141" />
+	<Version number="2.67.2-ai.preview142" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="948d8a2a6e19c6d468eb6043a0b41b25a259adbe" />
+	<File name="changelog.txt" part="default" sha1="819a6d0c06fee73af87f21ce00a1a1d328bec0b9" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1447,7 +1447,7 @@
 	<File name="Modules/AddImplicitPopup.lua" part="program" sha1="f68d391d10b95c0feef70b7e8e82326a745dcb3b" />
 	<File name="Modules/AtlasArt.lua" part="program" sha1="1d3d01aa76eb489f2f5fa6f6852d0860b5429c84" />
 	<File name="Modules/AtlasPlanner.lua" part="program" sha1="f40e0833ca3e7cc7147d1616bbf631683d73e9ff" />
-	<File name="Modules/AtlasStrategy.lua" part="program" sha1="c568a88865e2b587d6ad859d3d5dcdb4d836240c" />
+	<File name="Modules/AtlasStrategy.lua" part="program" sha1="930d191279c274c2f3130a5cd32800a52e53437d" />
 	<File name="Modules/AtlasTargets.lua" part="program" sha1="94a9ecd4339e57dd77c0b738ea384f038d54de5e" />
 	<File name="Modules/Build.lua" part="program" sha1="972e8291b2ac3360e6914e39ab7db209e78e97d8" />
 	<File name="Modules/BuildDisplayStats.lua" part="program" sha1="ffc4da3b13c3d50f3580b452622429f0bd7e70ab" />

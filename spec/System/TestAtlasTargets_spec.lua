@@ -10,8 +10,10 @@ describe("Desired Atlas routes",function()
 		for name,id in pairs({Mirage=14203,Wildwood=3814,Sentinels=40046,Torment=875,["Rogue Exiles"]=33902,Threads=34352}) do
 			assert.is_true(contains(strategy.results(p,"",name),id));assert.is_true(contains(targets.mechanic(p,name).desired,id))
 		end
-		assert.is_true(contains(strategy.results(p,"","Ritual"),52197));assert.is_true(contains(strategy.results(p,"","Wildwood"),52197))
-		assert.is_true(contains(targets.mechanic(p,"Wildwood").desired,52197))
+		assert.is_true(contains(strategy.results(p,"","Rogue Exiles"),26414));assert.is_true(contains(strategy.results(p,"","Torment"),26414))
+		assert.is_true(contains(targets.mechanic(p,"Torment").desired,26414))
+		assert.is_true(contains(strategy.results(p,"","Harvest"),53175));assert.is_true(contains(targets.mechanic(p,"Harvest").desired,53175))
+		assert.is_false(contains(strategy.results(p,"","Wildwood"),53175));assert.is_false(contains(strategy.results(p,"","Wildwood"),52197))
 	end)
 	it("keeps desired and avoided preferences exclusive and portable",function()
 		local p=plan();local id=atlas.search(p.version,"Bountiful Harvest",1).matches[1].id
