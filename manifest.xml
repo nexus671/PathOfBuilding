@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview137" />
+	<Version number="2.67.2-ai.preview138" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="681f346b862d4c3b3a67287be8f193fcee008825" />
+	<File name="changelog.txt" part="default" sha1="91dd9e89f6f0fa36410d51afdb44792d8c8b3210" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1169,7 +1169,7 @@
 	<File name="Classes/GemSelectControl.lua" part="program" sha1="8954e020052121d13122873b578b87e0bb7c60fc" />
 	<File name="Classes/GemTooltip.lua" part="program" sha1="aa0ce7d2eb619fc6b6e55aec9767320bee187343" />
 	<File name="Classes/ImportTab.lua" part="program" sha1="1a7cbb47f77f6eb500f2fa11d9f8ab42c7c4a46c" />
-	<File name="Classes/Item.lua" part="program" sha1="222c2ec03e6c1380dd2479b188c33eaa9c9286d1" />
+	<File name="Classes/Item.lua" part="program" sha1="6c3335973bf3384f9a52fcf1e36a0f74b00d6625" />
 	<File name="Classes/ItemDBControl.lua" part="program" sha1="102cd044133926ef2844103e4243023d87ca4510" />
 	<File name="Classes/ItemListControl.lua" part="program" sha1="01546a91c647cb978ffb757cbe75a7afaa2d0cba" />
 	<File name="Classes/ItemSetListControl.lua" part="program" sha1="5ff494b708b1b633f0cf4157e30ad295c1044ed4" />

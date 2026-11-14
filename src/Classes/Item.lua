@@ -499,6 +499,7 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 	self.tinctureValues = nil
 	self.tinctureImportedQuality = nil
 	self.twiceCorrupted = nil
+	self.unidentifiedMarker = nil
 	self.rawLines = { }
 	-- Find non-blank lines and trim whitespace
 	for line in raw:gmatch("%s*([^\n]*%S)") do
@@ -544,6 +545,7 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 		for _, line in ipairs(self.rawLines) do
 			if line == "Unidentified" or line:match("^Unidentified %(Tier %d+%)$") then
 				unidentified = true
+				self.unidentifiedMarker = line
 				break
 			end
 		end
@@ -2085,6 +2087,9 @@ function ItemClass:BuildRaw()
 	end
 	for _, modLine in ipairs(self.crucibleModLines) do
 		writeModLine(modLine)
+	end
+	if self.unidentifiedMarker then
+		t_insert(rawLines, self.unidentifiedMarker)
 	end
 	if self.split then
 		t_insert(rawLines, "Split")

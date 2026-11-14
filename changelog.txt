@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Preserve unidentified item state through item-editor rebuilds.
 * Recognize tiered unidentified items when importing their base types.
 * Preserve explicit unidentified item tiers in pasted loot-filter examples.
 * Review shown, hidden and uncertain examples across a loot-filter scene.
