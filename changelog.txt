@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Attach referenced loot-filter files for offline preview and export.
 * Preserve quoted loot-filter names when previewing and editing rules.
 * Review Atlas branch removals before disconnecting multiple nodes.
 * Match numeric text in loot-filter names without treating it as a modifier count.

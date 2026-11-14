@@ -43,7 +43,15 @@ function M.validate(data)
 		if p.palettes~=nil then entry.palettes=require("Modules.LootFilterCollections").palettes(p.palettes) end
 		if p.categoryStyles~=nil then entry.categoryStyles=require("Modules.LootFilterCategoryStyles").validate(p.categoryStyles) end
 		entry.baseCommit=p.baseCommit and text(p.baseCommit,40,"template revision") or M.source().commit
-		if p.template then entry.template=text(p.template,M.limit,"imported filter");assert(#parser.parse(p.template).rules>0,"Imported filter has no rules") end
+		if p.template then entry.template=text(p.template,M.limit,"imported filter");local parsed=parser.parse(p.template);assert(#parsed.rules>0 or #parsed.imports>0,"Imported filter has no rules or imports") end
+		if p.importFiles~=nil then
+			entry.importFiles={};local names={}
+			for _,file in ipairs(array(p.importFiles)) do
+				assert(type(file)=="table","Invalid imported filter file")
+				local name=text(file.name,240,"import filename");assert(name:match("%S") and not name:find('[%c"]') and not names[name],"Invalid or duplicate import filename");names[name]=true
+				entry.importFiles[#entry.importFiles+1]={name=name,text=text(file.text,M.limit,"imported filter text")}
+			end
+		end
 		local seen={}
 		for _,rule in ipairs(array(p.rules)) do
 			local r={id=text(rule.id,100,"rule ID"),title=text(rule.title,160,"rule title"),text=text(rule.text,24000,"rule text"),enabled=rule.enabled~=false}
@@ -122,7 +130,7 @@ function M.migrate(raw)
 	local out,block,skip,changes={}, {},false,{}
 	local function flush() if not skip then for _,line in ipairs(block) do out[#out+1]=line end end;block={};skip=false end
 	for line in (raw.."\n"):gmatch("([^\n]*)\n") do
-		if line:match("^%s*Show%s*") or line:match("^%s*Hide%s*") or line:match("^%s*Minimal%s*") then flush() end
+		if line:match("^%s*Show%s*") or line:match("^%s*Hide%s*") or line:match("^%s*Minimal%s*") or line:match("^%s*Import%s") then flush() end
 		if line:match("^%s*BaseType%s") then
 			local values={};local changed=false
 			line=line:gsub('"([^"\r\n]+)"',function(name)
@@ -142,7 +150,7 @@ function M.base(profile)
 end
 function M.migratedBase(profile)
 	local raw=M.base(profile)
-	if profile.template then return M.migrate(raw) end
+	if profile.template then return M.migrate(require("Modules.LootFilterImports").expand(raw,profile.importFiles,M.limit)) end
 	-- Bundled presets and the patch map are immutable until the next restart.
 	local key="migrated-"..profile.strictness
 	if not cache[key] then cache[key]={M.migrate(raw)} end

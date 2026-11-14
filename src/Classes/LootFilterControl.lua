@@ -75,7 +75,7 @@ function M.EditRule(rule,save,mode)
 end
 function M.Import(save)
  modal("Import loot filter","",function(raw)
-  local parsed=parser.parse(raw);assert(#parsed.rules>0,"No filter rules found")
+  local parsed=parser.parse(raw);assert(#parsed.rules>0 or #parsed.imports>0,"No filter rules or imports found")
   for _,d in ipairs(parsed.diagnostics) do assert(not d.error,d.error) end
   save(raw)
  end)
