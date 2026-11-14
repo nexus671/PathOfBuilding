@@ -14,27 +14,27 @@ M.booleans={Identified=true,Corrupted=true,TwiceCorrupted=true,Mirrored=true,Fra
 M.strings={Class=true,BaseType=true,HasInfluence=true,HasExplicitMod=true,HasEnchantment=true,EnchantmentPassiveNode=true,Prophecy=true,ArchnemesisMod=true,GemQualityType=true}
 local rarity={Normal=0,Magic=1,Rare=2,Unique=3}
 function M.tokens(line)
-	local out={};local pos=1
+	local out,quoted={},{};local pos=1
 	while pos<=#line do
 		local char=line:sub(pos,pos)
 		if char=="#" then break
 		elseif char:match("%s") then pos=pos+1
 		elseif char=='"' then
 			local last=line:find('"',pos+1,true);assert(last,"Unclosed quoted value")
-			out[#out+1]=line:sub(pos+1,last-1);pos=last+1
-		else local last=line:find('[%s#]',pos) or #line+1;out[#out+1]=line:sub(pos,last-1);pos=last end
+			out[#out+1]=line:sub(pos+1,last-1);quoted[#out]=true;pos=last+1
+		else local last=line:find('[%s#]',pos) or #line+1;out[#out+1]=line:sub(pos,last-1);quoted[#out]=false;pos=last end
 	end
-	return out
+	return out,quoted
 end
 function M.parse(raw)
 	assert(type(raw)=="string" and #raw<=2*1024*1024,"Filter exceeds 2 MiB")
 	local result={rules={},diagnostics={},imports={}};local current;local title
 	for line in (raw:gsub("^\239\187\191","").."\n"):gmatch("([^\n]*)\n") do
-		local ok,t=pcall(M.tokens,line);local lineNo=(result.lineCount or 0)+1;result.lineCount=lineNo
+		local ok,t,quoted=pcall(M.tokens,line);local lineNo=(result.lineCount or 0)+1;result.lineCount=lineNo
 		title=line:match("^%s*# PoB rule: (.*)") or title
 		if not ok then result.diagnostics[#result.diagnostics+1]={line=lineNo,error=t}
 		elseif #t>0 then
-			local key=table.remove(t,1)
+			local key=table.remove(t,1);table.remove(quoted,1)
 			if key=="Show" or key=="Hide" or key=="Minimal" then
 				current={action=key,line=lineNo,title=title,conditions={},styles={},rawLines={line}};title=nil;result.rules[#result.rules+1]=current
 				if #t>0 then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Unexpected values after "..key} end
@@ -53,10 +53,10 @@ function M.parse(raw)
 					elseif key=="PlayEffect" then invalid=not (#t==1 and t[1]=="None") and (not colors[t[1]] or #t>2 or #t==2 and t[2]~="Temp") end
 					if invalid then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid "..key} end
 				else
-					local op="=";local first=t[1] or "";local prefix=first:match("^[<>=!]+")
-					if prefix then op=prefix;t[1]=first:sub(#prefix+1);if t[1]=="" then table.remove(t,1) end end
+					local op="=";local first=t[1] or "";local prefix=not quoted[1] and first:match("^[<>=!]+")
+					if prefix then op=prefix;t[1]=first:sub(#prefix+1);if t[1]=="" then table.remove(t,1);table.remove(quoted,1) end end
 					local known=M.numeric[key] or M.booleans[key] or M.strings[key] or key=="Rarity" or key=="SocketGroup"
-					current.conditions[#current.conditions+1]={keyword=key,operator=op,values=t,known=known,line=lineNo}
+					current.conditions[#current.conditions+1]={keyword=key,operator=op,values=t,quoted=quoted,known=known,line=lineNo}
 					if #t==0 then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Condition requires a value: "..key}
 					elseif not known then result.diagnostics[#result.diagnostics+1]={line=lineNo,warning="Simulator cannot resolve "..key.."; original text is preserved"} end
 					if not ({["="]=true,["=="]=true,["!="]=true,["!"]=true,[">="]=true,["<="]=true,[">"]=true,["<"]=true})[op] then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid operator "..op} end
@@ -134,7 +134,7 @@ function M.condition(c,item)
 		return compare(value,values[1]=="True",op)
 	else
 		local negative=op=="!" or op=="!=";local entries=type(value)=="table" and value or {value}
-		local count=0;local minimum=(c.keyword=="HasExplicitMod" or c.keyword=="HasEnchantment") and tonumber(values[1]) or nil;local start=minimum and 2 or 1
+		local count=0;local minimum=(c.keyword=="HasExplicitMod" or c.keyword=="HasEnchantment") and not (c.quoted and c.quoted[1]) and tonumber(values[1]) or nil;local start=minimum and 2 or 1
 		for _,entry in ipairs(entries) do for i=start,#values do
 			local found=op=="==" and tostring(entry)==values[i] or op~="==" and tostring(entry):lower():find(values[i]:lower(),1,true)~=nil
 			if found then count=count+1;break end

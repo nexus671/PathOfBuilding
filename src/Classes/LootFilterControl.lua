@@ -34,8 +34,8 @@ function M.Conditions(rule,save)
 			if condition then
 				c["c"..i.."key"]=new("DropDownControl"):DropDownControl(ui.anchor,{16,y,190,26},keywords,function(_,value) condition.keyword=value end);c["c"..i.."key"]:SelByValue(condition.keyword)
 				c["c"..i.."op"]=new("DropDownControl"):DropDownControl(ui.anchor,{218,y,72,26},{"=","==",">=","<=",">","<","!="},function(_,value) condition.operator=value end);c["c"..i.."op"]:SelByValue(condition.operator)
-				local values={};for _,v in ipairs(condition.values) do values[#values+1]=v:find(" ",1,true) and filters.quote(v) or v end
-				c["c"..i.."values"]=new("EditControl"):EditControl(ui.anchor,{302,y,w-366,26},table.concat(values," "),nil,nil,2000,function(value) local ok,result=pcall(parser.tokens,value);condition.invalid=not ok;if ok then condition.values=result end end)
+				local values={};for j,v in ipairs(condition.values) do values[#values+1]=(condition.quoted and condition.quoted[j] or v:find(" ",1,true)) and filters.quote(v) or v end
+				c["c"..i.."values"]=new("EditControl"):EditControl(ui.anchor,{302,y,w-366,26},table.concat(values," "),nil,nil,2000,function(value) local ok,result,quoted=pcall(parser.tokens,value);condition.invalid=not ok;if ok then condition.values=result;condition.quoted=quoted end end)
 				button(c,"c"..i.."remove",w-52,y,36,"X",function() table.remove(conditions,index);drawConditions() end)
 			end
 		end
@@ -51,7 +51,7 @@ function M.Conditions(rule,save)
 	button(c,"keepRule",16,h-48,140,"Keep rule",function() attempt(function()
 		local lines={c.action:GetSelValue()};for _,condition in ipairs(conditions) do
 			assert(not condition.invalid,"Close every quoted condition value")
-			local controlValues={};for _,value in ipairs(condition.values) do controlValues[#controlValues+1]=((parser.strings[condition.keyword] and not tonumber(value)) or value:find("%s")) and filters.quote(value) or value end
+			local controlValues={};for i,value in ipairs(condition.values) do controlValues[#controlValues+1]=((condition.quoted and condition.quoted[i]) or (parser.strings[condition.keyword] and not tonumber(value)) or value:find("%s")) and filters.quote(value) or value end
 			assert(#controlValues>0,"Every condition needs a value");lines[#lines+1]="    "..condition.keyword.." "..condition.operator.." "..table.concat(controlValues," ")
 		end
 		local styles=copyTable(block.styles)
