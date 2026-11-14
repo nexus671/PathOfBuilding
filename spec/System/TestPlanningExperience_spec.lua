@@ -6,6 +6,30 @@ describe("Planning experience queries",function()
 	local function empty(version) return {id="test",title="Strategy",version=version or "3.29.1",budget=138,nodes={},notes=""} end
 	before_each(function() newBuild() end)
 	after_each(function() main.popups={} end)
+	it("takes a longer safe starting route when the shortest path blocks encounters",function()
+		local version="3.29.3";local previousTree=atlas.tree(version);local previousMechanics=strategy.mechanics
+		local function node(id,name,kind,links,stats) return {id=id,name=name,kind=kind,links=links,stats=stats or {},grantedPoints=0} end
+		atlas.cache[version]={version=version,start=1,maxPoints=10,nodes={
+			[1]=node(1,"Start","small",{2,3}),
+			[2]=node(2,"Blocker","notable",{1,4},{"Your Maps have no chance to contain Breaches"}),
+			[3]=node(3,"Detour","small",{1,5}),
+			[5]=node(5,"Detour","small",{3,4}),
+			[4]=node(4,"Breach target","notable",{2,5},{"Your Maps have increased chance to contain a Breach"}),
+		}}
+		strategy.mechanics={"Breach"}
+		local ok,err=pcall(function()
+			local plan={id="test",title="Route",version=version,budget=10,nodes={},desired={2},avoided={}}
+			assert.same({2,4},atlas.connect(plan,{4}).nodes)
+			local routes=strategy.presets(plan);assert.equal(1,#routes)
+			assert.same({3,4,5},routes[1].plan.nodes)
+			assert.same(plan.desired,routes[1].plan.desired);assert.same(plan.avoided,routes[1].plan.avoided)
+			atlas.cache[version].nodes[3].links={1};atlas.cache[version].nodes[4].links={2}
+			assert.same({2,4},atlas.connect(plan,{4}).nodes)
+			assert.same({},strategy.presets(plan))
+		end)
+		atlas.cache[version]=previousTree;strategy.mechanics=previousMechanics
+		assert.is_true(ok,err)
+	end)
 	it("does not recommend mechanic-blocking notables as starting targets",function()
 		local targets=require("Modules.AtlasTargets")
 		local routes=strategy.presets(empty("3.29.3"));assert.is_true(#routes>0)
