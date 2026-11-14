@@ -88,7 +88,11 @@ function M.transition(before,after)
 		return state.budget+granted-#state.nodes
 	end
 	local function route(rebuild,initial)
-		local state=copyTable(initial or before);state.budget=budget;local steps={};local clearing=rebuild
+		local state=copyTable(initial or before);state.budget=budget
+		-- Saved routing preferences can change between stages. They do not
+		-- prevent allocating or refunding the nodes in a respec sequence.
+		state.desired=nil;state.avoided=nil
+		local steps={};local clearing=rebuild
 		for _=1,#state.nodes+#after.nodes+1 do
 			if table.concat(state.nodes,",")==table.concat(after.nodes,",") then return steps end
 			if #state.nodes==0 then clearing=false end
@@ -116,7 +120,7 @@ function M.transition(before,after)
 		local grants={};for _,id in ipairs(after.nodes) do if not allocated[id] and (tree.nodes[id].grantedPoints or 0)>0 then grants[#grants+1]=id end end
 		if #grants==1 then
 			local avoid={};for _,id in ipairs(after.avoided or {}) do if not allocated[id] then avoid[#avoid+1]=id end end
-			local start=copyTable(before);start.budget=budget
+			local start=copyTable(before);start.budget=budget;start.desired=nil;start.avoided=nil
 			local ok,via,added=pcall(atlas.connect,start,{grants[1]},avoid)
 			if ok then
 				local prefix={};local state=copyTable(start)

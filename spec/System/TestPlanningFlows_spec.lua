@@ -109,6 +109,21 @@ describe("Connected planning workflows",function()
 		end
 		assert.is_true(refunds>0);assert.same(goal.nodes,state.nodes)
 	end)
+	it("allows Atlas stage transitions to change saved node preferences",function()
+		local strategy=require("Modules.AtlasStrategy")
+		local before=plan("before-preferences")
+		local tree=atlas.tree(before.version)
+		local target=tree.nodes[tree.start].links[1]
+		before.avoided={target}
+		local after=atlas.connect(plan("after-preferences"),{target})
+		local original=copyTable(before)
+		local transition=strategy.transition(before,after)
+		assert.is_truthy(transition.steps)
+		assert.equal(1,#transition.steps)
+		assert.equal("Allocate",transition.steps[1].action)
+		assert.equal(target,transition.steps[1].id)
+		assert.same(original,before)
+	end)
 	it("creates stress presets from explicit active inputs without mutating them",function()
 		local encounter=require("Modules.CalcEncounter");local source={enemyPhysicalDamage="1000",recoverySimulationWindow=4}
 		local input=encounter.preset(source,{},encounter.presets[7]);assert.equal(200,input.recoverySimulationPhysicalDot);assert.equal(30,input.recoverySimulationWindow);assert.equal(4,source.recoverySimulationWindow);assert.is_nil(source.recoverySimulationPhysicalDot)

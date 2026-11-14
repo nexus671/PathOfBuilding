@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Allow Atlas transition previews when node preferences change between stages.
 * Show coherent equipment examples for common socket-based filter rules.
 * Explain conflicting socket counts and colours in loot-filter test drops.
 * Correct strict socket comparisons in loot-filter previews.
