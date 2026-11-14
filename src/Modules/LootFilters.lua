@@ -118,6 +118,7 @@ function M.generate(build,profile,checkpoint)
 	for _,project in ipairs(build.savers.CraftingProjects.projects) do if project.nativeRecipe then
 		local key=require("sha1")(project.startingItem.."\0"..require("Modules.PlanningData").encode(project.nativeRecipe))
 		local coverage=recipeResourceCache[key];local needsInspection=not coverage;local ok=true
+		if not coverage and checkpoint then require("Modules.CraftingAdvanced").prepare(checkpoint) end
 		if not coverage then ok,coverage=pcall(function()
 			local sim=require("Modules.CraftingSimulator");local model=recipeModels[project.startingItem]
 			if not model then model=sim.model(project.startingItem);recipeModels[project.startingItem]=model end

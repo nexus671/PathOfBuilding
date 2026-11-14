@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Load crafting data in stages when checking linked filter targets.
 * Check linked filter targets in smaller background steps.
 * Explain incomplete ingredient coverage in crafting-based filter pickups.
 * Report crafting recipes that cannot be inspected when refreshing filter pickups.

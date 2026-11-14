@@ -29,7 +29,7 @@ Create campaign, early mapping and endgame profiles for Normal or Ruthless. In R
 
 If a saved recipe cannot be inspected, or an action has no item ingredient breakdown, its previous generated recipe pickups are kept and the affected guide is listed for review. Known ingredients are still added. MCP generation returns the same warnings.
 
-Linked-target checks run between frames. The auto-adjust button shows when the check is in progress. Loading crafting data for the first recipe can still cause a noticeable pause.
+Linked-target checks and the first crafting-data decode run between frames. The auto-adjust button shows when the check is in progress. Loading the data file and inspecting individual recipes can still cause a pause.
 
 Select a rule to preview example properties. Examples are synthetic; modifier names come from the rule and do not establish that a real item with that combination can drop. **Edit** opens its live appearance controls; **Advanced conditions** opens matching criteria. All conditions must match. Move rules up or down to change priority; the first matching rule decides unless it uses `Continue`. **Silent** adds explicit alert-disable actions so a continued earlier rule does not supply an alert. The item's separate ground-drop sound is unchanged. Editing a generated rule turns it into a personal rule so regeneration preserves the edit. Disable a rule to try the filter without deleting it.
 

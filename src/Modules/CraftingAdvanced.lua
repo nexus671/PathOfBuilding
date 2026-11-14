@@ -1,4 +1,5 @@
 -- Independent rules layered on native PoB modifiers. No third-party engine code.
+-- cspell:ignore jsontype
 local json=require("dkjson")
 local A={}
 local cached
@@ -8,6 +9,44 @@ function A.data()
 		local raw=f:read("*a"); f:close(); cached=assert(json.decode(raw))
 	end
 	return cached
+end
+-- Decode the large generated catalogue in bounded batches when a caller can
+-- yield between frames. Publish it only after the whole document is valid.
+function A.prepare(checkpoint)
+	if cached then return end
+	local root=GetScriptPath();local f=assert(io.open((root ~= "" and root.."/" or "").."Data/Crafting/3.29.json","rb"))
+	local raw=f:read("*a");f:close();local pos=1;local started=os.clock()
+	local function space() pos=raw:find("%S",pos) or #raw+1 end
+	local function expect(char) space();assert(raw:sub(pos,pos)==char,"Invalid crafting data at "..pos);pos=pos+1 end
+	local function value()
+		space();local result,nextPos,err=json.decode(raw,pos);assert(not err,err);pos=nextPos;return result
+	end
+	local function pause()
+		if os.clock()-started>=0.008 then checkpoint();started=os.clock() end
+	end
+	local function container()
+		space();local opening=raw:sub(pos,pos)
+		if opening~="{" and opening~="[" then return value() end
+		pos=pos+1;local object=opening=="{";local closing=object and "}" or "]"
+		local result=setmetatable({},{__jsontype=object and "object" or "array"});local index=0;space()
+		if raw:sub(pos,pos)==closing then pos=pos+1;return result end
+		while true do
+			if object then local key=value();assert(type(key)=="string","Invalid crafting data key");expect(":");result[key]=value()
+			else index=index+1;result[index]=value() end
+			pause();space();local char=raw:sub(pos,pos);pos=pos+1
+			if char==closing then break end
+			assert(char==",","Invalid crafting data at "..(pos-1))
+		end
+		return result
+	end
+	expect("{");local result=setmetatable({},{__jsontype="object"});space()
+	if raw:sub(pos,pos)~="}" then repeat
+		local key=value();assert(type(key)=="string","Invalid crafting data key");expect(":");result[key]=container();pause();space()
+		local char=raw:sub(pos,pos);pos=pos+1
+		if char=="}" then break end
+		assert(char==",","Invalid crafting data at "..(pos-1))
+	until false else pos=pos+1 end
+	space();assert(pos>#raw,"Trailing crafting data");cached=cached or result
 end
 local methods={
 	fossil="Fossil resonator",harvest_reforge="Harvest: reforge with a tagged modifier",harvest_augment="Harvest: add tagged / remove random",
