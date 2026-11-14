@@ -4,6 +4,16 @@ describe("Build-owned loot filters",function()
 	local parser=require("Modules.LootFilterParser")
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() main.popups={} end)
+	it("rejects malformed imports even when other imports are unresolved",function()
+		for _,line in ipairs({"Import",'Import ""','Import "file.filter" Invalid','Import "file.filter" Optional extra'}) do
+			local parsed=parser.parse('Import "valid.filter" Optional\n'..line..'\nShow')
+			assert.equal("invalid",parser.simulate(parsed,{}).status);assert.equal(2,parsed.diagnostics[1].line)
+		end
+		local parsed=parser.parse('Import "required.filter"\nImport "optional.filter" Optional\nShow')
+		assert.equal(0,#parsed.diagnostics);assert.equal(2,#parsed.imports);assert.is_true(parsed.imports[2].optional);assert.equal("unknown",parser.simulate(parsed,{}).status)
+		local profile=filters.profile("bad-import","Bad import");profile.template='Import "file.filter" Invalid\nShow'
+		local _,report=filters.compile(profile);local found=false;for _,entry in ipairs(report.diagnostics) do if entry.error and entry.error:find("Invalid Import",1,true) then found=true end end;assert.is_true(found)
+	end)
 	it("preserves quoted conditions and modifier counts when restyling",function()
 		local library=require("Modules.LootFilterLibrary")
 		for _,condition in ipairs({'HasExplicitMod >=2 "Haast" "Ephij"','HasExplicitMod "1"','BaseType "123"'}) do

@@ -38,7 +38,10 @@ function M.parse(raw)
 			if key=="Show" or key=="Hide" or key=="Minimal" then
 				current={action=key,line=lineNo,title=title,conditions={},styles={},rawLines={line}};title=nil;result.rules[#result.rules+1]=current
 				if #t>0 then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Unexpected values after "..key} end
-			elseif key=="Import" then result.imports[#result.imports+1]={line=lineNo,file=t[1],optional=t[2]=="Optional"};current=nil
+			elseif key=="Import" then
+				if #t<1 or #t>2 or not t[1]:match("%S") or #t==2 and t[2]~="Optional" then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Invalid Import; specify a file and optional Optional keyword"}
+				else result.imports[#result.imports+1]={line=lineNo,file=t[1],optional=t[2]=="Optional"} end
+				current=nil
 			elseif not current then result.diagnostics[#result.diagnostics+1]={line=lineNo,error="Expected Show, Hide or Minimal before "..key}
 			else
 				current.rawLines[#current.rawLines+1]=line
@@ -153,8 +156,8 @@ function M.condition(c,item)
 end
 function M.simulate(parsed,item)
 	local result={action="Show",status="matched",styles={},matches={},reasons={}}
-	if #parsed.imports>0 then return {status="unknown",action="Unknown",styles={},matches={},reasons={"External Import files are not resolved. Import a flattened filter for an exact preview."}} end
 	for _,d in ipairs(parsed.diagnostics) do if d.error then return {status="invalid",action="Unknown",styles={},matches={},reasons={"Syntax error on line "..d.line}} end end
+	if #parsed.imports>0 then return {status="unknown",action="Unknown",styles={},matches={},reasons={"External Import files are not resolved. Import a flattened filter for an exact preview."}} end
 	for _,rule in ipairs(parsed.rules) do
 		local matched,unknown=true,{}
 		for _,condition in ipairs(rule.conditions) do local pass,why=M.condition(condition,item);if pass==false then matched=false;break elseif pass==nil then unknown[#unknown+1]=why end end
