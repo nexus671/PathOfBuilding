@@ -403,12 +403,16 @@ function A.extend(M,api)
 	function M.resistanceReason(model,state,from,to)
 		if from==to or not contains({"fire","cold","lightning"},from) or not contains({"fire","cold","lightning"},to) then return "Choose different elemental resistance types" end
 		if api.flags(model,state).suffixes then return "Suffixes are locked" end
-		local matches={}
-		for i,entry in ipairs(state.affixes) do if not entry.fractured and model.byId[entry.id].group==from:gsub("^%l",string.upper).."Resistance" then matches[#matches+1]=i end end
+		local matches={};local element=from:gsub("^%l",string.upper)
+		for i,entry in ipairs(state.affixes) do
+			local jewel=model.item.type=="Jewel" and (entry.id==element.."ResistanceJewel" or entry.id=="Maximum"..element.."ResistanceJewel")
+			if not entry.fractured and (model.byId[entry.id].group==element.."Resistance" or jewel) then matches[#matches+1]=i end
+		end
 		if #matches==0 then return "No swappable single-element resistance" end
 		for _,index in ipairs(matches) do
 			local id=state.affixes[index].id:gsub(from:gsub("^%l",string.upper),to:gsub("^%l",string.upper))
 			if not model.byId[id] then return "No matching resistance tier on this base" end
+			if model.item.type=="Jewel" and model.item:GetModSpawnWeight(model.byId[id],{})<=0 then return "The replacement modifier cannot occur on this jewel" end
 			for _,entry in ipairs(state.affixes) do if model.byId[entry.id].group==model.byId[id].group then return "That resistance group is already present" end end
 		end
 		return nil,matches

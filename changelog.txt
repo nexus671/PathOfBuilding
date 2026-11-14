@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Support Harvest resistance swaps on ordinary and maximum-resistance jewels.
 * Reroll modifier values during Harvest resistance swaps.
 * Explain 3.30 Harvest resistance-swap costs and unverified ingredient pairs.
 * Distinguish 3.30 Harvest nodes from Viridian Wildwood encounter nodes.

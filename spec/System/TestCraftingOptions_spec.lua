@@ -60,6 +60,22 @@ describe("State-aware crafting choices",function()
 		assert.is_false(check("harvest_resistance",full,m));assert.are.equal(0,#sim.actionOptions(m,full,"harvest_resistance"))
 		input.affixes[1].fractured=nil;assert.are.same(before,input)
 	end)
+	it("swaps regular and maximum jewel resistances while respecting fractures and groups",function()
+		local m=model("Cobalt Jewel")
+		for _,prefix in ipairs({"","Maximum"}) do for _,from in ipairs({"Fire","Cold","Lightning"}) do
+			local id=prefix..from.."ResistanceJewel";assert.is_truthy(m.byId[id])
+			local input=state(m,"MAGIC",{{id=id,range=0.5}});local choices=sim.actionOptions(m,input,"harvest_resistance");assert.equal(2,#choices)
+			for _,choice in ipairs(choices) do
+				local result=sim.action(m,input,choice.action,function() return 0 end)
+				local destination=choice.action.to:gsub("^%l",string.upper)
+				assert.equal(prefix..destination.."ResistanceJewel",result.affixes[1].id)
+				assert.equal(0,result.affixes[1].range)
+			end
+			input.affixes[1].fractured=true;assert.equal(0,#sim.actionOptions(m,input,"harvest_resistance"))
+		end end
+		local both=state(m,"RARE",{{id="FireResistanceJewel",range=0.5},{id="ColdResistanceJewel",range=0.5}})
+		local reason=sim.resistanceReason(m,both,"fire","cold");assert.is_truthy(reason)
+	end)
 	it("requires rare Harvest inputs and excludes tags absent from the eligible pool",function()
 		local m=model("Plate Vest");local magic=sim.perform(m.raw,{method="transmute"},1).state
 		for _,method in ipairs({"harvest_reforge","harvest_augment"}) do
