@@ -8,8 +8,8 @@ describe("Visual filter catalogue",function()
 		local profile=filters.profile("test","Test");local before=copyTable(profile)
 		local entries=library.catalog(profile);assert.is_true(#entries>500)
 		assert.same(before,profile)
-		local currency=library.entries(profile,entries,"Currency","Chaos Orb");assert.is_true(#currency>0)
-		for _,entry in ipairs(currency) do assert.equal("Currency",entry.category);assert.is_true(entry.base);assert.equal(1,#parser.parse(entry.rule.text).rules) end
+		local currency=library.entries(profile,entries,"All items","Chaos Orb");assert.is_true(#currency>0)
+		for _,entry in ipairs(currency) do assert.is_truthy(entry.rule.text:find("Chaos Orb",1,true));assert.is_true(entry.base);assert.equal(1,#parser.parse(entry.rule.text).rules) end
 	end)
 	it("edits appearance while preserving multi-value conditions, Continue and custom sound volume",function()
 		local rule={id="base-1",title="Target",text='Show\n HasExplicitMod >=2 "of Haast" "of Ephij"\n BaseType == "Iron Hat"\n CustomAlertSound "my sound.wav" 125\n Continue',enabled=false}
@@ -43,6 +43,16 @@ describe("Visual filter catalogue",function()
 		local p=filters.profile("test","Test");p.template='Show\n BaseType == "Iron Hat"\n ItemLevel >= 83'
 		local entry=library.catalog(p)[1];assert.is_nil(rawget(entry,"sample"));local sample=entry.sample;assert.equal("Iron Hat",sample.BaseType);assert.equal(83,sample.ItemLevel)
 		assert.equal(sample,entry.sample);assert.same(library.sample(entry.rule),sample)
+	end)
+	it("labels generic rules using their real conditions instead of an invented example",function()
+		local p=filters.profile("labels","Labels");p.template='Show\n Identified True\n Rarity Rare\n HasExplicitMod "Elreon"\nShow\n Class == "Helmets"\nShow\n Sockets >= 5\nHide\n BaseType != "Chaos Orb"'
+		local entries=library.catalog(p)
+		assert.equal("Has Explicit Mod = Elreon",entries[1].rule.title)
+		assert.equal("Class == Helmets",entries[2].rule.title)
+		assert.equal("Sockets >= 5",entries[3].rule.title)
+		assert.equal("Base Type != Chaos Orb",entries[4].rule.title)
+		local structure=require("Modules.LootFilterStructure").filter(require("Modules.LootFilterStructure").outline(p),"","base")
+		for i,entry in ipairs(entries) do assert.equal(entry.rule.title,structure[i].title);assert.is_nil(rawget(entry,"sample")) end
 	end)
 	it("derives known equipment classes and leaves unfamiliar bases unknown",function()
 		assert.equal("One Hand Swords",library.sample({text='Show\n BaseType == "Rusted Sword"'}).Class)

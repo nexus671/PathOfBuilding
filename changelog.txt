@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Label generic loot-filter rules by their conditions instead of unrelated example items.
 * Avoid false filter-priority conflicts between different modifier-count rules.
 * Preserve quoted filter conditions when restyling and explicitly silence inherited alerts.
 * Recognize known zero-socket items in loot-filter previews.

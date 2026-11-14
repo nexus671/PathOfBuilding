@@ -58,12 +58,22 @@ function M.catalog(profile)
 	for i,block in ipairs(parser.parse(raw).rules) do
 		local text=table.concat(block.rawLines,"\n");local example
 		local tier=block.rawLines[1]:match("%$tier%-%>([%w_-]+)") or "Base rule"
-		local title;local named=false
-		for _,condition in ipairs(block.conditions) do if condition.keyword=="BaseType" then title=condition.values[1]..(#condition.values>1 and " +"..(#condition.values-1) or "");named=true;break end end
-		if not named then
-			example=M.sample({text=text},block);title=example.LinkedSockets>=5 and tostring(example.LinkedSockets).."-link equipment" or example.BaseType
-			if #block.conditions==0 then title=block.continue and "Style remaining items" or block.action.." remaining items" end
+		local title;local chosen
+		for _,key in ipairs({"BaseType","Class","HasExplicitMod","HasEnchantment","SocketGroup","LinkedSockets","Sockets","Rarity"}) do
+			for _,condition in ipairs(block.conditions) do if condition.keyword==key then chosen=condition;break end end
+			if chosen then break end
 		end
+		chosen=chosen or block.conditions[1]
+		if chosen then
+			local values=chosen.values;local first=values[1] or "?";local more=#values>1 and " +"..(#values-1) or ""
+			if chosen.keyword=="BaseType" and (chosen.operator=="=" or chosen.operator=="==") then title=first..more
+			else
+				local count=(chosen.keyword=="HasExplicitMod" or chosen.keyword=="HasEnchantment") and not (chosen.quoted and chosen.quoted[1]) and tonumber(first)
+				local name=chosen.keyword:gsub("(%l)(%u)","%1 %2")
+				if count and values[2] then title=name.." "..chosen.operator..first.." "..values[2]..(#values>2 and " +"..(#values-2) or "")
+				else title=name.." "..chosen.operator.." "..first..more end
+			end
+		else title=block.continue and "Style remaining items" or block.action.." remaining items" end
 		tier=tier:match("^t%d+$") and "Tier "..tier:sub(2) or "Preset rule"
 		title=title:gsub("%-%>"," / "):gsub("_"," ")
 		local key="base-"..sha1(text):sub(1,20);ids[key]=(ids[key] or 0)+1
