@@ -542,7 +542,7 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 		-- Determine if "Unidentified" item
 		local unidentified = false
 		for _, line in ipairs(self.rawLines) do
-			if line == "Unidentified" then
+			if line == "Unidentified" or line:match("^Unidentified %(Tier %d+%)$") then
 				unidentified = true
 				break
 			end
@@ -619,6 +619,8 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 			self.checkSection = true
 		elseif line == "Split" then
 			self.split = true
+		elseif line == "Unidentified" or line:match("^Unidentified %(Tier %d+%)$") then
+			-- State marker, not a modifier.
 		elseif line == "Mirrored" then
 			self.mirrored = true
 		elseif line == "Corrupted" then

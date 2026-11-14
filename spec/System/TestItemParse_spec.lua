@@ -1,4 +1,11 @@
 describe("TestItemParse", function()
+	it("recognizes a tiered unidentified rare item's base", function()
+		local raw = "Item Class: Body Armours\nRarity: Rare\nPlate Vest\n--------\nItem Level: 86\n--------\nUnidentified (Tier 4)"
+		local item = new("Item"):Item(raw)
+		assert.are.equal("Plate Vest", item.baseName)
+		assert.is_truthy(item.base)
+		assert.are.equal(0, #item.explicitModLines)
+	end)
 	local function raw(s, base)
 		base = base or "Plate Vest"
 		return "Rarity: Rare\nName\n"..base.."\n"..s
