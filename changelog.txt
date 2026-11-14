@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Review Atlas branch removals before disconnecting multiple nodes.
 * Match numeric text in loot-filter names without treating it as a modifier count.
 * Show and edit recipe failure recovery choices in the failure selector.
 * Keep saved recipe routes unchanged when an invalid edit is rejected.

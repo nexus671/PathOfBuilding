@@ -73,6 +73,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	assert(canvas.focus==65225 and workspace.controls.allocate.label:find("+",1,true),"The selected route should preview its point cost")
 	local x,y=canvas:GetPos();ui:clickAt(x+canvas.width/2,y+canvas.height/2,true)
 	frame("atlas-connected");assert(workspace.controls.status.label:find("20 granted",1,true))
+	do
+		local atlas=require("Modules.AtlasPlanner");local tree=atlas.tree("3.29.3")
+		local route=atlas.connect({id="test",title="Test",version="3.29.3",budget=138,nodes={}},{65225});local set={};for _,id in ipairs(route.nodes) do set[id]=true end
+		for _,id in ipairs(tree.nodes[tree.start].links) do if set[id] then canvas.focus=id;break end end
+		ui:click("remove");assert(main.popups[1].controls.confirm,"Branch removal did not ask for review");frame("atlas-remove-branch-confirm")
+		main:ClosePopup();assert(workspace.controls.status.label:find("20 granted",1,true),"Cancelling branch removal changed the plan");canvas.focus=65225
+	end
 	ui:click("remove");frame("atlas-removed");ui:click("avoid");frame("atlas-avoided");ui:click("clearAvoid");ui:click("undo")
 	ui:click("undo");assert(workspace.controls.avoid.label=="Avoid selected","Undo did not restore exclusions");ui:click("redo");ui:click("undo")
 	ui:click("undo");ui:click("undo");assert(workspace.controls.status.label:find("0 /",1,true),workspace.controls.status.label);ui:click("allocate")

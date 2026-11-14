@@ -45,6 +45,16 @@ describe("Native Atlas planner", function()
 		local invalid=plan(); invalid.nodes={target}; assert.are.equal(false,pcall(atlas.validate,invalid))
 		invalid.nodes={tree.start,tree.start}; assert.are.equal(false,pcall(atlas.validate,invalid))
 	end)
+	it("asks before removing a disconnected branch and supports cancel and undo",function()
+		local tree=atlas.tree("3.27.0");local original=atlas.connect(plan(),{65225});local allocated={}
+		for _,id in ipairs(original.nodes) do allocated[id]=true end
+		local root;for _,id in ipairs(tree.nodes[tree.start].links) do if allocated[id] then root=id;break end end
+		local controls=require("Classes.AtlasPlannerControl").Open(build,original);controls.canvas.focus=root
+		controls.remove:Click();assert.is_truthy(main.popups[1].controls.confirm);main:ClosePopup()
+		assert.is_truthy(controls.status.label:find("20 granted",1,true))
+		controls.remove:Click();main.popups[1].controls.confirm:Click();assert.is_truthy(controls.status.label:find("0 /",1,true))
+		controls.undo:Click();assert.is_truthy(controls.status.label:find("20 granted",1,true))
+	end)
 	it("accounts for granted points and keeps raw stat counts separate from effective odds", function()
 		local target=atlas.search("3.27.0","Unwavering Vision",10).matches[1].id
 		local result=atlas.connect(plan(),{target}); local report=atlas.report(result)

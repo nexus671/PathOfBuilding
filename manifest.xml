@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview71" />
+	<Version number="2.67.2-ai.preview72" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="960c9b9a394edbcc89db8a6f029c0bf46803e567" />
+	<File name="changelog.txt" part="default" sha1="4e09f678e0ba99134f27081706f1b1643c8be3c0" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1118,7 +1118,7 @@
 	<File name="Assets/veiledicon.png" part="program" sha1="035479a7ee7847969ef50ff428e3bee897fba671" />
 	<File name="Assets/vestigialicon.png" part="program" sha1="ecb5dd4b9aed1cac0c1a677b18838ae9c62744d7" />
 	<File name="Assets/warlordicon.png" part="program" sha1="cca050c84884f5c0bb1380ece51d3c4b32be4900" />
-	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="0e2109c40ae9f18afa38cab151b3f6ac07d5018b" />
+	<File name="Classes/AtlasPlannerControl.lua" part="program" sha1="ceb49eaacbd832cea55a9dca614b683756f40e67" />
 	<File name="Classes/AtlasPlanningControl.lua" part="program" sha1="18fba4bf0422846dfaf51f75bcf426b7c9d15aa1" />
 	<File name="Classes/AtlasTargetsControl.lua" part="program" sha1="e925a2ea5e9069b388163afe363c9e07c76a64d1" />
 	<File name="Classes/BuildJourneyControl.lua" part="program" sha1="3429fb9b3ce4463a96838e127e3863814d47f976" />

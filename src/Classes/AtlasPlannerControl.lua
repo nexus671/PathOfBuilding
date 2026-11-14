@@ -283,7 +283,13 @@ function Panel.Open(build,source,layout)
 	local function change(nextPlan) remember();draft=atlas.validate(nextPlan);avoided=copyTable(draft.avoided or {});controls.canvas.comparison=nil;ui.draft(build,"atlas");syncEditors();refresh() end
 	controls.canvas.onIntent=function(id,kind) safely(function() change(require("Modules.AtlasTargets").toggle(current(),id,kind)) end) end
 	controls.allocate=button(side,height-188,124,"Connect path",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.connect(current(),{controls.canvas.focus},avoided)) end)
-	controls.remove=button(side+136,height-188,124,"Remove branch",function() assert(controls.canvas.focus,"Select a node first"); change(atlas.remove(current(),controls.canvas.focus)) end)
+	controls.remove=button(side+136,height-188,124,"Remove branch",function()
+		local before=current();local id=assert(controls.canvas.focus,"Select a node first");local after=atlas.remove(before,id)
+		local count=#before.nodes-#after.nodes
+		if count>1 then
+			main:OpenConfirmPopup("Remove Atlas branch",string.format("Removing this node also removes %d disconnected nodes.\n%d nodes will be unallocated. You can undo this change.",count-1,count),"Remove",function() change(after) end)
+		else change(after) end
+	end)
 	controls.undo=button(16,height-86,64,"Undo",function() assert(#undo>0,"No changes to undo");redo[#redo+1]=snapshot();local saved=table.remove(undo);draft=saved.plan;avoided=saved.avoided;syncEditors();refresh() end)
 	controls.redo=button(86,height-86,64,"Redo",function() assert(#redo>0,"No changes to redo");undo[#undo+1]=snapshot();local saved=table.remove(redo);draft=saved.plan;avoided=saved.avoided;syncEditors();refresh() end)
 	controls.fit=button(156,height-86,70,"Fit tree",function() controls.canvas:Fit() end)
