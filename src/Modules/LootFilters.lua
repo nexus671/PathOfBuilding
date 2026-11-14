@@ -135,7 +135,7 @@ function M.generate(build,profile,checkpoint)
 		end end end
 		if not ok or #coverage.unknown>0 then
 			local message=not ok and "Could not inspect this recipe's resources." or "Some actions have no item ingredient breakdown: "..table.concat(coverage.unknown,", ").."."
-			warnings[#warnings+1]={origin="craft:"..project.id,title=project.title,message=message.." Previous recipe pickups were kept; review the crafting guide."}
+			warnings[#warnings+1]={origin="craft:"..project.id,title=project.title,message=message.." Previous recipe pickups were kept; review the crafting guide.",retry=not ok}
 			for _,rule in ipairs(profile.rules) do if rule.origin=="craft:"..project.id and rule.id:match("^craft%-resource%-") and not ids[rule.id] then result[#result+1]=copyTable(rule);ids[rule.id]=true end end
 		end
 		if checkpoint and needsInspection then checkpoint() end

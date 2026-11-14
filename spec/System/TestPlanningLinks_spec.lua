@@ -62,6 +62,17 @@ describe("Linked planning tools",function()
 		local names={};for _,rule in ipairs(rules) do names[rule.title]=true end;assert.is_true(names["Omen of Connections"]);assert.is_true(names["Orb of Fusing"])
 		assert.is_true(dependencies.report(build,profile).stale)
 	end)
+	it("reuses incomplete recipe checks until the retained draft changes",function()
+		local project=craft();project.nativeRecipe={steps={{method="omen_connections"},{method="locus"}},targets={},requirements={links=4}}
+		build.savers.CraftingProjects:Upsert(project);local profile=filters.profile("partial-cache","Partial cache");profile.rules=filters.generate(build,profile)
+		local original=filters.generate;local calls=0;filters.generate=function(...) calls=calls+1;return original(...) end
+		local ok,err=pcall(function()
+			local first=dependencies.report(build,profile);assert.equal("Needs review",first.entries[1].status)
+			assert.same(first,dependencies.report(build,profile));assert.equal(1,calls)
+			profile.rules[1].title="Edited pickup";dependencies.report(build,profile);assert.equal(2,calls)
+		end)
+		filters.generate=original;assert.is_true(ok,err)
+	end)
 	it("shows recipe inspection warnings when refreshing pickups in the workspace",function()
 		local project=craft();project.nativeRecipe={steps={{method="omen_connections"}},targets={},requirements={links=4}}
 		build.savers.CraftingProjects:Upsert(project);local profile=filters.profile("review-ui","Review UI");profile.rules=filters.generate(build,profile)

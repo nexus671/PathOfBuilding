@@ -33,9 +33,16 @@ function M.report(build,profile,checkpoint)
 	local revision=require("Modules.PlanningRevision");local stamp=revision.stamp(build);local skills=skillInputs(build);local cached=generated[build]
 	if not cached or not revision.same(cached.stamp,stamp) or cached.skills~=skills then cached={stamp=stamp,skills=skills,profiles={}};generated[build]=cached end
 	local key=profile.preset..":"..profile.theme;local new=cached.profiles[key]
+	if new and new.rulesKey and new.rulesKey~=stable.encode(profile.rules) then new=nil end
 	if not new then
 		local start=os.clock();local rules,warnings=filters.generate(build,profile,checkpoint);new={groups=collect(rules),warnings=warnings or {}}
-		if #new.warnings==0 then cached.profiles[key]=new end
+		local retry=false;for _,warning in ipairs(new.warnings) do if warning.retry then retry=true;break end end
+		if not retry then
+			-- Incomplete recipes retain existing pickups, so their result depends
+			-- on the current draft as well as the build and filter style.
+			if #new.warnings>0 then new.rulesKey=stable.encode(profile.rules) end
+			cached.profiles[key]=new
+		end
 		if not checkpoint then require("Modules.PlanningPerformance").record(build,"Filter target refresh",os.clock()-start) end
 	end
 	local old=collect(profile.rules);local result={stale=false,linked=0,entries={}}
