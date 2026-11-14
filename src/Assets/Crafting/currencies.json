@@ -1799,6 +1799,7 @@
     "augmentation": "Metadata/Items/Currency/CurrencyAddModToMagic",
     "awakener": "Metadata/Items/AtlasExiles/ApplyInfluence",
     "beast_max_links": "Metadata/Items/Currency/CurrencyItemisedCapturedMonster",
+    "beast_talisman_imprint": "Metadata/Items/Currency/CurrencyItemisedCapturedMonster",
     "binding": "Metadata/Items/Currency/CurrencyUpgradeToRareAndSetSockets",
     "blessed": "Metadata/Items/Currency/CurrencyRerollImplicit",
     "catalyst": "Metadata/Items/Currency/CurrencyJewelleryQualityResource",

@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "src/Assets/Crafting/Currency"
 METHODS = {
     "beast_max_links": "Imprinted Bestiary Orb",
+    "beast_talisman_imprint": "Imprinted Bestiary Orb",
     "omen_connections": "Omen of Connections",
     "omen_trichromatism": "Omen of Trichromatism",
     "transmute": "Orb of Transmutation", "alteration": "Orb of Alteration",

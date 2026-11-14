@@ -624,7 +624,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		assert(socketRun.successes==1 and not next(socketRun.transitionErrors),"The saved Bestiary recipe did not link the item")
 		local talismanRaw="Rarity: NORMAL\nChieftain Talisman\nItem Level: 86";local talismanRecipe
 		require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy"}},targets={},requirements={minAffixes=4}},{method="alchemy"},function(value) talismanRecipe=value end,sim.model(talismanRaw))
-		ui:click("addCurrency");ui:text("search","imprint rare Talisman");ui:click("choose");ui:click("keep")
+		ui:click("addCurrency");ui:text("search","imprint rare Talisman");frame("crafting-recipe-talisman-imprint");ui:click("choose");ui:click("keep")
 		assert(talismanRecipe.steps[2].method=="beast_talisman_imprint","Rare Talisman imprint was not kept in the recipe")
 		local replaced;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy",maxAttempts=2,onSuccess=1,onFailure=2,onFailureAction="stop",recoveryNotes="Keep this note",untilRequirements={minAffixes=5}}},targets={},requirements={minAffixes=6}},{method="chaos"},function(value) replaced=value end,routeModel)
 		ui:click("replace");ui:click("keep");local step=replaced.steps[1]

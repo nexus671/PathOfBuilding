@@ -84,6 +84,7 @@ describe("Current crafting reference workflows",function()
 		local changed=sim.perform(item,{method="chaos"},2,imprint).state;local restored=sim.perform(item,{method="restore_imprint"},3,changed).state
 		assert.same(state.affixes,restored.affixes);assert.is_nil(restored.imprint)
 		assert.same({beast_talisman_imprint=1},sim.components(craft,state,model))
+		local icon=require("Modules.CraftingWorkbench").icon;assert.is_truthy(icon(craft.method));assert.equal(icon("beast_max_links"),icon(craft.method))
 		local other=sim.model(raw);assert.is_false(require("Modules.CraftingAvailability").check(craft.method,sixAffixes(other),other))
 		assert.is_false(pcall(sim.perform,raw,craft,1,sixAffixes(other)))
 		state.affixes[1].fractured=true;assert.is_false(pcall(sim.perform,item,craft,1,state))
