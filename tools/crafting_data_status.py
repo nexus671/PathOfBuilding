@@ -35,6 +35,25 @@ def require_changed_export(expected, pinned, old_hashes, new_hashes, allow_ident
         raise ValueError("All crafting exports match the previous patch; review the sources before using --allow-identical-export")
 
 
+def require_supported_granted_effects(previous, exported):
+    """Reject a changed support-level representation until the importer handles it."""
+    affected = []
+    for identifier in previous.keys() & exported.keys():
+        current = exported[identifier]
+        if not current.get("grants_effects"):
+            continue
+        old_stats = {stat["id"]: stat for stat in previous[identifier]["stats"]}
+        for stat in current["stats"]:
+            old = old_stats.get(stat["id"])
+            if (old and stat["id"].startswith("local_display_")
+                    and (old["min"], old["max"]) != (0, 0)
+                    and (stat["min"], stat["max"]) == (0, 0)):
+                affected.append(identifier)
+                break
+    if affected:
+        raise ValueError(f"{len(affected)} modifiers have zeroed display values and granted effects; update the importer before using this export (example: {sorted(affected)[0]})")
+
+
 def assess(pinned, detected, exported, old_hashes, new_hashes=None):
     if detected != exported:
         return {"status": "export_pending", "changedFiles": []}

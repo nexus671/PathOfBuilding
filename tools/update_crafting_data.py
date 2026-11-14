@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 from urllib.request import urlopen
-from crafting_data_status import require_changed_export, require_exported, version
+from crafting_data_status import require_changed_export, require_exported, require_supported_granted_effects, version
 
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY = "repoe-fork/repoe-fork.github.io"
@@ -29,6 +29,8 @@ if destination.exists():
                            {name: hashlib.sha256(content).hexdigest() for name, content in raw.items()},
                            args.allow_identical_export)
 mods, fossils, bases, bench = (json.loads(raw[name]) for name in FILES)
+if destination.exists():
+    require_supported_granted_effects(previous["mods"], mods)
 identifiers = set()
 for source in (ROOT / "src" / "Data").glob("*.lua"):
     if source.name.startswith("Mod") or source.name in ["BeastCraft.lua", "Essence.lua"]:

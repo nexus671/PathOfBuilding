@@ -1,6 +1,6 @@
 import unittest
 
-from crafting_data_status import FILES, assess, require_changed_export, require_exported, version
+from crafting_data_status import FILES, assess, require_changed_export, require_exported, require_supported_granted_effects, version
 
 
 class CraftingDataStatusTest(unittest.TestCase):
@@ -29,6 +29,19 @@ class CraftingDataStatusTest(unittest.TestCase):
         require_exported("3.29.3.6", "3.29.3.6")
         with self.assertRaises(ValueError):
             version(b"3.30.example")
+
+    def test_rejects_zeroed_support_levels_with_granted_effects(self):
+        stat = {"id": "local_display_socketed_gems_get_remote_mine_level", "min": 18, "max": 18}
+        previous = {"mine": {"stats": [stat]}}
+        candidate = {"mine": {"stats": [dict(stat, min=0, max=0)],
+                              "grants_effects": [{"level": 18}]}}
+        with self.assertRaisesRegex(ValueError, "zeroed display values"):
+            require_supported_granted_effects(previous, candidate)
+        candidate["mine"]["stats"][0] = stat
+        require_supported_granted_effects(previous, candidate)
+        candidate["mine"]["stats"][0] = dict(stat, min=0, max=0)
+        candidate["mine"]["grants_effects"] = []
+        require_supported_granted_effects(previous, candidate)
 
 
 if __name__ == "__main__":
