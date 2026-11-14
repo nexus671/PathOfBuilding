@@ -4,14 +4,18 @@ local metadata=require("Modules.CraftingAdvanced")
 local M={}
 function M.scope(mod) return (mod.type=="Corrupted" or mod.type=="Exarch" or mod.type=="Eater") and "implicit" or "explicit" end
 local function has(list,value) for _,entry in ipairs(list or {}) do if entry==value then return true end end end
-local function groups(id,mod) local entry=metadata.data().mods[id];return entry and entry.groups or {mod.group or id} end
+local function groups(model,id,mod)
+	local entry=metadata.data().mods[id];local result=entry and entry.groups or {mod.group or id}
+	if model.item.clusterJewel and sim.isClusterSpeedMod(model,id) then result=copyTable(result);result[#result+1]=sim.clusterSpeedGroup end
+	return result
+end
 function M.catalog(model)
 	if model.modifierCatalogue then return model.modifierCatalogue end
 	local rows,seen={},{}
 	local function add(id,mod,source,weight)
 		if seen[id] or not mod then return end;seen[id]=true
 		local meta=metadata.data().mods[id];local tags=meta and meta.implicit_tags or mod.modTags or mod.tags or {}
-		rows[#rows+1]={id=id,mod=mod,text=table.concat(mod," / "),type=mod.type or "Special",level=mod.level or meta and meta.required_level or 0,groups=groups(id,mod),source=meta and meta.is_essence_only and "Essence" or source,baseWeight=weight,tags=tags}
+		rows[#rows+1]={id=id,mod=mod,text=table.concat(mod," / "),type=mod.type or "Special",level=mod.level or meta and meta.required_level or 0,groups=groups(model,id,mod),source=meta and meta.is_essence_only and "Essence" or source,baseWeight=weight,tags=tags}
 	end
 	for _,entry in ipairs(model.mods) do add(entry.id,entry.mod,"Natural",entry.weight) end
 	for id,mod in pairs(model.item.affixes or {}) do if not seen[id] and (mod.type=="Prefix" or mod.type=="Suffix") and mod.weightKey and not (mod.affix or ""):find("Elevated",1,true) then
@@ -33,7 +37,7 @@ function M.inspect(model,state)
 	local used,counts,flags={}, {Prefix=0,Suffix=0},sim.blockFlags(model,state)
 	for key,value in pairs(state.rollBlock or {}) do flags[key]=value end
 	for _,entry in ipairs(state.affixes) do local mod=assert(model.byId[entry.id]);counts[mod.type]=(counts[mod.type] or 0)+1
-		for _,group in ipairs(groups(entry.id,mod)) do used[group]=table.concat(mod," / ") end
+		for _,group in ipairs(groups(model,entry.id,mod)) do used[group]=table.concat(mod," / ") end
 	end
 	local caps=sim.capacities(model,state);local result={rows={},totalWeight=total,note="Draw chances describe one ordinary weighted affix selection in the captured state, not the selected currency or a complete recipe. Tier ranks compare applicable natural tiers in the same modifier group."}
 	for _,row in ipairs(M.catalog(model)) do

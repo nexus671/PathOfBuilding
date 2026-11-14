@@ -69,7 +69,9 @@ local function influenced(model,id)
 end
 local function groups(model,id)
 	local meta=A.data().mods[id]
-	return meta and meta.groups or {model.byId[id].group}
+	local result=meta and meta.groups or {model.byId[id].group}
+	if model.item.clusterJewel then local sim=require("Modules.CraftingSimulator");if sim.isClusterSpeedMod(model,id) then result=copyTable(result);result[#result+1]=sim.clusterSpeedGroup end end
+	return result
 end
 local function hasTag(model,id,tag)
 	if tag == "influence" then return influenced(model,id) ~= nil end
@@ -782,9 +784,13 @@ function A.extend(M,api)
 		end
 		for kind,value in pairs(state.percentiles or {}) do assert(contains({"Armour","Evasion","EnergyShield","Ward"},kind) and type(value) == "number" and value >= 0 and value <= 1,"Invalid base defence roll") end
 		local permitted=copyTable(model.initial)
-		local seenGroups={}
+		local seenGroups={};local legacySpeed={};local allLegacySpeed=true
+		for _,entry in ipairs(model.initial.affixes or {}) do if M.isClusterSpeedMod(model,entry.id) then legacySpeed[entry.id]=(legacySpeed[entry.id] or 0)+1 end end
 		for _,entry in ipairs(state.affixes or {}) do
-			for _,group in ipairs(groups(model,entry.id)) do assert(not seenGroups[group],"State has conflicting modifier groups");seenGroups[group]=true end
+			if M.isClusterSpeedMod(model,entry.id) then
+				if (legacySpeed[entry.id] or 0)>0 then legacySpeed[entry.id]=legacySpeed[entry.id]-1 else allLegacySpeed=false end
+			end
+			for _,group in ipairs(groups(model,entry.id)) do assert(not seenGroups[group] or group==M.clusterSpeedGroup and allLegacySpeed,"State has conflicting modifier groups");seenGroups[group]=true end
 			local mod=model.byId[entry.id]
 			if model.special[entry.id] or influenced(model,entry.id) or entry.fractured or state.baseItem and mod.weightKey and model.item:GetModSpawnWeight(mod,model.extraTags) > 0 then permitted.affixes[#permitted.affixes+1]=copyTable(entry) end
 		end
@@ -795,6 +801,7 @@ function A.extend(M,api)
 	end
 	function M.catalog(raw,query,limit,initialState)
 		local result=originalCatalog(raw,query,limit); local model=M.model(raw)
+		if model.item.clusterJewel then for _,entry in ipairs(result.modifiers) do if M.isClusterSpeedMod(model,entry.id) then entry.group=M.clusterSpeedGroup end end end
 		local state=initialState and M.validateState(model,initialState) or model.initial
 		local modifiers=require("Modules.CraftingModifiers");local inspection=modifiers.inspect(model,state);local rows=modifiers.filter(inspection,query,nil,nil,nil,"Eligible first")
 		result.modifierTable={total=#rows,totalWeight=inspection.totalWeight,note=inspection.note,rows={}}

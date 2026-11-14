@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Apply the 3.30 cluster-jewel small-passive speed family when crafting.
 * Update 3.30 base implicits and let Blessed Orbs update recognized legacy values.
 * Allow existing Orbs of Binding on low-item-level equipment.
 * Open filter previews faster while retaining priority-conflict checks.

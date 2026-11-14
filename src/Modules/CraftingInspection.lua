@@ -12,6 +12,7 @@ function M.modDetails(model,id,entry)
 		lines[#lines+1]="Group tier: "..rank
 	end
 	for _,line in ipairs(mod) do lines[#lines+1]="Range: "..line end
+	if sim.isClusterSpeedMod(model,id) then lines[#lines+1]="3.30: small-passive attack and cast speed modifiers share a family." end
 	if mod.tags and #mod.tags>0 then lines[#lines+1]="Tags: "..table.concat(mod.tags,", ") end
 	if entry then
 		lines[#lines+1]=entry.fractured and "Fractured: protected from ordinary rerolls." or entry.crafted and "Crafted modifier: uses a bench-crafted slot." or "Natural explicit modifier."

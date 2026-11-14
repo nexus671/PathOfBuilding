@@ -240,6 +240,13 @@ async function main(){
   assert.equal(updatedGloves.nativeCrafting.state.baseImplicit330,true);
   const continuedGloves=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:legacyGloves,action:{method:'quality'},initialState:updatedGloves.nativeCrafting.state,seed:1},'crafted');
   assert.match(continuedGloves.nativeCrafting.itemText,/(?:2[0-6])% increased Spell Damage/);
+  const legacyCluster='Rarity: RARE\nSimulated craft\nLarge Cluster Jewel\nCrafted: true\nPrefix: None\nPrefix: None\nSuffix: {range:0.5}AfflictionJewelSmallPassivesGrantAttackSpeed\nSuffix: {range:0.5}AfflictionJewelSmallPassivesGrantCastSpeed\nCluster Jewel Skill: affliction_axe_and_sword_damage\nCluster Jewel Node Count: 8\nItem Level: 86\nImplicits: 3\n{crafted}Adds 8 Passive Skills\n{crafted}2 Added Passive Skills are Jewel Sockets\n{crafted}Added Small Passive Skills grant: 12% increased Axe and Sword Damage\n{tags:attack,speed}{suffix}Added Small Passive Skills also grant: 1% increased Attack Speed\n{tags:caster,speed}{suffix}Added Small Passive Skills also grant: 1% increased Cast Speed';
+  const castOnly={rarity:'RARE',affixes:[{id:'AfflictionJewelSmallPassivesGrantCastSpeed',range:0.5}]};
+  const clusterInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:legacyCluster,initialState:castOnly,query:'AfflictionJewelSmallPassivesGrantAttackSpeed',limit:20},'inspected');
+  const blockedSpeed=clusterInspection.crafting.nativeEngine.modifierTable.rows.find(row=>row.id==='AfflictionJewelSmallPassivesGrantAttackSpeed');
+  assert.ok(blockedSpeed);assert.equal(blockedSpeed.eligible,false);assert.match(blockedSpeed.reasons.join(' '),/Conflicts with/);
+  const speedMetadata=clusterInspection.crafting.nativeEngine.modifiers.find(row=>row.id==='AfflictionJewelSmallPassivesGrantAttackSpeed');
+  assert.equal(speedMetadata.group,'3.30 cluster small-passive speed family');
   const independentAffix=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:raw,action:{method:'quality'},initialState:{rarity:'RARE',affixes:[{id:'LocalBaseArmourAndLife1',range:[0,1]}]},seed:1},'crafted');
   assert.match(independentAffix.nativeCrafting.itemText,/\+23 to maximum Life/);assert.deepEqual(independentAffix.nativeCrafting.state.affixes[0].range,[0,1]);
   const starterAtlas={id:'starter-atlas',title:'Starter Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'starter'}};

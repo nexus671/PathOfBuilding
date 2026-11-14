@@ -2,6 +2,17 @@
 -- Independent, bounded crafting model using PoB's game-data modifier tables.
 local encounter = require("Modules.CalcEncounter")
 local M = {methodChecks={}}
+-- GGG 3.30: these cluster small-passive speed modifiers share one family.
+M.clusterSpeedGroup="3.30 cluster small-passive speed family"
+function M.isClusterSpeedMod(model,id)
+	if not model.item.clusterJewel then return false end
+	local mod=model.byId[id]
+	if not id:match("^AfflictionJewelSmallPassivesGrant") or not mod then return false end
+	for _,line in ipairs(mod) do
+		if line:find("Added Small Passive Skills also grant:",1,true) and (line:find("Attack Speed",1,true) or line:find("Cast Speed",1,true) or line:find("Attack and Cast Speed",1,true)) then return true end
+	end
+	return false
+end
 M.methods = {"transmute","alteration","augmentation","regal","alchemy","chaos","exalt","annul","scour","divine","bench","remove_crafted","essence"}
 M.labels = {transmute="Orb of Transmutation",alteration="Orb of Alteration",augmentation="Orb of Augmentation",regal="Regal Orb",alchemy="Orb of Alchemy",chaos="Chaos Orb",exalt="Exalted Orb",annul="Orb of Annulment",scour="Orb of Scouring",divine="Divine Orb",bench="Crafting bench",remove_crafted="Remove crafted modifiers",essence="Essence"}
 function M.withTreeContext(result,version)
@@ -93,6 +104,7 @@ local function counts(model,state)
 		local mod=assert(model.byId[entry.id],"Unknown modifier ID: "..tostring(entry.id))
 		result[mod.type]=result[mod.type]+1
 		if mod.group then result.groups[mod.group]=true end
+		if model.item.clusterJewel and M.isClusterSpeedMod(model,entry.id) then result.groups[M.clusterSpeedGroup]=true end
 		if entry.crafted then result.crafted=result.crafted+1 end
 		for _,tag in ipairs(mod.tags or { }) do result.tags[tag]=true end
 	end
@@ -210,7 +222,7 @@ function M.pool(model,state)
 	local result,total={},0
 	for _,entry in ipairs(model.mods) do
 		local mod=entry.mod
-		local blocked=c[mod.type] >= caps[mod.type] or c.groups[mod.group]
+		local blocked=c[mod.type] >= caps[mod.type] or c.groups[mod.group] or model.item.clusterJewel and M.isClusterSpeedMod(model,entry.id) and c.groups[M.clusterSpeedGroup]
 		for _,tag in ipairs(mod.modTags or { }) do if f[tag] then blocked=true end end
 		if not blocked then
 			local weight=next(c.tags) and model.item:GetModSpawnWeight(mod,c.tags) or entry.weight

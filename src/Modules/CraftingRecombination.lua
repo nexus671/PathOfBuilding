@@ -37,7 +37,11 @@ function R.extend(M,A,api)
 	function M.actionOptions(model,state,method) return options(context(model,state),state,method) end
 	function M.matches(state,targets,rarity,model,requirements,requiredGroups) return matches(state,targets,rarity,model and context(model,state),requirements,requiredGroups) end
 	function M.validateState(model,state) return validate(context(model,state),state) end
-	local function groups(model,id) local metadata=A.data().mods[id];return metadata and metadata.groups or {model.byId[id].group} end
+	local function groups(model,id)
+		local metadata=A.data().mods[id];local result=metadata and metadata.groups or {model.byId[id].group}
+		if model.item.clusterJewel and M.isClusterSpeedMod(model,id) then result=copyTable(result);result[#result+1]=M.clusterSpeedGroup end
+		return result
+	end
 	local function signature(mod) return table.concat(mod," / "):gsub("%b()","#"):gsub("%d+%.?%d*","#"):lower() end
 	local function naturalCraft(model,entry)
 		if not entry.crafted then return nil end
