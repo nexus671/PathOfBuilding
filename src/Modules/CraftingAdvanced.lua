@@ -312,8 +312,8 @@ function A.extend(M,api)
 		M.methodChecks[method]=function(model,state)
 			local f=api.flags(model,state)
 			if selected=="ducat_rotmother" and (model.item.type~="Belt" or state.rarity~="RARE") then return "Rotmother requires a rare belt" end
-			if selected=="ducat_cyaxan" and (state.rarity~="RARE" or f.prefixes or f.suffixes or f.attack or f.caster) then return "Cyaxan requires a rare item without meta modifiers in this model" end
-			if selected=="ducat_rotmother" and (f.prefixes or f.suffixes or f.attack or f.caster) then return "Remove meta modifiers before using Rotmother in this model" end
+			if selected=="ducat_cyaxan" and (state.rarity~="RARE" or f.prefixes or f.suffixes or f.explicitAttack or f.explicitCaster) then return "Cyaxan requires a rare item without meta modifiers in this model" end
+			if selected=="ducat_rotmother" and (f.prefixes or f.suffixes or f.explicitAttack or f.explicitCaster) then return "Remove meta modifiers before using Rotmother in this model" end
 			if selected=="ducat_brinehook" and model.item.type=="Jewel" then return "Pantheon Aspects require equipment" end
 			local prepared=copyTable(state)
 			if selected=="ducat_cyaxan" then api.clear(model,prepared,true) elseif selected=="ducat_brinehook" and prepared.rarity=="NORMAL" then prepared.rarity="MAGIC" end
@@ -458,10 +458,10 @@ function A.extend(M,api)
 			append(model,state,random)
 		elseif method == "ducat_rotmother" then
 			assert(model.item.type == "Belt" and state.rarity == "RARE","Rotmother requires a rare belt")
-			assert(not (f.prefixes or f.suffixes or f.attack or f.caster),"Remove meta modifiers before using Rotmother in this model")
+			assert(not (f.prefixes or f.suffixes or f.explicitAttack or f.explicitCaster),"Remove meta modifiers before using Rotmother in this model")
 			append(model,state,random,{source=ducatSource(model,method),fixedWeights=true})
 		elseif method == "ducat_cyaxan" then
-			assert(state.rarity == "RARE" and not (f.prefixes or f.suffixes or f.attack or f.caster),"Cyaxan requires a rare item without meta modifiers in this model")
+			assert(state.rarity == "RARE" and not (f.prefixes or f.suffixes or f.explicitAttack or f.explicitCaster),"Cyaxan requires a rare item without meta modifiers in this model")
 			api.clear(model,state,true);append(model,state,random,{source=ducatSource(model,method)});fill(model,state,random)
 		elseif method == "ducat_brinehook" then
 			assert(model.item.type ~= "Jewel","Pantheon Aspects require equipment")
@@ -489,7 +489,7 @@ function A.extend(M,api)
 			local last=table.remove(state.affixes); remove(model,state,random); state.affixes[#state.affixes+1]=last
 			assert(last.id == added)
 		elseif method == "fossil" then
-			assert(not (f.prefixes or f.suffixes or f.attack or f.caster),"Remove meta modifiers before using a resonator")
+			assert(not (f.prefixes or f.suffixes or f.explicitAttack or f.explicitCaster),"Remove meta modifiers before using a resonator")
 			assert(type(action.fossils) == "table" and #action.fossils >= 1 and #action.fossils <= 4,"Select one to four different fossils")
 			local fossils,seen,extras={},{},{}
 			for _,id in ipairs(action.fossils) do

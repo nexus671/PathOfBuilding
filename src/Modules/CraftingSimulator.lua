@@ -59,19 +59,33 @@ local function renderLines(item)
 end
 local function flags(model,state)
 	local result={ }
+	local function rollBlock(line)
+		if line == "Cannot roll Attack Modifiers" then result.attack=true end
+		if line == "Cannot roll Caster Modifiers" then result.caster=true end
+	end
 	for _,entry in ipairs(state.affixes) do
 		local mod=model.byId[entry.id]
 		if mod.partialLock then result[mod.partialLock.side]=mod.partialLock.count end
 		for _,line in ipairs(mod) do
 			if line == "Prefixes Cannot Be Changed" then result.prefixes=true end
 			if line == "Suffixes Cannot Be Changed" then result.suffixes=true end
-			if line == "Cannot roll Attack Modifiers" then result.attack=true end
-			if line == "Cannot roll Caster Modifiers" then result.caster=true end
+			if line == "Cannot roll Attack Modifiers" then result.explicitAttack=true end
+			if line == "Cannot roll Caster Modifiers" then result.explicitCaster=true end
+			rollBlock(line)
 			if line == "Can have up to 3 Crafted Modifiers" then result.multipleCrafts=true end
 		end
 	end
+	-- Replaced implicits take precedence over the starting item's base implicit.
+	local replacement=state.corruptedImplicits or state.implicits
+	if replacement then
+		for _,entry in ipairs(replacement) do for _,line in ipairs(model.byId[entry.id] or {}) do rollBlock(line) end end
+	else
+		for _,line in ipairs(model.item.implicitModLines or {}) do rollBlock(StripEscapes(line.line or "")) end
+		if state.vendorImplicit then for _,line in ipairs(model.byId[state.vendorImplicit] or {}) do rollBlock(line) end end
+	end
 	return result
 end
+M.blockFlags=flags
 local function counts(model,state)
 	local result={Prefix=0,Suffix=0,crafted=0,total=#state.affixes,groups={},tags={}}
 	for _,entry in ipairs(state.affixes) do
@@ -318,7 +332,7 @@ function M.essenceReason(model,state,id)
 	for _,entry in ipairs(model.essences) do if entry.id==id then selected=entry;break end end
 	if not selected then return "This essence cannot be used on this base" end
 	local f=flags(model,state)
-	if f.prefixes or f.suffixes or f.attack or f.caster then return "Remove meta modifiers before applying an essence" end
+	if f.prefixes or f.suffixes or f.explicitAttack or f.explicitCaster then return "Remove meta modifiers before applying an essence" end
 	if not (state.rarity=="NORMAL" or state.rarity=="RARE" and (selected.tier>=5 or selected.type>0)) then return "This essence cannot be used on the current rarity" end
 	local mod=model.byId[selected.modId]
 	for _,entry in ipairs(state.affixes) do if mod.group and entry.fractured and model.byId[entry.id].group==mod.group then return "The essence modifier conflicts with a fractured modifier" end end

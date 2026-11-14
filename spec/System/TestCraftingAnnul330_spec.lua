@@ -37,4 +37,28 @@ describe("3.30 Orb of Annulment",function()
 		state.affixes[1].fractured=true;table.remove(state.affixes,2)
 		assert.is_false(pcall(sim.calculate,raw,{method="annul"},{},state))
 	end)
+	it("respects a wand's caster-blocking implicit while preserving 3.30 Annulment behavior",function()
+		local wand="Rarity: NORMAL\nSomatic Wand\nItem Level: 86";local model=sim.model(wand)
+		assert.is_true(sim.blockFlags(model,model.initial).caster)
+		local metadata=require("Modules.CraftingAdvanced").data().mods;local caster={}
+		for _,entry in ipairs(model.mods) do local mod=metadata[entry.id];for _,tag in ipairs(mod and mod.implicit_tags or {}) do if tag=="caster" then caster[entry.id]=true end end end
+		assert.is_truthy(next(caster));for _,entry in ipairs(sim.pool(model,model.initial)) do assert.is_nil(caster[entry.id]) end
+		local explained,bench=false,false;for _,row in ipairs(require("Modules.CraftingModifiers").inspect(model,model.initial).rows) do
+			local reasons=table.concat(row.reasons," ")
+			if caster[row.id] and reasons:find("Cannot roll caster",1,true) then explained=true end
+			if row.id=="bench:70" then bench=true;assert.is_nil(reasons:find("Cannot roll caster",1,true));assert.is_nil(sim.benchReason(model,model.initial,row.id)) end
+		end;assert.is_true(explained);assert.is_true(bench)
+		local essence=model.essences[1];assert.is_truthy(essence);assert.is_nil(sim.essenceReason(model,model.initial,essence.id))
+		assert.equal("RARE",sim.perform(wand,{method="essence",essenceId=essence.id},1).state.rarity)
+		assert.equal("RARE",sim.perform(wand,{method="fossil",fossils={"Metadata/Items/Currency/CurrencyDelveCraftingLife"}},1).state.rarity)
+		local craftedBlock=sim.validateState(model,{rarity="RARE",affixes={{id="bench:732",range=0.5,crafted=true}}})
+		assert.is_truthy(sim.essenceReason(model,craftedBlock,essence.id));assert.is_false(pcall(sim.perform,wand,{method="fossil",fossils={"Metadata/Items/Currency/CurrencyDelveCraftingLife"}},1,craftedBlock))
+		local state=sim.validateState(model,{rarity="RARE",affixes={{id="GlobalChaosSpellGemsLevel1",range=0.5},{id="LocalAddedChaosDamage1",range=0.5}}})
+		local result=sim.perform(wand,{method="bench_reroll",count=1},1,state);local kept=false
+		for _,entry in ipairs(result.state.affixes) do if entry.id=="GlobalChaosSpellGemsLevel1" then kept=true end end;assert.is_true(kept)
+		local annul=sim.calculate(wand,{method="annul"},{{anyOf={"GlobalChaosSpellGemsLevel1"}}},state)
+		assert.equal(50,annul.successChance)
+		model.byId.testReplacement={"Other implicit"};local replaced=copyTable(model.initial);replaced.corruptedImplicits={{id="testReplacement"}}
+		assert.is_nil(sim.blockFlags(model,replaced).caster)
+	end)
 end)

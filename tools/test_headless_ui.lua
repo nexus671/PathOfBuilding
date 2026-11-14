@@ -543,6 +543,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end
 	assert(not jobs.job,"Crafting simulation did not finish")
 	frame("simulation-result");assert(#main.popups[1].controls.resultSummary.list>=4,"Detailed simulation results are missing")
+	do
+		local model=sim.model("Rarity: NORMAL\nSomatic Wand\nItem Level: 86");local row
+		for _,entry in ipairs(require("Modules.CraftingModifiers").inspect(model,model.initial).rows) do if table.concat(entry.reasons," "):find("Cannot roll caster",1,true) then row=entry;break end end
+		assert(row,"The wand's caster restriction was not explained");require("Classes.CraftingModifierControl").Open(model,model.initial,{choose=function() end});ui:text("search",row.id)
+		local lines={};for _,line in ipairs(main.popups[1].controls.details.list) do lines[#lines+1]=line[1] end;assert(table.concat(lines," "):find("Cannot roll caster",1,true),"Modifier browser did not show the implicit restriction")
+		frame("crafting-wand-implicit-block");ui:click("close")
+	end
 	ui:click("editRecipe");frame("crafting-recipe-cards");ui:click("flowGraph");frame("crafting-route-graph");ui:click("graphAll");frame("crafting-route-graph-all");ui:click("close");ui:click("recovery");ui:choose("action","stop","val");ui:text("notes","Inspect unwanted rolls before spending more");frame("crafting-failure-recovery");ui:click("keep")
 	assert(main.popups[1].controls.failure:GetSelValueByKey("val")=="stop","Recovery policy was not shown as the failure behavior")
 	ui:click("update");assert(main.popups[1].controls.failure:GetSelValueByKey("val")=="stop","Updating a step lost its recovery policy")

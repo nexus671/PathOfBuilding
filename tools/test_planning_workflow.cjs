@@ -68,6 +68,9 @@ async function main(){
   const annulOddsState={rarity:'RARE',affixes:[{id:'LocalAddedChaosDamage1',range:0.5},{id:'bench:731',range:0.5,crafted:true}]};
   const annulOdds=await queued('calculate_crafting',{baseRevision:context.revision,itemText:annulOddsRaw,action:{method:'annul'},initialState:annulOddsState,targets:[{anyOf:['LocalAddedChaosDamage1']}]},'crafted');
   assert.equal(annulOdds.nativeCrafting.sampled,false);assert.equal(annulOdds.nativeCrafting.successChance,50);assert.equal(annulOdds.nativeCrafting.outcomes.length,2);
+  const kineticState={rarity:'RARE',affixes:[{id:'GlobalChaosSpellGemsLevel1',range:0.5},{id:'LocalAddedChaosDamage1',range:0.5}]};
+  const kineticBench=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:'Rarity: NORMAL\nSomatic Wand\nItem Level: 86',action:{method:'bench_reroll',count:1},initialState:kineticState,seed:1},'crafted');
+  assert.ok(kineticBench.nativeCrafting.state.affixes.some(entry=>entry.id==='GlobalChaosSpellGemsLevel1'));
   const partialCatalog=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:annulOddsRaw,query:'1 Prefix Modifier',limit:30},'inspected');
   const partial=partialCatalog.crafting.nativeEngine.bench.find(entry=>entry.id==='bench:partial-prefix-1');
   assert.ok(partial);assert.deepEqual(partial.components,{'Metadata/Items/Currency/CurrencyModValues':1});

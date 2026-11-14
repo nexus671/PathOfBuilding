@@ -30,11 +30,10 @@ function M.catalog(model)
 end
 function M.inspect(model,state)
 	model=sim.context(model,state);local eligible,total=sim.pool(model,state);local weights={};for _,entry in ipairs(eligible) do weights[entry.id]=entry.weight end
-	local used,counts,flags={}, {Prefix=0,Suffix=0},{}
+	local used,counts,flags={}, {Prefix=0,Suffix=0},sim.blockFlags(model,state)
 	for key,value in pairs(state.rollBlock or {}) do flags[key]=value end
 	for _,entry in ipairs(state.affixes) do local mod=assert(model.byId[entry.id]);counts[mod.type]=(counts[mod.type] or 0)+1
 		for _,group in ipairs(groups(entry.id,mod)) do used[group]=table.concat(mod," / ") end
-		for _,line in ipairs(mod) do if line=="Cannot roll Attack Modifiers" then flags.attack=true elseif line=="Cannot roll Caster Modifiers" then flags.caster=true end end
 	end
 	local caps=sim.capacities(model,state);local result={rows={},totalWeight=total,note="Draw chances describe one ordinary weighted affix selection in the captured state, not the selected currency or a complete recipe. Tier ranks compare applicable natural tiers in the same modifier group."}
 	for _,row in ipairs(M.catalog(model)) do
@@ -42,7 +41,9 @@ function M.inspect(model,state)
 		if row.level>model.item.itemLevel then reasons[#reasons+1]="Requires item level "..row.level end
 		if counts[row.type] and counts[row.type]>=(caps[row.type] or 0) then reasons[#reasons+1]="No open "..row.type:lower().." slot" end
 		for _,group in ipairs(row.groups) do if used[group] then reasons[#reasons+1]="Conflicts with "..used[group] end end
-		for _,tag in ipairs({"attack","caster"}) do if flags[tag] and has(row.tags,tag) then reasons[#reasons+1]="Cannot roll "..tag.." modifiers" end end
+		if row.source=="Natural" or row.source=="Influence" then
+			for _,tag in ipairs({"attack","caster"}) do if flags[tag] and has(row.tags,tag) then reasons[#reasons+1]="Cannot roll "..tag.." modifiers" end end
+		end
 		if weight==0 and #reasons==0 then reasons[1]=(row.source=="Natural" or row.source=="Influence") and "Not in the current base/influence pool" or row.source.." crafting source; outside the ordinary draw pool" end
 		-- A positive engine weight is authoritative for this pool, including its special rules.
 		if weight>0 then reasons={} end
