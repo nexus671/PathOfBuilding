@@ -452,6 +452,19 @@ describe("Advanced native crafting", function()
 		assert.are.equal("RARE",bound.state.rarity)
 		assert.are.equal(4,#bound.state.sockets)
 	end)
+	it("allows Binding to link low-level equipment up to its base socket limit",function()
+		for _,fixture in ipairs({{"Iron Hat",1,4},{"Iron Hat",24,4},{"Plate Vest",1,4},{"Driftwood Wand",1,3}}) do
+			local item="Rarity: NORMAL\n"..fixture[1].."\nItem Level: "..fixture[2]
+			local model=sim.model(item);local available=require("Modules.CraftingAvailability").check("binding",model.initial,model)
+			assert.is_true(available)
+			local result=sim.perform(item,{method="binding"},2);assert.equal("RARE",result.state.rarity);assert.equal(fixture[3],#result.state.sockets)
+			for _,socket in ipairs(result.state.sockets) do assert.equal(result.state.sockets[1].group,socket.group) end
+			local restored=sim.validateState(model,result.state);assert.equal(fixture[3],#restored.sockets)
+		end
+		local low="Rarity: NORMAL\nIron Hat\nItem Level: 1"
+		local recipe=sim.simulate(low,{steps={{method="binding"}},targets={},requirements={links=4}},{trials=3,maxActions=1})
+		assert.equal(3,recipe.successes);assert.equal("binding_legacy",recipe.warnings[1].code)
+	end)
 	it("refuses essence use with meta modifiers instead of silently consuming them", function()
 		local model=sim.model(raw); local lock
 		for _,entry in ipairs(model.bench) do if entry.mod[1] == "Prefixes Cannot Be Changed" then lock=entry.id end end

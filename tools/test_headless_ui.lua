@@ -296,11 +296,12 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		ui:click("paletteUse");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Bestiary: maximum links",1,true));frame("crafting-beast-linked");ui:click("close")
 	end
 	do
-		local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86";local model=sim.model(raw)
+		local raw="Rarity: NORMAL\nIron Hat\nItem Level: 1";local model=sim.model(raw)
 		require("Classes.CraftingSimulatorControl").Open(build,{id="binding-legacy-ui",title="Legacy Binding",slot="Helmet",startingItem=raw,goals={},steps={}})
 		ui:click("settings");ui:text("paletteSearch","Orb of Binding")
 		local hints={};for _,row in ipairs(main.popups[1].controls.paletteHint.list) do hints[#hints+1]=StripEscapes(row[1]) end
-		assert(table.concat(hints," "):find("No longer generated",1,true),"Binding availability was not disclosed");frame("crafting-binding-legacy");ui:click("close")
+		assert(table.concat(hints," "):find("No longer generated",1,true),"Binding availability was not disclosed");frame("crafting-binding-legacy")
+		ui:click("paletteUse");ui:click("item");assert(main.popups[1].controls.intro.label:find("Applied Orb of Binding",1,true),"Binding failed on low-level equipment");ui:click("close")
 		local saved;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy"}},targets={},requirements={maxAffixes=0}},{method="alchemy"},function(value) saved=value end,model)
 		ui:click("addCurrency");ui:text("search","Orb of Binding");local details={};for _,row in ipairs(main.popups[1].controls.details.list) do details[#details+1]=StripEscapes(row[1]) end
 		assert(table.concat(details," "):find("No longer generated",1,true),"Binding recipe step omitted its availability");frame("crafting-binding-recipe");ui:click("choose");ui:click("keep")

@@ -710,8 +710,8 @@ function A.extend(M,api)
 			local limit=model.item.base.socketLimit or 0
 			assert(limit > 0,"This base cannot have equipment sockets")
 			local count=method == "binding" and math.min(4,limit) or api.integer(action.count,2,limit,"socket count")
-			local levelLimit=model.item.itemLevel >= 50 and 6 or model.item.itemLevel >= 35 and 5 or model.item.itemLevel >= 25 and 4 or model.item.itemLevel >= 2 and 3 or 2
-			assert(method == "socket_bench" or count <= levelLimit,"Item level is too low for this socket count")
+			-- Binding and socket bench recipes ignore the natural item-level limit;
+			-- both remain constrained by the base's maximum socket count.
 			local previous=state.sockets or {};local free=0;for _,socket in ipairs(previous) do free=math.max(free,socket.group+1) end
 			state.sockets={};for i=1,count do
 				state.sockets[i]=previous[i] and copyTable(previous[i]) or {color="W",group=free+i}
