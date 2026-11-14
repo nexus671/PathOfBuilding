@@ -101,8 +101,15 @@ describe("Build-owned loot filters",function()
 	it("edits and validates included files without touching the original profile",function()
 		local profile=filters.profile("included","Included");local saved
 		require("Classes.LootFilterImportControl").Open(profile,function(files) saved=files end)
-		local c=main.popups[1].controls;c.name:SetText("rules.filter");c.text:SetText('Hide\n BaseType "Iron Hat"');c.saveFile:Click();c.keep:Click()
+		local c=main.popups[1].controls;c.name:SetText("rules.filter");c.text:SetText('Hide\n BaseType "Iron Hat"');c.keep:Click()
 		assert.is_nil(profile.importFiles);assert.equal("rules.filter",saved[1].name);assert.is_truthy(saved[1].text:find("Iron Hat",1,true))
+	end)
+	it("retains attachment edits across selection and rejected saves",function()
+		local profile=filters.profile("included","Included");profile.importFiles={{name="one.filter",text="Show"},{name="two.filter",text="Hide"}};local saved
+		require("Classes.LootFilterImportControl").Open(profile,function(files) saved=files end);local c=main.popups[1].controls
+		c.files.selFunc(2,c.files.list[2]);c.text:SetText('Hide\n BaseType "Iron Hat"');c.files.selFunc(3,c.files.list[3]);c.files.selFunc(2,c.files.list[2])
+		assert.is_truthy(c.text.buf:find("Iron Hat",1,true));c.name:SetText("");c.keep:Click();assert.is_truthy(main.popups[1].controls);assert.equal("",c.name.buf);assert.is_nil(saved)
+		main:ClosePopup();c.name:SetText("one.filter");c.keep:Click();assert.is_truthy(saved[1].text:find("Iron Hat",1,true));assert.equal("Hide",saved[2].text)
 	end)
 	it("evaluates the twice-corrupted filter condition",function()
 		local parsed=parser.parse("Hide\n TwiceCorrupted True\nShow")

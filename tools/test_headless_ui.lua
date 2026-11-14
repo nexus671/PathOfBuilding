@@ -705,7 +705,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("manage");frame("filter-empty-profile-tools");local emptyToolIds={};for _,row in ipairs(main.popups[1].controls.results.list) do if row.entry then emptyToolIds[row.entry.id]=true end end;local emptyToolCount=0;for _ in pairs(emptyToolIds) do emptyToolCount=emptyToolCount+1 end;assert(emptyToolCount==2 and emptyToolIds.new and emptyToolIds.import,"Empty filter tools offered actions without a profile");ui:click("close")
 	ui:click("create2");ui:text("title","Covens pickup plan");frame("filter-profile")
 	ui:click("manage");ui:text("search","Included filter files");ui:click("choose")
-	ui:text("name","rules.filter");ui:text("text",'Hide\n BaseType "Iron Hat"');frame("filter-included-files");ui:click("saveFile");ui:click("keep")
+	ui:text("name","rules.filter");ui:text("text",'Hide\n BaseType "Iron Hat"');frame("filter-included-files");ui:click("keep")
 	assert(build.planningWorkspace.cache.filters.layout.snapshot().data.profiles[1].importFiles[1].name=="rules.filter","Included filter file was not kept in the draft")
 	ui:choose("mode","Ruthless");frame("filter-ruthless");ui:click("viewStyle");ui:click("globalStyle");ui:click("textColorPick");ui:text("a","0");assert(not main.popups[1].controls.keep:IsEnabled(),"Ruthless picker allowed invisible text");ui:text("a","80");frame("filter-colour-ruthless");ui:click("cancel");ui:click("close");ui:click("viewOverview");ui:choose("mode","Normal")
 	ui:click("generate");frame("filter-build-targets")
