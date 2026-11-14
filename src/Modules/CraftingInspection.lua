@@ -1,6 +1,12 @@
 -- Readable facts and item-state differences, separate from crafting transitions.
 local sim=require("Modules.CraftingSimulator")
 local M={}
+-- Values verified against the pinned 3.30.0.1.4 client export. The native
+-- modifier tables remain at 3.29 until current and legacy imports coexist.
+local lightRadius330={LightRadiusAndAccuracy1="10-15",LightRadiusAndAccuracy2="16-20",LightRadiusAndAccuracy3="21-30",
+	LightRadiusAndAccuracyNew1="10-15",LightRadiusAndAccuracyNew2="16-20",
+	LocalLightRadiusAndAccuracy1="10-15",LocalLightRadiusAndAccuracy2="16-20",LocalLightRadiusAndAccuracy3="10-15",
+	LocalLightRadiusAndAccuracyNew1_="16-20",LocalLightRadiusAndAccuracyNew2="21-30"}
 function M.modDetails(model,id,entry)
 	local mod=assert(model.byId[id],"Unknown modifier")
 	local lines={mod.type.." | "..(mod.affix or "Modifier"),"Required item level: "..(mod.level or 0)}
@@ -12,6 +18,7 @@ function M.modDetails(model,id,entry)
 		lines[#lines+1]="Group tier: "..rank
 	end
 	for _,line in ipairs(mod) do lines[#lines+1]="Range: "..line end
+	if lightRadius330[id] then lines[#lines+1]="3.30 client: Light Radius is "..lightRadius330[id].."%; this model still uses the older range." end
 	if sim.isClusterSpeedMod(model,id) then lines[#lines+1]="3.30: small-passive attack and cast speed modifiers share a family." end
 	if mod.tags and #mod.tags>0 then lines[#lines+1]="Tags: "..table.concat(mod.tags,", ") end
 	if entry then

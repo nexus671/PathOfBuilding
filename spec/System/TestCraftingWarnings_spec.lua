@@ -2,6 +2,13 @@ describe("Crafting result model notes",function()
 	local sim=require("Modules.CraftingSimulator")
 	local raw="Rarity: NORMAL\nIron Hat\nItem Level: 86"
 	local donor="Rarity: NORMAL\nCone Helmet\nItem Level: 70"
+	it("identifies the known 3.30 Light Radius data gap in modifier inspection",function()
+		local model=sim.model(raw);local details=require("Modules.CraftingInspection").modDetails(model,"LightRadiusAndAccuracy3")
+		local joined=table.concat(details,"\n")
+		assert.matches("15%% increased Light Radius",joined)
+		assert.matches("3%.30 client: Light Radius is 21%-30%%",joined)
+		assert.matches("Light Radius",table.concat(sim.limits,"\n"))
+	end)
 	it("uses the 3.30 client ingredients for every resistance conversion",function()
 		local cases={fire={cold={wild_lifeforce=300,primal_lifeforce=300},lightning={wild_lifeforce=300,vivid_lifeforce=300}},
 			cold={fire={primal_lifeforce=300,wild_lifeforce=300},lightning={primal_lifeforce=300,vivid_lifeforce=300}},
