@@ -26,7 +26,7 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Economy-based tiers | Pinned NeverSink snapshot | Live pricing, outlier handling and recalculation |
 | Global search | Searches names and raw condition/action text | Cross-page command palette |
 | Loot generator | Deterministic example scenes and build-target samples | Representative drop distributions and encounter presets |
-| Hidden-drop display | Simulator toggle and searchable scene review with shown, hidden and uncertain counts | Counts describe examples, not drop rates |
+| Hidden-drop display | Simulator toggle and searchable scene review with shown, minimal, hidden and uncertain counts | Counts describe examples, not drop rates |
 | Click a simulated item | Explains results and opens matched blocks for editing | More unknown-property guidance |
 | Item configuration | Editable properties and native game-clipboard import | Hidden identities are never inferred |
 | Item history | Session history plus persistent named sets of exact sample properties | More encounter sample presets |

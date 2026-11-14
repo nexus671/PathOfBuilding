@@ -5,6 +5,10 @@ local parser=require("Modules.LootFilterParser")
 local library=require("Modules.LootFilterLibrary")
 local visual=require("Modules.LootFilterVisuals")
 local M={}
+function M.dropOutcome(result)
+	local action=result and result.action
+	return (action=="Show" or action=="Hide" or action=="Minimal") and action or "Unknown"
+end
 local function button(c,key,x,y,w,label,run) c[key]=new("ButtonControl"):ButtonControl(ui.anchor,{x,y,w,28},label,run);return c[key] end
 local function identifier() return "filter-"..require("sha1")(os.time()..tostring({})):sub(1,20) end
 function M.Open(build,source,layout,controller)
@@ -326,14 +330,14 @@ function M.Open(build,source,layout,controller)
 		end)
 		button(c,"sound",16,362,100,"Play sound",function() local _,message=require("Modules.LootFilterAudio").play(result and result.styles or {});c.selection.list=ui.rows({item.BaseType,message},left-28,14) end)
 		button(c,"sceneStats",124,362,100,"Drop review",function()
-			local counts={Show=0,Hide=0,Unknown=0};local entries={}
+			local counts={Show=0,Hide=0,Minimal=0,Unknown=0};local entries={}
 			for index,drop in ipairs(scene) do
 				local evaluated=parsed and parser.simulate(parsed,drop) or {action="Unknown",status="unknown",styles={},reasons={"Filter is unavailable."}}
-				local action=evaluated.action=="Show" and "Show" or evaluated.action=="Hide" and "Hide" or "Unknown"
+				local action=M.dropOutcome(evaluated)
 				counts[action]=counts[action]+1
 				entries[#entries+1]={id=index,label=(drop.BaseType or "Unknown item").." - "..action,category=action,details=sampleDetails(drop,evaluated),sample=drop}
 			end
-			local title=string.format("Example drops: %d shown, %d hidden, %d unknown",counts.Show,counts.Hide,counts.Unknown)
+			local title=string.format("Examples: %d shown, %d minimal, %d hidden, %d unknown",counts.Show,counts.Minimal,counts.Hide,counts.Unknown)
 			require("Classes.PlanningBrowserControl").Open(title,entries,{action="Inspect item",choose=function(entry) rememberSample(entry.sample);scenePage=1;compile();reopen() end})
 		end)
 		c.sceneStats.tooltipText="Review every example in this scene, including hidden and uncertain results. Counts are not drop-rate predictions."

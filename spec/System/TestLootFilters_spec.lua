@@ -2,6 +2,14 @@
 describe("Build-owned loot filters",function()
 	local filters=require("Modules.LootFilters")
 	local parser=require("Modules.LootFilterParser")
+	it("keeps Ruthless Minimal results separate from unknown drop outcomes",function()
+		local outcome=require("Classes.LootFilterWorkspace").dropOutcome
+		for _,action in ipairs({"Show","Hide","Minimal"}) do
+			assert.equal(action,outcome(parser.simulate(parser.parse(action),{})))
+		end
+		assert.equal("Unknown",outcome(parser.simulate(parser.parse("Show\n ItemLevel >= 80"),{})))
+		assert.equal("Unknown",outcome(parser.simulate(parser.parse("Show\n ItemLevel >= nope"),{})))
+	end)
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() main.popups={} end)
 	it("rejects malformed imports even when other imports are unresolved",function()
