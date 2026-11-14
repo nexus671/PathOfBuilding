@@ -11,6 +11,8 @@ Open **Atlas** beside **AI builds**, or switch to **Atlas** in the full-width pl
 
 **Find nodes** opens a searchable list with mechanic filters and added point costs. Choosing a result highlights its mechanic on the tree. The minimap moves the camera without changing allocations. Drag the divider beside the inspector to resize it.
 
+Mechanic filters include Mirage, Wildwood, Sentinels, Torment, Rogue Exiles and Threads. A node that mentions multiple mechanics appears in each applicable filter; the investment summary assigns one primary category per node so its totals do not double-count points. Categories are based on node text and are not a simulation of encounter interactions.
+
 **Targets** collects desired nodes; Shift-click marks them directly on the tree. Toggle a mechanic's notables together, then preview a route retaining existing allocations or rebuilding from the start. Recalculation runs in short background slices, with pause/cancel controls. Review added/refunded points, connected targets and keystone effects, then **Use preview**. Changed plans require recalculation. The optimizer compares a bounded set of target orders; it does not claim a global optimum.
 
 **Routes** compares the shortest connection with available alternatives. In **Plan tools**, mark a selected node as a preferred waypoint, open editable mechanic starting routes, compare the draft with a saved plan, or restore an earlier history state. Starting routes compare target orders and connect up to three nearby notables from the bundled graph; they do not predict farming income. Route comparisons honor the current budget and exclusions.

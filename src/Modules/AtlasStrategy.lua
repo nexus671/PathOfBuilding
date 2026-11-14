@@ -1,13 +1,22 @@
 -- Presentation queries over the pinned graph; no character or map-odds simulation.
 local atlas=require("Modules.AtlasPlanner")
-local M={mechanics={"Maps","Essence","Harvest","Expedition","Breach","Legion","Blight","Delirium","Ritual","Beyond","Abyss","Strongboxes","Shrines","Heist","Delve","Bestiary","Incursion","Betrayal","Ultimatum","Bosses"}}
-local aliases={Maps={"map","kirac"},Bosses={"boss","shaper","elder","maven","eater","exarch"},Strongboxes={"strongbox"},Shrines={"shrine"},Bestiary={"beast","einhar"},Incursion={"incursion","alva"},Betrayal={"syndicate","jun"},Delve={"sulphite","niko"}}
+local M={mechanics={"Maps","Essence","Harvest","Expedition","Breach","Legion","Blight","Delirium","Ritual","Beyond","Abyss","Strongboxes","Shrines","Heist","Delve","Bestiary","Incursion","Betrayal","Ultimatum","Bosses","Mirage","Wildwood","Sentinels","Torment","Rogue Exiles","Threads"}}
+local aliases={Maps={"map","kirac"},Bosses={"boss","shaper","elder","maven","eater","exarch"},Strongboxes={"strongbox"},Shrines={"shrine"},Bestiary={"beast","einhar"},Incursion={"incursion","alva"},Betrayal={"syndicate","jun"},Delve={"sulphite","niko"},Wildwood={"wildwood","sacred flora","sacred fauna"},Sentinels={"sentinel"},Torment={"tormented spirit","tormented procurator"},["Rogue Exiles"]={"rogue exile"},Threads={"thread"}}
+local function matches(text,name)
+	for _,word in ipairs(aliases[name] or {name:lower()}) do if text:find(word,1,true) then return true end end
+	return false
+end
 function M.mechanic(node)
 	local text=(node.name.." "..table.concat(node.stats," ")):lower()
 	-- Generic map text is common to every mechanic: classify it last.
-	for i=2,#M.mechanics do local name=M.mechanics[i];for _,word in ipairs(aliases[name] or {name:lower()}) do if text:find(word,1,true) then return name end end end
-	for _,word in ipairs(aliases.Maps) do if text:find(word,1,true) then return "Maps" end end
+	for i=2,#M.mechanics do local name=M.mechanics[i];if matches(text,name) then return name end end
+	if matches(text,"Maps") then return "Maps" end
 	return "Other"
+end
+function M.hasMechanic(node,name)
+	-- Keep generic map bonuses separate from mechanic-specific nodes.
+	if name=="Maps" then return M.mechanic(node)=="Maps" end
+	return matches((node.name.." "..table.concat(node.stats," ")):lower(),name)
 end
 function M.costs(plan,avoid)
 	local tree=atlas.tree(plan.version);local blocked={};for _,id in ipairs(atlas.exclusions(plan,avoid)) do blocked[id]=true end
@@ -23,7 +32,7 @@ end
 function M.results(plan,query,mechanic,avoid)
 	local costs=M.costs(plan,avoid);local tree=atlas.tree(plan.version);local entries={}
 	query=(query or ""):lower()
-	for id,node in pairs(tree.nodes) do if id~=tree.start and (mechanic==nil or mechanic=="All" or M.mechanic(node)==mechanic) and (node.name.." "..table.concat(node.stats," ")):lower():find(query,1,true) then
+	for id,node in pairs(tree.nodes) do if id~=tree.start and (mechanic==nil or mechanic=="All" or M.hasMechanic(node,mechanic)) and (node.name.." "..table.concat(node.stats," ")):lower():find(query,1,true) then
 		entries[#entries+1]={id=id,node=node,cost=costs[id]}
 	end end
 	table.sort(entries,function(a,b) if a.cost~=b.cost then return (a.cost or math.huge)<(b.cost or math.huge) elseif a.node.name~=b.node.name then return a.node.name<b.node.name else return a.id<b.id end end)

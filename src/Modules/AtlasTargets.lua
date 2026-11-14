@@ -18,7 +18,7 @@ function M.mechanic(plan,name)
 	local next=atlas.validate(plan);local desired={};for _,id in ipairs(next.desired or {}) do desired[id]=true end
 	local blocked={};for _,id in ipairs(next.avoided or {}) do blocked[id]=true end
 	local candidates={};local all=true
-	for id,node in pairs(atlas.tree(plan.version).nodes) do if node.kind=="notable" and strategy.mechanic(node)==name and #M.blocking(node)==0 and not blocked[id] then candidates[#candidates+1]=id;if not desired[id] then all=false end end end
+	for id,node in pairs(atlas.tree(plan.version).nodes) do if node.kind=="notable" and strategy.hasMechanic(node,name) and #M.blocking(node)==0 and not blocked[id] then candidates[#candidates+1]=id;if not desired[id] then all=false end end end
 	for _,id in ipairs(candidates) do desired[id]=not all or nil end
 	next.desired={};for id in pairs(desired) do next.desired[#next.desired+1]=id end;return atlas.validate(next)
 end

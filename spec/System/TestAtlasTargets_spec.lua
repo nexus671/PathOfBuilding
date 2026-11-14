@@ -4,6 +4,15 @@ describe("Desired Atlas routes",function()
 	local function plan() return {id="targets",title="Targets",version="3.30.0-preview",budget=150,nodes={},notes=""} end
 	before_each(function() newBuild();main.popups={} end)
 	after_each(function() targets.jobs[build]=nil;main.popups={} end)
+	it("finds new Atlas mechanics and multi-mechanic notables",function()
+		local strategy=require("Modules.AtlasStrategy");local p=plan()
+		local function contains(list,id) for _,entry in ipairs(list) do if (type(entry)=="table" and entry.id or entry)==id then return true end end return false end
+		for name,id in pairs({Mirage=14203,Wildwood=3814,Sentinels=40046,Torment=875,["Rogue Exiles"]=33902,Threads=34352}) do
+			assert.is_true(contains(strategy.results(p,"",name),id));assert.is_true(contains(targets.mechanic(p,name).desired,id))
+		end
+		assert.is_true(contains(strategy.results(p,"","Ritual"),52197));assert.is_true(contains(strategy.results(p,"","Wildwood"),52197))
+		assert.is_true(contains(targets.mechanic(p,"Wildwood").desired,52197))
+	end)
 	it("keeps desired and avoided preferences exclusive and portable",function()
 		local p=plan();local id=atlas.search(p.version,"Bountiful Harvest",1).matches[1].id
 		p=targets.toggle(p,id,"desired");assert.same({id},p.desired)
