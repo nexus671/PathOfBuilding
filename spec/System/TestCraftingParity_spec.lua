@@ -76,6 +76,22 @@ describe("Current crafting reference workflows",function()
 		for _,entry in ipairs(state.affixes) do assert.is_nil(entry.fractured) end
 		assert.are.equal(false,pcall(sim.action,sim.model(raw),sixAffixes(sim.model(raw)),{method="beast_talisman_fracture",count=2},function() return 0.1 end))
 	end)
+	it("imprints and restores a rare Talisman through the Bestiary service",function()
+		local item="Rarity: NORMAL\nChieftain Talisman\nItem Level: 86";local model=sim.model(item);local state=sixAffixes(model)
+		local craft={method="beast_talisman_imprint"};assert.is_true(require("Modules.CraftingAvailability").check(craft.method,state,model))
+		local imprint=sim.perform(item,craft,1,state).state;assert.same(state.affixes,imprint.imprint.affixes)
+		local odds=sim.calculate(item,craft,{{anyOf={state.affixes[1].id}}},state);assert.is_false(odds.sampled);assert.equal(100,odds.successChance);assert.is_truthy(odds.sampleState.imprint);assert.matches("deterministic imprint",odds.exactFor)
+		local changed=sim.perform(item,{method="chaos"},2,imprint).state;local restored=sim.perform(item,{method="restore_imprint"},3,changed).state
+		assert.same(state.affixes,restored.affixes);assert.is_nil(restored.imprint)
+		assert.same({beast_talisman_imprint=1},sim.components(craft,state,model))
+		local other=sim.model(raw);assert.is_false(require("Modules.CraftingAvailability").check(craft.method,sixAffixes(other),other))
+		assert.is_false(pcall(sim.perform,raw,craft,1,sixAffixes(other)))
+		state.affixes[1].fractured=true;assert.is_false(pcall(sim.perform,item,craft,1,state))
+		state.affixes[1].fractured=nil;state.corrupted=true;assert.is_false(pcall(sim.perform,item,craft,1,state))
+		local partial=sixAffixes(model);for i=#partial.affixes,1,-1 do if model.byId[partial.affixes[i].id].type=="Suffix" then table.remove(partial.affixes,i);break end end
+		partial=sim.perform(item,{method="bench",modId="bench:partial-prefix-1"},4,partial).state
+		local saved=sim.perform(item,craft,5,partial).state;assert.same(partial.affixes,saved.imprint.affixes)
+	end)
 	it("distinguishes desired fractures and crafted modifiers from ordinary hits",function()
 		local model=sim.model(raw);local state=sixAffixes(model);local id=state.affixes[1].id
 		assert.is_true(sim.matches(state,{{anyOf={id},fractured=false,crafted=false}},nil,model))

@@ -37,6 +37,7 @@ function M.check(method,state,model)
 	if method=="restore_imprint" and not state.imprint then return false,"No saved imprint exists for this working item." end
 	if method=="restore_imprint" and fractured then return false,"Imprints cannot be applied to fractured items." end
 	if method=="beast_imprint" and (state.rarity~="MAGIC" or fractured) then return false,"Imprinting requires a non-fractured magic item." end
+	if method=="beast_talisman_imprint" and (not item.base.tags.talisman or state.rarity~="RARE" or fractured) then return false,"Imprinting requires a non-fractured rare Talisman." end
 	if method=="remove_crafted" and not crafted then return false,"This item has no bench-crafted modifiers." end
 	if method=="beast_aspect" then
 		if kind=="Jewel" then return false,"Aspect crafts require equipment." end

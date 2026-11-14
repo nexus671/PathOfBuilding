@@ -55,6 +55,10 @@ async function main(){
   const inspected=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:raw,query:'maximum Life',limit:20},'inspected');assert.ok(inspected.crafting.nativeEngine.modifiers.length);
   assert.equal(inspected.crafting.nativeEngine.methodWarnings.binding[0].code,'binding_legacy');
   const binding=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:raw,action:{method:'binding'},seed:1},'crafted');assert.equal(binding.nativeCrafting.warnings[0].code,'binding_legacy');assert.equal(binding.nativeCrafting.state.rarity,'RARE');
+  const talismanRaw='Rarity: NORMAL\nChieftain Talisman\nItem Level: 86';
+  const rareTalisman=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:talismanRaw,action:{method:'alchemy'},seed:1},'crafted');
+  const talismanImprint=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:talismanRaw,initialState:rareTalisman.nativeCrafting.state,action:{method:'beast_talisman_imprint'},seed:1},'crafted');
+  assert.equal(talismanImprint.nativeCrafting.state.imprint.rarity,'RARE');
   assert.equal(inspected.crafting.nativeEngine.harvestOptions.find(entry=>entry.method==='harvest_reforge').available,false);
   assert.ok(inspected.crafting.nativeEngine.bench.every(entry=>typeof entry.available==='boolean'));
   assert.ok(inspected.crafting.nativeEngine.modifierTable.rows.some(row=>row.tier && row.groups.length && row.chance>0));

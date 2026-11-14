@@ -60,11 +60,12 @@ function C.extend(M)
 					outcomes=outcomes,sampleState=outcomes[1].state,sampleItem=M.toItem(model,outcomes[1].state).raw,dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
 			end
 		end
-		if (method=="socket_bench" or method=="socket_white_bench" or method=="omen_connections" or method=="beast_max_links") and not craft.allflame then
+		if (method=="socket_bench" or method=="socket_white_bench" or method=="omen_connections" or method=="beast_max_links" or method=="beast_imprint" or method=="beast_talisman_imprint" or method=="restore_imprint") and not craft.allflame then
 			M.validateRecipe({steps={craft},targets=targets,requirements=options.requirements,requiredGroups=options.requiredGroups})
 			local model=M.model(raw);local result=M.perform(raw,craft,options.seed,initialState)
 			local hit=M.matches(result.state,targets,nil,model,options.requirements,options.requiredGroups)
-			return {exactFor="One deterministic socket craft on the supplied item",sampled=false,successChance=hit and 100 or 0,
+			local imprint=method=="beast_imprint" or method=="beast_talisman_imprint" or method=="restore_imprint"
+			return {exactFor=imprint and "One deterministic imprint action on the supplied item" or "One deterministic socket craft on the supplied item",sampled=false,successChance=hit and 100 or 0,
 				totalWeight=1,matchingWeight=hit and 1 or 0,sampleState=result.state,sampleItem=result.itemText,
 				outcomes={{chance=100,weight=1,matches=hit,text=M.labels[method],state=result.state}},dataPatch=M.dataPatch,limitations=copyTable(M.limits)}
 		end

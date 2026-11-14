@@ -13,7 +13,7 @@ local methods={
 	fossil="Fossil resonator",harvest_reforge="Harvest: reforge with a tagged modifier",harvest_augment="Harvest: add tagged / remove random",
 	harvest_resistance="Harvest: change elemental resistance",fracture="Fracturing Orb",influence_exalt="Influenced Exalted Orb",awakener="Awakener's Orb",
 	veiled_orb="Veiled Exalted Orb",unveil="Choose an unveil",dominance="Orb of Dominance",beast_aspect="Bestiary: Aspect skill",beast_prefix_suffix="Bestiary: prefix to suffix",
-	beast_suffix_prefix="Bestiary: suffix to prefix",beast_imprint="Bestiary: create magic imprint",restore_imprint="Restore imprint",
+	beast_suffix_prefix="Bestiary: suffix to prefix",beast_imprint="Bestiary: create magic imprint",beast_talisman_imprint="Bestiary: imprint rare Talisman",restore_imprint="Restore imprint",
 	bench_reroll="Bench: reroll 1 or 3 modifiers",eldritch_implicit="Eldritch Ember / Ichor",eldritch_exalt="Eldritch Exalted Orb",eldritch_annul="Eldritch Orb of Annulment",
 	eldritch_chaos="Eldritch Chaos Orb",blessed="Blessed Orb",sacred="Sacred Orb",socket_bench="Bench: socket count / links",binding="Orb of Binding",
 	ducat_cyaxan="Cyaxan's Ducat",ducat_brinehook="Brinehook's Ducat",ducat_genteel="The Genteel's Ducat",ducat_merrick="Merrick's Ducat",
@@ -608,6 +608,9 @@ function A.extend(M,api)
 			append(model,state,random,{type=to})
 		elseif method == "beast_imprint" then
 			assert(state.rarity == "MAGIC" and not fractured(state),"Imprinting requires a non-fractured magic item")
+			state.imprint=nil; state.imprint=copyTable(state)
+		elseif method == "beast_talisman_imprint" then
+			assert(model.item.base.tags.talisman and state.rarity == "RARE" and not fractured(state),"Imprinting requires a non-fractured rare Talisman")
 			state.imprint=nil; state.imprint=copyTable(state)
 		elseif method == "restore_imprint" then
 			local imprint=assert(state.imprint,"No saved imprint in this state")
