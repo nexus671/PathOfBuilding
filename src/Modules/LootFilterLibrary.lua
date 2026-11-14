@@ -36,20 +36,30 @@ function M.sample(rule,block)
 	local item={BaseType="Chaos Orb",Class="Stackable Currency",Rarity="Normal",ItemLevel=86,AreaLevel=83,DropLevel=1,Quality=0,StackSize=1,Sockets=0,SocketGroup="",LinkedSockets=0,Width=1,Height=1,UnidentifiedItemTier=0,HasInfluence={"None"},HasExplicitMod={},HasEnchantment={},EnchantmentPassiveNode="",BaseDefencePercentile=50}
 	for key in pairs(parser.booleans) do item[key]=false end
 	for key in pairs(parser.numeric) do if item[key]==nil then item[key]=0 end end
-	local hasBase,hasClass=false,false
+	local hasBase,hasClass,hasRarity,hasIdentified,modifier=false,false,false,false,nil
 	if rule then block=block or parser.parse(rule.text).rules[1];if block then for _,c in ipairs(block.conditions) do
 		local value=c.values[1]
 		if c.keyword=="BaseType" then hasBase=true elseif c.keyword=="Class" then hasClass=true end
+		if c.keyword=="Rarity" then hasRarity=true elseif c.keyword=="Identified" then hasIdentified=true end
+		if c.keyword=="HasExplicitMod" and (c.operator=="=" or c.operator=="==" or c.operator==">=" or c.operator==">") then modifier=c end
 		if parser.numeric[c.keyword] then local n=tonumber(value);item[c.keyword]=n and (c.operator==">" and n+1 or c.operator=="<" and n-1 or n) or value
 		elseif c.keyword=="Rarity" then item.Rarity=value
 		elseif parser.booleans[c.keyword] then item[c.keyword]=value=="True"
 		elseif c.keyword=="HasInfluence" then item[c.keyword]=copyTable(c.values)
 		elseif c.keyword=="BaseType" or c.keyword=="Class" or c.keyword=="SocketGroup" then item[c.keyword]=value end
 	end end end
+	if modifier then
+		local count=not (modifier.quoted and modifier.quoted[1]) and tonumber(modifier.values[1]);local start=count and 2 or 1
+		local needed=count and (modifier.operator==">" and count+1 or count) or 1
+		item.HasExplicitMod={};for i=start,math.min(#modifier.values,start+math.min(needed,6)-1) do item.HasExplicitMod[#item.HasExplicitMod+1]=modifier.values[i] end
+		if not hasIdentified then item.Identified=true end
+		if not hasRarity and not hasBase and not hasClass then item.Rarity="Rare" end
+	end
 	if not hasBase then
 		if hasClass then item.BaseType=classExamples[item.Class] or item.Class
 		elseif item.LinkedSockets>=5 or type(item.SocketGroup)=="string" and item.SocketGroup~="" then item.BaseType="Vaal Regalia";item.Class="Body Armours"
-		elseif item.Rarity=="Unique" then item.BaseType="Leather Belt";item.Class="Belts" end
+		elseif item.Rarity=="Unique" then item.BaseType="Leather Belt";item.Class="Belts"
+		elseif item.Rarity=="Rare" or item.Rarity=="Magic" then item.BaseType="Iron Hat";item.Class="Helmets" end
 	elseif not hasClass then item.Class=baseClass(item.BaseType) end
 	return item
 end

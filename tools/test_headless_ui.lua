@@ -725,6 +725,11 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("manage");frame("filter-empty-profile-tools");local emptyToolIds={};for _,row in ipairs(main.popups[1].controls.results.list) do if row.entry then emptyToolIds[row.entry.id]=true end end;local emptyToolCount=0;for _ in pairs(emptyToolIds) do emptyToolCount=emptyToolCount+1 end;assert(emptyToolCount==2 and emptyToolIds.new and emptyToolIds.import,"Empty filter tools offered actions without a profile");ui:click("close")
 	ui:click("create2");ui:text("title","Covens pickup plan");frame("filter-profile")
 	do
+		local rule={id="rare-example",title="Rare modifiers",text='Show\n Rarity Rare\n HasExplicitMod >=2 "Haast" "Ephij"'}
+		local example=require("Modules.LootFilterLibrary").sample(rule);assert(example.BaseType=="Iron Hat" and example.Identified and #example.HasExplicitMod==2,"Generic rare example did not use equipment and matching modifiers")
+		require("Classes.LootFilterControl").EditRule(rule,function() end);frame("filter-rare-example");ui:click("cancel")
+	end
+	do
 		local saved;require("Classes.LootFilterControl").Conditions({id="count",title="Modifier count",text='Hide\n HasExplicitMod >=2 "Haast" "Ephij"'},function(rule) saved=rule end)
 		frame("filter-modifier-count-editor");ui:click("keepRule")
 		assert(saved.text:find('HasExplicitMod >=2 "Haast" "Ephij"',1,true),"Rule editor separated the modifier count operator")
