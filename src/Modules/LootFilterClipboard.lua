@@ -17,10 +17,16 @@ function M.parse(raw,area)
 	-- The clipboard's gem labels differ from the filter language's class names.
 	class=({["Active Skill Gems"]="Skill Gems",["Support Skill Gems"]="Support Gems"})[class] or class
 	local markers={};for line in raw:gmatch("[^\n]+") do markers[line]=true end
+	local tier
+	for line in pairs(markers) do
+		local value=line:match("^Unidentified %(Tier (%d+)%)$")
+		if value then tier=tonumber(value);break end
+	end
 	local mapped={normal="Normal",magic="Magic",rare="Rare",unique="Unique",relic="Unique",currency="Normal",gem="Normal",quest="Normal"}
 	local item={BaseType=base,Class=class,Rarity=assert(mapped[rarity:lower()],"Unsupported clipboard rarity"),AreaLevel=area,
-		Identified=not markers.Unidentified,Corrupted=markers.Corrupted==true or markers["Twice Corrupted"]==true,
+		Identified=not markers.Unidentified and tier==nil,Corrupted=markers.Corrupted==true or markers["Twice Corrupted"]==true,
 		TwiceCorrupted=markers["Twice Corrupted"]==true,Mirrored=markers.Mirrored==true}
+	if tier and tier>=0 and tier<=5 then item.UnidentifiedItemTier=tier end
 	-- Ordinary equipment copies list each influence on a separate marker line.
 	-- Unique items and maps can carry special influence effects; do not infer
 	-- their complete influence set from the absence of these markers.
