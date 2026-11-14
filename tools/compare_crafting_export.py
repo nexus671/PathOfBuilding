@@ -20,6 +20,21 @@ def compare(previous, exported):
     changed = {field: sorted(key for key in shared
                              if old[key].get(field) != exported[key].get(field))
                for field in FIELDS}
+    display_changes = []
+    for key in sorted(shared):
+        current = exported[key]
+        effects = current.get("grants_effects") or []
+        if not effects:
+            continue
+        old_stats = {stat["id"]: stat for stat in old[key].get("stats", [])}
+        for stat in current.get("stats", []):
+            prior = old_stats.get(stat["id"])
+            if (prior and stat["id"].startswith("local_display_")
+                    and (prior["min"], prior["max"]) != (0, 0)
+                    and (stat["min"], stat["max"]) == (0, 0)):
+                display_changes.append({"modifier": key, "stat": stat["id"],
+                                        "previous_min": prior["min"], "previous_max": prior["max"],
+                                        "granted_effects": effects})
     return {
         "previous_patch": previous["patch"],
         "previous_count": len(old),
@@ -30,6 +45,7 @@ def compare(previous, exported):
             mod.get("domain", "<missing>") for key, mod in exported.items()
             if key not in old).items())),
         "changed_ids_by_field": changed,
+        "zeroed_display_stats_with_granted_effects": display_changes,
     }
 
 
