@@ -101,6 +101,8 @@ Jobs run in the background. **Cancel crafting job** stops them. Results include 
 
 **Simulate → Resource prices** lists the currencies needed by the selected action and saved recipe. Enter prices per unit, add a source and quote date, or copy quotes from another project. Saved quotes also work through MCP. Zero means free; blank means unknown. Changing the common unit clears action overrides and the starting-item cost rather than converting them.
 
+Recipe resources include possible state-dependent costs across branches and loops. This can list a resource that a particular run never spends; the simulation reports actual usage for each run.
+
 Verified bench recipes use their actual ingredients. Unmatched services keep a whole-action price. **Action override** replaces the total for the selected action only; other recipe steps retain their resource quotes. The result says when an override was unused. **Base cost** adds the starting-item cost to every trial. Spending divided by observed successes is a model estimate, not a guaranteed game cost. Zero observed successes does not establish impossibility.
 
 Results list modeled ingredients and service uses separately from spending, with

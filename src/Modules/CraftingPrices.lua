@@ -115,7 +115,11 @@ function M.entries(model,state,actions,book,recipeState)
 		if seen[canonical] then seen[canonical].required=seen[canonical].required or required;return end
 		local name,path,kind=M.describe(canonical,model);local row={key=canonical,name=name,path=path,kind=kind,required=required or false};seen[canonical]=row;result[#result+1]=row
 	end
+	-- Routes can jump backwards or restart, so a corruption action anywhere in
+	-- the guide can precede another step on a later visit. Show possible
+	-- ingredients conservatively rather than assuming linear execution.
 	local mayCorrupt=false
+	for _,action in ipairs(actions or {}) do if action.method=="vaal" or action.method=="locus" then mayCorrupt=true;break end end
 	for _,action in ipairs(actions or {}) do
 		local found=false
 		-- Include both general recipe ingredients and the current item's
@@ -129,7 +133,6 @@ function M.entries(model,state,actions,book,recipeState)
 			if ok then found=true;for key in pairs(components) do add(key,true) end end
 		end
 		if not found then add(sim.priceKey(action),true) end
-		if action.method=="vaal" or action.method=="locus" then mayCorrupt=true end
 	end
 	for key in pairs(book and book.values or {}) do add(key,false) end
 	for id in pairs(catalogue().items) do add(id,false) end

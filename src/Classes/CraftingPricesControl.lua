@@ -21,7 +21,7 @@ function Panel.Open(model,state,actions,book,currency,onKeep,books,recipeState)
 	ui.description(controls,"selected",side,146,sideWidth,64,{},16)
 	ui.label(controls,"priceLabel",side,232,"Price for one unit",14)
 	controls.price=new("EditControl"):EditControl(ui.anchor,{side,254,sideWidth,28},"",nil,nil,32)
-	ui.description(controls,"hint",side,298,sideWidth,math.min(60,height-500),{"Select a currency to quote its unit price.","0 means free; blank stays unknown."},14)
+	ui.description(controls,"hint",side,298,sideWidth,math.min(60,height-500),{"Select a currency to quote its unit price.","0 means free; blank stays unknown.","Recipe resources include possible costs."},14)
 	local function stash() if selected then buffers[selected.key]=controls.price.buf:match("^%s*(.-)%s*$") end end
 	local function renderRows()
 		local rows={}
@@ -36,7 +36,7 @@ function Panel.Open(model,state,actions,book,currency,onKeep,books,recipeState)
 	local function choose(entry)
 		stash();selected=entry;controls.resources.selectedKey=entry and entry.key;controls.price:SetText(entry and buffers[entry.key] or "")
 		controls.selected.list=ui.rows({entry and entry.name or "No resource selected"},sideWidth,16)
-		controls.hint.list=ui.rows(entry and {entry.kind=="Whole action" and "Price of the complete craft." or "Quote one unit of this resource.","0 means free; blank stays unknown."} or {"Select a resource from the list."},sideWidth,14)
+		controls.hint.list=ui.rows(entry and {entry.kind=="Whole action" and "Price of the complete craft." or "Quote one unit of this resource.","0 means free; blank stays unknown.","Recipe resources include possible costs."} or {"Select a resource from the list.","Recipe resources include possible costs."},sideWidth,14)
 		renderRows()
 	end
 	local function refresh()

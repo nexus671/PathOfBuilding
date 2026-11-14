@@ -49,6 +49,7 @@ describe("Saved crafting resource prices",function()
 		for _,case in ipairs({
 			{actions={{method="socket_white_bench"}},recipeState=state},
 			{actions={{method="locus"},{method="socket_white_bench"}}},
+			{actions={{method="socket_white_bench"},{method="locus",onSuccess=1}}},
 		}) do
 			local found
 			for _,row in ipairs(prices.entries(model,model.initial,case.actions,book({}),case.recipeState)) do if row.key==vaal then found=row end end
