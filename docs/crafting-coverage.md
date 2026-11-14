@@ -1,4 +1,4 @@
-<!-- cspell:ignore Siveran Katakohi Ukatoa -->
+<!-- cspell:ignore Siveran Katakohi Ukatoa repoe -->
 # Crafting coverage and rules
 
 The independent engine uses PoB modifiers and an immutable [RePoE export](https://github.com/repoe-fork/repoe-fork.github.io/tree/ae6d85a5c36857e08819852ab8732239294aba59), version **3.29.3.6**. It incorporates several announced 3.30 rules, including experimental partial locks and the [published base implicit changes](https://www.pathofexile.com/forum/view-thread/4013680). Existing explicit implicit lines are retained; a Blessed Orb updates a recognized legacy implicit where the patch notes permit it. On those changed bases, an unrecognized ordinary implicit is rejected instead of guessed. The legacy Artillery Quiver implicit remains separate. Other 3.30 crafting changes and modifier data are not yet incorporated; it does not yet provide complete Craft of Exile parity.
