@@ -113,6 +113,7 @@ function M.condition(c,item)
 				if count then pass=compare(count,number,op) else unknown="Invalid Sockets" end
 			elseif type(colours)~="string" then unknown="Supply socket colours for Sockets"
 			elseif colours:find("[^RGBWAD%s%-]") then unknown="Invalid socket colours for Sockets"
+			elseif count and select(2,colours:gsub("[RGBWAD]",""))~=count then unknown="Socket count does not match socket colours"
 			else pass=socketMatch(colours,pattern,op) end
 			if pass~=nil and (negative and not pass or not negative and pass) then return not negative end
 		end

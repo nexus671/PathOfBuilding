@@ -35,6 +35,8 @@ For socket conditions, enter linked groups separately in **SocketGroup** and all
 
 For strict `<` and `>` comparisons, a socket pattern matches when **any** specified count satisfies the comparison. For example, `SocketGroup < 4RG` matches a four-link with no red socket. This follows [GGG's explanation of socket matching](https://www.reddit.com/r/pathofexile/comments/f2t4tz/comment/g0xmhhp/?context=10).
 
+If the supplied socket count and colour list disagree, colour-dependent socket checks report unknown. A count-only alternative can still match independently.
+
 For modifier or enchantment counts, the game requires the operator and number together, such as `HasExplicitMod >=2 "of Haast" "of Ephij"`. The rule editor formats this automatically and flags a separated operator in imported rules.
 
 **Import** accepts exported `.filter` text. The original text stays in the build, separate from personal rules. The compiler adapts GGG's announced 3.30 BaseType renames and removals and adds Show rules for new items. If removing old items empties a BaseType list, it discards that entire block instead of broadening it. **Audit / update** lists migrations and parser diagnostics. New items remain visible rather than receiving invented economy tiers.
