@@ -704,6 +704,11 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("nav_filters");frame("filter-empty")
 	ui:click("manage");frame("filter-empty-profile-tools");local emptyToolIds={};for _,row in ipairs(main.popups[1].controls.results.list) do if row.entry then emptyToolIds[row.entry.id]=true end end;local emptyToolCount=0;for _ in pairs(emptyToolIds) do emptyToolCount=emptyToolCount+1 end;assert(emptyToolCount==2 and emptyToolIds.new and emptyToolIds.import,"Empty filter tools offered actions without a profile");ui:click("close")
 	ui:click("create2");ui:text("title","Covens pickup plan");frame("filter-profile")
+	do
+		local saved;require("Classes.LootFilterControl").Conditions({id="count",title="Modifier count",text='Hide\n HasExplicitMod >=2 "Haast" "Ephij"'},function(rule) saved=rule end)
+		frame("filter-modifier-count-editor");ui:click("keepRule")
+		assert(saved.text:find('HasExplicitMod >=2 "Haast" "Ephij"',1,true),"Rule editor separated the modifier count operator")
+	end
 	ui:click("manage");ui:text("search","Included filter files");ui:click("choose")
 	ui:text("name","rules.filter");ui:text("text",'Hide\n BaseType "Iron Hat"');frame("filter-included-files");ui:click("keep")
 	assert(build.planningWorkspace.cache.filters.layout.snapshot().data.profiles[1].importFiles[1].name=="rules.filter","Included filter file was not kept in the draft")

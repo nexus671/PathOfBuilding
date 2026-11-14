@@ -33,6 +33,8 @@ The drop preview shows the label, border and beam, and explains the deciding rul
 
 For socket conditions, enter linked groups separately in **SocketGroup** and all socket colours in **SocketColours**. Use R, G, B, W, A and D for red, green, blue, white, Abyss and Delve sockets; linked colours can be separated by hyphens. A rule such as `SocketGroup >= 5GGG` requires at least five linked sockets and at least three green sockets; `==` requires an exact count of the named colours. Invalid rules and test-drop colours show an explanation instead of a certain result.
 
+For modifier or enchantment counts, the game requires the operator and number together, such as `HasExplicitMod >=2 "of Haast" "of Ephij"`. The rule editor formats this automatically and flags a separated operator in imported rules.
+
 **Import** accepts exported `.filter` text. The original text stays in the build, separate from personal rules. The compiler adapts GGG's announced 3.30 BaseType renames and removals and adds Show rules for new items. If removing old items empties a BaseType list, it discards that entire block instead of broadening it. **Audit / update** lists migrations and parser diagnostics. New items remain visible rather than receiving invented economy tiers.
 
 For a filter with `Import` lines, open **Profile tools → Included filter files**. Paste each file's contents with the exact referenced name. Switch to **Add a file** for another, then select **Keep files**. The build stores those copies; the compiler expands them in order for preview and export, including nested imports. Missing or cyclic references remain in the output and the preview stays unknown. No files are read from the game folder.

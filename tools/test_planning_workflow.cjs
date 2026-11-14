@@ -268,6 +268,8 @@ async function main(){
   const modFilter={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n HasExplicitMod "of Haast"'}]};
   const hiddenMod=await queued('test_loot_filter',{baseRevision:context.revision,profile:modFilter,sample:{Identified:false,HasExplicitMod:['of Haast']}},'tested');assert.equal(hiddenMod.result.status,'unknown');
   const visibleMod=await queued('test_loot_filter',{baseRevision:context.revision,profile:modFilter,sample:{Identified:true,HasExplicitMod:['of Haast']}},'tested');assert.equal(visibleMod.result.action,'Hide');
+  const countedModFilter={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n HasExplicitMod >=2 "Haast" "Ephij"'}]};
+  const countedMod=await queued('test_loot_filter',{baseRevision:context.revision,profile:countedModFilter,sample:{Identified:true,HasExplicitMod:['of Haast','of Ephij']}},'tested');assert.equal(countedMod.result.action,'Hide');
   const numericNameFilter={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n BaseType "1"'}]};
   const numericName=await queued('test_loot_filter',{baseRevision:context.revision,profile:numericNameFilter,sample:{BaseType:'Level 1 Relic'}},'tested');assert.equal(numericName.result.action,'Hide');
   const quotedModFilter={...socketProfile,rules:[{...socketProfile.rules[0],text:'Hide\n HasExplicitMod "1"'}]};

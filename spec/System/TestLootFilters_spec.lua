@@ -75,6 +75,15 @@ describe("Build-owned loot filters",function()
 		main.popups[1].controls.keepRule:Click();assert.is_truthy(saved.text:find('HasExplicitMod = "1"',1,true));assert.is_truthy(saved.text:find('BaseType = ">=1"',1,true))
 		assert.equal("Hide",parser.simulate(parser.parse(saved.text.."\nShow"),{Identified=true,HasExplicitMod={"Tier 1"},BaseType=">=1 Token"}).action)
 	end)
+	it("keeps modifier count operators joined to their number",function()
+		for _,key in ipairs({"HasExplicitMod","HasEnchantment"}) do
+			local raw='Hide\n '..key..' >=2 "Haast" "Ephij"';local saved
+			require("Classes.LootFilterControl").Conditions({id="count",title="Count",text=raw},function(value) saved=value end)
+			main.popups[1].controls.keepRule:Click();assert.is_truthy(saved.text:find(key..' >=2 "Haast" "Ephij"',1,true))
+			local item={Identified=true,[key]={"of Haast","of Ephij"}};assert.equal("Hide",parser.simulate(parser.parse(saved.text.."\nShow"),item).action)
+			assert.equal("invalid",parser.simulate(parser.parse('Hide\n '..key..' >= 2 "Haast"\nShow'),item).status)
+		end
+	end)
 	it("never treats incomplete or unsupported samples as a certain hide",function()
 		for _,raw in ipairs({'Hide\n Fated True','Hide\n TwiceCorrupted True','Hide\n UnidentifiedItemTier >= 3','Hide\n FutureKeyword True'}) do
 			assert.equal("unknown",parser.simulate(parser.parse(raw),{}).status)
