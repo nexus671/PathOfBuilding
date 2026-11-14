@@ -408,12 +408,27 @@ function A.extend(M,api)
 		if not removable then return "No removable modifier for this craft" end
 	end
 	local shieldMaximum={fire={"MaximumFireResist1","MaximumFireResist2_","MaximumFireResist3"},cold={"MaximumColdResist1","MaximumColdResist2","MaximumColdResist3"},lightning={"MaximumLightningResist1","MaximumLightningResist2___","MaximumLightningResist3"}}
+	-- Client families have matching roll tiers, but several IDs have suffixes.
+	local clusterResistance={
+		fire={{"AfflictionJewelSmallPassivesGrantFireRes","AfflictionJewelSmallPassivesGrantFireRes2","AfflictionJewelSmallPassivesGrantFireRes3"},
+			{"AfflictionJewelSmallPassivesGrantFireResSmall","AfflictionJewelSmallPassivesGrantFireResSmall2","AfflictionJewelSmallPassivesGrantFireResSmall3_","AfflictionJewelSmallPassivesGrantFireResSmall4","AfflictionJewelSmallPassivesGrantFireResSmall5"}},
+		cold={{"AfflictionJewelSmallPassivesGrantColdRes_","AfflictionJewelSmallPassivesGrantColdRes2","AfflictionJewelSmallPassivesGrantColdRes3"},
+			{"AfflictionJewelSmallPassivesGrantColdResSmall","AfflictionJewelSmallPassivesGrantColdResSmall2","AfflictionJewelSmallPassivesGrantColdResSmall3","AfflictionJewelSmallPassivesGrantColdResSmall4","AfflictionJewelSmallPassivesGrantColdResSmall5_"}},
+		lightning={{"AfflictionJewelSmallPassivesGrantLightningRes","AfflictionJewelSmallPassivesGrantLightningRes2_","AfflictionJewelSmallPassivesGrantLightningRes3"},
+			{"AfflictionJewelSmallPassivesGrantLightningResSmall","AfflictionJewelSmallPassivesGrantLightningResSmall2__","AfflictionJewelSmallPassivesGrantLightningResSmall3","AfflictionJewelSmallPassivesGrantLightningResSmall4_","AfflictionJewelSmallPassivesGrantLightningResSmall5"}},
+	}
+	local function clusterResistanceTarget(model,id,from,to)
+		if not model.item.clusterJewel then return end
+		for size,list in ipairs(clusterResistance[from] or {}) do for tier,source in ipairs(list) do
+			if source==id then return clusterResistance[to][size][tier] end
+		end end
+	end
 	local function shieldResistanceTarget(model,id,from,to)
 		if model.item.type~="Shield" then return end
 		for tier,source in ipairs(shieldMaximum[from] or {}) do if source==id then return shieldMaximum[to][tier] end end
 	end
 	local function resistanceTarget(model,id,from,to)
-		return shieldResistanceTarget(model,id,from,to) or id:gsub(from:gsub("^%l",string.upper),to:gsub("^%l",string.upper))
+		return clusterResistanceTarget(model,id,from,to) or shieldResistanceTarget(model,id,from,to) or id:gsub(from:gsub("^%l",string.upper),to:gsub("^%l",string.upper))
 	end
 	function M.resistanceReason(model,state,from,to)
 		if from==to or not contains({"fire","cold","lightning"},from) or not contains({"fire","cold","lightning"},to) then return "Choose different elemental resistance types" end
@@ -428,9 +443,10 @@ function A.extend(M,api)
 		for i,entry in ipairs(state.affixes) do
 			local jewel=model.item.type=="Jewel" and (entry.id==element.."ResistanceJewel" or entry.id=="Maximum"..element.."ResistanceJewel" or entry.id=="Abyss"..element.."ResistanceJewel1")
 			local shield=shieldResistanceTarget(model,entry.id,from,to)
+			local cluster=clusterResistanceTarget(model,entry.id,from,to)
 			local eligible=false;for _,group in ipairs(groups(model,entry.id)) do if contains(sourceGroups,group) then eligible=true;break end end
 			if not api.protected(entry,model.byId[entry.id],f) and eligible then
-				if not (model.byId[entry.id].group==element.."Resistance" or jewel or shield) then return "An eligible resistance modifier has an unsupported conversion family" end
+				if not (model.byId[entry.id].group==element.."Resistance" or jewel or shield or cluster) then return "An eligible resistance modifier has an unsupported conversion family" end
 				matches[#matches+1]=i
 			end
 		end
@@ -438,7 +454,7 @@ function A.extend(M,api)
 		for _,index in ipairs(matches) do
 			local id=resistanceTarget(model,state.affixes[index].id,from,to)
 			if not model.byId[id] then return "No matching resistance tier on this base" end
-			if (model.item.type=="Jewel" or shieldResistanceTarget(model,state.affixes[index].id,from,to)) and model.item:GetModSpawnWeight(model.byId[id],{})<=0 then return "The replacement modifier cannot occur on this base" end
+			if (model.item.type=="Jewel" or shieldResistanceTarget(model,state.affixes[index].id,from,to)) and model.item:GetModSpawnWeight(model.byId[id],model.extraTags or {})<=0 then return "The replacement modifier cannot occur on this base" end
 			for _,entry in ipairs(state.affixes) do if model.byId[entry.id].group==model.byId[id].group then return "That resistance group is already present" end end
 		end
 		return nil,matches

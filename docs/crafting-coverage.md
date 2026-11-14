@@ -27,7 +27,7 @@ The independent engine uses PoB modifiers and an immutable [RePoE export](https:
 
 Socket craft inspection includes the modelled colour bench, Chromatic and tainted currency actions alongside the deterministic socket and link services. Random outcomes remain labelled as such, and unavailable choices explain their current restrictions.
 
-Resistance conversion is refused when an eligible, unprotected hybrid or cluster family is not yet modeled, even if another modifier on the item could be converted. This avoids presenting a definite outcome when the game could choose the unsupported modifier.
+Cluster-jewel small-passive resistance conversions use the matching size and tier. Resistance conversion is refused when another eligible, unprotected family is not yet modeled, even if a supported modifier could be converted. This avoids presenting a definite outcome when the game could choose the unsupported modifier.
 
 ## Saved resource prices
 
