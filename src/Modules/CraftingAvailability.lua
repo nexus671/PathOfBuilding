@@ -5,7 +5,7 @@ local normal={transmute=true,alchemy=true,binding=true}
 local magic={alteration=true,augmentation=true,regal=true,foulborn_augmentation=true,foulborn_regal=true}
 local rare={chaos=true,exalt=true,veiled_orb=true,fracture=true,influence_exalt=true,awakener=true,dominance=true,bench_reroll=true,eldritch_exalt=true,eldritch_annul=true,eldritch_chaos=true,foulborn_exalt=true,tainted_chaos=true,tainted_exalt=true,harvest_reforge=true,harvest_augment=true}
 local flask={transmute=true,alteration=true,augmentation=true,annul=true,scour=true,divine=true,blessed=true,quality=true}
-local socket={chromatic=true,tainted_chromatic=true,socket_colour_bench=true,socket_white_bench=true,tainted_jeweller=true,tainted_fusing=true}
+local socket={chromatic=true,beast_max_links=true,tainted_chromatic=true,socket_colour_bench=true,socket_white_bench=true,tainted_jeweller=true,tainted_fusing=true}
 function M.check(method,state,model)
 	if state.destroyed then return false,"Undo or reset the destroyed item." end
 	if state.mirrored then return false,"Mirrored items cannot be crafted." end

@@ -760,7 +760,7 @@ do
 end
 -- Extensions register state prerequisites once for both execution and browsing.
 local partialLockActions={bench=true,bench_reroll=true,remove_crafted=true,annul=true,chaos=true,alteration=true,scour=true,divine=true,exalt=true,augmentation=true,regal=true,harvest_reforge=true,harvest_augment=true,
-	socket_bench=true,socket_white_bench=true,socket_colour_bench=true,chromatic=true,omen_connections=true,omen_trichromatism=true,tainted_chromatic=true,tainted_jeweller=true,tainted_fusing=true,
+	socket_bench=true,socket_white_bench=true,socket_colour_bench=true,chromatic=true,beast_max_links=true,omen_connections=true,omen_trichromatism=true,tainted_chromatic=true,tainted_jeweller=true,tainted_fusing=true,
 	quality=true,tainted_quality=true,catalyst=true,tainted_catalyst=true,blessed=true,sacred=true,harvest_enchant=true,eldritch_implicit=true,conflict=true}
 function M.methodReason(model,state,method)
 	if M.hasPartialLock(M.context(model,state),state) and not partialLockActions[method] then

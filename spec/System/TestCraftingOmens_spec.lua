@@ -1,3 +1,4 @@
+-- cspell:ignore craic
 describe("Guaranteed socket crafts",function()
 	local sim=require("Modules.CraftingSimulator")
 	local check=require("Modules.CraftingAvailability").check
@@ -14,6 +15,22 @@ describe("Guaranteed socket crafts",function()
 		local imported=new("Item"):Item(result.itemText);assert.are.same(result.state.sockets,imported.sockets)
 		assert.are.same(result.state,sim.perform(raw,{method="omen_connections"},999).state)
 	end)
+	it("models the Bestiary maximum-links recipe and both named beasts",function()
+		local action={method="beast_max_links"};local model=sim.model(raw);local before=copyTable(model.initial)
+		local result=sim.perform(raw,action,1);local expected=copyTable(before);for _,socket in ipairs(expected.sockets) do socket.group=0 end
+		assert.are.same(expected,result.state);assert.are.same(before,model.initial)
+		assert.are.same({beast_black_morrigan=1,beast_craicic_sand_spitter=1},sim.components(action))
+		local price=require("Modules.CraftingPrices");assert.equal("The Black Morrigan",price.describe("beast_black_morrigan"));assert.equal("Craicic Sand Spitter",price.describe("beast_craicic_sand_spitter"))
+		assert.is_nil(price.aliases(model).beast_max_links)
+		local _,icon=price.describe("beast_black_morrigan",model);assert.is_truthy(icon)
+		assert.is_truthy(require("Modules.CraftingWorkbench").icon("beast_max_links"))
+		local calculated=sim.calculate(raw,action,{},nil,{requirements={links=6}});assert.is_false(calculated.sampled);assert.equal(100,calculated.successChance)
+		local recipe={steps={action},targets={},requirements={links=6}}
+		local run=sim.simulate(raw,recipe,{trials=3,maxActions=1,prices={beast_black_morrigan=7,beast_craicic_sand_spitter=2},currency="chaos"})
+		assert.equal(9,run.meanCost);assert.equal(3,run.currencySpent.beast_black_morrigan);assert.equal(3,run.currencySpent.beast_craicic_sand_spitter)
+		local unknown=sim.simulate(raw,recipe,{trials=1,maxActions=1,prices={beast_black_morrigan=7},currency="chaos"});assert.is_truthy(unknown.unpriced.beast_craicic_sand_spitter)
+		assert.is_false(check("beast_max_links",result.state,model));assert.is_false(pcall(sim.perform,raw,action,1,result.state))
+	end)
 	it("rejects unusable items and fully linked groups without spending randomness",function()
 		local m=sim.model(raw);local variants={}
 		local function variant(key,value) local state=copyTable(m.initial);state[key]=value;variants[#variants+1]=state end
@@ -22,8 +39,10 @@ describe("Guaranteed socket crafts",function()
 		variant("sockets",{{color="A",group=0},{color="W",group=1}})
 		variant("corrupted",true);variant("mirrored",true)
 		for _,state in ipairs(variants) do
-			assert.is_false(check("omen_connections",state,m));local calls=0
-			assert.is_false(pcall(sim.action,m,state,{method="omen_connections"},function() calls=calls+1;return 0.5 end));assert.are.equal(0,calls)
+			for _,method in ipairs({"omen_connections","beast_max_links"}) do
+				assert.is_false(check(method,state,m));local calls=0
+				assert.is_false(pcall(sim.action,m,state,{method=method},function() calls=calls+1;return 0.5 end));assert.are.equal(0,calls)
+			end
 		end
 	end)
 	it("charges the Omen and Fusing once for each completed recipe",function()

@@ -13,7 +13,7 @@ local function catalogue()
 	return art
 end
 local catalysts={"Abrasive","Accelerating","Dextral","Fertile","Imbued","Intrinsic","Noxious","Prismatic","Sinistral","Tempering","Turbulent","Unstable"}
-local complex={fossil=true,essence=true,catalyst=true,quality=true,tainted_quality=true,eldritch_implicit=true,harvest_reforge=true,harvest_augment=true,harvest_resistance=true,omen_connections=true,omen_trichromatism=true}
+local complex={fossil=true,essence=true,catalyst=true,quality=true,tainted_quality=true,eldritch_implicit=true,harvest_reforge=true,harvest_augment=true,harvest_resistance=true,beast_max_links=true,omen_connections=true,omen_trichromatism=true}
 function M.aliases(model)
 	local kind=model and model.item.type or ""
 	if aliasCache[kind] then return aliasCache[kind] end
@@ -95,6 +95,10 @@ function M.describe(key,model)
 	elseif option then label=label.." / "..option end
 	local id=data.methods[method]
 	if key=="dead_mans_sulphur" then return "Dead Man's Sulphur",nil,"Resource" end
+	if key=="beast_black_morrigan" or key=="beast_craicic_sand_spitter" then
+		local orb=data.methods.beast_max_links;local path=orb and data.items[orb] and data.items[orb].path
+		return key=="beast_black_morrigan" and "The Black Morrigan" or "Craicic Sand Spitter",path,"Beast"
+	end
 	return label,id and data.items[id].path,"Whole action"
 end
 function M.entries(model,state,actions,book)

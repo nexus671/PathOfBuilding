@@ -97,6 +97,7 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		end
 		for _,count in ipairs({1,3}) do entries[#entries+1]={id="bench-reroll-"..count,label="Bench: reroll "..count.." modifier"..(count==1 and "" or "s"),category="Bench",icon=workbench.icon("bench_reroll"),action={method="bench_reroll",count=count},
 			details={"Add this bench action to the recipe without changing the working item.","The item must have enough removable modifiers when this step runs."}} end
+		entries[#entries+1]={id="beast_max_links",label=sim.labels.beast_max_links,category="Bestiary",icon=workbench.icon("beast_max_links"),action={method="beast_max_links"},details={"Link the item's existing sockets using the Black Morrigan and a Craicic Sand Spitter.","Add sockets first; this step does not increase their number."}}
 		if model then
 			entries[#entries+1]={id="fossil-combination",label="Fossil combination",category="Fossils",configure="fossil",details={"Choose up to four fossils for this recipe step.","The item must meet the fossil requirements when this step runs."}}
 			for _,entry in ipairs(model.bench or {}) do

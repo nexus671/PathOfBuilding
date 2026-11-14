@@ -1,5 +1,5 @@
 // A real MCP stdio client drives an isolated native host and explicit UI review.
-// cspell:ignore GGGRRW
+// cspell:ignore GGGRRW craic
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -115,6 +115,11 @@ async function main(){
   assert.ok(enchantInspection.crafting.nativeEngine.nativeStats.Armour<bodyInspection.crafting.nativeEngine.nativeStats.Armour);
   const linksInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'connections',limit:5},'inspected');
   const linksService=linksInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='omen_connections');
+  const beastLinksInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'maximum links',limit:5},'inspected');
+  const beastLinks=beastLinksInspection.crafting.nativeEngine.socketCrafts.find(entry=>entry.method==='beast_max_links');
+  assert.ok(beastLinks.available && beastLinks.deterministic);assert.deepEqual(beastLinks.components,{beast_black_morrigan:1,beast_craicic_sand_spitter:1});
+  const beastLinked=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:bodyRaw,action:beastLinks.action},'crafted');
+  assert.equal(beastLinked.nativeCrafting.state.sockets.length,6);assert.ok(beastLinked.nativeCrafting.state.sockets.every(socket=>socket.group===0));
   assert.ok(linksService.available && linksService.deterministic);assert.deepEqual(linksService.components,{'Metadata/Items/Currency/AncestralOmenOnFusingMakeFullLinks':1,'Metadata/Items/Currency/CurrencyRerollSocketLinks':1});
   const linkAction=linksService.action;
   const rgbInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:bodyRaw,query:'RGB',limit:5},'inspected');

@@ -1343,6 +1343,14 @@
       "height": 78,
       "sha256": "072b034345117585d90763e8e19b9b3056393520f215c15fd43ab9efe0792bd2"
     },
+    "Metadata/Items/Currency/CurrencyItemisedCapturedMonster": {
+      "name": "Imprinted Bestiary Orb",
+      "path": "Assets/Crafting/Currency/b8439154c0cc6e3936e8.png",
+      "url": "https://web.poecdn.com/image/Art/2DItems/Currency/BestiaryOrbFull.png",
+      "width": 78,
+      "height": 78,
+      "sha256": "29139a8dabbdab2ef82706dc642f9348a441605d6df9caf34d957c425eda90d1"
+    },
     "Metadata/Items/Currency/CurrencyJewelleryQualityAttack": {
       "name": "Abrasive Catalyst",
       "path": "Assets/Crafting/Currency/e6d2b984d6bd3e9da5a6.png",
@@ -1790,6 +1798,7 @@
     "annul": "Metadata/Items/Currency/CurrencyRemoveMod",
     "augmentation": "Metadata/Items/Currency/CurrencyAddModToMagic",
     "awakener": "Metadata/Items/AtlasExiles/ApplyInfluence",
+    "beast_max_links": "Metadata/Items/Currency/CurrencyItemisedCapturedMonster",
     "binding": "Metadata/Items/Currency/CurrencyUpgradeToRareAndSetSockets",
     "blessed": "Metadata/Items/Currency/CurrencyRerollImplicit",
     "catalyst": "Metadata/Items/Currency/CurrencyJewelleryQualityResource",
