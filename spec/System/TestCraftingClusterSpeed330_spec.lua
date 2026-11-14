@@ -4,6 +4,17 @@ describe("3.30 cluster jewel speed families",function()
 	local cast="AfflictionJewelSmallPassivesGrantCastSpeed"
 	local raw="Rarity: NORMAL\nLarge Cluster Jewel\nItem Level: 86\nCluster Jewel Skill: affliction_axe_and_sword_damage\nCluster Jewel Node Count: 8\nImplicits: 3\n{crafted}Adds 8 Passive Skills\n{crafted}2 Added Passive Skills are Jewel Sockets\n{crafted}Added Small Passive Skills grant: 12% increased Axe and Sword Damage"
 	before_each(function() newBuild() end)
+	it("matches the complete speed family in the 3.30 client export",function()
+		local expected=dofile("../spec/System/Fixtures/ClusterSpeed330.lua")
+		local model=sim.model(raw)
+		for id in pairs(expected) do
+			assert.is_not_nil(model.byId[id],id)
+			assert.is_true(sim.isClusterSpeedMod(model,id),id)
+		end
+		for id in pairs(model.byId) do
+			if sim.isClusterSpeedMod(model,id) then assert.is_true(expected[id] or false,id) end
+		end
+	end)
 	local function legacy()
 		local base=sim.model(raw)
 		local state={rarity="RARE",affixes={{id=attack,range=0.5},{id=cast,range=0.5}}}
