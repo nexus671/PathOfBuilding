@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Find and show temporary Atlas grant paths when planning stage transitions.
 * Check that Atlas point grants can be reached before using their points.
 * Report failed AI planning requests with the correct request ID.
 * Show native rarity colours on loot-filter previews when a rule has no text colour.

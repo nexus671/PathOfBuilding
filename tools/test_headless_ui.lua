@@ -109,6 +109,14 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:resize(size[1],size[2]);ui:frame();ui:text("title",savedTitle);ui:text("budget","138")
 	ui:click("nav_build");ui:click("modeItems");ui:click("modeSkills");ui:click("atlas");assert(workspace.controls.notes.buf:find("Essence",1,true),"Switching tools lost the Atlas draft")
 	ui:click("keep");assert(#build.savers.AtlasPlans.plans==1)
+	do
+		local atlas=require("Modules.AtlasPlanner");local start={id="temp-start",title="Temporary start",version="3.29.3",budget=138,nodes={}}
+		local shortest=atlas.connect(start,{65225});local goal=atlas.connect(start,{65225},{17321});goal.avoided=nil;goal.id="temp-goal";goal.title="Temporary goal"
+		start.budget=#shortest.nodes;goal.budget=start.budget;build.savers.AtlasPlans:Upsert(start)
+		require("Classes.AtlasPlanningControl").Open(build,goal,function() end);ui:choose("previous","temp-start","val")
+		local lines={};for _,row in ipairs(main.popups[1].controls.transition.list) do lines[#lines+1]=StripEscapes(row[1]) end
+		assert(table.concat(lines," "):find("Temporary grant path",1,true),"Atlas stages did not show the temporary grant route");frame("atlas-temporary-grant-route");ui:click("close");build.savers.AtlasPlans:Remove("temp-start")
+	end
 	local starter=copyTable(build.savers.AtlasPlans.plans[1]);starter.id="starter-atlas";starter.title="Starter maps";starter.nodes={};starter.progression={stage="starter"};build.savers.AtlasPlans:Upsert(starter)
 	ui:click("progression");ui:choose("stage","final","val");ui:choose("previous","starter-atlas","val");frame("atlas-progression")
 	ui:click("strategyTab");ui:text("maps","T16 maps; avoid reflect");ui:text("scarabs","Record map supplies here");ui:text("requirements","Complete map unlocks");ui:text("avoid","Reflect");ui:text("amount","many");ui:text("source","Manual test quote");ui:click("keep")

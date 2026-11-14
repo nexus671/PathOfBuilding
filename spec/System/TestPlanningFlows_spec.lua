@@ -91,6 +91,19 @@ describe("Connected planning workflows",function()
 		local empty=plan("empty");empty.budget=0;local bonus=copyTable(before);bonus.budget=0;atlas.validate(bonus)
 		assert.is_nil(strategy.transition(empty,bonus).steps)
 	end)
+	it("finds and verifies a temporary route to an Atlas point grant",function()
+		local strategy=require("Modules.AtlasStrategy");local start={id="start",title="Start",version="3.29.3",budget=138,nodes={}}
+		local shortest=atlas.connect(start,{65225});local goal=atlas.connect(start,{65225},{17321});goal.avoided=nil
+		start.budget=#shortest.nodes;goal.budget=start.budget;assert.is_nil(atlas.budgetReachability(goal))
+		local result=strategy.transition(start,goal);assert.is_true(result.temporary);assert.is_truthy(result.steps)
+		local state=copyTable(start);local refunds=0
+		for _,step in ipairs(result.steps) do
+			if step.action=="Refund" then refunds=refunds+1;for index,id in ipairs(state.nodes) do if id==step.id then table.remove(state.nodes,index);break end end
+			else assert.is_true(atlas.report(state).remaining>0);state.nodes[#state.nodes+1]=step.id end
+			state=atlas.validate(state)
+		end
+		assert.is_true(refunds>0);assert.same(goal.nodes,state.nodes)
+	end)
 	it("creates stress presets from explicit active inputs without mutating them",function()
 		local encounter=require("Modules.CalcEncounter");local source={enemyPhysicalDamage="1000",recoverySimulationWindow=4}
 		local input=encounter.preset(source,{},encounter.presets[7]);assert.equal(200,input.recoverySimulationPhysicalDot);assert.equal(30,input.recoverySimulationWindow);assert.equal(4,source.recoverySimulationWindow);assert.is_nil(source.recoverySimulationPhysicalDot)

@@ -79,9 +79,14 @@ end
 function M.transition(before,after)
 	local diff=M.compare(before,after);local tree=atlas.tree(after.version);local goal={};for _,id in ipairs(after.nodes) do goal[id]=true end
 	local budget=math.max(before.budget,after.budget)
-	local function route(rebuild)
-		local state=copyTable(before);state.budget=budget;local steps={};local clearing=rebuild
-		for _=1,#before.nodes+#after.nodes+1 do
+	local function freePoints(state)
+		local granted=tree.nodes[tree.start].grantedPoints or 0
+		for _,id in ipairs(state.nodes) do granted=granted+(tree.nodes[id].grantedPoints or 0) end
+		return state.budget+granted-#state.nodes
+	end
+	local function route(rebuild,initial)
+		local state=copyTable(initial or before);state.budget=budget;local steps={};local clearing=rebuild
+		for _=1,#state.nodes+#after.nodes+1 do
 			if table.concat(state.nodes,",")==table.concat(after.nodes,",") then return steps end
 			if #state.nodes==0 then clearing=false end
 			local nextState,step
@@ -90,7 +95,7 @@ function M.transition(before,after)
 				local ok,validated=pcall(atlas.validate,candidate)
 				if ok then nextState=validated;step={action="Refund",id=id};break end
 			end end
-			if not nextState and not clearing then
+			if not nextState and not clearing and freePoints(state)>0 then
 				local allocated={[tree.start]=true};for _,id in ipairs(state.nodes) do allocated[id]=true end
 				for _,id in ipairs(after.nodes) do if not allocated[id] then
 					local adjacent=false;for _,other in ipairs(tree.nodes[id].links) do if allocated[other] then adjacent=true;break end end
@@ -101,11 +106,26 @@ function M.transition(before,after)
 			steps[#steps+1]=step;state=nextState
 		end
 	end
-	local steps=route(false);local rebuilt=false;if not steps then steps=route(true);rebuilt=true end
-	local result={added=diff.added,removed=diff.removed,stats=diff.stats,steps=steps,rebuild=rebuilt,lines={before.title.." -> "..after.title,#diff.removed.." changed nodes to refund; "..#diff.added.." changed nodes to allocate.","Route assumes "..budget.." base points are available. Each step preserves connectivity and the supplied budget plus granted points. Refund currency prices are not assumed."}}
+	local steps=route(false);local rebuilt=false;if not steps then steps=route(true);rebuilt=steps~=nil end
+	local temporary=false
+	if not steps then
+		local allocated={[tree.start]=true};for _,id in ipairs(before.nodes) do allocated[id]=true end
+		local grants={};for _,id in ipairs(after.nodes) do if not allocated[id] and (tree.nodes[id].grantedPoints or 0)>0 then grants[#grants+1]=id end end
+		if #grants==1 then
+			local avoid={};for _,id in ipairs(after.avoided or {}) do if not allocated[id] then avoid[#avoid+1]=id end end
+			local start=copyTable(before);start.budget=budget
+			local ok,via,added=pcall(atlas.connect,start,{grants[1]},avoid)
+			if ok then
+				local prefix={};local state=copyTable(start)
+				for i=#added,1,-1 do if freePoints(state)<1 then prefix=nil;break end;local candidate=copyTable(state);candidate.nodes[#candidate.nodes+1]=added[i];local valid,nextState=pcall(atlas.validate,candidate);if not valid then prefix=nil;break end;state=nextState;prefix[#prefix+1]={action="Allocate",id=added[i]} end
+				if prefix then local suffix=route(false,via);if suffix then steps=prefix;for _,step in ipairs(suffix) do steps[#steps+1]=step end;temporary=true end end
+			end
+		end
+	end
+	local result={added=diff.added,removed=diff.removed,stats=diff.stats,steps=steps,rebuild=rebuilt,temporary=temporary,lines={before.title.." -> "..after.title,#diff.removed.." changed nodes to refund; "..#diff.added.." changed nodes to allocate.","Route assumes "..budget.." base points are available. Each step preserves connectivity and the supplied budget plus granted points. Refund currency prices are not assumed."}}
 	if steps then
 		local refunds=0;for _,step in ipairs(steps) do if step.action=="Refund" then refunds=refunds+1 end end
-		result.lines[#result.lines+1]=(rebuilt and "Rebuild route; may require extra refunds. " or "Direct route. ")..refunds.." refunds, "..(#steps-refunds).." allocations. This is a valid route, not a minimum-refund optimizer."
+		result.lines[#result.lines+1]=(temporary and "Temporary grant path; includes extra refunds. " or rebuilt and "Rebuild route; may require extra refunds. " or "Direct route. ")..refunds.." refunds, "..(#steps-refunds).." allocations. This is a valid route, not a minimum-refund optimizer."
 		for i,step in ipairs(steps) do result.lines[#result.lines+1]=i..". "..step.action..": "..tree.nodes[step.id].name.." ["..step.id.."]" end
 	else result.lines[#result.lines+1]="No sequential route found within this budget. Earn more points or plan a temporary route before applying these allocations." end
 	return result
