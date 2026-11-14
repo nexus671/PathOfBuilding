@@ -36,6 +36,17 @@ describe("Saved crafting resource prices",function()
 		quote.values[fusing]=nil;result=sim.simulate(raw,recipe,options);assert.is_nil(result.meanCost);assert.is_true(result.unpriced[fusing])
 		quote.values[fusing]=0;result=sim.simulate(raw,recipe,options);assert.are.equal(327,result.meanCost)
 	end)
+	it("lists corruption costs among the current recipe resources",function()
+		local model=sim.model(raw);local state=copyTable(model.initial);state.corrupted=true
+		local vaal=prices.key("vaal",model)
+		for _,action in ipairs({{method="socket_white_bench"},{method="socket_colour_bench",count=3},{method="socket_bench",count=6,linked=true}}) do
+			local rows=prices.entries(model,state,{action},book({}));local found
+			for _,row in ipairs(rows) do if row.key==vaal then found=row end end
+			assert.is_truthy(found,action.method);assert.is_true(found.required)
+		end
+		local rows=prices.entries(model,model.initial,{{method="socket_white_bench"}},book({}))
+		for _,row in ipairs(rows) do if row.key==vaal then assert.is_false(row.required) end end
+	end)
 	it("resolves currency aliases and keeps explicit action overrides separate",function()
 		local m=sim.model(raw);local state=copyTable(m.initial);state.rarity="RARE"
 		local id=assert(prices.aliases(m).exalt);local quote=book({[id]=2})

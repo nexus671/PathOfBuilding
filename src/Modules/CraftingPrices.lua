@@ -116,9 +116,14 @@ function M.entries(model,state,actions,book)
 		local name,path,kind=M.describe(canonical,model);local row={key=canonical,name=name,path=path,kind=kind,required=required or false};seen[canonical]=row;result[#result+1]=row
 	end
 	for _,action in ipairs(actions or {}) do
-		local ok,components=pcall(sim.components,action,nil,model)
-		if not ok then ok,components=pcall(sim.components,action,state,model) end
-		if ok then for key in pairs(components) do add(key,true) end else add(sim.priceKey(action),true) end
+		local found=false
+		-- Include both general recipe ingredients and the current item's
+		-- state-dependent ingredients, such as Vaal Orbs on corrupted gear.
+		for _,input in ipairs({false,state or false}) do
+			local ok,components=pcall(sim.components,action,input or nil,model)
+			if ok then found=true;for key in pairs(components) do add(key,true) end end
+		end
+		if not found then add(sim.priceKey(action),true) end
 	end
 	for key in pairs(book and book.values or {}) do add(key,false) end
 	for id in pairs(catalogue().items) do add(id,false) end
