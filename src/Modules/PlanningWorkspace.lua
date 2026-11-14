@@ -2,7 +2,7 @@
 local M={}
 local pages={ai="AI builds",atlas="Atlas",crafting="Crafting",journey="Journey",filters="Loot filter"}
 function M.new(build)
-	local self=setmetatable({build=build,page="ai",cache={},drafts={},selections={},craftDrafts=build.planningCraftDrafts or {},controls={},viewport={x=0,y=32,width=main.screenW,height=main.screenH-32}},{__index=M})
+	local self=setmetatable({build=build,page="ai",cache={},drafts={},transient={},selections={},craftDrafts=build.planningCraftDrafts or {},controls={},viewport={x=0,y=32,width=main.screenW,height=main.screenH-32}},{__index=M})
 	build.planningCraftDrafts=nil
 	self.nav=new("ControlHost"):ControlHost()
 	local anchor=new("Control"):Control(nil,{0,0,0,0})
@@ -103,7 +103,7 @@ function M:Show(page,source)
 	local saved=self.drafts[page]
 	source=source or saved and saved.plan
 	if not cached then
-		local layout={selectedProject=self.selections[page],restore=saved and saved.view,restorePage=saved and saved.plan and saved.plan.page,width=self.viewport.width,height=self.viewport.height-52,navigate=function(target,value) self:Show(target,value) end}
+		local layout={selectedProject=self.selections[page],restore=saved and saved.view,restorePage=saved and saved.plan and saved.plan.page,transient=self.transient,width=self.viewport.width,height=self.viewport.height-52,navigate=function(target,value) self:Show(target,value) end}
 		layout.openProjects=function()
 			local current=self.cache.crafting
 			if current and current.layout.snapshot then

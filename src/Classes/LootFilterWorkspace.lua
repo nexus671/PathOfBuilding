@@ -27,7 +27,7 @@ function M.Open(build,source,layout,controller)
 		for _,reason in ipairs(evaluated and evaluated.reasons or {}) do lines[#lines+1]=reason end;return lines
 	end
 	local history=require("Modules.PlanningHistory").new(data,state.history);local tierView;local tierState=state.tierState
-	local dependencies;local dependencyTime;local dependencyJob;local dependencyError;local generationJob
+	local transient=layout.transient or {};local dependencies;local dependencyTime;local dependencyJob;local dependencyError;local generationJob=transient.filterGeneration
 	local function advanceDependencies()
 		if not dependencyJob then return end
 		local done,result,err=require("Modules.LootFilterDependencies").poll(dependencyJob)
@@ -39,7 +39,7 @@ function M.Open(build,source,layout,controller)
 		end
 	end
 	local function refreshDependencies()
-		if dependencyJob then return end
+		if dependencyJob or generationJob then return end
 		if profile then dependencyJob=require("Modules.LootFilterDependencies").begin(build,profile);advanceDependencies() else dependencies=nil;dependencyTime=GetTime() end
 	end
 	local function draft(field) dirty=true;history:record(data,field);ui.draft(build,"filters") end
@@ -47,9 +47,11 @@ function M.Open(build,source,layout,controller)
 	local function reopen() layout.navigate("filters",snapshot()) end
 	local function advanceGeneration()
 		if not generationJob then return end
-		local done,result,err=require("Modules.LootFilterDependencies").poll(generationJob)
+		local done,result,err
+		if profile~=generationJob.profile then done=true;err="changed"
+		else done,result,err=require("Modules.LootFilterDependencies").poll(generationJob) end
 		if not done then return end
-		local original=generationJob.profile;generationJob=nil
+		local original=generationJob.profile;generationJob=nil;transient.filterGeneration=nil
 		if err or profile~=original then
 			dependencyTime=nil
 			main:OpenMessagePopup("Build pickups",(err=="changed" or profile~=original) and "The build or filter changed. Please try again." or ui.errorText(err))
@@ -63,7 +65,7 @@ function M.Open(build,source,layout,controller)
 	end
 	local function generatePickups()
 		if generationJob then return end
-		dependencyJob=nil;generationJob=require("Modules.LootFilterDependencies").beginGenerate(build,profile);advanceGeneration()
+		dependencyJob=nil;generationJob=require("Modules.LootFilterDependencies").beginGenerate(build,profile);transient.filterGeneration=generationJob;advanceGeneration()
 	end
 	local function replaceProfile(next)
 		for i,value in ipairs(data.profiles) do if value.id==next.id then data.profiles[i]=next end end;profile=next;draft();reopen()
