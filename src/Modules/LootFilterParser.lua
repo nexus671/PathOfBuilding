@@ -134,7 +134,7 @@ function M.condition(c,item)
 		return compare(value,values[1]=="True",op)
 	else
 		local negative=op=="!" or op=="!=";local entries=type(value)=="table" and value or {value}
-		local count=0;local minimum=tonumber(values[1]);local start=minimum and 2 or 1
+		local count=0;local minimum=(c.keyword=="HasExplicitMod" or c.keyword=="HasEnchantment") and tonumber(values[1]) or nil;local start=minimum and 2 or 1
 		for _,entry in ipairs(entries) do for i=start,#values do
 			local found=op=="==" and tostring(entry)==values[i] or op~="==" and tostring(entry):lower():find(values[i]:lower(),1,true)~=nil
 			if found then count=count+1;break end
