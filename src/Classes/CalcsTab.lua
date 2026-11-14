@@ -482,10 +482,15 @@ function CalcsTabClass:BuildOutput(deferRecovery)
 		node.finalModList = node.modList
 	end
 
+	local perf = require("Modules.PlanningPerformance")
+	local passStart = os.clock()
 	self.mainEnv = self.calcs.buildOutput(self.build, "MAIN", deferRecovery)
+	perf.record(self.build, "Main calculation", os.clock() - passStart)
 	self.mainOutput = self.mainEnv.player.output
 	if self.build.planningCheckpoint then self.build.planningCheckpoint("Calculate detailed stats") end
+	passStart = os.clock()
 	self.calcsEnv = self.calcs.buildOutput(self.build, "CALCS", deferRecovery)
+	perf.record(self.build, "Detailed calculation", os.clock() - passStart)
 	self.calcsOutput = self.calcsEnv.player.output
 	if self.build.planningCheckpoint then self.build.planningCheckpoint("Prepare comparison calculator") end
 
@@ -499,7 +504,9 @@ function CalcsTabClass:BuildOutput(deferRecovery)
 	end
 	
 	-- Retrieve calculator functions
+	passStart = os.clock()
 	local miscCalcFunc, miscCalcBase = self.calcs.getMiscCalculator(self.build)
+	perf.record(self.build, "Comparison setup", os.clock() - passStart)
 	self.miscCalculator = { miscCalcFunc, miscCalcBase }
 end
 

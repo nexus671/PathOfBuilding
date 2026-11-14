@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <PoBVersion>
-	<Version number="2.67.2-ai.preview93" />
+	<Version number="2.67.2-ai.preview94" />
 	<Source part="default" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/" />
 	<Source part="runtime" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/runtime/" platform="win32" />
 	<Source part="program" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<Source part="tree" url="https://raw.githubusercontent.com/nexus671/PathOfBuilding-AI-Edition/{branch}/src/" />
 	<File name="LICENSE.md" part="default" sha1="c77635aa1ba0a2ffe8eb72f93b3376e3a3d2041a" />
-	<File name="changelog.txt" part="default" sha1="e6ab738251501c98e36cb301e63c37e57a3d0d75" />
+	<File name="changelog.txt" part="default" sha1="995eb1a90f3a47f2a35fc7a99d0ae231dc090090" />
 	<File name="help.txt" part="default" sha1="e486cb63a78f5ca355430b67fa23e02fd30f5771" />
 	<File name="Path{space}of{space}Building.exe" part="runtime" sha1="8dcd46aac0b70d0a4d5eac5c7244302c9b805f85" platform="win32" />
 	<File name="SimpleGraphic.dll" part="runtime" sha1="9d823db1e01eb8fde7f5118e351da609be4ed679" platform="win32" />
@@ -1128,7 +1128,7 @@
 	<File name="Classes/ButtonControl.lua" part="program" sha1="dd46384fc87d495e7ef5a11803cfc70360ac8bf1" />
 	<File name="Classes/CalcBreakdownControl.lua" part="program" sha1="a21556a505153a81023f0d04ace948d606e2914e" />
 	<File name="Classes/CalcSectionControl.lua" part="program" sha1="ace88981a36381c6ccecbdb76ee1b9b04d1afeaf" />
-	<File name="Classes/CalcsTab.lua" part="program" sha1="6e33ba0a9672e1fd45bc321f65f36d5af0a1584a" />
+	<File name="Classes/CalcsTab.lua" part="program" sha1="b572194703b7db74244032d9d3018bf78967aca0" />
 	<File name="Classes/CheckBoxControl.lua" part="program" sha1="021e4ea29d62a600ab14e69e6ed0ad33832d78ab" />
 	<File name="Classes/ColourPickerControl.lua" part="program" sha1="c635b032cb53d0770a68b2f2e64f0fcd19f6a256" />
 	<File name="Classes/CompareBuySimilar.lua" part="program" sha1="0efebcea57d90cc9169819cd0e344899f369b618" />

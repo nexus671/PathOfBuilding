@@ -4,7 +4,7 @@ Open AI builds, Atlas, Crafting or Journey to enter the planning workspace. **To
 
 ## Performance and background upgrades
 
-**Tools > Performance diagnostics** shows observed last, mean and worst processing times, ordered by the worst slice. Refresh after an interaction, or copy the timings when reporting a slowdown. Reset clears session measurements only.
+**Tools > Performance diagnostics** shows observed last, mean and worst processing times, ordered by the worst slice. Main calculation, detailed calculation and comparison setup are shown separately within the overall build recalculation. Refresh after an interaction, or copy the timings when reporting a slowdown. Reset clears session measurements only.
 
 **Journey > Gear > Measure upgrades** calculates candidates between frames. You can navigate to another tool while it works; the button shows completion counts and its tooltip shows the current phase. Cancel discards unfinished work and retains completed measurements. Editing the source build invalidates the ranking.
 

@@ -26,6 +26,11 @@ describe("Connected planning workflows",function()
 		local row=perf.rows(build)[1];assert.equal(2,row.count);assert.near(20,row.mean,0.001);assert.near(30,row.worst,0.001)
 		local other={};perf.record(other,"Other",0.1);perf.clear(build);assert.equal(0,#perf.rows(build));assert.equal(1,#perf.rows(other))
 	end)
+	it("reports the individual native calculation passes",function()
+		local perf=require("Modules.PlanningPerformance");perf.clear(build);build.calcsTab:BuildOutput(true)
+		local rows={};for _,row in ipairs(perf.rows(build)) do rows[row.name]=row end
+		for _,name in ipairs({"Main calculation","Detailed calculation","Comparison setup"}) do assert.is_truthy(rows[name]);assert.equal(1,rows[name].count);assert.is_true(rows[name].last>=0) end
+	end)
 	it("keeps frame freshness checks cheap and performs an exact check before publishing",function()
 		local upgrades=require("Modules.JourneyUpgrades");local data=require("Modules.BuildJourney").empty()
 		data.wishlist={{id="hat",title="Hat",slot="Helmet",route="buy",targetItem="Rarity: RARE\nHat\nIron Hat\n+100 to maximum Life"}};build.savers.BuildJourney:Replace(data);upgrades.start(build)
