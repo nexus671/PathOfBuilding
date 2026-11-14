@@ -97,6 +97,14 @@ async function main(){
     assert.ok(harvest.nativeCrafting.state.affixes.some(entry=>entry.id==='LocalAddedChaosDamage1'));assert.equal(harvest.nativeCrafting.warnings[0].code,'partial_lock_model');
   }
   const harvestHat='Rarity: NORMAL\nIron Hat\nItem Level: 86';
+  const oldLight='Rarity: MAGIC\nIron Hat\nItem Level: 86\n18% increased Global Accuracy Rating\n15% increased Light Radius';
+  const oldLightInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:oldLight,limit:10},'inspected');
+  assert.equal(oldLightInspection.crafting.nativeEngine.initialState.affixes[0].legacyLightRadius,true);
+  const newLight=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:oldLight,initialState:oldLightInspection.crafting.nativeEngine.initialState,action:{method:'divine'},seed:7},'crafted');
+  assert.match(newLight.nativeCrafting.itemText,/(?:2[1-9]|30)% increased Light Radius/);
+  assert.equal(newLight.nativeCrafting.state.affixes[0].legacyLightRadius,undefined);
+  const reopenedLight=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:newLight.nativeCrafting.itemText,limit:1},'inspected');
+  assert.equal(reopenedLight.crafting.nativeEngine.initialState.affixes[0].legacyLightRadius,undefined);
   const harvestHatStart={rarity:'RARE',affixes:[{id:'AttackerTakesDamage1',range:0.5}]};
   const harvestHatLock=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:harvestHat,action:{method:'bench',modId:'bench:partial-prefix-1'},initialState:harvestHatStart},'crafted');
   const harvestHatInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:harvestHat,initialState:harvestHatLock.nativeCrafting.state,limit:100},'inspected');

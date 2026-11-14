@@ -139,7 +139,7 @@ function M.item(controls,key,x,y,w,h,model,getState,onClick,options)
 					groupIndex=groupIndex+1
 				else wrap(lines,marker,entry.fractured and "^xD6B677" or "^xA6B3C6",w-30) end
 				local firstMod=#lines+1
-				for _,line in ipairs(simulator.rolledLines(context.byId[entry.id] or {},entry.range)) do
+				for _,line in ipairs(simulator.rolledLines(simulator.entryMod(context,entry) or {},entry.range)) do
 					local first=#lines+1
 					wrap(lines,line,entry.fractured and "^xD6B677" or entry.crafted and "^xB4B4FF" or "^x8888FF",w-(options.compact and 98 or 30))
 					for i=first,#lines do lines[i].affixId=entry.id end

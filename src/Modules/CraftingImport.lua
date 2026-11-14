@@ -21,16 +21,16 @@ function I.resolve(M,model,state)
 	local rows={}
 	for _,line in ipairs(model.item.explicitModLines) do rows[#rows+1]={text=itemLib.applyRange(line.line,line.range or 0.5),crafted=line.crafted or false,fractured=line.fractured or false,prefix=line.prefix,suffix=line.suffix} end
 	local used={}
-	for _,entry in ipairs(state.affixes) do for _,text in ipairs(M.rolledLines(model.byId[entry.id],entry.range)) do
+	for _,entry in ipairs(state.affixes) do for _,text in ipairs(M.rolledLines(M.entryMod(model,entry),entry.range)) do
 		local found
 		for i,row in ipairs(rows) do if not used[i] and row.text == text and row.crafted == (entry.crafted or false) and row.fractured == (entry.fractured or false) then found=i;break end end
 		assert(found,"A native modifier identity does not match the imported values")
 		used[found]=true
 	end end
 	local candidates,seen={},{ }
-	local function consider(id,crafted)
-		if seen[id] then return end;seen[id]=true
-		local mod=model.byId[id];if not mod or #mod == 0 then return end
+	local function consider(id,crafted,legacy)
+		local key=id..(legacy and ":legacy" or ":current");if seen[key] then return end;seen[key]=true
+		local mod=legacy and model.legacyLightRadius[id] or model.byId[id];if not mod or #mod == 0 then return end
 		local indices,ranges,fractured={},{},nil
 		for _,template in ipairs(mod) do
 			local found,values
@@ -45,9 +45,11 @@ function I.resolve(M,model,state)
 			indices[#indices+1]=found;fractured=rows[found].fractured
 			for _,value in ipairs(values) do ranges[#ranges+1]=value end
 		end
-		candidates[#candidates+1]={indices=indices,entry={id=id,range=#ranges == 0 and 0.5 or #ranges == 1 and ranges[1] or ranges,crafted=crafted or nil,fractured=fractured or nil}}
+		if legacy then for _,candidate in ipairs(candidates) do if candidate.entry.id==id and not candidate.entry.legacyLightRadius and table.concat(candidate.indices,",")==table.concat(indices,",") then return end end end
+		candidates[#candidates+1]={indices=indices,entry={id=id,range=#ranges == 0 and 0.5 or #ranges == 1 and ranges[1] or ranges,crafted=crafted or nil,fractured=fractured or nil,legacyLightRadius=legacy or nil}}
 	end
 	for _,entry in ipairs(model.mods) do consider(entry.id,false) end
+	for _,entry in ipairs(model.mods) do if model.legacyLightRadius[entry.id] then consider(entry.id,false,true) end end
 	for _,entry in ipairs(model.essences) do consider(entry.modId,false) end
 	for _,entry in ipairs(model.bench) do consider(entry.id,true) end
 	for _,list in ipairs({data.veiledMods,data.beastCraft}) do for id,mod in pairs(list) do

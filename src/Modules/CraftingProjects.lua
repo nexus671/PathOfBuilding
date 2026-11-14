@@ -88,7 +88,7 @@ function M.new(build)
 	end
 	function self:Save(xml)
 		if self.unreadable then xml[#xml+1]=self.unreadable
-		elseif #self.projects > 0 then xml[#xml+1]=json.encode({schemaVersion=1,projects=self.projects}) end
+		elseif #self.projects > 0 then xml[#xml+1]=require("Modules.PlanningData").encodeExact({schemaVersion=1,projects=self.projects}) end
 	end
 	function self:Upsert(project)
 		assert(not self.unreadable,self.warning)
@@ -111,7 +111,7 @@ function M.new(build)
 			replacement[index]=entry; found=true; break
 		end end
 		if not found then replacement[#replacement+1]=entry end
-		assert(#json.encode({schemaVersion=1,projects=replacement}) <= 2*1024*1024,"Crafting projects exceed the supported size")
+		assert(#require("Modules.PlanningData").encodeExact({schemaVersion=1,projects=replacement}) <= 2*1024*1024,"Crafting projects exceed the supported size")
 		self.projects=replacement;self.notice=nil; build.modFlag=true
 		require("Modules.PlanningUI").kept(build,"crafting")
 		return entry

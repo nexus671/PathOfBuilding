@@ -180,6 +180,11 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:choose("libraryPage","Item")
 	bridge.disable(build);io.open,os.remove=originalOpen,originalRemove
 	ui:bind(nil)
+	local legacyLight="Rarity: MAGIC\nIron Hat\nItem Level: 86\n18% increased Global Accuracy Rating\n15% increased Light Radius"
+	require("Classes.CraftingSimulatorControl").Open(build,{id="light-radius-ui",title="Legacy light radius",slot="Helmet",startingItem=legacyLight,goals={},steps={}})
+	frame("crafting-light-radius-legacy");ui:click("currency_divine");ui:click("item")
+	assert(main.popups[1].controls.intro.label:find("Applied Divine",1,true),"Divine Orb was not applied to the legacy item")
+	frame("crafting-light-radius-current");ui:click("close")
 	local enchantedProject={id="harvest-ui",title="Body armour quality enchant",slot="Body Armour",startingItem="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20",goals={},steps={}}
 	require("Classes.CraftingSimulatorControl").Open(build,enchantedProject)
 	ui:click("settings");ui:text("paletteSearch","replace quality");frame("crafting-harvest-service");ui:click("paletteUse")

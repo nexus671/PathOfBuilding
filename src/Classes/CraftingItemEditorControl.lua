@@ -31,7 +31,7 @@ function Panel.Open(model,input,onKeep)
 	controls.fractured=new("DropDownControl"):DropDownControl({"TOPLEFT",nil,"TOPLEFT"},{212,154,220,24},{"Not fractured","Fractured"})
 	local function refresh()
 		local list={}
-		for i,entry in ipairs(state.affixes) do list[#list+1]={label=i.." | "..(entry.fractured and "Fractured | " or "")..table.concat(model.byId[entry.id]," / "),val=i} end
+		for i,entry in ipairs(state.affixes) do list[#list+1]={label=i.." | "..(entry.fractured and "Fractured | " or "")..table.concat(sim.entryMod(model,entry)," / "),val=i} end
 		if #list == 0 then list={{label="No explicit modifiers",val=0}} end
 		controls.current:SetList(list)
 	end

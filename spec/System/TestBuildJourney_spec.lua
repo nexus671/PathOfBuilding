@@ -89,6 +89,18 @@ describe("Build journey",function()
 		project.run=nil;project.title="Updated plan without replacing the checkpoint";build.savers.CraftingProjects:Upsert(project)
 		assert.same(run,build.savers.CraftingProjects.projects[1].run)
 	end)
+	it("preserves a legacy Light Radius checkpoint and its updated item",function()
+		local sim=require("Modules.CraftingSimulator")
+		local raw="Rarity: MAGIC\nIron Hat\nItem Level: 86\n18% increased Global Accuracy Rating\n15% increased Light Radius"
+		local initial=sim.model(raw).initial;assert.is_true(initial.affixes[1].legacyLightRadius)
+		local action={method="divine"};local crafted=sim.perform(raw,action,104729,initial)
+		local project={id="legacy-light",title="Legacy light",slot="Helmet",startingItem=raw,goals={},steps={},run={schemaVersion=1,state=crafted.state,initial=initial,history={initial},actions={action},sequence=1,targets={},configured={},seed="104729"}}
+		build.savers.CraftingProjects:Upsert(project)
+		local prepared=bridge.prepare(build,{mode="edit",title="Resume",baseRevision=bridge.revision(build),operations={{type="set_character",level=80}}})
+		local run=prepared.candidate.savers.CraftingProjects.projects[1].run
+		assert.same(initial,run.initial);assert.same(crafted.state,run.state);assert.is_true(run.history[1].affixes[1].legacyLightRadius)
+		assert.matches("15%% increased Light Radius",sim.toItem(sim.model(raw),run.history[1]).raw)
+	end)
 	it("updates ordinary crafting plans without inventing or copying a missing checkpoint",function()
 		local project={id="plain",title="Plain plan",slot="Helmet",startingItem="Rarity: NORMAL\nIron Hat\nItem Level: 86",goals={},steps={{action="Roll life"}}}
 		local store=build.savers.CraftingProjects;store:Upsert(project);project.steps[1].done=true;store:Upsert(project)

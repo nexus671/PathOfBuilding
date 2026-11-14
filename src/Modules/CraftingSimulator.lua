@@ -113,10 +113,17 @@ end
 
 -- Use the native renderer so every preview retains the same independent rolls.
 function M.rolledLines(mod,range) return itemLib.applyModRanges(mod,range) end
+function M.entryMod(model,entry)
+	return entry.legacyLightRadius and assert(model.legacyLightRadius[entry.id],"Unknown legacy Light Radius modifier") or model.byId[entry.id]
+end
 
 function M.toItem(model,state)
 	local item=new("Item"):Item(model.raw)
 	item.affixes=model.byId
+	for _,entry in ipairs(state.affixes) do if entry.legacyLightRadius then
+		if item.affixes==model.byId then item.affixes={};for id,mod in pairs(model.byId) do item.affixes[id]=mod end end
+		item.affixes[entry.id]=M.entryMod(model,entry)
+	end end
 	if M.decorateItem then M.decorateItem(model,state,item) end
 	item.rarity=state.rarity; item.title=state.rarity == "RARE" and "Simulated craft" or nil
 	item.name=item.title or item.baseName
@@ -169,6 +176,7 @@ function M.model(raw)
 			if weight > 0 then model.mods[#model.mods+1]={id=id,mod=mod,weight=weight} end
 		end
 	end
+	require("Modules.CraftingLightRadius330").prepare(model)
 	table.sort(model.mods,function(a,b) return a.id < b.id end)
 	for index,mod in ipairs(data.masterMods) do
 		if mod.types and mod.types[item.type] and (mod.type == "Prefix" or mod.type == "Suffix") then
@@ -198,10 +206,21 @@ function M.model(raw)
 	for _,list in ipairs({item.prefixes,item.suffixes}) do for _,entry in ipairs(list) do
 		if entry.modId ~= "None" then
 			assert(model.byId[entry.modId],"Starting item has an unknown modifier")
-			state.affixes[#state.affixes+1]={id=entry.modId,range=type(entry.range) == "table" and copyTable(entry.range) or entry.range,fractured=entry.fractured or false}
+			state.affixes[#state.affixes+1]={id=entry.modId,range=type(entry.range) == "table" and copyTable(entry.range) or entry.range,fractured=entry.fractured or false,legacyLightRadius=model.legacyLightRadius[entry.modId] and true or nil}
 		end
 	end end
 	local reconstructed=M.toItem(model,state)
+	if renderLines(reconstructed) ~= renderLines(item) then
+		local indices={};for index,entry in ipairs(state.affixes) do if entry.legacyLightRadius then indices[#indices+1]=index end end
+		-- An item can contain more than one affected modifier and each may be
+		-- legacy or current. There are at most six explicit modifiers.
+		for mask=1,2^#indices-1 do
+			local current=copyTable(state)
+			for bit,index in ipairs(indices) do if math.floor(mask/2^(bit-1))%2==1 then current.affixes[index].legacyLightRadius=nil end end
+			local candidate=M.toItem(model,current)
+			if renderLines(candidate)==renderLines(item) then state=current;reconstructed=candidate;break end
+		end
+	end
 	if renderLines(reconstructed) ~= renderLines(item) then
 		state=require("Modules.CraftingImport").resolve(M,model,state)
 		reconstructed=M.toItem(model,state)
@@ -390,7 +409,7 @@ function M.action(model,input,action,random)
 		state.rarity=left.total == 0 and "NORMAL" or left.Prefix <= 1 and left.Suffix <= 1 and "MAGIC" or "RARE"
 	elseif method == "divine" then
 		assert(state.rarity ~= "NORMAL","Divine requires a magic or rare item")
-		for _,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then entry.range=M.rollRange(model.byId[entry.id],random) end end
+		for _,entry in ipairs(state.affixes) do if not protected(entry,model.byId[entry.id],f) then entry.legacyLightRadius=nil;entry.range=M.rollRange(model.byId[entry.id],random) end end
 	elseif method == "bench" then
 		local reason=M.benchReason(model,state,action.modId);assert(not reason,reason)
 		local mod=model.byId[action.modId]
@@ -532,11 +551,11 @@ local function priceKey(action) return action.method == "bench" and action.modId
 function M.validateState(model,state)
 	assert(type(state) == "table" and type(state.affixes) == "table" and #state.affixes <= 6,"Invalid crafting state")
 	assert(state.rarity == "NORMAL" or state.rarity == "MAGIC" or state.rarity == "RARE","Invalid state rarity")
-	local groups,allowed,fractured={},{},{}
+	local groups,allowed,fractured,legacy={},{},{},{}
 	for _,entry in ipairs(model.mods) do allowed[entry.id]=true end
 	for _,entry in ipairs(model.bench) do allowed[entry.id]=true end
 	for _,entry in ipairs(model.essences) do allowed[entry.modId]=true end
-	for _,entry in ipairs(model.initial.affixes) do allowed[entry.id]=true; if entry.fractured then fractured[entry.id]=true end end
+	for _,entry in ipairs(model.initial.affixes) do allowed[entry.id]=true; if entry.fractured then fractured[entry.id]=true end;if entry.legacyLightRadius then legacy[entry.id]=entry end end
 	for _,entry in ipairs(state.affixes) do
 		local mod=assert(model.byId[entry.id],"Unknown state modifier")
 		assert(allowed[entry.id],"State modifier is unavailable on this base")
@@ -544,6 +563,14 @@ function M.validateState(model,state)
 		assert((entry.id:match("^bench:") ~= nil) == (entry.crafted == true),"State crafted flag does not match its modifier")
 		assert(entry.crafted == nil or type(entry.crafted) == "boolean","Invalid crafted flag")
 		assert(entry.fractured == nil or type(entry.fractured) == "boolean","Invalid fractured flag")
+		assert(entry.legacyLightRadius == nil or type(entry.legacyLightRadius) == "boolean","Invalid legacy modifier flag")
+		assert(not entry.legacyLightRadius or legacy[entry.id] and model.legacyLightRadius[entry.id],"Legacy Light Radius values must come from the starting item")
+		if entry.legacyLightRadius then
+			local initial=legacy[entry.id];local current=type(entry.range)=="table" and entry.range or {entry.range or 0.5}
+			local original=type(initial.range)=="table" and initial.range or {initial.range or 0.5}
+			assert(#current==#original,"Legacy Light Radius rolls cannot be changed without rerolling")
+			for index,value in ipairs(current) do assert(value==original[index],"Legacy Light Radius rolls cannot be changed without rerolling") end
+		end
 		assert(mod.type == "Prefix" or mod.type == "Suffix","Unsupported state modifier type")
 		assert(not groups[mod.group],"State has conflicting modifier groups"); groups[mod.group]=true
 		local ranges=type(entry.range) == "table" and entry.range or {entry.range or 0.5}

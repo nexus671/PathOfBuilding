@@ -91,7 +91,7 @@ function Memory.extend(M,A,api)
 						table.sort(candidates,function(a,b) return model.byId[a.id].level > model.byId[b.id].level end)
 						local cumulative,selection=0,0;for _,tier in ipairs(candidates) do cumulative=cumulative+tier.weight;selection=selection+cumulative;tier.upgradeWeight=cumulative end
 						local pick=random()*selection
-						for _,tier in ipairs(candidates) do pick=pick-tier.upgradeWeight;if pick < 0 then entry.id=tier.id;entry.range=M.rollRange(model.byId[tier.id],random);break end end
+						for _,tier in ipairs(candidates) do pick=pick-tier.upgradeWeight;if pick < 0 then entry.id=tier.id;entry.legacyLightRadius=nil;entry.range=M.rollRange(model.byId[tier.id],random);break end end
 					end
 				end end
 				state.memoryStrands=0

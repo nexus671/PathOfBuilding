@@ -167,7 +167,8 @@ function A.extend(M,api)
 		local all=setmetatable({},{__index=model.item})
 		for key in pairs(influences) do all[key]=true end
 		model.influencePool={}
-		for id,mod in pairs(data.itemMods.Explicit) do
+		for id,original in pairs(data.itemMods.Explicit) do
+			local mod=model.legacyLightRadius[id] and model.byId[id] or original
 			if mod.affix:find("Elevated",1,true) and influenced(model,id) then model.special[id]=true end
 			if (mod.type == "Prefix" or mod.type == "Suffix") and mod.level <= model.item.itemLevel and not mod.affix:find("Elevated",1,true) and all:GetModSpawnWeight(mod) > 0 then
 				model.influencePool[#model.influencePool+1]={id=id,mod=mod,weight=all:GetModSpawnWeight(mod)}
@@ -1035,7 +1036,7 @@ function A.extend(M,api)
 		return {exactFor="One weighted affix draw, conditional on the supplied state and native pool",successChance=success/total*100,totalWeight=total,matchingWeight=success,outcomes=outcomes,dataPatch=A.data().patch,limitations=copyTable(M.limits)}
 	end
 	M.limits={"Independent PoE 1 crafting model pinned to extracted 3.29.3.6 data; this is not complete Craft of Exile parity.",
-		"3.30 changed Light Radius on accuracy modifiers; the model still uses the older ranges. Inspect an affected modifier for its current client range.",
+		"Light Radius accuracy modifiers use 3.30 crafting ranges; existing legacy values are retained until rerolled.",
 		"Current coverage includes core currencies, ordinary jewels/flasks/tinctures, bench crafts, essences, weighted fossils, Harvest tag crafts, influence slams, Awakener, fractures, veiled choices, Bestiary, Eldritch crafts, base implicit/defence rerolls and deterministic socket/link bench crafts.",
 		"Tangled Fossils require a revealed resonator outcome. Automatic predictable recombination odds, unique generation and many 3.30 rules are not implemented.",
 		"The standard Orb of Annulment uses the announced 3.30 attack/caster blocker rule. Other modifier data and unsupported 3.30 crafting changes remain pinned to 3.29.3.6.",

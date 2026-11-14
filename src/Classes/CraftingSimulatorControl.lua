@@ -253,7 +253,7 @@ function Panel.Open(build,project,layout)
 	end)
 	button(controls,"inspectItem",16,338,416,"Inspect affixes and slots",function()
 		local current=simulator.context(model,state)
-		local entries={};for _,entry in ipairs(state.affixes) do local id=entry.id;entries[#entries+1]={id=id,label=table.concat(current.byId[id]," / "),category=current.byId[id].type,details=function() return inspect.modDetails(current,id,entry) end} end
+		local entries={};for _,entry in ipairs(state.affixes) do local id=entry.id;entries[#entries+1]={id=id,label=table.concat(simulator.entryMod(current,entry)," / "),category=current.byId[id].type,details=function() return inspect.modDetails(current,id,entry) end} end
 		browser.Open(inspect.slots(model,state),entries,{action="Use as target",choose=function(entry) pickTarget(entry.id);controls.page:SelByValue("Target conditions") end})
 	end)
 	button(controls,"allflame",16,410,416,"Allflame settings (3.29)",function()
