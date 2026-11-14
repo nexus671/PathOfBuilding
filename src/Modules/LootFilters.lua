@@ -79,6 +79,10 @@ function M.rule(id,title,conditions,origin,theme)
 end
 function M.generate(build,profile,checkpoint)
 	local result={};local used={};local ids={};local warnings={}
+	local sliceStart=os.clock()
+	local function checkpointIfNeeded()
+		if checkpoint and os.clock()-sliceStart>=0.008 then checkpoint();sliceStart=os.clock() end
+	end
 	for _,rule in ipairs(profile.rules) do if not rule.origin then ids[rule.id]=true end end
 	local function add(id,title,conditions,origin)
 		local signature=table.concat(conditions,"\n");if used[signature] then return end;used[signature]=true
@@ -92,8 +96,8 @@ function M.generate(build,profile,checkpoint)
 		local level=tonumber((raw or ""):match("Item Level: (%d+)"));if level then conditions[#conditions+1]="ItemLevel >= "..level end
 		add(id,title,conditions,origin)
 	end
-	for _,p in ipairs(build.savers.CraftingProjects.projects) do base(p.startingItem,"craft-"..p.id,p.title.." base","craft:"..p.id) end
-	for _,e in ipairs(build.savers.BuildJourney.data.wishlist) do if e.status=="planned" then base(e.targetItem,"gear-"..e.id,e.title.." base","gear:"..e.id) end end
+	for _,p in ipairs(build.savers.CraftingProjects.projects) do base(p.startingItem,"craft-"..p.id,p.title.." base","craft:"..p.id);checkpointIfNeeded() end
+	for _,e in ipairs(build.savers.BuildJourney.data.wishlist) do if e.status=="planned" then base(e.targetItem,"gear-"..e.id,e.title.." base","gear:"..e.id) end;checkpointIfNeeded() end
 	for i,group in ipairs(build.skillsTab.socketGroupList) do
 		local slot=group.slot and build.itemsTab.slots[group.slot]
 		local activeWeaponSet=build.itemsTab.activeItemSet.useSecondWeaponSet and 2 or 1
@@ -138,7 +142,7 @@ function M.generate(build,profile,checkpoint)
 			warnings[#warnings+1]={origin="craft:"..project.id,title=project.title,message=message.." Previous recipe pickups were kept; review the crafting guide.",retry=not ok}
 			for _,rule in ipairs(profile.rules) do if rule.origin=="craft:"..project.id and rule.id:match("^craft%-resource%-") and not ids[rule.id] then result[#result+1]=copyTable(rule);ids[rule.id]=true end end
 		end
-		if checkpoint and needsInspection then checkpoint() end
+		if checkpoint and needsInspection then checkpoint();sliceStart=os.clock() end
 	end end
 	local aliases={chaos="Chaos Orb",divine="Divine Orb",divines="Divine Orb",alchemy="Orb of Alchemy",alteration="Orb of Alteration",exalt="Exalted Orb",annul="Orb of Annulment",fusing="Orb of Fusing",chromatic="Chromatic Orb",jeweller="Jeweller's Orb"}
 	for name in pairs(names) do aliases[name:lower()]=name;aliases[name:lower().."s"]=name end

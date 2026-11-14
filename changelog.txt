@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Generate build-adjusted filter pickups in stages and discard outdated results.
 * Avoid repeatedly rebuilding unchanged filter targets when a crafting guide needs review.
 * Load crafting data in stages when checking linked filter targets.
 * Check linked filter targets in smaller background steps.

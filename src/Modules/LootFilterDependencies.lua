@@ -59,13 +59,19 @@ function M.report(build,profile,checkpoint)
 	-- An entirely manual filter has no previous generation to become out of date.
 	result.stale=result.linked>0 and result.stale;return result
 end
-function M.begin(build,profile)
+local function begin(build,profile,generate)
 	local revision=require("Modules.PlanningRevision")
-	local job={build=build,profile=profile,stamp=revision.stamp(build),skills=skillInputs(build),profileKey=stable.encode({preset=profile.preset,theme=profile.theme,rules=profile.rules})}
+	local job={build=build,profile=profile,stamp=revision.stamp(build),skills=skillInputs(build),profileKey=stable.encode({preset=profile.preset,theme=profile.theme,rules=profile.rules}),generate=generate}
 	local captured=copyTable(profile)
-	job.thread=coroutine.create(function() return M.report(build,captured,function() coroutine.yield() end) end)
+	job.thread=coroutine.create(function()
+		local checkpoint=function() coroutine.yield() end
+		if generate then local rules,warnings=filters.generate(build,captured,checkpoint);return {rules=rules,warnings=warnings} end
+		return M.report(build,captured,checkpoint)
+	end)
 	return job
 end
+function M.begin(build,profile) return begin(build,profile,false) end
+function M.beginGenerate(build,profile) return begin(build,profile,true) end
 function M.poll(job)
 	local revision=require("Modules.PlanningRevision")
 	local function unchanged()
@@ -74,7 +80,7 @@ function M.poll(job)
 	end
 	if not unchanged() then return true,nil,"changed" end
 	local start=os.clock();local ok,result=coroutine.resume(job.thread)
-	require("Modules.PlanningPerformance").record(job.build,"Filter target refresh slice",os.clock()-start)
+	require("Modules.PlanningPerformance").record(job.build,job.generate and "Filter pickup generation slice" or "Filter target refresh slice",os.clock()-start)
 	if not ok then return true,nil,result end
 	if coroutine.status(job.thread)=="dead" then if not unchanged() then return true,nil,"changed" end;return true,result end
 	return false

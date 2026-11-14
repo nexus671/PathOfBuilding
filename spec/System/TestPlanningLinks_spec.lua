@@ -79,7 +79,11 @@ describe("Linked planning tools",function()
 		local workspace=require("Modules.PlanningWorkspace").new(build);workspace:Show("filters",{data={schemaVersion=1,activeId=profile.id,profiles={profile}}})
 		project.nativeRecipe.steps={{method="omen_connections"},{method="chaos"}};build.savers.CraftingProjects:Upsert(project)
 		local sim=require("Modules.CraftingSimulator");local original=sim.model;sim.model=function() error("fixture failure") end
-		local ok,err=pcall(function() workspace.controls.generate:Click();assert.is_truthy(main.popups[1].controls.results) end)
+		local ok,err=pcall(function()
+			workspace.controls.generate:Click()
+			for _=1,10 do if main.popups[1] then break end;workspace.cache.filters.layout.tick() end
+			assert.is_truthy(main.popups[1].controls.results)
+		end)
 		sim.model=original;assert.is_true(ok,err)
 	end)
 	it("leaves entirely manual filters untracked and preserves personal overrides on refresh",function()
@@ -122,6 +126,19 @@ describe("Linked planning tools",function()
 		repeat slices=slices+1;done,result,err=dependencies.poll(job);assert.is_nil(err) until done or slices>10
 		assert.is_true(done);assert.is_true(slices>1);assert.same(dependencies.report(build,profile),result)
 	end)
+	it("generates pickups in steps and rejects an edited filter",function()
+		for i=1,3 do
+			local project=craft();project.id="generation"..i;project.startingItem=project.startingItem:gsub("86",tostring(30+i))
+			project.nativeRecipe={steps={{method="socket_white_bench"}},targets={},requirements={sockets=1}};build.savers.CraftingProjects:Upsert(project)
+		end
+		local profile=filters.profile("generation","Generation");local job=dependencies.beginGenerate(build,profile)
+		local done,result,err=dependencies.poll(job);assert.is_false(done)
+		profile.rules[1]=filters.rule("manual","Manual",{'BaseType == "Chaos Orb"'})
+		done,result,err=dependencies.poll(job);assert.is_true(done);assert.is_nil(result);assert.equal("changed",err)
+		job=dependencies.beginGenerate(build,profile);local slices=0
+		repeat slices=slices+1;done,result,err=dependencies.poll(job);assert.is_nil(err) until done or slices>10
+		local rules,warnings=filters.generate(build,profile);assert.is_true(done);assert.is_true(slices>1);assert.same(rules,result.rules);assert.same(warnings,result.warnings)
+	end)
 	it("keeps the filter workspace usable while linked recipes are checked",function()
 		for i=1,3 do
 			local project=craft();project.id="ui-step"..i;project.startingItem=project.startingItem:gsub("86",tostring(60+i))
@@ -133,6 +150,28 @@ describe("Linked planning tools",function()
 		assert.equal("Checking build pickups...",workspace.controls.generate.label())
 		for _=1,10 do if workspace.controls.generate:IsEnabled() then break end;workspace.cache.filters.layout.tick() end
 		assert.is_true(workspace.controls.generate:IsEnabled())
+	end)
+	it("does not apply a pending pickup update after the build changes",function()
+		local profile=filters.profile("generation-ui","Generation UI");local workspace=require("Modules.PlanningWorkspace").new(build)
+		workspace:Show("filters",{data={schemaVersion=1,activeId=profile.id,profiles={profile}}})
+		local project=craft();project.startingItem=project.startingItem:gsub("86","37")
+		project.nativeRecipe={steps={{method="socket_white_bench"}},targets={},requirements={sockets=1}};build.savers.CraftingProjects:Upsert(project)
+		workspace.controls.generate:Click();assert.is_false(workspace.controls.generate:IsEnabled());assert.equal("Updating build pickups...",workspace.controls.generate.label())
+		project.title="Changed during update";build.savers.CraftingProjects:Upsert(project);workspace.cache.filters.layout.tick()
+		assert.equal(0,#workspace.cache.filters.layout.snapshot().data.profiles[1].rules);assert.is_truthy(main.popups[1])
+	end)
+	it("applies generated pickups after the staged update completes",function()
+		local profile=filters.profile("generation-complete","Generation complete");local workspace=require("Modules.PlanningWorkspace").new(build)
+		workspace:Show("filters",{data={schemaVersion=1,activeId=profile.id,profiles={profile}}})
+		for i=1,2 do
+			local project=craft();project.id="ui-generate"..i;project.startingItem=project.startingItem:gsub("86",tostring(40+i))
+			project.nativeRecipe={steps={{method="socket_white_bench"}},targets={},requirements={sockets=1}};build.savers.CraftingProjects:Upsert(project)
+		end
+		local previous=workspace.cache.filters.layout;workspace.controls.generate:Click()
+		assert.equal(0,#previous.snapshot().data.profiles[1].rules)
+		for _=1,10 do if workspace.cache.filters.layout~=previous then break end;previous.tick() end
+		assert.is_not.equal(previous,workspace.cache.filters.layout)
+		assert.is_true(#workspace.cache.filters.layout.snapshot().data.profiles[1].rules>0)
 	end)
 	it("keeps the source filter draft and previous working craft when following a link",function()
 		local project=craft();build.savers.CraftingProjects:Upsert(project);local workspace=require("Modules.PlanningWorkspace").new(build)

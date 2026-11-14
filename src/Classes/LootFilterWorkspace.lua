@@ -27,7 +27,7 @@ function M.Open(build,source,layout,controller)
 		for _,reason in ipairs(evaluated and evaluated.reasons or {}) do lines[#lines+1]=reason end;return lines
 	end
 	local history=require("Modules.PlanningHistory").new(data,state.history);local tierView;local tierState=state.tierState
-	local dependencies;local dependencyTime;local dependencyJob;local dependencyError
+	local dependencies;local dependencyTime;local dependencyJob;local dependencyError;local generationJob
 	local function advanceDependencies()
 		if not dependencyJob then return end
 		local done,result,err=require("Modules.LootFilterDependencies").poll(dependencyJob)
@@ -45,12 +45,25 @@ function M.Open(build,source,layout,controller)
 	local function draft(field) dirty=true;history:record(data,field);ui.draft(build,"filters") end
 	local function snapshot() return {data=data,selected=profile and profile.id,page=page,category=category,scope=scope,query=query,rule=selected,sample=item,dirty=dirty,seed=seed,sceneKind=sceneKind,showHidden=showHidden,history=history:snapshot(),tierState=tierView and tierView.snapshot() or tierState,sceneSettings=settings,sampleHistory=samples,sampleSetId=sampleSetId,scenePage=scenePage} end
 	local function reopen() layout.navigate("filters",snapshot()) end
-	local function generatePickups()
-		local rules,warnings=filters.generate(build,profile);profile.rules=rules;draft();reopen()
-		if #warnings>0 then
-			local entries={};for _,warning in ipairs(warnings) do entries[#entries+1]={id=warning.origin,label=warning.title,details={warning.message}} end
+	local function advanceGeneration()
+		if not generationJob then return end
+		local done,result,err=require("Modules.LootFilterDependencies").poll(generationJob)
+		if not done then return end
+		local original=generationJob.profile;generationJob=nil
+		if err or profile~=original then
+			dependencyTime=nil
+			main:OpenMessagePopup("Build pickups",(err=="changed" or profile~=original) and "The build or filter changed. Please try again." or ui.errorText(err))
+			return
+		end
+		profile.rules=result.rules;draft();reopen()
+		if #result.warnings>0 then
+			local entries={};for _,warning in ipairs(result.warnings) do entries[#entries+1]={id=warning.origin,label=warning.title,details={warning.message}} end
 			require("Classes.PlanningBrowserControl").Open("Review build pickups",entries)
 		end
+	end
+	local function generatePickups()
+		if generationJob then return end
+		dependencyJob=nil;generationJob=require("Modules.LootFilterDependencies").beginGenerate(build,profile);advanceGeneration()
 	end
 	local function replaceProfile(next)
 		for i,value in ipairs(data.profiles) do if value.id==next.id then data.profiles[i]=next end end;profile=next;draft();reopen()
@@ -197,8 +210,8 @@ function M.Open(build,source,layout,controller)
 		c.mode=new("DropDownControl"):DropDownControl(ui.anchor,{28+left/2-6,306,left/2-6,26},{"Normal","Ruthless"},function(_,value) profile.mode=value;draft();reopen() end);c.mode:SelByValue(profile.mode)
 		ui.label(c,"strictLabel",16,346,"Strictness",12);c.strictness=new("DropDownControl"):DropDownControl(ui.anchor,{16,364,left,26},filters.strictness,function(index) profile.strictness=index-1;draft();reopen() end);c.strictness.selIndex=profile.strictness+1
 		button(c,"generate",16,406,left,"Auto-adjust for this build",generatePickups)
-		c.generate.label=function() return dependencyJob and "Checking build pickups..." or dependencies and dependencies.stale and "Refresh build pickups *" or "Auto-adjust for this build" end
-		c.generate.enabled=function() return not dependencyJob end
+		c.generate.label=function() return generationJob and "Updating build pickups..." or dependencyJob and "Checking build pickups..." or dependencies and dependencies.stale and "Refresh build pickups *" or "Auto-adjust for this build" end
+		c.generate.enabled=function() return not dependencyJob and not generationJob end
 		c.generate.tooltipText="* means linked targets changed. Profile tools > Linked build targets shows the sources. Refreshing preserves personal overrides."
 		button(c,"customize",16,448,left,"Customize pickups  >",function() page="Customize";reopen() end)
 		sceneControl("preview",left+32,214,right,h-288,library.scene(profile,build,"Mixed drops",0,83),true)
@@ -317,7 +330,7 @@ function M.Open(build,source,layout,controller)
 		c.saveHint.label=function() return "^7"..(dirty and "Working draft / Keep in build, then Save" or "Kept profiles travel with your build") end
 	end
 	layout.snapshot=snapshot
-	layout.onShow=refreshDependencies;layout.tick=function() if dependencyJob then advanceDependencies() elseif not dependencyTime or GetTime()-dependencyTime>2000 then refreshDependencies() end end
+	layout.onShow=function() if not generationJob then refreshDependencies() end end;layout.tick=function() if generationJob then advanceGeneration() elseif dependencyJob then advanceDependencies() elseif not dependencyTime or GetTime()-dependencyTime>2000 then refreshDependencies() end end
 	refreshDependencies()
 	for _,control in pairs(c) do control.layoutAudit="loot-filter-workspace" end
 	ui.style(c,{keep=true,export=true},custom);visual.layers(c,backgrounds);layout.mount(w,h,"Loot filter",c)
