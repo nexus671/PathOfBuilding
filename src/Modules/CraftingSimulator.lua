@@ -167,6 +167,7 @@ function M.model(raw)
 	assert(equipment[item.type] or item.type == "Jewel" or item.type == "Flask" or item.type == "Tincture" or data.weaponTypeInfo[item.type],"This engine currently supports ordinary equipment; this item type is unsupported")
 	if item.fractured then for _,info in ipairs(itemLib.influenceInfo.all) do assert(not item[info.key],"Fractured and influenced combinations are unsupported") end end
 	local model={raw=item.raw,item=item,byId={},mods={},bench={},essences={}}
+	model.legacyAbyss=require("Modules.CraftingAbyss330").prepare(item)
 	local extraTags={}
 	if item.clusterJewel and item.clusterJewel.skills[item.clusterJewelSkill] then extraTags[item.clusterJewel.skills[item.clusterJewelSkill].tag]=true end
 	for id,mod in pairs(item.affixes or { }) do model.byId[id]=mod end

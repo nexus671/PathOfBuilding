@@ -1037,6 +1037,7 @@ function A.extend(M,api)
 	end
 	M.limits={"Independent PoE 1 crafting model pinned to extracted 3.29.3.6 data; this is not complete Craft of Exile parity.",
 		"Light Radius accuracy modifiers use 3.30 crafting ranges; existing legacy values are retained until rerolled.",
+		"Abyss jewel crafting uses the 3.30 client weight changes, including the Assembled Eye pool and seven removed natural modifiers. Existing removed modifiers are retained until removed.",
 		"Current coverage includes core currencies, ordinary jewels/flasks/tinctures, bench crafts, essences, weighted fossils, Harvest tag crafts, influence slams, Awakener, fractures, veiled choices, Bestiary, Eldritch crafts, base implicit/defence rerolls and deterministic socket/link bench crafts.",
 		"Tangled Fossils require a revealed resonator outcome. Automatic predictable recombination odds, unique generation and many 3.30 rules are not implemented.",
 		"The standard Orb of Annulment uses the announced 3.30 attack/caster blocker rule. Other modifier data and unsupported 3.30 crafting changes remain pinned to 3.29.3.6.",

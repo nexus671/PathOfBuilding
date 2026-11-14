@@ -185,6 +185,15 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	frame("crafting-light-radius-legacy");ui:click("currency_divine");ui:click("item")
 	assert(main.popups[1].controls.intro.label:find("Applied Divine",1,true),"Divine Orb was not applied to the legacy item")
 	frame("crafting-light-radius-current");ui:click("close")
+	local assembled="Rarity: NORMAL\nAssembled Eye Jewel\nItem Level: 86"
+	require("Classes.CraftingSimulatorControl").Open(build,{id="abyss-330-ui",title="Assembled Eye craft",slot="Jewel",startingItem=assembled,goals={},steps={}})
+	frame("crafting-assembled-eye-base");ui:click("currency_transmute");ui:click("item")
+	assert(main.popups[1].controls.intro.label:find("Applied",1,true),"Assembled Eye craft did not apply")
+	assert(not main.popups[1].controls.itemMods.list[1][1]:find("No explicit modifiers",1,true),"Assembled Eye craft has no modifiers")
+	frame("crafting-assembled-eye-crafted");ui:click("close")
+	local oldAbyss="Rarity: MAGIC\nSearching Eye Jewel\nItem Level: 86\n15% chance to Avoid Elemental Ailments while you have Elusive"
+	require("Classes.CraftingSimulatorControl").Open(build,{id="abyss-legacy-ui",title="Legacy Abyss jewel",slot="Jewel",startingItem=oldAbyss,goals={},steps={}})
+	frame("crafting-abyss-legacy");ui:click("close")
 	local enchantedProject={id="harvest-ui",title="Body armour quality enchant",slot="Body Armour",startingItem="Rarity: NORMAL\nPlate Vest\nItem Level: 86\nQuality: 20",goals={},steps={}}
 	require("Classes.CraftingSimulatorControl").Open(build,enchantedProject)
 	ui:click("settings");ui:text("paletteSearch","replace quality");frame("crafting-harvest-service");ui:click("paletteUse")

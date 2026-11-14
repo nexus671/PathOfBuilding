@@ -296,6 +296,15 @@ async function main(){
   assert.equal(speedMetadata.group,'3.30 cluster small-passive speed family');
   const independentAffix=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:raw,action:{method:'quality'},initialState:{rarity:'RARE',affixes:[{id:'LocalBaseArmourAndLife1',range:[0,1]}]},seed:1},'crafted');
   assert.match(independentAffix.nativeCrafting.itemText,/\+23 to maximum Life/);assert.deepEqual(independentAffix.nativeCrafting.state.affixes[0].range,[0,1]);
+  const assembled='Rarity: NORMAL\nAssembled Eye Jewel\nItem Level: 86';
+  const assembledInspection=await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:assembled,query:'AbyssAccuracyRatingJewel3',limit:10},'inspected');
+  const assembledMod=assembledInspection.crafting.nativeEngine.modifiers.find(row=>row.id==='AbyssAccuracyRatingJewel3');
+  assert.ok(assembledMod);assert.equal(assembledMod.weight,750);
+  const assembledCraft=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:assembled,action:{method:'transmute'},seed:42},'crafted');
+  assert.ok(assembledCraft.nativeCrafting.state.affixes.length>0);
+  const oldAbyss='Rarity: MAGIC\nSearching Eye Jewel\nItem Level: 86\n15% chance to Avoid Elemental Ailments while you have Elusive';
+  const oldAbyssResult=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:oldAbyss,action:{method:'divine'},seed:1},'crafted');
+  assert.equal(oldAbyssResult.nativeCrafting.state.affixes[0].id,'AbyssAvoidElementalAilmentsWhileElusiveJewel1');
   const starterAtlas={id:'starter-atlas',title:'Starter Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'starter'}};
   const atlasSearch=await queued('search_atlas_nodes',{baseRevision:context.revision,version:'3.29.1',query:'Essence',limit:10},'atlas');
   const atlasTargets=atlasSearch.atlas.matches.slice(0,3).map(node=>node.id);assert.equal(atlasTargets.length,3);

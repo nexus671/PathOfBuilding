@@ -49,6 +49,7 @@ function I.resolve(M,model,state)
 		candidates[#candidates+1]={indices=indices,entry={id=id,range=#ranges == 0 and 0.5 or #ranges == 1 and ranges[1] or ranges,crafted=crafted or nil,fractured=fractured or nil,legacyLightRadius=legacy or nil}}
 	end
 	for _,entry in ipairs(model.mods) do consider(entry.id,false) end
+	for id in pairs(model.legacyAbyss or {}) do consider(id,false) end
 	for _,entry in ipairs(model.mods) do if model.legacyLightRadius[entry.id] then consider(entry.id,false,true) end end
 	for _,entry in ipairs(model.essences) do consider(entry.modId,false) end
 	for _,entry in ipairs(model.bench) do consider(entry.id,true) end
