@@ -50,10 +50,10 @@ This is a comparison, not a claim of FilterBlade parity. Its website, customizer
 | Automatic uploads | Not implemented | Requires a separately operated update service |
 | Frequent economy refresh | Not connected | FilterBlade's hosted economy feed is not bundled |
 | Single-filter download | Copy/export `.filter`, preserving existing files | Optional replacement workflow |
-| Export all strictnesses | Each profile can select any strictness; batch export includes personal edits | Seven strictness files with collision checks; ZIP packaging remains |
+| Export all strictnesses | Seven files or one ZIP, including personal edits and appearance, with collision checks | Imported filters have no preset variants |
 | Validation | Native parser checks and account-server validation when authorised | Broader syntax coverage and live game validation |
 | Mobile layout | Desktop layouts tested at 960, 1024 and 1280 widths | Native PoB is not a mobile web app |
 
-The remaining offline polish includes a colour wheel, additional starter presets, encounter sample collections and local export packaging. Hosted economy updates remain separate service work. The release checklist tracks implementation and repeated workflow verification.
+The remaining offline polish includes additional starter presets and encounter sample collections. Hosted economy updates remain separate service work. The release checklist tracks implementation and repeated workflow verification.
 
 Reference screenshots were captured outside the repository during the review. Third-party advertising scripts logged browser errors; the main anonymous customizer and simulator remained usable. No login, publication, purchase or subscription was performed.

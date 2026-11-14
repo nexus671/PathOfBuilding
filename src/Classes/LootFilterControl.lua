@@ -177,6 +177,16 @@ function M.Export(profile,raw)
 		notify("Filters exported","Saved seven strictnesses to "..directory)
 	end) end)
 	c.writeAll.enabled=not profile.template;c.writeAll.tooltipText="Keeps personal rules and global appearance in every variant. Imported filters have no preset variants."
+	button(c,"writeZip",308,282,196,"Save strictness ZIP",function() attempt(function()
+		assert(c.filename.buf:match("^[%w_-]+%.filter$"),"Use a filename with letters, numbers, hyphens or underscores")
+		local directory=c.directory.buf;assert(directory~="" and not directory:find("[%c]"),"Choose a directory")
+		local target=directory.."/"..c.filename.buf:gsub("%.filter$","-strictnesses.zip")
+		local existing=io.open(target,"rb");if existing then existing:close();notify("File exists","Choose another filename to preserve the existing archive.");return end
+		local archive=require("Modules.LootFilterZip").variants(profile,c.filename.buf)
+		MakeDir(directory);local file=assert(io.open(target,"wb"),"Could not create archive");local ok=file:write(archive);local closed=file:close();assert(ok and closed,"Could not finish "..target)
+		notify("Filters exported",target)
+	end) end)
+	c.writeZip.enabled=not profile.template;c.writeZip.tooltipText=c.writeAll.tooltipText
 	button(c,"close",w-156,236,140,"Close",function() main:ClosePopup() end);ui.style(c,{write=true});main:OpenPopup(w,h,"Export loot filter",c,nil,"filename","close")
 end
 function M.Audit(profile,report,save)

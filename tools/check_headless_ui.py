@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import tempfile
+import zipfile
 from pathlib import Path
 
 from render_headless_ui import render
@@ -65,6 +66,13 @@ def main():
     (directory / "controls.log").write_text(result.stdout)
     assert result.returncode == 0, result.stdout
     assert source_hashes() == hashes, "Source files changed during UI capture; repeat against stable sources"
+    for width in (1280, 1024, 960):
+        archive = frames / f"ui-{width}-strictnesses.zip"
+        with zipfile.ZipFile(archive) as z:
+            assert z.namelist() == [f"ui-{width}-{n}.filter" for n in range(7)], "ZIP has incorrect strictness files"
+            assert z.testzip() is None, "ZIP failed CRC validation"
+            assert all(b"Covens pickup plan" in z.read(name) for name in z.namelist()), "ZIP lost the personal filter"
+        archive.unlink()
     paths = sorted(frames.glob("*.json"))
     assert len(paths) == 1038, f"Expected 1038 UI frames, found {len(paths)}"
     with ProcessPoolExecutor(max_workers=args.workers) as pool:

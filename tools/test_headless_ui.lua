@@ -772,7 +772,10 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	ui:click("writeAll");ui:click("close");assert(not io.open(exportedPath:gsub("%.filter$","-0.filter"),"rb"),"Batch wrote files before detecting a collision")
 	file=assert(io.open(collision,"rb"));assert(file:read("*a")=="Keep existing batch file");file:close();os.remove(collision)
 	ui:click("writeAll");ui:click("close")
-	for strictness=0,6 do local target=exportedPath:gsub("%.filter$","-"..strictness..".filter");local file=assert(io.open(target,"rb"));assert(file:read("*a"):find("Covens pickup plan",1,true));file:close();os.remove(target) end
+	local zipPath=exportedPath:gsub("%.filter$","-strictnesses.zip");local zipSentinel=assert(io.open(zipPath,"wb"));zipSentinel:write("Keep archive");zipSentinel:close()
+	ui:click("writeZip");ui:click("close");zipSentinel=assert(io.open(zipPath,"rb"));assert(zipSentinel:read("*a")=="Keep archive","ZIP export overwrote an existing archive");zipSentinel:close();os.remove(zipPath)
+	ui:click("writeZip");ui:click("close");local zipFile=assert(io.open(zipPath,"rb"));local zip=zipFile:read("*a");zipFile:close()
+	for strictness=0,6 do local target=exportedPath:gsub("%.filter$","-"..strictness..".filter");local file=assert(io.open(target,"rb"));local text=file:read("*a");assert(text:find("Covens pickup plan",1,true) and zip:find(text,1,true),"ZIP did not contain the compiled variant");file:close();os.remove(target) end
 	ui:click("close")
 	filterTool("Audit and update");frame("filter-audit");ui:click("close")
 	ui:click("keep");assert(#build.savers.LootFilters.data.profiles==1,"Loot filter was not kept");assert(build.savers.LootFilters.data.profiles[1].appearance.alertVolume==0,"Global appearance was not kept")
