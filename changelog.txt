@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Review shown, hidden and uncertain examples across a loot-filter scene.
 * Apply catalyst quality to generated and Blessed-updated base implicits.
 * Apply the 3.30 cluster-jewel small-passive speed family when crafting.
 * Update 3.30 base implicits and let Blessed Orbs update recognized legacy values.

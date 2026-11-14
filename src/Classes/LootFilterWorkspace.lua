@@ -324,7 +324,19 @@ function M.Open(build,source,layout,controller)
 		button(c,"sampleHistory",124,322,100,"History",function() local entries={};for i=#samples,1,-1 do local sample=samples[i];entries[#entries+1]={id=i,label=sample.BaseType or "Unknown item",details={"Item level: "..tostring(sample.ItemLevel or "unknown"),"Area level: "..tostring(sample.AreaLevel or "unknown"),"Missing properties remain unknown."},sample=sample} end
 			require("Classes.PlanningBrowserControl").Open("Tested item history",entries,{action="Test again",choose=function(entry) rememberSample(entry.sample);scenePage=1;compile();reopen() end})
 		end)
-		button(c,"sound",16,362,left,"Preview selected sound",function() local _,message=require("Modules.LootFilterAudio").play(result and result.styles or {});c.selection.list=ui.rows({item.BaseType,message},left-28,14) end)
+		button(c,"sound",16,362,100,"Play sound",function() local _,message=require("Modules.LootFilterAudio").play(result and result.styles or {});c.selection.list=ui.rows({item.BaseType,message},left-28,14) end)
+		button(c,"sceneStats",124,362,100,"Drop review",function()
+			local counts={Show=0,Hide=0,Unknown=0};local entries={}
+			for index,drop in ipairs(scene) do
+				local evaluated=parsed and parser.simulate(parsed,drop) or {action="Unknown",status="unknown",styles={},reasons={"Filter is unavailable."}}
+				local action=evaluated.action=="Show" and "Show" or evaluated.action=="Hide" and "Hide" or "Unknown"
+				counts[action]=counts[action]+1
+				entries[#entries+1]={id=index,label=(drop.BaseType or "Unknown item").." - "..action,category=action,details=sampleDetails(drop,evaluated),sample=drop}
+			end
+			local title=string.format("Example drops: %d shown, %d hidden, %d unknown",counts.Show,counts.Hide,counts.Unknown)
+			require("Classes.PlanningBrowserControl").Open(title,entries,{action="Inspect item",choose=function(entry) rememberSample(entry.sample);scenePage=1;compile();reopen() end})
+		end)
+		c.sceneStats.tooltipText="Review every example in this scene, including hidden and uncertain results. Counts are not drop-rate predictions."
 		c.selection=new("TextListControl"):TextListControl(ui.anchor,{16,410,left,h-474},nil,ui.rows(sampleDetails(item,result),left-28,14))
 		local extraTest=false
 		if savedSet then

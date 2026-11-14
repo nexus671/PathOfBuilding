@@ -859,6 +859,7 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 	filterTool("Review changes");frame("filter-change-review");ui:click("close");ui:click("keep")
 	assert(#build.savers.LootFilters.data.profiles[1].modules==1,"Rule modules were not kept")
 	ui:click("viewSimulate");ui.clipboard="Item Class: Helmets\nRarity: Rare\nFoe Visage\nIron Hat\n--------\nItem Level: 86\nShaper Item\nElder Item";ui:click("pasteDrop")
+	ui:click("sceneStats");assert(main.popups[#main.popups].controls.category,"Drop review did not open its result browser");frame("filter-drop-review");ui:click("choose")
 	local pasted=build.planningWorkspace.cache.filters.layout.snapshot().sample;assert(pasted.ShaperItem and pasted.ElderItem and #pasted.HasInfluence==2,"Pasted influences were not retained")
 	ui.clipboard="Item Class: Stackable Currency\nRarity: Currency\nChaos Orb\n--------\nStack Size: 7/20";ui:click("pasteDrop");frame("filter-copied-item")
 	ui:click("sceneSettings");ui:text("areaLevel","72");ui:text("itemLevel","75");ui:choose("background","Dark");frame("filter-scene-settings");ui:click("keepScene")
