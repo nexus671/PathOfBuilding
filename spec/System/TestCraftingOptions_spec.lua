@@ -76,6 +76,17 @@ describe("State-aware crafting choices",function()
 		local both=state(m,"RARE",{{id="FireResistanceJewel",range=0.5},{id="ColdResistanceJewel",range=0.5}})
 		local reason=sim.resistanceReason(m,both,"fire","cold");assert.is_truthy(reason)
 	end)
+	it("maps shield maximum resistances between equal tiers",function()
+		local m=model("Pinnacle Tower Shield")
+		local ids={fire={"MaximumFireResist1","MaximumFireResist2_","MaximumFireResist3"},cold={"MaximumColdResist1","MaximumColdResist2","MaximumColdResist3"},lightning={"MaximumLightningResist1","MaximumLightningResist2___","MaximumLightningResist3"}}
+		for from,tiers in pairs(ids) do for tier,id in ipairs(tiers) do
+			local input=state(m,"MAGIC",{{id=id,range=0.5}});local choices=sim.actionOptions(m,input,"harvest_resistance");assert.equal(2,#choices)
+			for _,choice in ipairs(choices) do local result=sim.action(m,input,choice.action,function() return 0 end);assert.equal(ids[choice.action.to][tier],result.affixes[1].id) end
+			input.affixes[1].fractured=true;assert.equal(0,#sim.actionOptions(m,input,"harvest_resistance"))
+		end end
+		local both=state(m,"RARE",{{id=ids.fire[1],range=0.5},{id=ids.cold[1],range=0.5}})
+		assert.is_truthy(sim.resistanceReason(m,both,"fire","cold"))
+	end)
 	it("requires rare Harvest inputs and excludes tags absent from the eligible pool",function()
 		local m=model("Plate Vest");local magic=sim.perform(m.raw,{method="transmute"},1).state
 		for _,method in ipairs({"harvest_reforge","harvest_augment"}) do

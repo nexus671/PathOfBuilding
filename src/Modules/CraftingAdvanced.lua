@@ -400,19 +400,28 @@ function A.extend(M,api)
 		end
 		if not removable then return "No removable modifier for this craft" end
 	end
+	local shieldMaximum={fire={"MaximumFireResist1","MaximumFireResist2_","MaximumFireResist3"},cold={"MaximumColdResist1","MaximumColdResist2","MaximumColdResist3"},lightning={"MaximumLightningResist1","MaximumLightningResist2___","MaximumLightningResist3"}}
+	local function shieldResistanceTarget(model,id,from,to)
+		if model.item.type~="Shield" then return end
+		for tier,source in ipairs(shieldMaximum[from] or {}) do if source==id then return shieldMaximum[to][tier] end end
+	end
+	local function resistanceTarget(model,id,from,to)
+		return shieldResistanceTarget(model,id,from,to) or id:gsub(from:gsub("^%l",string.upper),to:gsub("^%l",string.upper))
+	end
 	function M.resistanceReason(model,state,from,to)
 		if from==to or not contains({"fire","cold","lightning"},from) or not contains({"fire","cold","lightning"},to) then return "Choose different elemental resistance types" end
 		if api.flags(model,state).suffixes then return "Suffixes are locked" end
 		local matches={};local element=from:gsub("^%l",string.upper)
 		for i,entry in ipairs(state.affixes) do
 			local jewel=model.item.type=="Jewel" and (entry.id==element.."ResistanceJewel" or entry.id=="Maximum"..element.."ResistanceJewel")
-			if not entry.fractured and (model.byId[entry.id].group==element.."Resistance" or jewel) then matches[#matches+1]=i end
+			local shield=shieldResistanceTarget(model,entry.id,from,to)
+			if not entry.fractured and (model.byId[entry.id].group==element.."Resistance" or jewel or shield) then matches[#matches+1]=i end
 		end
 		if #matches==0 then return "No swappable single-element resistance" end
 		for _,index in ipairs(matches) do
-			local id=state.affixes[index].id:gsub(from:gsub("^%l",string.upper),to:gsub("^%l",string.upper))
+			local id=resistanceTarget(model,state.affixes[index].id,from,to)
 			if not model.byId[id] then return "No matching resistance tier on this base" end
-			if model.item.type=="Jewel" and model.item:GetModSpawnWeight(model.byId[id],{})<=0 then return "The replacement modifier cannot occur on this jewel" end
+			if (model.item.type=="Jewel" or shieldResistanceTarget(model,state.affixes[index].id,from,to)) and model.item:GetModSpawnWeight(model.byId[id],{})<=0 then return "The replacement modifier cannot occur on this base" end
 			for _,entry in ipairs(state.affixes) do if model.byId[entry.id].group==model.byId[id].group then return "That resistance group is already present" end end
 		end
 		return nil,matches
@@ -710,7 +719,7 @@ function A.extend(M,api)
 		elseif method == "harvest_resistance" then
 			local reason,matches=M.resistanceReason(model,state,action.from,action.to);assert(not reason,reason)
 			local index=matches[math.floor(random()*#matches)+1]; local old=state.affixes[index]
-			local id=old.id:gsub(action.from:gsub("^%l",string.upper),action.to:gsub("^%l",string.upper))
+			local id=resistanceTarget(model,old.id,action.from,action.to)
 			old.id=id;old.range=M.rollRange(model.byId[id],random)
 		elseif method == "blessed" then
 			assert(#model.item.implicitModLines > 0 and not state.implicits,"No base implicit to reroll")
