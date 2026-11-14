@@ -92,8 +92,10 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		assert(#draft.steps < 20,"Use up to twenty steps")
 		local entries={};local workbench=require("Modules.CraftingWorkbench")
 		for _,method in ipairs({"transmute","alteration","augmentation","regal","alchemy","binding","chaos","exalt","annul","scour","divine","vaal","blessed","sacred","chromatic","quality"}) do
+			local details={"Add this action to the recipe without changing the working item.","The item must meet its requirements when this step runs."}
+			if method=="binding" then details[#details+1]="No longer generated in 3.30; existing Orbs of Binding still work." end
 			entries[#entries+1]={id=method,label=sim.labels[method],category="Currency",icon=workbench.icon(method),action={method=method},
-				details={"Add this action to the recipe without changing the working item.","The item must meet its requirements when this step runs."}}
+				details=details}
 		end
 		for _,count in ipairs({1,3}) do entries[#entries+1]={id="bench-reroll-"..count,label="Bench: reroll "..count.." modifier"..(count==1 and "" or "s"),category="Bench",icon=workbench.icon("bench_reroll"),action={method="bench_reroll",count=count},
 			details={"Add this bench action to the recipe without changing the working item.","The item must have enough removable modifiers when this step runs."}} end

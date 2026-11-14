@@ -18,6 +18,7 @@ function M.actionWarnings(action)
 	local result={}
 	if action.method=="bench" and type(action.modId)=="string" and action.modId:match("^bench:partial%-") then result[#result+1]={code="partial_lock_model",message=partialWarningMessage} end
 	if action.method=="recombine" then result[#result+1]={code="recombination_count_odds",message="Recombination uses older count odds; 3.30 odds are not verified."} end
+	if action.method=="binding" then result[#result+1]={code="binding_legacy",message="Orbs of Binding are no longer generated in 3.30; existing orbs still work.",source="https://www.pathofexile.com/forum/view-thread/4013680",asOfPatch="3.30"} end
 	if action.allflame or action.method=="ducat_kishara" then result[#result+1]={code="allflame_historical",message="Allflame is historical and did not return to core in 3.30."} end
 	return result
 end
@@ -717,7 +718,8 @@ end
 function M.catalog(raw,query,limit)
 	local model=M.model(raw)
 	query=(query or ""):lower(); limit=limit or 50
-	local result={methods=copyTable(M.methods),modifiers={},bench={},essences={},limitations=copyTable(M.limits)}
+	local result={methods=copyTable(M.methods),methodWarnings={},modifiers={},bench={},essences={},limitations=copyTable(M.limits)}
+	for _,method in ipairs(M.methods) do local warnings=M.actionWarnings({method=method});if #warnings>0 then result.methodWarnings[method]=warnings end end
 	for _,entry in ipairs(model.mods) do if #result.modifiers < limit and (entry.id.." "..table.concat(entry.mod," / ")):lower():find(query,1,true) then result.modifiers[#result.modifiers+1]={id=entry.id,text=table.concat(entry.mod," / "),level=entry.mod.level,type=entry.mod.type,weight=entry.weight,group=entry.mod.group} end end
 	for _,entry in ipairs(model.bench) do if #result.bench < limit and (entry.id.." "..table.concat(entry.mod," / ")):lower():find(query,1,true) then result.bench[#result.bench+1]={id=entry.id,text=table.concat(entry.mod," / "),type=entry.mod.type} end end
 	for _,entry in ipairs(model.essences) do if #result.essences < limit and entry.name:lower():find(query,1,true) then result.essences[#result.essences+1]=copyTable(entry) end end
