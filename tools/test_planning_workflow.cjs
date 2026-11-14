@@ -235,6 +235,11 @@ async function main(){
   const blessedRing=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:steelRaw,action:{method:'blessed'},seed:1},'crafted');
   assert.ok(Array.isArray(blessedRing.nativeCrafting.state.baseImplicitRanges[0]));
   await queued('inspect_crafting_item',{baseRevision:context.revision,itemText:steelRaw,initialState:blessedRing.nativeCrafting.state,limit:1},'inspected');
+  const legacyGloves='Rarity: NORMAL\nFingerless Silk Gloves\nItem Level: 86\nImplicits: 1\n12% increased Spell Damage';
+  const updatedGloves=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:legacyGloves,action:{method:'blessed'},seed:1},'crafted');
+  assert.equal(updatedGloves.nativeCrafting.state.baseImplicit330,true);
+  const continuedGloves=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:legacyGloves,action:{method:'quality'},initialState:updatedGloves.nativeCrafting.state,seed:1},'crafted');
+  assert.match(continuedGloves.nativeCrafting.itemText,/(?:2[0-6])% increased Spell Damage/);
   const independentAffix=await queued('apply_crafting_action',{baseRevision:context.revision,itemText:raw,action:{method:'quality'},initialState:{rarity:'RARE',affixes:[{id:'LocalBaseArmourAndLife1',range:[0,1]}]},seed:1},'crafted');
   assert.match(independentAffix.nativeCrafting.itemText,/\+23 to maximum Life/);assert.deepEqual(independentAffix.nativeCrafting.state.affixes[0].range,[0,1]);
   const starterAtlas={id:'starter-atlas',title:'Starter Atlas',version:'3.29.1',budget:138,nodes:[],progression:{stage:'starter'}};

@@ -1253,6 +1253,7 @@ data.itemBases = { }
 for _, type in pairs(itemTypes) do
 	LoadModule("Data/Bases/" .. type)(data.itemBases)
 end
+LoadModule("Data/BaseImplicit330")(data.itemBases)
 
 ---@class ItemBaseEntry
 ---@field label string

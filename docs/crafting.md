@@ -25,7 +25,7 @@ Search **Find currencies** for **replace quality** to apply a Harvest quality en
 
 **Bestiary: maximum links** links the existing sockets without adding any. It uses one Black Mórrigan and one Craicic Sand Spitter; supply a price for each beast or a whole-action quote to estimate cost. The model currently supports non-unique, uncorrupted equipment with ordinary sockets.
 
-Search **Find currencies** for **white sockets** to use the 3.30 bench craft. It turns supported sockets white without changing their links, for one Orb of Scouring and, on corrupted items, one Vaal Orb. The rest of the crafting data remains pinned to 3.29.3.6; see **Coverage** for its limits.
+Search **Find currencies** for **white sockets** to use the 3.30 bench craft. It turns supported sockets white without changing their links, for one Orb of Scouring and, on corrupted items, one Vaal Orb. Published 3.30 base implicit changes are also included. The underlying modifier export remains pinned to 3.29.3.6; see **Coverage** for its limits.
 
 The standard Orb of Annulment uses the 3.30 rule: **Cannot roll Attack/Caster Modifiers** does not protect those modifiers from removal. Fractures and prefix/suffix locks still protect their applicable modifiers. Other 3.30 crafting changes are not yet fully modelled.
 

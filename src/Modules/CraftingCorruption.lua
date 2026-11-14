@@ -49,7 +49,7 @@ function C.extend(M,A,api)
 			for _,group in ipairs(A.data().mods[id].groups) do groups[group]=true end
 		end
 		state.corruptedImplicits=chosen
-		state.implicits=nil;state.baseImplicitRanges=nil;state.vendorImplicit=nil;state.corrupted=true
+		state.implicits=nil;state.baseImplicitRanges=nil;state.baseImplicit330=nil;state.vendorImplicit=nil;state.corrupted=true
 	end
 	function M.decorateItem(model,state,item)
 		originalDecorate(model,state,item)

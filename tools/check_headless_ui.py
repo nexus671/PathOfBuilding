@@ -18,6 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def source_hashes():
     sources = list((ROOT / "src/Classes").glob("*.lua")) + list((ROOT / "src/Modules").glob("*.lua"))
+    sources += list((ROOT / "src/Data").rglob("*.lua"))
+    sources += list((ROOT / "src/AI").rglob("*.cjs"))
     sources += list((ROOT / "runtime/SimpleGraphic/Fonts").glob("*"))
     sources += list((ROOT / "runtime/lua").rglob("*.lua"))
     sources += list((ROOT / "src/Assets/Crafting").rglob("*"))

@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Update 3.30 base implicits and let Blessed Orbs update recognized legacy values.
 * Allow existing Orbs of Binding on low-item-level equipment.
 * Open filter previews faster while retaining priority-conflict checks.
 * Prepare simulator build-target examples across frames and reuse unchanged filter previews.
