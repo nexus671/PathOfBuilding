@@ -168,7 +168,7 @@ function M.Open(build,source,layout,controller)
 		function canvas:Draw() local px,py=self:GetPos();visual.floor(px,py,width,height,settings.background)
 			local selectedKey=encode(item);for _,cell in ipairs(cells) do
 				local cx,cy=px+cell.x-x,py+cell.y-y;visual.chip(cx,cy,cell.w,cell.h,cell.item,cell.result,selectedKey==cell.key)
-				if sceneKind=="Tiered gear" and cell.item.Identified==false and cell.item.UnidentifiedItemTier~=nil then visual.text(cx+5,cy+2,12,cell.item.UnidentifiedItemTier==0 and "Untiered" or "Tier "..cell.item.UnidentifiedItemTier,"^xEED49C",cell.w-10) end
+				if sceneKind=="Tiered gear" and cell.item.Identified==false and cell.item.UnidentifiedItemTier~=nil then visual.text(cx+5,cy+2,12,cell.item.UnidentifiedItemTier==0 and "No tier" or "Tier "..cell.item.UnidentifiedItemTier,"^xEED49C",cell.w-10) end
 			end
 			if #cells==0 then visual.text(px+14,py+height/2,14,"No visible examples. Show hidden drops or choose another scene.","^xAABBBE",width-28) end
 			visual.text(px+14,py+height-26,12,(caption or "EXAMPLE DROPS").."  /  "..visible.." displayed  /  click an item to inspect","^xAABBBE",page=="Simulate" and width-224 or width-28)
@@ -339,7 +339,7 @@ function M.Open(build,source,layout,controller)
 				local evaluated=parsed and parser.simulate(parsed,drop) or {action="Unknown",status="unknown",styles={},reasons={"Filter is unavailable."}}
 				local action=M.dropOutcome(evaluated)
 				counts[action]=counts[action]+1
-				local tier=drop.Identified==false and drop.UnidentifiedItemTier~=nil and (drop.UnidentifiedItemTier==0 and " (untiered)" or " (tier "..drop.UnidentifiedItemTier..")") or ""
+				local tier=drop.Identified==false and drop.UnidentifiedItemTier~=nil and (drop.UnidentifiedItemTier==0 and " (no tier)" or " (tier "..drop.UnidentifiedItemTier..")") or ""
 				entries[#entries+1]={id=index,label=(drop.BaseType or "Unknown item")..tier.." - "..action,category=action,details=sampleDetails(drop,evaluated),sample=drop}
 			end
 			local title=string.format("Examples: %d shown, %d minimal, %d hidden, %d unknown",counts.Show,counts.Minimal,counts.Hide,counts.Unknown)
