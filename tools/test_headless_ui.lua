@@ -570,6 +570,13 @@ for _,size in ipairs({{1280,720},{1024,768},{960,640}}) do
 		local replaced;require("Classes.CraftingRecipeControl").Open({steps={{method="alchemy",maxAttempts=2,onSuccess=1,onFailure=2,onFailureAction="stop",recoveryNotes="Keep this note",untilRequirements={minAffixes=5}}},targets={},requirements={minAffixes=6}},{method="chaos"},function(value) replaced=value end,routeModel)
 		ui:click("replace");ui:click("keep");local step=replaced.steps[1]
 		assert(step.method=="chaos" and step.maxAttempts==2 and step.onSuccess==1 and step.onFailure==2 and step.onFailureAction=="stop" and step.recoveryNotes=="Keep this note" and step.untilRequirements.minAffixes==5,"Replacing action lost routes or conditions")
+		local finished;local input={steps={{method="alchemy",onSuccess=3,onFailure=3},{method="chaos",onSuccess=1}},targets={},requirements={maxAffixes=0}}
+		require("Classes.CraftingRecipeControl").Open(input,{method="transmute"},function(value) finished=value end,routeModel)
+		ui:click("add");ui:click("addCurrency");ui:text("search","Chaos Orb");ui:click("choose")
+		ui:click("addCurrency");ui:text("search","Fossil combination");ui:click("choose");ui:choose("fossil1",life,"id");ui:click("use")
+		frame("crafting-recipe-append-finish");ui:click("keep")
+		assert(finished.steps[1].onSuccess==6 and finished.steps[1].onFailure==6 and finished.steps[2].onSuccess==1 and finished.steps[2].onFailure==nil,"Appending changed existing route destinations")
+		local stopped=sim.simulate(raw,finished,{trials=1,maxActions=5,forceFirstAction=true});assert(stopped.meanActions==1 and not next(stopped.transitionErrors),"An explicit finish route executed an appended step")
 	end
 	ui:click("distribution");frame("simulation-distribution");assert(main.popups[1].controls.successCard and main.popups[1].controls.medianSpend and main.popups[1].controls.veryUnluckySpend and main.popups[1].controls.moreTrials,"Simulation result cards are missing");ui:click("charts");frame("crafting-success-chart");ui:choose("mode","Spending per trial");frame("crafting-spending-chart");ui:click("copy");assert(ui.clipboard:find("route,value,percent,count,trials",1,true));ui:click("close");ui:click("sample");frame("crafting-sampled-outcome");ui:click("close");ui:click("moreTrials")
 	for i=1,100 do if not jobs.job then break end;jobs.tick(build) end

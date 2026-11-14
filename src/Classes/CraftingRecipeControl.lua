@@ -52,7 +52,7 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 	ui.selectable(controls.graph,function(row) return row.step end,function(row) selected=row.step;controls.step:SelByValue(selected,"val");loadStep() end)
 	button(controls,"add",16,514,256,"Append current emulator action",function()
 		assert(#draft.steps < 20,"Use up to twenty steps")
-		draft.steps[#draft.steps+1]=copyTable(currentAction);selected=#draft.steps;refresh()
+		draft=require("Modules.CraftingRoutes").append(draft,currentAction);selected=#draft.steps;refresh()
 	end)
 	button(controls,"replace",288,514,272,"Replace selected with emulator action",function()
 		local old=assert(draft.steps[selected],"Select a step");local next=copyTable(currentAction)
@@ -111,7 +111,7 @@ function Panel.Open(recipe,currentAction,onKeep,model)
 		end end
 		require("Classes.PlanningBrowserControl").Open("Add a recipe step",entries,{action="Add step",closeOnChoose=false,choose=function(entry)
 			main:ClosePopup()
-			local function append(action) draft.steps[#draft.steps+1]=copyTable(action);selected=#draft.steps;refresh() end
+			local function append(action) draft=require("Modules.CraftingRoutes").append(draft,action);selected=#draft.steps;refresh() end
 			if entry.configure=="fossil" then require("Classes.CraftingFossilControl").Open(model,nil,append) else append(entry.action) end
 		end})
 	end)

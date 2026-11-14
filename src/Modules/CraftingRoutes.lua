@@ -1,5 +1,17 @@
 -- Recipe graph edges use the simulator's route and recovery semantics.
 local M={}
+-- Explicit finish is encoded as step count + 1. Move it when appending so it
+-- cannot silently become a reference to the new step. Default next routes
+-- remain implicit and naturally continue to the appended step.
+function M.append(recipe,action)
+	assert(type(recipe)=="table" and type(recipe.steps)=="table" and #recipe.steps<20,"Use up to twenty steps")
+	assert(type(action)=="table" and type(action.method)=="string","Choose a recipe action")
+	local next=copyTable(recipe);local oldFinish=#next.steps+1
+	for _,step in ipairs(next.steps) do for _,key in ipairs({"onSuccess","onFailure"}) do
+		if step[key]==oldFinish then step[key]=oldFinish+1 end
+	end end
+	next.steps[oldFinish]=copyTable(action);return next
+end
 function M.edges(recipe)
 	local result={};local finish=#recipe.steps+1
 	for i,step in ipairs(recipe.steps) do
