@@ -1,4 +1,5 @@
 -- Searchable base-filter catalogue and deterministic example drops. No drop-rate model.
+-- cspell:ignore RGBW WRGB
 local filters=require("Modules.LootFilters")
 local parser=require("Modules.LootFilterParser")
 local sha1=require("sha1")
@@ -37,8 +38,10 @@ function M.sample(rule,block)
 	for key in pairs(parser.booleans) do item[key]=false end
 	for key in pairs(parser.numeric) do if item[key]==nil then item[key]=0 end end
 	local hasBase,hasClass,hasRarity,hasIdentified,modifier=false,false,false,false,nil
+	local socketConditions={}
 	if rule then block=block or parser.parse(rule.text).rules[1];if block then for _,c in ipairs(block.conditions) do
 		local value=c.values[1]
+		if c.keyword=="Sockets" or c.keyword=="SocketGroup" or c.keyword=="LinkedSockets" then socketConditions[#socketConditions+1]=c end
 		if c.keyword=="BaseType" then hasBase=true elseif c.keyword=="Class" then hasClass=true end
 		if c.keyword=="Rarity" then hasRarity=true elseif c.keyword=="Identified" then hasIdentified=true end
 		if c.keyword=="HasExplicitMod" and (c.operator=="=" or c.operator=="==" or c.operator==">=" or c.operator==">") then modifier=c end
@@ -48,6 +51,23 @@ function M.sample(rule,block)
 		elseif c.keyword=="HasInfluence" then item[c.keyword]=copyTable(c.values)
 		elseif c.keyword=="BaseType" or c.keyword=="Class" or c.keyword=="SocketGroup" then item[c.keyword]=value end
 	end end end
+	-- Construct a coherent example for a single ordinary socket requirement.
+	-- More complicated combinations are left to the simulator instead of guessing.
+	if #socketConditions==1 then
+		local c=socketConditions[1];local pattern=c.values[1] or ""
+		local number=tonumber(pattern:match("^%d+"));local colors=pattern:match("[RGBW]+$") or ""
+		if (c.operator=="=" or c.operator=="==" or c.operator==">=") and pattern:match("^%d*[RGBW]*$") then
+			local count=number or #colors
+			local padding="W"
+			if c.operator=="==" and count>#colors then
+				padding=nil;for color in ("WRGB"):gmatch(".") do if not colors:find(color,1,true) then padding=color;break end end
+			end
+			if count>=#colors and count<=6 and padding then
+				colors=colors..string.rep(padding,count-#colors)
+				item.Sockets=count;item.SocketColours=colors;item.SocketGroup=colors;item.LinkedSockets=count
+			end
+		end
+	end
 	if modifier then
 		local count=not (modifier.quoted and modifier.quoted[1]) and tonumber(modifier.values[1]);local start=count and 2 or 1
 		local needed=count and (modifier.operator==">" and count+1 or count) or 1
@@ -57,7 +77,7 @@ function M.sample(rule,block)
 	end
 	if not hasBase then
 		if hasClass then item.BaseType=classExamples[item.Class] or item.Class
-		elseif item.LinkedSockets>=5 or type(item.SocketGroup)=="string" and item.SocketGroup~="" then item.BaseType="Vaal Regalia";item.Class="Body Armours"
+		elseif #socketConditions>0 or item.LinkedSockets>=5 or type(item.SocketGroup)=="string" and item.SocketGroup~="" then item.BaseType="Vaal Regalia";item.Class="Body Armours"
 		elseif item.Rarity=="Unique" then item.BaseType="Leather Belt";item.Class="Belts"
 		elseif item.Rarity=="Rare" or item.Rarity=="Magic" then item.BaseType="Iron Hat";item.Class="Helmets" end
 	elseif not hasClass then item.Class=baseClass(item.BaseType) end

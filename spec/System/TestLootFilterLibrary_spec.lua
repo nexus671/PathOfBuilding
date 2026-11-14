@@ -65,6 +65,16 @@ describe("Visual filter catalogue",function()
 		local tooMany=library.sample({text='Show\n HasExplicitMod >=7 "a" "b" "c" "d" "e" "f" "g"'});assert.equal(6,#tooMany.HasExplicitMod)
 		assert.equal("Iron Hat",library.sample({text='Show\n Rarity Magic'}).BaseType)
 	end)
+	it("builds coherent equipment examples for common socket rules",function()
+		for _,condition in ipairs({"SocketGroup RGB", "SocketGroup == 5GGG", "SocketGroup == 5GW", "Sockets >= 5", "Sockets 5GGG", "LinkedSockets >= 5"}) do
+			local text="Show\n "..condition.."\nHide"
+			local item=library.sample({text=text})
+			assert.equal("Body Armours",item.Class)
+			assert.equal(item.Sockets,#item.SocketColours)
+			assert.equal(item.Sockets,item.LinkedSockets)
+			assert.equal("Show",parser.simulate(parser.parse(text),item).action)
+		end
+	end)
 	it("uses native default text colours for item rarity and known item classes",function()
 		local color=require("Modules.LootFilterVisuals").defaultTextColor
 		assert.same({200,200,200},color({Rarity="Normal",Class="Helmets"}))
