@@ -117,22 +117,24 @@ function M.generate(build,profile)
 	local recipeModels={}
 	for _,project in ipairs(build.savers.CraftingProjects.projects) do if project.nativeRecipe then
 		local key=require("sha1")(project.startingItem.."\0"..require("Modules.PlanningData").encode(project.nativeRecipe))
-		local entries=recipeResourceCache[key];local ok=true
-		if not entries then ok,entries=pcall(function()
+		local coverage=recipeResourceCache[key];local ok=true
+		if not coverage then ok,coverage=pcall(function()
 			local sim=require("Modules.CraftingSimulator");local model=recipeModels[project.startingItem]
 			if not model then model=sim.model(project.startingItem);recipeModels[project.startingItem]=model end
 			local state=project.nativeRecipe.initialState and sim.validateState(model,project.nativeRecipe.initialState) or model.initial
-			local result={};for _,entry in ipairs(require("Modules.CraftingPrices").entries(model,state,project.nativeRecipe.steps,nil,state)) do
-				if entry.required and entry.kind=="Currency" then result[#result+1]={key=entry.key,name=entry.name} end
+			local result={items={},unknown={}};for _,entry in ipairs(require("Modules.CraftingPrices").entries(model,state,project.nativeRecipe.steps,nil,state)) do
+				if entry.required and entry.kind=="Currency" then result.items[#result.items+1]={key=entry.key,name=entry.name}
+				elseif entry.required and entry.kind=="Whole action" then result.unknown[#result.unknown+1]=entry.name end
 			end;return result
 		end)
-			if ok then recipeResourceCache[key]=entries;recipeResourceOrder[#recipeResourceOrder+1]=key;if #recipeResourceOrder>128 then recipeResourceCache[table.remove(recipeResourceOrder,1)]=nil end end
+			if ok then recipeResourceCache[key]=coverage;recipeResourceOrder[#recipeResourceOrder+1]=key;if #recipeResourceOrder>128 then recipeResourceCache[table.remove(recipeResourceOrder,1)]=nil end end
 		end
-		if ok then for _,entry in ipairs(entries) do if not removed[entry.name] then
+		if ok then for _,entry in ipairs(coverage.items) do if not removed[entry.name] then
 			add("craft-resource-"..project.id.."-"..require("sha1")(entry.key):sub(1,12),entry.name,{"BaseType == "..quote(entry.name)},"craft:"..project.id)
 		end end end
-		if not ok then
-			warnings[#warnings+1]={origin="craft:"..project.id,title=project.title,message="Could not inspect this recipe's resources. Previous recipe pickups were kept; review the crafting guide."}
+		if not ok or #coverage.unknown>0 then
+			local message=not ok and "Could not inspect this recipe's resources." or "Some actions have no item ingredient breakdown: "..table.concat(coverage.unknown,", ").."."
+			warnings[#warnings+1]={origin="craft:"..project.id,title=project.title,message=message.." Previous recipe pickups were kept; review the crafting guide."}
 			for _,rule in ipairs(profile.rules) do if rule.origin=="craft:"..project.id and rule.id:match("^craft%-resource%-") and not ids[rule.id] then result[#result+1]=copyTable(rule);ids[rule.id]=true end end
 		end
 	end end

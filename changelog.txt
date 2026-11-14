@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Explain incomplete ingredient coverage in crafting-based filter pickups.
 * Report crafting recipes that cannot be inspected when refreshing filter pickups.
 * Add modeled crafting-recipe currencies to build-adjusted loot filters.
 * Refresh linked-filter warnings immediately after skill or weapon-set changes.
