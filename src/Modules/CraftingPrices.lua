@@ -108,22 +108,28 @@ function M.describe(key,model)
 	end
 	return label,id and data.items[id].path,"Whole action"
 end
-function M.entries(model,state,actions,book)
+function M.entries(model,state,actions,book,recipeState)
 	local result,seen={},{};local aliases=M.aliases(model)
 	local function add(key,required)
 		local canonical=aliases[key] or key
 		if seen[canonical] then seen[canonical].required=seen[canonical].required or required;return end
 		local name,path,kind=M.describe(canonical,model);local row={key=canonical,name=name,path=path,kind=kind,required=required or false};seen[canonical]=row;result[#result+1]=row
 	end
+	local mayCorrupt=false
 	for _,action in ipairs(actions or {}) do
 		local found=false
 		-- Include both general recipe ingredients and the current item's
-		-- state-dependent ingredients, such as Vaal Orbs on corrupted gear.
-		for _,input in ipairs({false,state or false}) do
+		-- state-dependent ingredients, including the saved recipe's start.
+		local inputs={false,state or false,recipeState or false}
+		if mayCorrupt then
+			local corrupt=copyTable(recipeState or state or model.initial);corrupt.corrupted=true;inputs[#inputs+1]=corrupt
+		end
+		for _,input in ipairs(inputs) do
 			local ok,components=pcall(sim.components,action,input or nil,model)
 			if ok then found=true;for key in pairs(components) do add(key,true) end end
 		end
 		if not found then add(sim.priceKey(action),true) end
+		if action.method=="vaal" or action.method=="locus" then mayCorrupt=true end
 	end
 	for key in pairs(book and book.values or {}) do add(key,false) end
 	for id in pairs(catalogue().items) do add(id,false) end

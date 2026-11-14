@@ -46,6 +46,19 @@ describe("Saved crafting resource prices",function()
 		end
 		local rows=prices.entries(model,model.initial,{{method="socket_white_bench"}},book({}))
 		for _,row in ipairs(rows) do if row.key==vaal then assert.is_false(row.required) end end
+		for _,case in ipairs({
+			{actions={{method="socket_white_bench"}},recipeState=state},
+			{actions={{method="locus"},{method="socket_white_bench"}}},
+		}) do
+			local found
+			for _,row in ipairs(prices.entries(model,model.initial,case.actions,book({}),case.recipeState)) do if row.key==vaal then found=row end end
+			assert.is_truthy(found);assert.is_true(found.required)
+		end
+		local controls=require("Classes.CraftingPricesControl").Open(model,model.initial,{{method="socket_white_bench"}},book({}),"chaos",function() end,nil,state)
+		controls.search:SetText("Vaal Orb",true)
+		local visible=false;for _,row in ipairs(controls.resources.list) do if row.key==vaal then visible=true end end
+		assert.is_true(visible)
+		controls.close:Click()
 	end)
 	it("resolves currency aliases and keeps explicit action overrides separate",function()
 		local m=sim.model(raw);local state=copyTable(m.initial);state.rarity="RARE"

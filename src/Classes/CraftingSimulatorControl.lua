@@ -416,7 +416,7 @@ function Panel.Open(build,project,layout)
 			if controls.currency.buf~=book.currency then controls.currency:SetText(book.currency);updateCurrency() end
 			draft.priceBook=book;if draft.run then draft.run.settings.currency=book.currency end;draft=copyTable(build.savers.CraftingProjects:Upsert(draft))
 			ui.kept(build,"craftingPrices");refresh({"Resource prices kept in this build. Use build Save to persist."})
-		end,books)
+		end,books,draft.nativeRecipe and (draft.nativeRecipe.initialState or model.initial))
 	end)
 	button(controls,"keepRecipe",16,530,200,"Keep actions as recipe",function()
 		assert(#actions > 0,"Apply a crafting action first")

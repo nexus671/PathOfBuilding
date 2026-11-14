@@ -1,9 +1,9 @@
 local prices=require("Modules.CraftingPrices")
 local ui=require("Modules.PlanningUI")
 local Panel={}
-function Panel.Open(model,state,actions,book,currency,onKeep,books)
+function Panel.Open(model,state,actions,book,currency,onKeep,books,recipeState)
 	book=book and prices.normalized(book,model) or {currency=currency or "chaos",source="Manual quotes",quotedAt=os.time(),values={}}
-	local entries=prices.entries(model,state,actions,book);local buffers={};for key,value in pairs(book.values) do buffers[key]=tostring(value) end
+	local entries=prices.entries(model,state,actions,book,recipeState);local buffers={};for key,value in pairs(book.values) do buffers[key]=tostring(value) end
 	local controls={};local width=math.min(960,main.screenW-40);local height=math.min(660,main.screenH-60)
 	local listWidth=width-320;local side=listWidth+32;local sideWidth=width-side-16
 	local selected,visible;local images={}
@@ -58,7 +58,7 @@ function Panel.Open(model,state,actions,book,currency,onKeep,books)
 				local project=assert(c.books:GetSelValueByKey("val"),"Select a saved price book")
 				local source=new("Item"):Item(project.startingItem);assert(source.base,"Source project needs a recognized item")
 				book=prices.normalized(project.priceBook,{item=source});buffers={};for key,value in pairs(book.values) do buffers[key]=tostring(value) end
-				entries=prices.entries(model,state,actions,book);selected=nil;controls.price:SetText("")
+				entries=prices.entries(model,state,actions,book,recipeState);selected=nil;controls.price:SetText("")
 				controls.currency:SetText(book.currency);controls.source:SetText(book.source);originalTime=os.date(timeFormat,book.quotedAt);controls.quotedAt:SetText(originalTime)
 				refresh();main:ClosePopup()
 			end)

@@ -1,6 +1,7 @@
 VERSION[ai][2026/11/13]
 
 --- AI Edition ---
+* Include saved-recipe starting states when listing crafting resources.
 * Include corrupted socket-bench costs in the recipe resource price editor.
 * Allow Atlas transition previews when node preferences change between stages.
 * Show coherent equipment examples for common socket-based filter rules.
